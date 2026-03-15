@@ -1,0 +1,546 @@
+<div class="app-shell" [class.dark]="isDark" [class.light]="!isDark">
+
+  <!-- ════════════ TOPBAR ════════════ -->
+  <header class="topbar">
+    <div class="logo-wrap">
+      <img class="logo-img" [src]="logoSrc" alt="Brycen" />
+      <div>
+        <div class="logo-text">Brycen Hub</div>
+        <div class="logo-slogan">One Group. One Platform. Full Visibility.</div>
+      </div>
+    </div>
+
+    <div class="topbar-spacer"></div>
+
+    <!-- Search -->
+    <div class="search-box">
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="11" cy="11" r="8" />
+        <path d="m21 21-4.35-4.35" />
+      </svg>
+      <input placeholder="Search..." [(ngModel)]="searchQuery" />
+    </div>
+
+    <!-- Language -->
+    <div class="lang-btn">🌐 EN ▾</div>
+
+    <!-- Dark/Light toggle -->
+    <div class="icon-btn" (click)="toggleTheme()" title="Toggle theme">
+      <span style="font-size:13px">{{ isDark ? '🌙' : '☀️' }}</span>
+    </div>
+
+    <!-- Bell Notification -->
+    <app-bell-notification [notifications]="notifications"></app-bell-notification>
+  </header>
+
+  <!-- ════════════ ANNOUNCEMENT BAR ════════════ -->
+  <app-announcement-bar [announcements]="announcements" (announcementsChange)="announcements = $event">
+  </app-announcement-bar>
+
+  <!-- ════════════ MAIN ROW ════════════ -->
+  <div class="main-row">
+
+    <!-- ══════════════════════════════════
+         LEFT SIDEBAR
+    ══════════════════════════════════ -->
+    <aside class="left-sidebar">
+      <div class="sidebar-scroll">
+
+        <!-- Profile -->
+        <div class="profile-section">
+          <div class="avatar-wrap">
+            <div class="avatar-circle">
+              <!-- Realistic Avatar SVG — Brycen Green Theme -->
+              <svg viewBox="0 0 64 64" width="64" height="64" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                  <linearGradient id="avatarBg" x1="0" y1="0" x2="1" y2="1">
+                    <stop offset="0%" stop-color="#14532d" />
+                    <stop offset="100%" stop-color="#16a34a" />
+                  </linearGradient>
+                </defs>
+                <rect width="64" height="64" fill="url(#avatarBg)" />
+                <!-- body/shirt -->
+                <ellipse cx="32" cy="72" rx="22" ry="18" fill="#1e3a5f" />
+                <!-- neck -->
+                <rect x="27" y="40" width="10" height="10" rx="3" fill="#f5c5a3" />
+                <!-- head -->
+                <ellipse cx="32" cy="30" rx="13" ry="14" fill="#f5c5a3" />
+                <!-- hair -->
+                <ellipse cx="32" cy="17" rx="13" ry="7" fill="#1a0a00" />
+                <rect x="19" y="17" width="26" height="8" fill="#1a0a00" />
+                <!-- ears -->
+                <ellipse cx="19" cy="30" rx="3" ry="4" fill="#f0b090" />
+                <ellipse cx="45" cy="30" rx="3" ry="4" fill="#f0b090" />
+                <!-- eyes -->
+                <ellipse cx="26" cy="29" rx="2.5" ry="2.8" fill="white" />
+                <ellipse cx="38" cy="29" rx="2.5" ry="2.8" fill="white" />
+                <ellipse cx="26.5" cy="29.5" rx="1.5" ry="1.8" fill="#1a0a00" />
+                <ellipse cx="38.5" cy="29.5" rx="1.5" ry="1.8" fill="#1a0a00" />
+                <!-- eyebrows -->
+                <path d="M23 25.5 Q26 24 29 25.5" stroke="#1a0a00" stroke-width="1.2" fill="none"
+                  stroke-linecap="round" />
+                <path d="M35 25.5 Q38 24 41 25.5" stroke="#1a0a00" stroke-width="1.2" fill="none"
+                  stroke-linecap="round" />
+                <!-- nose -->
+                <ellipse cx="32" cy="33" rx="2" ry="1.5" fill="#e8a882" />
+                <!-- mouth / smile -->
+                <path d="M28 37 Q32 40 36 37" stroke="#c47b55" stroke-width="1.2" fill="none" stroke-linecap="round" />
+              </svg>
+            </div>
+            <div class="online-dot"></div>
+          </div>
+          <div class="profile-name">{{ currentUser?.name }}</div>
+          <div class="role-badge">{{ currentUser?.role }}</div>
+          <div class="member-badge">⭐ 3 Years of Brycen Member</div>
+        </div>
+
+        <!-- spacing between profile and nav -->
+        <div style="height:6px"></div>
+
+        <!-- Nav Items — emoji icons, standard style -->
+        <div class="sidebar-nav-wrap">
+          <div class="sidebar-item active">
+            <span class="nav-icon">📊</span>
+            <span>Dashboard</span>
+          </div>
+          <div class="sidebar-item" [routerLink]="['/chat']">
+            <span class="nav-icon">💬</span>
+            <span>Chat</span>
+            <span class="item-badge">3</span>
+          </div>
+          <div class="sidebar-item" [routerLink]="['/projects']">
+            <span class="nav-icon">📁</span>
+            <span>All Projects</span>
+          </div>
+          <div class="sidebar-item">
+            <span class="nav-icon">📅</span>
+            <span>Timeline</span>
+          </div>
+          <div class="sidebar-item">
+            <span class="nav-icon">📈</span>
+            <span>Reports</span>
+          </div>
+          <div class="sidebar-item">
+            <span class="nav-icon">📹</span>
+            <span>Video Call</span>
+          </div>
+          <div class="sidebar-item">
+            <span class="nav-icon">➕</span>
+            <span>New Project</span>
+          </div>
+          <!-- AI Assign Staff -->
+          <div class="sidebar-item ai-item">
+            <span class="nav-icon">🤖</span>
+            <span>AI Assign Staff</span>
+            <span class="ai-badge">AI</span>
+          </div>
+        </div>
+
+        <!-- section divider with margin -->
+        <div class="section-divider" style="margin: 8px 10px;"></div>
+
+        <!-- Active Projects List — with progress bar (v26 style) -->
+        <div class="proj-section-label">
+          ACTIVE PROJECTS <span style="color:#22c55e;">{{ activeProjects.length }}</span>
+        </div>
+        <div class="proj-list-wrap">
+          <!-- <div *ngFor="let p of activeProjects" class="proj-item-v2" [routerLink]="['/kanban', p.id]" style="cursor:pointer;"> -->
+            <div *ngFor="let p of activeProjects" class="proj-item-v2" [routerLink]="['/projects', p.id]" style="cursor:pointer;">
+            <div class="proj-item-top">
+              <div class="proj-item-left">
+                <div class="proj-dot-sq" [style.background]="p.color"></div>
+                <span class="proj-name">{{ p.name }}</span>
+              </div>
+              <span class="proj-pct" [style.color]="p.color">{{ p.progress }}%</span>
+            </div>
+            <div class="progress-bar proj-bar">
+              <div class="progress-fill" [style.width.%]="p.progress" [style.background]="p.color">
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /sidebar-scroll -->
+
+      <!-- Settings — fixed bottom -->
+      <div class="sidebar-bottom">
+        <div class="settings-wrap">
+          <div *ngIf="settingsOpen" class="settings-submenu">
+            <div class="sub-item">⚙️ Preferences</div>
+            <div class="sub-item">🔔 Notifications</div>
+            <div class="sub-item">🔒 Privacy</div>
+            <div class="sub-item">🌐 Language</div>
+            <div class="sub-item signout-item" (click)="signOut()">🚪 Sign Out</div>
+          </div>
+          <div class="sidebar-item" (click)="settingsOpen = !settingsOpen">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="3" />
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06
+                     a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09
+                     A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83
+                     l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09
+                     A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83
+                     l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09
+                     a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83
+                     l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09
+                     a1.65 1.65 0 0 0-1.51 1z" />
+            </svg>
+            Settings
+            <span style="margin-left:auto;font-size:9px;opacity:0.4">
+              {{ settingsOpen ? '▲' : '▼' }}
+            </span>
+          </div>
+        </div><!-- /settings-wrap -->
+      </div><!-- /sidebar-bottom -->
+    </aside>
+
+    <!-- ══════════════════════════════════
+         MAIN CONTENT
+    ══════════════════════════════════ -->
+    <main class="main-content">
+
+      <!-- Stats Row -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-label">Total Projects</div>
+          <div class="stat-value">{{ stats.total }}</div>
+          <div class="stat-sub">↑ 2 this month</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Active</div>
+          <div class="stat-value">{{ stats.active }}</div>
+          <div class="stat-sub" style="color:#22c55e">● In progress</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Overdue Tasks</div>
+          <div class="stat-value" style="color:#ef4444">{{ stats.overdue }}</div>
+          <div class="stat-sub" style="color:#f59e0b">⚠ Needs attention</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Team Members</div>
+          <div class="stat-value">{{ stats.members }}</div>
+          <div class="stat-sub">Across {{ stats.total }} projects</div>
+        </div>
+      </div>
+
+      <!-- Projects Overview -->
+      <div class="card" style="padding:14px 14px 8px;margin-bottom:10px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+          <div class="card-title" style="margin-bottom:0;font-size:12px;">Projects Overview</div>
+          <span style="font-size:10px;opacity:0.45;">Last 6 months</span>
+        </div>
+        <div style="display:flex;gap:14px;align-items:center;">
+
+          <!-- SVG Bar Chart -->
+          <div style="flex:1;min-width:0;">
+            <div style="display:flex;align-items:center;gap:0;font-size:9px;opacity:0.65;margin-bottom:6px;">
+              <span
+                style="width:7px;height:7px;border-radius:50%;background:#22c55e;display:inline-block;margin-right:3px;"></span><span
+                style="margin-right:10px;">Done</span>
+              <span
+                style="width:7px;height:7px;border-radius:50%;background:#3b82f6;display:inline-block;margin-right:3px;"></span><span
+                style="margin-right:10px;">In Progress</span>
+              <span
+                style="width:7px;height:7px;border-radius:50%;background:#6366f1;display:inline-block;margin-right:3px;"></span><span>Todo</span>
+            </div>
+            <!-- Y-axis + bars side by side -->
+            <div style="display:flex;gap:4px;align-items:flex-start;">
+              <!-- Y-axis labels: 40→0 -->
+              <div style="display:flex;flex-direction:column;justify-content:space-between;height:120px;flex-shrink:0;">
+                <span style="font-size:8px;opacity:0.35;line-height:1;">40</span>
+                <span style="font-size:8px;opacity:0.35;line-height:1;">30</span>
+                <span style="font-size:8px;opacity:0.35;line-height:1;">20</span>
+                <span style="font-size:8px;opacity:0.35;line-height:1;">10</span>
+                <span style="font-size:8px;opacity:0.35;line-height:1;">0</span>
+              </div>
+              <div style="flex:1;min-width:0;">
+                <svg viewBox="0 0 300 120" width="100%" height="120" preserveAspectRatio="none" style="display:block;">
+                  <defs>
+                    <linearGradient id="gDone" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stop-color="#4ade80" />
+                      <stop offset="100%" stop-color="#22c55e" />
+                    </linearGradient>
+                    <linearGradient id="gProg" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stop-color="#60a5fa" />
+                      <stop offset="100%" stop-color="#3b82f6" />
+                    </linearGradient>
+                    <linearGradient id="gTodo" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stop-color="#818cf8" />
+                      <stop offset="100%" stop-color="#6366f1" />
+                    </linearGradient>
+                  </defs>
+                  <!-- Grid lines at 0,30,60,90,120 -->
+                  <line x1="0" y1="0" x2="300" y2="0" stroke="rgba(255,255,255,0.05)" stroke-width="1" />
+                  <line x1="0" y1="30" x2="300" y2="30" stroke="rgba(255,255,255,0.05)" stroke-width="1" />
+                  <line x1="0" y1="60" x2="300" y2="60" stroke="rgba(255,255,255,0.05)" stroke-width="1" />
+                  <line x1="0" y1="90" x2="300" y2="90" stroke="rgba(255,255,255,0.05)" stroke-width="1" />
+                  <line x1="0" y1="119" x2="300" y2="119" stroke="rgba(255,255,255,0.10)" stroke-width="1" />
+                  <ng-container *ngFor="let m of chartData; let i = index">
+                    <rect
+                      [attr.x]="9 + i * 50"
+                      [attr.y]="120 - getBarHeight(m.done, getBarMaxVal())"
+                      width="11"
+                      [attr.height]="getBarHeight(m.done, getBarMaxVal())"
+                      rx="2" fill="url(#gDone)" />
+                    <rect
+                      [attr.x]="22 + i * 50"
+                      [attr.y]="120 - getBarHeight(m.inProgress, getBarMaxVal())"
+                      width="11"
+                      [attr.height]="getBarHeight(m.inProgress, getBarMaxVal())"
+                      rx="2" fill="url(#gProg)" />
+                    <rect
+                      [attr.x]="35 + i * 50"
+                      [attr.y]="120 - getBarHeight(m.todo, getBarMaxVal())"
+                      width="11"
+                      [attr.height]="getBarHeight(m.todo, getBarMaxVal())"
+                      rx="2" fill="url(#gTodo)" />
+                  </ng-container>
+                </svg>
+                <!-- Month labels -->
+                <div style="display:flex;font-size:9px;opacity:0.4;margin-top:4px;">
+                  <div *ngFor="let m of chartData" style="flex:1;text-align:center;">{{ m.month }}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Divider -->
+          <div class="chart-divider" style="width:1px;height:110px;flex-shrink:0;align-self:center;"></div>
+
+          <!-- Donut 90x90 -->
+          <div style="display:flex;flex-direction:column;align-items:center;flex-shrink:0;">
+            <p style="font-size:9px;font-weight:600;opacity:0.5;margin-bottom:6px;">Task Status</p>
+            <div style="position:relative;width:90px;height:90px;">
+              <svg width="90" height="90" viewBox="0 0 90 90">
+                <!-- r=32, circ=201.1 -->
+                <circle cx="45" cy="45" r="32" fill="none" stroke="#1e2d4a" stroke-width="11" />
+                <!-- Done 36/180=20% →40.2 -->
+                <circle cx="45" cy="45" r="32" fill="none" stroke="#22c55e" stroke-width="11" stroke-dasharray="40 161"
+                  stroke-dashoffset="0" stroke-linecap="round" transform="rotate(-90 45 45)" />
+                <!-- InReview 24/180=13.3% →26.8, offset=-40 -->
+                <circle cx="45" cy="45" r="32" fill="none" stroke="#f59e0b" stroke-width="11" stroke-dasharray="27 174"
+                  stroke-dashoffset="-40" stroke-linecap="round" transform="rotate(-90 45 45)" />
+                <!-- InProg 48/180=26.7% →53.6, offset=-67 -->
+                <circle cx="45" cy="45" r="32" fill="none" stroke="#3b82f6" stroke-width="11" stroke-dasharray="54 147"
+                  stroke-dashoffset="-67" stroke-linecap="round" transform="rotate(-90 45 45)" />
+                <!-- ToDo 72/180=40% →80.4, offset=-121 -->
+                <circle cx="45" cy="45" r="32" fill="none" stroke="#6366f1" stroke-width="11" stroke-dasharray="80 121"
+                  stroke-dashoffset="-121" stroke-linecap="round" transform="rotate(-90 45 45)" />
+              </svg>
+              <div
+                style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;pointer-events:none;">
+                <span style="font-size:16px;font-weight:800;line-height:1;">{{ getTotalTasks() }}</span>
+                <span style="font-size:8px;opacity:0.45;margin-top:2px;">tasks</span>
+              </div>
+            </div>
+            <!-- Legend exactly like v26 -->
+            <div style="margin-top:8px;width:115px;">
+              <div style="display:flex;justify-content:space-between;font-size:9px;margin-bottom:2px;">
+                <span style="color:#6366f1;">&#9679; To Do</span><span style="font-weight:600;">{{ donutData[0].count
+                  }}</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;font-size:9px;margin-bottom:2px;">
+                <span style="color:#3b82f6;">&#9679; In Progress</span><span style="font-weight:600;">{{
+                  donutData[1].count }}</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;font-size:9px;margin-bottom:2px;">
+                <span style="color:#f59e0b;">&#9679; In Review</span><span style="font-weight:600;">{{
+                  donutData[2].count }}</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;font-size:9px;">
+                <span style="color:#22c55e;">&#9679; Done</span><span style="font-weight:600;">{{ donutData[3].count
+                  }}</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Portfolio -->
+      <div class="card" style="padding:14px;margin-bottom:10px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+          <div class="card-title" style="margin-bottom:0;font-size:12px;">Portfolio</div>
+          <span style="font-size:10px;opacity:0.45;">{{ portfolioProjects.length }} active projects</span>
+        </div>
+        <!-- Header row -->
+        <div
+          style="display:grid;grid-template-columns:2fr 1fr 1.5fr 1fr 1fr 1fr;gap:8px;padding:0 6px 7px;border-bottom:1px solid rgba(255,255,255,0.06);">
+          <span
+            style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.45;">Project</span>
+          <span
+            style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.45;">Status</span>
+          <span
+            style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.45;">Progress</span>
+          <span
+            style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.45;">Owner</span>
+          <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.45;">Due
+            Date</span>
+          <span
+            style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.45;">Health</span>
+        </div>
+        <!-- Data rows -->
+        <div *ngFor="let p of portfolioProjects; let last = last"
+          [style.border-bottom]="last ? 'none' : '1px solid rgba(255,255,255,0.04)'"
+          style="display:grid;grid-template-columns:2fr 1fr 1.5fr 1fr 1fr 1fr;gap:8px;padding:8px 6px;align-items:center;">
+          <!-- Project name -->
+          <span style="font-size:11px;font-weight:600;">{{ p.name }}</span>
+          <!-- Status badge -->
+          <div style="display:flex;align-items:center;gap:4px;">
+            <div style="width:6px;height:6px;border-radius:50%;flex-shrink:0;"
+              [style.background]="p.status==='On Track'?'#22c55e':p.status==='At Risk'?'#f59e0b':'#ef4444'"></div>
+            <span style="font-size:10px;font-weight:600;"
+              [style.color]="p.status==='On Track'?'#22c55e':p.status==='At Risk'?'#f59e0b':'#ef4444'">
+              {{ p.status }}
+            </span>
+          </div>
+          <!-- Progress bar -->
+          <div style="display:flex;align-items:center;gap:5px;">
+            <div class="progress-bar" style="flex:1;height:5px;">
+              <div class="progress-fill" [style.width.%]="p.progress"
+                [style.background]="p.status==='On Track'?'linear-gradient(90deg,#3b82f6,#6366f1)':p.status==='At Risk'?'linear-gradient(90deg,#f59e0b,#d97706)':'linear-gradient(90deg,#ef4444,#f97316)'">
+              </div>
+            </div>
+            <span style="font-size:9px;opacity:0.5;width:24px;text-align:right;">{{ p.progress }}%</span>
+          </div>
+          <!-- Owner -->
+          <div style="display:flex;align-items:center;gap:4px;">
+            <div
+              style="width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:bold;color:white;flex-shrink:0;"
+              [style.background]="p.ownerColor">{{ p.ownerInitial }}</div>
+            <span style="font-size:10px;">{{ p.owner }}</span>
+          </div>
+          <!-- Due date -->
+          <span style="font-size:10px;">{{ p.dueDate }}</span>
+          <!-- Health: On Track = 5 green dots, At Risk = text, Delayed = text -->
+          <div>
+            <ng-container *ngIf="p.status === 'On Track'">
+              <span *ngFor="let h of getHealthDots(p.health); let i = index" class="health-dot"
+                [style.background]="i < p.health ? '#22c55e' : 'rgba(255,255,255,0.1)'"
+                style="margin-right:2px;"></span>
+            </ng-container>
+            <ng-container *ngIf="p.status === 'At Risk'">
+              <span *ngFor="let h of getHealthDots(p.health); let i = index" class="health-dot"
+                [style.background]="i < p.health ? '#f59e0b' : 'rgba(255,255,255,0.1)'"
+                style="margin-right:2px;"></span>
+            </ng-container>
+            <ng-container *ngIf="p.status === 'Delayed'">
+              <span *ngFor="let h of getHealthDots(p.health); let i = index" class="health-dot"
+                [style.background]="i < p.health ? '#ef4444' : 'rgba(255,255,255,0.1)'"
+                style="margin-right:2px;"></span>
+            </ng-container>
+          </div>
+        </div>
+      </div>
+
+
+      <!-- Bottom 3-col Grid -->
+      <div class="bottom-grid">
+
+        <!-- Overdue Tasks -->
+        <div class="card">
+          <div class="card-title" style="color:#ef4444">
+            ⚠ Overdue Tasks
+            <span style="background:rgba(239,68,68,0.15);color:#ef4444;font-size:8px;
+                         padding:2px 7px;border-radius:20px;margin-left:6px;font-weight:700">
+              {{ overdueTasks.length }} tasks
+            </span>
+          </div>
+          <div *ngFor="let t of overdueTasks" class="ov-item" [class.ov-red]="t.priority === 'red'"
+            [class.ov-amber]="t.priority === 'amber'">
+            <span style="font-size:11px">{{ t.priority === 'red' ? '🔴' : '🟡' }}</span>
+            <div>
+              <div style="font-size:10px;font-weight:600">{{ t.title }}</div>
+              <div style="font-size:8px;opacity:0.4">
+                {{ t.project }} · {{ t.daysOverdue }}d overdue
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Recent Activity -->
+        <div class="card">
+          <div class="card-title">🔔 Recent Activity</div>
+          <div *ngFor="let a of activities" class="act-item">
+            <div class="act-avatar" [style.background]="a.color">{{ a.initial }}</div>
+            <div>
+              <div class="act-text"><strong>{{ a.user }}</strong> {{ a.action }}</div>
+              <div class="act-time">{{ a.time }}</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Upcoming Deadlines -->
+        <div class="card">
+          <div class="card-title">📅 Upcoming Deadlines</div>
+          <div *ngFor="let d of deadlines" class="dl-item">
+            <div style="display:flex;justify-content:space-between;
+                        align-items:center;margin-bottom:2px">
+              <span style="font-size:10px;font-weight:600">{{ d.project }}</span>
+              <span class="dl-urgency" [class.urgent-text]="d.status === 'urgent'"
+                [class.soon-text]="d.status === 'soon'" [class.normal-text]="d.status === 'normal'">
+                {{ d.date }}
+              </span>
+            </div>
+            <div style="font-size:9px;opacity:0.5">{{ d.task }}</div>
+          </div>
+        </div>
+
+      </div><!-- /bottom-grid -->
+    </main>
+
+    <!-- ══════════════════════════════════
+         RIGHT SIDEBAR
+    ══════════════════════════════════ -->
+    <aside class="right-sidebar">
+
+      <!-- My Tasks — v26 compact style -->
+      <div class="my-tasks-section">
+        <div class="rs-section-header">
+          <span style="font-size:11px;font-weight:700;">My Tasks</span>
+          <span class="rs-badge-red">{{ myTasks.length }}</span>
+        </div>
+        <div class="tasks-list" [style.max-height.px]="myTasksMaxH">
+          <div *ngFor="let t of myTasks" class="task-card" [ngClass]="'tc-' + t.priority"
+            [style.opacity]="t.done ? '0.7' : '1'">
+            <!-- Title row + status badge -->
+            <div class="tc-top">
+              <span class="tc-title" [style.text-decoration]="t.done ? 'line-through' : 'none'">
+                {{ t.title }}
+              </span>
+              <span class="tc-status-badge" [style.background]="t.statusColor + '25'" [style.color]="t.statusColor">
+                {{ t.status }}
+              </span>
+            </div>
+            <!-- Project + due -->
+            <p class="tc-project">{{ t.project }}</p>
+            <span class="tc-due" [style.color]="t.statusColor">{{ t.due }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Team Members -->
+      <div class="members-section">
+        <div class="rs-section-header">
+          <span style="font-size:11px;font-weight:700;">Team Members</span>
+          <span style="font-size:9px;opacity:0.4">{{ teamMembers.length }}</span>
+        </div>
+        <div class="members-list">
+          <div *ngFor="let m of teamMembers" class="member-card">
+            <div class="member-avatar" [style.background]="m.color">
+              {{ m.initial }}
+              <div *ngIf="m.online" class="member-online"></div>
+            </div>
+            <div class="member-info-wrap">
+              <div class="member-name">{{ m.name }}</div>
+              <div class="member-info">{{ m.role }} · <span class="member-tasks">{{ m.tasks }} tasks</span></div>
+            </div>
+            <div class="member-status-dot" [style.background]="m.online ? '#22c55e' : '#475569'">
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </aside>
+  </div><!-- /main-row -->
+</div>

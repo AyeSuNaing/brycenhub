@@ -1,0 +1,89 @@
+<!-- Slim Announcement Bar -->
+<div *ngIf="announcements.length > 0"
+     class="ann-bar"
+     [class.pinned]="current.pinned"
+     (click)="openModal(barIdx)">
+
+  <div class="ann-dot" [style.background]="current.tagColor"></div>
+
+  <span class="ann-tag"
+        [style.background]="current.tagColor + '22'"
+        [style.color]="current.tagColor">
+    {{ current.tag }}
+  </span>
+
+  <span class="ann-text">{{ current.text }}</span>
+  <span class="ann-hint">Click to read more</span>
+  <span class="ann-meta">{{ current.meta }} · {{ current.time }}</span>
+
+  <!-- Prev / Next -->
+  <div class="ann-nav" (click)="$event.stopPropagation()">
+    <button class="ann-nav-btn" (click)="prev()">&#8592;</button>
+    <span class="ann-idx">{{ barIdx + 1 }}/{{ announcements.length }}</span>
+    <button class="ann-nav-btn" (click)="next()">&#8594;</button>
+  </div>
+
+  <!-- Pinned lock or Dismiss -->
+  <span *ngIf="current.pinned" class="ann-lock" title="Pinned">🔒</span>
+  <div *ngIf="!current.pinned"
+       class="ann-close"
+       title="Dismiss"
+       (click)="dismiss(current.id); $event.stopPropagation()">✕</div>
+</div>
+
+<!-- Announcement Detail Modal -->
+<div *ngIf="modalOpen" class="ann-modal-overlay" (click)="closeModal()">
+  <div class="ann-modal" (click)="$event.stopPropagation()">
+
+    <!-- Header -->
+    <div class="ann-modal-header">
+      <div style="flex:1">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+          <span class="ann-tag"
+                [style.background]="modalAnn.tagColor + '22'"
+                [style.color]="modalAnn.tagColor"
+                style="font-size:9px">
+            {{ modalAnn.tag }}
+          </span>
+          <span *ngIf="modalAnn.pinned" style="font-size:9px;opacity:0.4">🔒 Pinned</span>
+        </div>
+        <p style="font-size:13px;font-weight:700;margin-bottom:2px">{{ modalAnn.title }}</p>
+        <p style="font-size:9px;opacity:0.45">{{ modalAnn.meta }} · {{ modalAnn.time }}</p>
+      </div>
+      <span class="close-x" (click)="closeModal()">✕</span>
+    </div>
+
+    <!-- Body -->
+    <div class="ann-modal-body">
+      <p style="font-size:12px;line-height:1.7;opacity:0.85">{{ modalAnn.text }}</p>
+    </div>
+
+    <!-- Footer -->
+    <div class="ann-modal-footer">
+      <div style="display:flex;gap:6px;align-items:center">
+        <button class="modal-nav-btn"
+                (click)="modalPrev()"
+                [disabled]="announcements.length <= 1">
+          &#8592; Prev
+        </button>
+        <span style="font-size:10px;opacity:0.4">
+          {{ modalIdx + 1 }} / {{ announcements.length }}
+        </span>
+        <button class="modal-nav-btn"
+                (click)="modalNext()"
+                [disabled]="announcements.length <= 1">
+          Next &#8594;
+        </button>
+      </div>
+      <button *ngIf="!modalAnn.pinned"
+              class="dismiss-btn"
+              (click)="dismiss(modalAnn.id); closeModal()">
+        Dismiss
+      </button>
+      <span *ngIf="modalAnn.pinned" style="font-size:9px;opacity:0.3">
+        🔒 Cannot dismiss
+      </span>
+    </div>
+
+  </div>
+</div>

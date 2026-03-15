@@ -1,0 +1,74 @@
+<div class="bell-wrap">
+
+  <!-- Bell Button -->
+  <button class="bell-btn" (click)="toggle($event)">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
+         stroke="currentColor" stroke-width="2" stroke-linecap="round">
+      <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+      <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+    </svg>
+  </button>
+
+  <!-- Unread Badge -->
+  <span *ngIf="unreadCount > 0" class="bell-badge">{{ unreadCount }}</span>
+
+  <!-- Dropdown -->
+  <div *ngIf="isOpen" class="bell-dropdown" (click)="$event.stopPropagation()">
+
+    <!-- Header + Tabs -->
+    <div class="bell-dd-header">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+        <span style="font-size:12px;font-weight:700">Notifications</span>
+        <span style="font-size:9px;opacity:0.45">{{ unreadCount }} unread</span>
+      </div>
+      <div class="bell-tabs">
+        <button class="bell-tab"
+                [class.active]="tab === 'all'"
+                (click)="setTab('all', $event)">
+          All
+          <span *ngIf="unreadCount > 0" class="bell-tab-badge">{{ unreadCount }}</span>
+        </button>
+        <button class="bell-tab"
+                [class.active]="tab === 'activity'"
+                (click)="setTab('activity', $event)">
+          Activity
+          <span *ngIf="activityUnread > 0" class="bell-tab-badge">{{ activityUnread }}</span>
+        </button>
+        <button class="bell-tab"
+                [class.active]="tab === 'mentions'"
+                (click)="setTab('mentions', $event)">
+          Mentions
+          <span *ngIf="mentionUnread > 0" class="bell-tab-badge">{{ mentionUnread }}</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Notification List -->
+    <div class="bell-list">
+      <ng-container *ngIf="filtered.length > 0; else emptyState">
+        <div *ngFor="let n of filtered"
+             class="bell-item"
+             [class.unread]="n.unread">
+          <div class="bell-item-dot"></div>
+          <div class="bell-item-avatar" [style.background]="n.color">{{ n.avatar }}</div>
+          <div class="bell-item-body">
+            <div class="bell-item-text">
+              <strong>{{ n.name }}</strong>&nbsp;
+              <span [innerHTML]="n.text"></span>
+            </div>
+            <div class="bell-item-meta">{{ n.project }} · {{ n.time }}</div>
+          </div>
+        </div>
+      </ng-container>
+      <ng-template #emptyState>
+        <div style="padding:24px;text-align:center;font-size:11px;opacity:0.4;">No notifications</div>
+      </ng-template>
+    </div>
+
+    <!-- Footer -->
+    <div class="bell-dd-footer">
+      <button class="bell-mark-all" (click)="markAllRead()">✓ Mark all as read</button>
+    </div>
+
+  </div><!-- /bell-dropdown -->
+</div>
