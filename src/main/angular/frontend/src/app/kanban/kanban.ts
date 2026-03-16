@@ -61,18 +61,18 @@ export class Kanban implements OnInit {
   currentUser: any = null;
   currentRole: string = '';
   currentUserRoleInProject: string = '';
-
+  isTranslating = false;
   // Properties
   langs = [
-    { code: 'en', flag: '🇺🇸', name: 'English' },
-    { code: 'ja', flag: '🇯🇵', name: 'Japanese' },
-    { code: 'my', flag: '🇲🇲', name: 'Myanmar' },
-    { code: 'km', flag: '🇰🇭', name: 'Khmer' },
-    { code: 'vi', flag: '🇻🇳', name: 'Vietnamese' },
-    { code: 'ko', flag: '🇰🇷', name: 'Korean' },
+    { code: 'en', display: 'EN', flag: '🇺🇸', name: 'English' },
+    { code: 'ja', display: 'JP', flag: '🇯🇵', name: 'Japanese' },
+    { code: 'my', display: 'MM', flag: '🇲🇲', name: 'Myanmar' },
+    { code: 'km', display: 'KH', flag: '🇰🇭', name: 'Khmer' },
+    { code: 'vi', display: 'VN', flag: '🇻🇳', name: 'Vietnamese' },
+    { code: 'ko', display: 'KR', flag: '🇰🇷', name: 'Korean' },
   ];
   showLangMenu = false;
-  currentLang = { code: 'en', flag: '🇺🇸', name: 'English' };
+  currentLang = { code: 'en', display: 'EN', flag: '🇺🇸', name: 'English' };
 
   // ── COLUMNS (dynamic — DB status based) ──────────
   columns = [
@@ -102,6 +102,7 @@ export class Kanban implements OnInit {
     document.body.classList.toggle('dark', this.isDark);
     document.body.classList.toggle('light', !this.isDark);
 
+    // saved language restore
     const savedLang = this.auth.getUser()?.preferredLanguage || 'en';
     this.currentLang = this.langs.find(l => l.code === savedLang) || this.langs[0];
 
@@ -110,28 +111,41 @@ export class Kanban implements OnInit {
     this.projectId = Number(this.route.snapshot.params['projectId']) || 0;
     this.loadAll();
 
-    document.addEventListener('click', (e) => {
-      const panel = document.getElementById('task-panel');
-      if (panel && !panel.contains(e.target as Node) && this.showPanel) {
-        // don't close on outside click — user must press ✕
-      }
-    });
-
     document.addEventListener('click', () => {
       this.showLangMenu = false;
       this.cdr.detectChanges();
     });
-
   }
 
   setLang(lang: any) {
     this.currentLang = lang;
     this.showLangMenu = false;
+
     this.http.put(
       `${BASE}/auth/language`,
       { language: lang.code },
       { headers: this.auth.getHeaders() }
-    ).subscribe();
+    ).subscribe({
+      next: () => {
+        const user = this.auth.getUser();
+        if (user) {
+          user.preferredLanguage = lang.code;
+          localStorage.setItem('user', JSON.stringify(user));
+        }
+      }
+    });
+
+    if (lang.code === 'en' || lang.code === 'km') {
+      this.tasks.forEach(t => {
+        t.translatedTitle = '';
+        t.translatedDesc = '';
+      });
+      this.cdr.detectChanges();
+    } else {
+      this.isTranslating = true;   // ← loading ဖွင့်
+      this.cdr.detectChanges();
+      this.translateTasks(lang.code);
+    }
   }
   // ── DATA LOADING ──────────────────────────────────
   loadAll() {
@@ -143,27 +157,24 @@ export class Kanban implements OnInit {
     });
 
     this.http.get<any[]>(`${BASE}/tasks/by-project/${this.projectId}`, h).subscribe({
-      next: t => { this.tasks = t; this.isLoading = false; this.cdr.detectChanges(); },
+      next: t => {
+        this.tasks = t;
+        this.isLoading = false;
+        this.cdr.detectChanges();
+
+        // saved lang ရှိရင် translate
+        const savedLang = this.auth.getUser()?.preferredLanguage || 'en';
+        if (savedLang !== 'en' && savedLang !== 'km') {
+          this.translateTasks(savedLang);
+        }
+      },
       error: () => { this.isLoading = false; this.cdr.detectChanges(); }
     });
 
+    // ✅ members တစ်ကြိမ်ပဲ — role in project ပါ စစ်
     this.http.get<any[]>(`${BASE}/projects/${this.projectId}/members`, h).subscribe({
-      next: m => { this.members = m; this.cdr.detectChanges(); },
-      error: () => { }
-    });
-
-    this.http.get<any[]>(`${BASE}/sprints/by-project/${this.projectId}`, h).subscribe({
-      next: s => { this.sprints = s; this.cdr.detectChanges(); },
-      error: () => { }
-    });
-
-    this.http.get<any[]>(
-      `${BASE}/projects/${this.projectId}/members`,
-      { headers: this.auth.getHeaders() }
-    ).subscribe({
       next: m => {
         this.members = m;
-        // current user ရဲ့ project role ရှာ
         const currentUserId = this.auth.getUser()?.id;
         const me = m.find((mem: any) => mem.userId === currentUserId);
         this.currentUserRoleInProject = me?.roleInProject || '';
@@ -171,8 +182,30 @@ export class Kanban implements OnInit {
       },
       error: () => { }
     });
+
+    this.http.get<any[]>(`${BASE}/sprints/by-project/${this.projectId}`, h).subscribe({
+      next: s => { this.sprints = s; this.cdr.detectChanges(); },
+      error: () => { }
+    });
   }
 
+  async translateTasks(lang: string) {
+    const h = { headers: this.auth.getHeaders() };
+    for (const task of this.tasks) {
+      try {
+        const res: any = await this.http.get(
+          `${BASE}/translations/task/${task.id}?lang=${lang}`, h
+        ).toPromise();
+        task.translatedTitle = res.title || '';
+        task.translatedDesc = res.description || '';
+      } catch {
+        task.translatedTitle = '';
+        task.translatedDesc = '';
+      }
+    }
+    this.isTranslating = false;   // ← loading ပိတ်
+    this.cdr.detectChanges();
+  }
   // ── COLUMNS ───────────────────────────────────────
   getTasksByStatus(status: string): any[] {
     return this.tasks.filter(t => t.status === status);
@@ -241,12 +274,11 @@ export class Kanban implements OnInit {
     this.selectedTask = task;
     this.showPanel = true;
     this.taskComments = [];
-    this.taskAttachments = [];   // ← ထည့်
+    this.taskAttachments = [];
     this.panelLoading = true;
     this.newComment = '';
-    this.pendingFiles = [];     // ← ထည့်
+    this.pendingFiles = [];
     this.cdr.detectChanges();
-
 
     this.http.get<any[]>(
       `${BASE}/comments/by-task/${task.id}`,
@@ -263,7 +295,7 @@ export class Kanban implements OnInit {
             c.attachments = atts || [];
           } catch { c.attachments = []; }
 
-          // ② userName load ← ဒါ ထည့်
+          // ② userName load
           try {
             const user = await this.http.get<any>(
               `${BASE}/users/${c.userId}`,
@@ -273,14 +305,76 @@ export class Kanban implements OnInit {
           } catch {
             c.userName = `User #${c.userId}`;
           }
+
+          // ③ comment translate ← ထည့်
+          const lang = this.currentLang.code;
+          if (lang !== 'en' && lang !== 'km') {
+            try {
+              const res: any = await this.http.get(
+                `${BASE}/translations/comment/${c.id}?lang=${lang}`,
+                { headers: this.auth.getHeaders() }
+              ).toPromise();
+              c.translatedContent = res.content || '';
+            } catch {
+              c.translatedContent = '';
+            }
+          }
         }
+
         this.taskComments = comments;
         this.panelLoading = false;
         this.cdr.detectChanges();
       },
       error: () => { this.panelLoading = false; this.cdr.detectChanges(); }
     });
+
+    this.loadTaskAttachments(task.id);
   }
+
+  // openTaskPanel(task: any) {
+  //   this.selectedTask = task;
+  //   this.showPanel = true;
+  //   this.taskComments = [];
+  //   this.taskAttachments = [];   // ← ထည့်
+  //   this.panelLoading = true;
+  //   this.newComment = '';
+  //   this.pendingFiles = [];     // ← ထည့်
+  //   this.cdr.detectChanges();
+
+
+  //   this.http.get<any[]>(
+  //     `${BASE}/comments/by-task/${task.id}`,
+  //     { headers: this.auth.getHeaders() }
+  //   ).subscribe({
+  //     next: async (comments) => {
+  //       for (const c of comments) {
+  //         // ① attachments load
+  //         try {
+  //           const atts = await this.http.get<any[]>(
+  //             `${BASE}/attachments/by-comment/${c.id}`,
+  //             { headers: this.auth.getHeaders() }
+  //           ).toPromise();
+  //           c.attachments = atts || [];
+  //         } catch { c.attachments = []; }
+
+  //         // ② userName load ← ဒါ ထည့်
+  //         try {
+  //           const user = await this.http.get<any>(
+  //             `${BASE}/users/${c.userId}`,
+  //             { headers: this.auth.getHeaders() }
+  //           ).toPromise();
+  //           c.userName = user?.name || `User #${c.userId}`;
+  //         } catch {
+  //           c.userName = `User #${c.userId}`;
+  //         }
+  //       }
+  //       this.taskComments = comments;
+  //       this.panelLoading = false;
+  //       this.cdr.detectChanges();
+  //     },
+  //     error: () => { this.panelLoading = false; this.cdr.detectChanges(); }
+  //   });
+  // }
 
 
   closePanel() {
@@ -513,7 +607,7 @@ export class Kanban implements OnInit {
   canAddTask(): boolean {
     const projectOk = ['PROJECT_MANAGER', 'LEADER']
       .includes(this.currentUserRoleInProject);
-    return  projectOk;
+    return projectOk;
   }
 
   goBack() {

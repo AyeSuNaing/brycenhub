@@ -11,191 +11,165 @@ import java.util.*;
 @Service
 public class TranslationService {
 
-    @Autowired
-    private TranslationProvider translationProvider;
+	@Autowired
+	private TranslationProvider translationProvider;
 
-    @Autowired
-    private TaskTranslationRepository taskTranslationRepo;
+	@Autowired
+	private TaskTranslationRepository taskTranslationRepo;
 
-    @Autowired
-    private CommentTranslationRepository commentTranslationRepo;
+	@Autowired
+	private CommentTranslationRepository commentTranslationRepo;
 
-    @Autowired
-    private TaskRepository taskRepository;
+	@Autowired
+	private TaskRepository taskRepository;
 
-    @Autowired
-    private CommentRepository commentRepository;
+	@Autowired
+	private CommentRepository commentRepository;
 
-    @Autowired
-    private ProjectRepository projectRepository;   // ✅ NEW
+	@Autowired
+	private ProjectRepository projectRepository; // ✅ NEW
 
-    // =============================================
-    // TASK TRANSLATION
-    // =============================================
-    public Map<String, Object> translateTask(Long taskId, String targetLang) {
-        Task task = taskRepository.findById(taskId)
-                .orElseThrow(() -> new RuntimeException("Task not found"));
+	@Autowired
+	private ProjectTranslationRepository projectTranslationRepo;
 
-        String sourceLang = task.getOriginalLanguage() != null
-                ? task.getOriginalLanguage() : "en";
+	// =============================================
+	// TASK TRANSLATION
+	// =============================================
+	public Map<String, Object> translateTask(Long taskId, String targetLang) {
+		Task task = taskRepository.findById(taskId).orElseThrow(() -> new RuntimeException("Task not found"));
 
-        if (sourceLang.equals(targetLang)) {
-            return Map.of(
-                    "taskId", taskId,
-                    "language", targetLang,
-                    "title", task.getTitle(),
-                    "description", task.getDescription() != null ? task.getDescription() : "",
-                    "cached", false,
-                    "provider", "original"
-            );
-        }
+		String sourceLang = task.getOriginalLanguage() != null ? task.getOriginalLanguage() : "en";
 
-        Optional<TaskTranslation> cached = taskTranslationRepo
-                .findByTaskIdAndLanguageCode(taskId, targetLang);
+		if (sourceLang.equals(targetLang)) {
+			return Map.of("taskId", taskId, "language", targetLang, "title", task.getTitle(), "description",
+					task.getDescription() != null ? task.getDescription() : "", "cached", false, "provider",
+					"original");
+		}
 
-        if (cached.isPresent()) {
-            TaskTranslation c = cached.get();
-            return Map.of(
-                    "taskId", taskId,
-                    "language", targetLang,
-                    "title", c.getTranslatedTitle() != null ? c.getTranslatedTitle() : "",
-                    "description", c.getTranslatedDescription() != null ? c.getTranslatedDescription() : "",
-                    "cached", true,
-                    "provider", "cache"
-            );
-        }
+		Optional<TaskTranslation> cached = taskTranslationRepo.findByTaskIdAndLanguageCode(taskId, targetLang);
 
-        String translatedTitle = translationProvider.translate(
-                task.getTitle(), sourceLang, targetLang);
-        String translatedDesc = task.getDescription() != null
-                ? translationProvider.translate(task.getDescription(), sourceLang, targetLang)
-                : "";
+		if (cached.isPresent()) {
+			TaskTranslation c = cached.get();
+			return Map.of("taskId", taskId, "language", targetLang, "title",
+					c.getTranslatedTitle() != null ? c.getTranslatedTitle() : "", "description",
+					c.getTranslatedDescription() != null ? c.getTranslatedDescription() : "", "cached", true,
+					"provider", "cache");
+		}
 
-        TaskTranslation translation = new TaskTranslation();
-        translation.setTaskId(taskId);
-        translation.setLanguageCode(targetLang);
-        translation.setTranslatedTitle(translatedTitle);
-        translation.setTranslatedDescription(translatedDesc);
-        taskTranslationRepo.save(translation);
+		String translatedTitle = translationProvider.translate(task.getTitle(), sourceLang, targetLang);
+		String translatedDesc = task.getDescription() != null
+				? translationProvider.translate(task.getDescription(), sourceLang, targetLang)
+				: "";
 
-        return Map.of(
-                "taskId", taskId,
-                "language", targetLang,
-                "title", translatedTitle,
-                "description", translatedDesc,
-                "cached", false,
-                "provider", translationProvider.getProviderName()
-        );
-    }
+		TaskTranslation translation = new TaskTranslation();
+		translation.setTaskId(taskId);
+		translation.setLanguageCode(targetLang);
+		translation.setTranslatedTitle(translatedTitle);
+		translation.setTranslatedDescription(translatedDesc);
+		taskTranslationRepo.save(translation);
 
-    // =============================================
-    // COMMENT TRANSLATION
-    // =============================================
-    public Map<String, Object> translateComment(Long commentId, String targetLang) {
-        Comment comment = commentRepository.findById(commentId)
-                .orElseThrow(() -> new RuntimeException("Comment not found"));
+		return Map.of("taskId", taskId, "language", targetLang, "title", translatedTitle, "description", translatedDesc,
+				"cached", false, "provider", translationProvider.getProviderName());
+	}
 
-        String sourceLang = comment.getOriginalLanguage() != null
-                ? comment.getOriginalLanguage() : "en";
+	// =============================================
+	// COMMENT TRANSLATION
+	// =============================================
+	public Map<String, Object> translateComment(Long commentId, String targetLang) {
+		Comment comment = commentRepository.findById(commentId)
+				.orElseThrow(() -> new RuntimeException("Comment not found"));
 
-        if (sourceLang.equals(targetLang)) {
-            return Map.of(
-                    "commentId", commentId,
-                    "language", targetLang,
-                    "content", comment.getContent() != null ? comment.getContent() : "",
-                    "cached", false,
-                    "provider", "original"
-            );
-        }
+		String sourceLang = comment.getOriginalLanguage() != null ? comment.getOriginalLanguage() : "en";
 
-        Optional<CommentTranslation> cached = commentTranslationRepo
-                .findByCommentIdAndLanguageCode(commentId, targetLang);
+		if (sourceLang.equals(targetLang)) {
+			return Map.of("commentId", commentId, "language", targetLang, "content",
+					comment.getContent() != null ? comment.getContent() : "", "cached", false, "provider", "original");
+		}
 
-        if (cached.isPresent()) {
-            CommentTranslation c = cached.get();
-            return Map.of(
-                    "commentId", commentId,
-                    "language", targetLang,
-                    "content", c.getTranslatedContent() != null ? c.getTranslatedContent() : "",
-                    "cached", true,
-                    "provider", "cache"
-            );
-        }
+		Optional<CommentTranslation> cached = commentTranslationRepo.findByCommentIdAndLanguageCode(commentId,
+				targetLang);
 
-        String translatedContent = translationProvider.translate(
-                comment.getContent(), sourceLang, targetLang);
+		if (cached.isPresent()) {
+			CommentTranslation c = cached.get();
+			return Map.of("commentId", commentId, "language", targetLang, "content",
+					c.getTranslatedContent() != null ? c.getTranslatedContent() : "", "cached", true, "provider",
+					"cache");
+		}
 
-        CommentTranslation translation = new CommentTranslation();
-        translation.setCommentId(commentId);
-        translation.setLanguageCode(targetLang);
-        translation.setTranslatedContent(translatedContent);
-        commentTranslationRepo.save(translation);
+		String translatedContent = translationProvider.translate(comment.getContent(), sourceLang, targetLang);
 
-        return Map.of(
-                "commentId", commentId,
-                "language", targetLang,
-                "content", translatedContent,
-                "cached", false,
-                "provider", translationProvider.getProviderName()
-        );
-    }
+		CommentTranslation translation = new CommentTranslation();
+		translation.setCommentId(commentId);
+		translation.setLanguageCode(targetLang);
+		translation.setTranslatedContent(translatedContent);
+		commentTranslationRepo.save(translation);
 
-    // =============================================
-    // ✅ PROJECT TRANSLATION — NEW
-    // =============================================
-    /**
-     * Project description + title ကို တောင်းဆိုသော language ဖြင့် ပြန်ပေး
-     * Task translation နဲ့ အတူတူ — cache မရှိ (project description မကြာမကြာ မပြောင်းဘူး)
-     * ဒါကြောင့် translate ပြီး direct return — cache မသိမ်း
-     */
-    public Map<String, Object> translateProject(Long projectId, String targetLang) {
-        Project project = projectRepository.findById(projectId)
-                .orElseThrow(() -> new RuntimeException("Project not found"));
+		return Map.of("commentId", commentId, "language", targetLang, "content", translatedContent, "cached", false,
+				"provider", translationProvider.getProviderName());
+	}
 
-        String sourceLang = project.getOriginalLanguage() != null
-                ? project.getOriginalLanguage() : "en";
+	// =============================================
+	// ✅ PROJECT TRANSLATION — NEW
+	// =============================================
+	/**
+	 * Project description + title ကို တောင်းဆိုသော language ဖြင့် ပြန်ပေး Task
+	 * translation နဲ့ အတူတူ — cache မရှိ (project description မကြာမကြာ မပြောင်းဘူး)
+	 * ဒါကြောင့် translate ပြီး direct return — cache မသိမ်း
+	 */
 
-        // Same language — original ပြန်ပေး
-        if (sourceLang.equals(targetLang)) {
-            return Map.of(
-                    "projectId", projectId,
-                    "language", targetLang,
-                    "title", project.getTitle(),
-                    "description", project.getDescription() != null ? project.getDescription() : "",
-                    "cached", false,
-                    "provider", "original"
-            );
-        }
+	public Map<String, Object> translateProject(Long projectId, String targetLang) {
+		Project project = projectRepository.findById(projectId)
+				.orElseThrow(() -> new RuntimeException("Project not found"));
 
-        // Translate title + description
-        String translatedTitle = translationProvider.translate(
-                project.getTitle(), sourceLang, targetLang);
+		String sourceLang = project.getOriginalLanguage() != null ? project.getOriginalLanguage() : "en";
 
-        String translatedDesc = project.getDescription() != null
-                ? translationProvider.translate(project.getDescription(), sourceLang, targetLang)
-                : "";
+		// Same language
+		if (sourceLang.equals(targetLang)) {
+			return Map.of("projectId", projectId, "language", targetLang, "title", project.getTitle(), "description",
+					project.getDescription() != null ? project.getDescription() : "", "cached", false, "provider",
+					"original");
+		}
 
-        return Map.of(
-                "projectId", projectId,
-                "language", targetLang,
-                "title", translatedTitle,
-                "description", translatedDesc,
-                "cached", false,
-                "provider", translationProvider.getProviderName()
-        );
-    }
+		// ✅ Cache စစ်
+		Optional<ProjectTranslation> cached = projectTranslationRepo.findByProjectIdAndLanguageCode(projectId,
+				targetLang);
 
-    // =============================================
-    // SUPPORTED LANGUAGES
-    // =============================================
-    public List<Map<String, String>> getSupportedLanguages() {
-        return List.of(
-                Map.of("code", "en", "name", "English",    "flag", "🇺🇸"),
-                Map.of("code", "ja", "name", "Japanese",   "flag", "🇯🇵"),
-                Map.of("code", "my", "name", "Myanmar",    "flag", "🇲🇲"),
-                Map.of("code", "km", "name", "Khmer",      "flag", "🇰🇭"),
-                Map.of("code", "vi", "name", "Vietnamese", "flag", "🇻🇳"),
-                Map.of("code", "ko", "name", "Korean",     "flag", "🇰🇷")
-        );
-    }
+		if (cached.isPresent()) {
+			ProjectTranslation c = cached.get();
+			return Map.of("projectId", projectId, "language", targetLang, "title",
+					c.getTranslatedTitle() != null ? c.getTranslatedTitle() : "", "description",
+					c.getTranslatedDescription() != null ? c.getTranslatedDescription() : "", "cached", true,
+					"provider", "cache");
+		}
+
+		// ✅ DeepL translate
+		String translatedTitle = translationProvider.translate(project.getTitle(), sourceLang, targetLang);
+
+		String translatedDesc = project.getDescription() != null
+				? translationProvider.translate(project.getDescription(), sourceLang, targetLang)
+				: "";
+
+		// ✅ DB သိမ်း
+		ProjectTranslation translation = new ProjectTranslation();
+		translation.setProjectId(projectId);
+		translation.setLanguageCode(targetLang);
+		translation.setTranslatedTitle(translatedTitle);
+		translation.setTranslatedDescription(translatedDesc);
+		projectTranslationRepo.save(translation);
+
+		return Map.of("projectId", projectId, "language", targetLang, "title", translatedTitle, "description",
+				translatedDesc, "cached", false, "provider", translationProvider.getProviderName());
+	}
+
+	// =============================================
+	// SUPPORTED LANGUAGES
+	// =============================================
+	public List<Map<String, String>> getSupportedLanguages() {
+		return List.of(Map.of("code", "en", "name", "English", "flag", "🇺🇸"),
+				Map.of("code", "ja", "name", "Japanese", "flag", "🇯🇵"),
+				Map.of("code", "my", "name", "Myanmar", "flag", "🇲🇲"),
+				Map.of("code", "km", "name", "Khmer", "flag", "🇰🇭"),
+				Map.of("code", "vi", "name", "Vietnamese", "flag", "🇻🇳"),
+				Map.of("code", "ko", "name", "Korean", "flag", "🇰🇷"));
+	}
 }

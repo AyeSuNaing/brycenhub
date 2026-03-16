@@ -33,7 +33,7 @@ public class DeepLTranslationProvider implements TranslationProvider {
     private static final String DEEPL_PRO_URL  = "https://api.deepl.com/v2/translate";
 
     // DeepL မပံ့ပိုးတဲ့ language codes → original English ပြ
-    private static final Set<String> UNSUPPORTED = Set.of("my", "km");
+    private static final Set<String> UNSUPPORTED = Set.of("km");
 
     // ကျွန်တော်တို့ language code → DeepL language code mapping
     // DeepL က uppercase သုံးတယ် (en → EN, ja → JA)
@@ -44,7 +44,7 @@ public class DeepLTranslationProvider implements TranslationProvider {
         LANG_MAP.put("ko", "KO");
         LANG_MAP.put("vi", "VI");   // Pro only — Free မှာ error ဖြစ်ရင် fallback
         LANG_MAP.put("km", null);   // Not supported
-        LANG_MAP.put("my", null);   // Not supported
+        LANG_MAP.put("my", "MY");   // Not supported
     }
 
     @Value("${translation.deepl.api-key:}")

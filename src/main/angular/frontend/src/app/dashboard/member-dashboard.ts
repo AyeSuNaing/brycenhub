@@ -6,8 +6,12 @@ import { DashboardDataService } from '../services/dashboard-data.service';
 import { AuthService } from '../services/auth.service';
 import { AnnouncementBarComponent } from '../shared/announcement-bar.component';
 import { BellNotificationComponent } from '../shared/bell-notification.component';
+import { ViewChild } from '@angular/core';
 import { ProjectInlineComponent } from '../projects/project-inline';
 import { ActivatedRoute } from '@angular/router';
+import { HttpClient } from '@angular/common/http';
+import { API } from '../constants/api-endpoints';
+
 
 import {
   Announcement, Notification, ActiveProject, PortfolioProject,
@@ -24,8 +28,13 @@ const LOGO_SVG = `data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIiIGhlaWdodD0iMzIi
   templateUrl: './member-dashboard.html',
   styleUrl: './member-dashboard.scss'
 })
+
+
 export class MemberDashboard implements OnInit, AfterViewInit, OnDestroy {
 
+
+
+  @ViewChild(ProjectInlineComponent) projectInline?: ProjectInlineComponent; // ← ဒီမှာ
 
 
   // Properties
@@ -35,14 +44,13 @@ export class MemberDashboard implements OnInit, AfterViewInit, OnDestroy {
   logoSrc = LOGO_SVG;
   isDark = true;
 
-  // ✅ သစ် (object array)
   langs = [
-    { code: 'EN', name: 'English', flag: '🇺🇸' },
-    { code: 'JP', name: 'Japanese', flag: '🇯🇵' },
-    { code: 'MM', name: 'Myanmar', flag: '🇲🇲' },
-    { code: 'KH', name: 'Khmer', flag: '🇰🇭' },
-    { code: 'VN', name: 'Vietnamese', flag: '🇻🇳' },
-    { code: 'KR', name: 'Korean', flag: '🇰🇷' },
+    { code: 'en', display: 'EN', name: 'English', flag: '🇺🇸' },
+    { code: 'ja', display: 'JP', name: 'Japanese', flag: '🇯🇵' },
+    { code: 'my', display: 'MM', name: 'Myanmar', flag: '🇲🇲' },
+    { code: 'km', display: 'KH', name: 'Khmer', flag: '🇰🇭' },
+    { code: 'vi', display: 'VN', name: 'Vietnamese', flag: '🇻🇳' },
+    { code: 'ko', display: 'KR', name: 'Korean', flag: '🇰🇷' },
   ];
 
   currentLangObj = this.langs[0]; // default EN
@@ -100,17 +108,22 @@ export class MemberDashboard implements OnInit, AfterViewInit, OnDestroy {
     private authService: AuthService,
     private cdr: ChangeDetectorRef,
     private route: ActivatedRoute,
+    private http: HttpClient,
   ) { }
 
   ngOnInit() {
     const saved = localStorage.getItem('brycen-theme');
     this.setTheme(saved !== 'light');
 
-    // localStorage ကနေ အရင်ယူ (instant)
+    // localStorage ကနေ အရင်ယူ
     this.currentUser = this.authService.getUser();
     this.cdr.detectChanges();
 
-    // API ကနေ fresh ယူ (reload ဖြစ်ရင်လည်း အလုပ်လုပ်မယ်)
+    // ✅ saved language restore — အပေါ်ဆုံးမှာ ထားပါ
+    const savedLang = this.authService.getUser()?.preferredLanguage || 'en';
+    this.currentLangObj = this.langs.find(l => l.code === savedLang) || this.langs[0];
+
+    // API ကနေ fresh ယူ
     this.authService.loadCurrentUser().subscribe({
       next: () => {
         this.currentUser = this.authService.getUser();
@@ -118,11 +131,10 @@ export class MemberDashboard implements OnInit, AfterViewInit, OnDestroy {
       }
     });
 
-    // ✅ သစ် — activeProjects load ပြီးမှ open
+    // kanban back button ကနေ လာရင် auto open
     this.route.queryParams.subscribe(params => {
       if (params['projectId']) {
         const id = Number(params['projectId']);
-        // activeProjects data ရောက်လာမှ open လုပ်မယ်
         const checkAndOpen = () => {
           if (!this.loading.projects) {
             this.openProject(id);
@@ -272,9 +284,27 @@ export class MemberDashboard implements OnInit, AfterViewInit, OnDestroy {
   setLang(lang: any) {
     this.currentLangObj = lang;
     this.showLangMenu = false;
-    // API call — user preference save
-    // this.http.put('/api/auth/language', { language: lang.code.toLowerCase() }).subscribe();
+
+    // API save
+    this.http.put(
+      API.AUTH.LANGUAGE,
+      { language: lang.code },
+      { headers: this.authService.getHeaders() }
+    ).subscribe({
+      next: () => {
+        const user = this.authService.getUser();
+        if (user) {
+          user.preferredLanguage = lang.code;
+          localStorage.setItem('user', JSON.stringify(user));
+        }
+        // project-inline ကို lang ပြောင်းဆိုပြ
+        if (this.projectInline) {
+          this.projectInline.switchLang(lang.code);
+        }
+      }
+    });
   }
+
 
   getTotalTasks(): number {
     return this.donutData.reduce((sum, d) => sum + d.count, 0);
@@ -330,12 +360,12 @@ export class MemberDashboard implements OnInit, AfterViewInit, OnDestroy {
     this.selectedProjectId = null;
     this.showProjectDetail = false;
   }
-  
+
   canCreateProject(): boolean {
-  const role = this.currentUser?.role || '';
-  return ['PROJECT_MANAGER', 'VICE_PRESIDENT', 'BOSS',
-          'COUNTRY_DIRECTOR'].includes(role);
-}
+    const role = this.currentUser?.role || '';
+    return ['PROJECT_MANAGER', 'VICE_PRESIDENT', 'BOSS',
+      'COUNTRY_DIRECTOR'].includes(role);
+  }
 
 
 

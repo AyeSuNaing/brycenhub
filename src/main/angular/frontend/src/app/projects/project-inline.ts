@@ -63,6 +63,14 @@ export class ProjectInlineComponent implements OnInit, OnChanges {
     { name: 'sprints', cols: ['🔑 id', 'project_id', 'name', 'status'] },
   ];
 
+
+  // Translation
+  currentLang: string = 'en';
+  translatedTitle: string = '';
+  translatedDesc: string = '';
+  isTranslating: boolean = false;
+  pendingLang: string = '';
+
   constructor(
     private http: HttpClient,
     public auth: AuthService,
@@ -71,6 +79,12 @@ export class ProjectInlineComponent implements OnInit, OnChanges {
   ) { }
 
   ngOnInit() {
+    // saved language သိမ်းထားပြီး loadAll ပြီးမှ သုံးမယ်
+    const savedLang = this.auth.getUser()?.preferredLanguage || 'en';
+    if (savedLang !== 'en') {
+      this.pendingLang = savedLang;  // ← switchLang မခေါ်ဘဲ pendingLang မှာ သိမ်း
+    }
+
     if (this.projectId) this.loadAll(this.projectId);
   }
 
@@ -93,11 +107,116 @@ export class ProjectInlineComponent implements OnInit, OnChanges {
     this.cdr.detectChanges();
   }
 
+  switchLang(lang: string) {
+    this.currentLang = lang;
+
+    if (lang === 'en' || !this.project) {
+      this.translatedTitle = '';
+      this.translatedDesc = '';
+      // tasks ကို original ပြန်ပြ
+      this.tasks.forEach(t => {
+        t.translatedTitle = '';
+        t.translatedDesc = '';
+      });
+      this.isTranslating = false;
+      this.cdr.detectChanges();
+      return;
+    }
+
+    if (lang === 'km') {
+      this.translatedTitle = '';
+      this.translatedDesc = '';
+      this.tasks.forEach(t => {
+        t.translatedTitle = '';
+        t.translatedDesc = '';
+      });
+      this.isTranslating = false;
+      this.cdr.detectChanges();
+      return;
+    }
+
+    this.isTranslating = true;
+    this.cdr.detectChanges();
+
+    const h = { headers: this.auth.getHeaders() };
+
+    // Project translate
+    this.http.get<any>(
+      `${BASE}/translations/project/${this.project.id}?lang=${lang}`, h
+    ).subscribe({
+      next: res => {
+        this.translatedTitle = res.title || '';
+        this.translatedDesc = res.description || '';
+        this.isTranslating = false;
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.isTranslating = false;
+        this.cdr.detectChanges();
+      }
+    });
+
+    // Tasks translate
+    if (this.tasks.length > 0) {
+      this.translateTasks(lang);
+    }
+  }
+
+  // switchLang(lang: string) {
+  //   this.currentLang = lang;
+
+  //   if (lang === 'en' || !this.project) {
+  //     this.translatedTitle = '';
+  //     this.translatedDesc = '';
+  //     this.isTranslating = false;  // ← ပိတ်
+  //     this.cdr.detectChanges();
+  //     return;
+  //   }
+
+  //   if (lang === 'my' || lang === 'km') {
+  //     this.translatedTitle = '';
+  //     this.translatedDesc = '';
+  //     this.isTranslating = false;
+  //     this.cdr.detectChanges();
+  //     return;
+  //   }
+
+  //   this.isTranslating = true;   // ← ဖွင့် (loading ပြ)
+  //   this.cdr.detectChanges();
+
+  //   this.http.get<any>(
+  //     `${BASE}/translations/project/${this.project.id}?lang=${lang}`,
+  //     { headers: this.auth.getHeaders() }
+  //   ).subscribe({
+  //     next: res => {
+  //       this.translatedTitle = res.title || '';
+  //       this.translatedDesc = res.description || '';
+  //       this.isTranslating = false;          // ← ပိတ် (loading ဖျောက်)
+  //       this.cdr.detectChanges();
+  //     },
+  //     error: () => {
+  //       this.isTranslating = false;
+  //       this.cdr.detectChanges();
+  //     }
+  //   });
+  // }
+
+
   loadAll(id: number) {
     const h = { headers: this.auth.getHeaders() };
 
     this.http.get<any>(`${BASE}/projects/${id}`, h).subscribe({
-      next: p => { this.project = p; this.isLoading = false; this.cdr.detectChanges(); },
+      next: p => {
+        this.project = p;
+        this.isLoading = false;
+        this.cdr.detectChanges();
+
+        // saved language ရှိရင် translate
+        if (this.pendingLang && this.pendingLang !== 'en') {
+          this.switchLang(this.pendingLang);
+          this.pendingLang = '';
+        }
+      },
       error: () => { this.isLoading = false; this.cdr.detectChanges(); }
     });
 
@@ -111,10 +230,21 @@ export class ProjectInlineComponent implements OnInit, OnChanges {
       error: () => { }
     });
 
+    // Tasks load
     this.http.get<any[]>(`${BASE}/tasks/by-project/${id}`, h).subscribe({
-      next: t => { this.tasks = t; this.cdr.detectChanges(); },
+      next: t => {
+        this.tasks = t;
+        this.cdr.detectChanges();
+
+        // saved lang ရှိရင် tasks တွေကို translate
+        const savedLang = this.auth.getUser()?.preferredLanguage || 'en';
+        if (savedLang !== 'en' && savedLang !== 'km') {
+          this.translateTasks(savedLang);
+        }
+      },
       error: () => { }
     });
+
 
     this.http.get<any[]>(`${BASE}/activity-logs/by-project/${id}`, h).subscribe({
       next: a => { this.activities = a; this.cdr.detectChanges(); },
@@ -134,6 +264,24 @@ export class ProjectInlineComponent implements OnInit, OnChanges {
     });
   }
 
+  async translateTasks(lang: string) {
+    const h = { headers: this.auth.getHeaders() };
+
+    for (const task of this.tasks) {
+      try {
+        const res: any = await this.http.get(
+          `${BASE}/translations/task/${task.id}?lang=${lang}`, h
+        ).toPromise();
+
+        task.translatedTitle = res.title || '';
+        task.translatedDesc = res.description || '';
+      } catch {
+        task.translatedTitle = '';
+        task.translatedDesc = '';
+      }
+    }
+    this.cdr.detectChanges();
+  }
   // ── COMPUTED ──────────────────────────────────
   get statsCards() {
     return [

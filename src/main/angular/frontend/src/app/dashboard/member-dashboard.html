@@ -22,31 +22,30 @@
     </div>
 
     <!-- Language -->
-    <!-- Language -->
     <div class="lang-btn" (click)="showLangMenu = !showLangMenu; $event.stopPropagation()"
       style="position:relative; user-select:none;">
 
       <!-- Current language display -->
       <span>{{ currentLangObj.flag }}</span>
-      <span style="font-weight:600">{{ currentLangObj.code }}</span>
-      <span style="font-size:9px; opacity:0.6">▾</span>
+      <span style="font-weight:600">{{ currentLangObj.display }}</span>
+      <span style="font-size:9px;opacity:0.6">▾</span>
 
       <!-- Dropdown -->
-      <div *ngIf="showLangMenu" style="position:absolute; top:calc(100% + 6px); right:0; min-width:130px;
-              border-radius:10px; border:1px solid; z-index:999;
-              padding:4px; animation: dropIn 0.15s ease;" (click)="$event.stopPropagation()"
+      <div *ngIf="showLangMenu" style="position:absolute;top:calc(100% + 6px);right:0;min-width:130px;
+      border-radius:10px;border:1px solid;z-index:999;
+      padding:4px;animation:dropIn 0.15s ease;" (click)="$event.stopPropagation()"
         [style.background]="isDark ? '#131929' : 'white'" [style.borderColor]="isDark ? '#1e2d4a' : '#e2e8f0'"
         [style.boxShadow]="'0 8px 24px rgba(0,0,0,0.2)'">
 
-        <div *ngFor="let lang of langs" (click)="setLang(lang)" style="display:flex; align-items:center; gap:8px;
-                padding:7px 10px; border-radius:7px; cursor:pointer;
-                font-size:11px; transition:background 0.15s;" [style.background]="currentLangObj.code === lang.code
-                              ? (isDark ? '#14532d33' : '#f0fdf4')
-                              : 'transparent'" [style.color]="currentLangObj.code === lang.code ? '#22c55e' : ''">
+        <div *ngFor="let lang of langs" (click)="setLang(lang)" style="display:flex;align-items:center;gap:8px;
+        padding:7px 10px;border-radius:7px;cursor:pointer;
+        font-size:11px;transition:background 0.15s;" [style.background]="currentLangObj.code === lang.code
+        ? (isDark ? '#14532d33' : '#f0fdf4') : 'transparent'"
+          [style.color]="currentLangObj.code === lang.code ? '#22c55e' : ''">
           <span style="font-size:14px">{{ lang.flag }}</span>
-          <span style="font-weight:600">{{ lang.code }}</span>
-          <span style="opacity:0.5; font-size:10px">{{ lang.name }}</span>
-          <span *ngIf="currentLangObj.code === lang.code" style="margin-left:auto; color:#22c55e">✓</span>
+          <span style="font-weight:600">{{ lang.display }}</span>
+          <span style="opacity:0.5;font-size:10px">{{ lang.name }}</span>
+          <span *ngIf="currentLangObj.code === lang.code" style="margin-left:auto;color:#22c55e">✓</span>
         </div>
       </div>
     </div>
