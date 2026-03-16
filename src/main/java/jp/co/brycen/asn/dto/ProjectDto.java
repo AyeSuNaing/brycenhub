@@ -60,4 +60,17 @@ public class ProjectDto {
         private String roleInProject;
         // PROJECT_MANAGER, LEADER, UI_UX, DEVELOPER, QA, CLIENT
     }
+   
+    @Data
+    public static class MemberResponse {
+        private Long   id;
+        private Long   userId;
+        private String userName;
+        private String initial;      // ← ထည့်
+        private String roleInProject;
+        private String status;
+        private String color;        // ← ထည့်
+        private long   tasks;        // ← ထည့်
+        private boolean online;      // ← ထည့်
+    }
 }

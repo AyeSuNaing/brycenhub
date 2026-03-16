@@ -5,13 +5,17 @@ import jp.co.brycen.asn.model.Project;
 import jp.co.brycen.asn.model.ProjectMember;
 import jp.co.brycen.asn.repository.ProjectMemberRepository;
 import jp.co.brycen.asn.repository.ProjectRepository;
+import jp.co.brycen.asn.repository.TaskRepository;
 import jp.co.brycen.asn.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.Set;
 import java.util.HashSet;
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.stream.Collectors;
 
 @Service
@@ -25,6 +29,9 @@ public class ProjectService {
 
     @Autowired
     private UserRepository userRepository;
+    
+    @Autowired
+    private TaskRepository taskRepository;
 
     // GET all projects
     public List<Project> getAllProjects() {
@@ -176,7 +183,53 @@ public class ProjectService {
         
         return result;
     }
-    
+    public List<ProjectDto.MemberResponse> getProjectMembersWithName(Long projectId) {
+        List<ProjectMember> members = projectMemberRepository
+                .findByProjectIdAndStatus(projectId, "ACTIVE");
+
+        return members.stream().map(m -> {
+            ProjectDto.MemberResponse dto = new ProjectDto.MemberResponse();
+            dto.setId(m.getId());
+            dto.setUserId(m.getUserId());
+            dto.setRoleInProject(m.getRoleInProject());
+            dto.setStatus(m.getStatus());
+
+            userRepository.findById(m.getUserId()).ifPresent(u -> {
+                dto.setUserName(u.getName());
+                // initial
+                dto.setInitial(u.getName().substring(0, 1).toUpperCase());
+                // online — lastSeen within 5 minutes
+                boolean online = u.getLastSeen() != null &&
+                    ChronoUnit.MINUTES.between(u.getLastSeen(), LocalDateTime.now()) <= 5;
+                dto.setOnline(online);
+            });
+
+            // task count — ဒီ project ထဲက DONE မဟုတ်တဲ့ tasks
+            long taskCount = taskRepository.findByAssigneeId(m.getUserId())
+                .stream()
+                .filter(t -> projectId.equals(t.getProjectId()))
+                .filter(t -> !"DONE".equals(t.getStatus()))
+                .count();
+            dto.setTasks(taskCount);
+
+            // color
+            dto.setColor(getAvatarColor(m.getUserId()));
+
+            return dto;
+        }).sorted(Comparator.comparingLong(ProjectDto.MemberResponse::getTasks).reversed())
+        		.collect(Collectors.toList());
+        
+        
+    }
+
+    // DashboardController မှာ ရှိတဲ့ getAvatarColor ကို copy ပါ
+    private String getAvatarColor(Long userId) {
+        String[] colors = {
+            "#6366f1","#3b82f6","#22c55e","#f59e0b",
+            "#a855f7","#ec4899","#14b8a6","#f97316"
+        };
+        return colors[(int)(userId % colors.length)];
+    }
 
     // GET project members
     public List<ProjectMember> getProjectMembers(Long projectId) {

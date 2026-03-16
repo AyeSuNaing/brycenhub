@@ -106,10 +106,10 @@ public class ProjectController {
 
     // GET /api/projects/{id}/members
     @GetMapping("/{id}/members")
-    public ResponseEntity<List<ProjectMember>> getMembers(@PathVariable Long id) {
-        return ResponseEntity.ok(projectService.getProjectMembers(id));
+    public ResponseEntity<List<ProjectDto.MemberResponse>> getMembers(@PathVariable Long id) {
+        return ResponseEntity.ok(projectService.getProjectMembersWithName(id));
     }
-
+    
     // POST /api/projects/{id}/members
     @PostMapping("/{id}/members")
     @PreAuthorize("hasAnyRole('BOSS', 'COUNTRY_DIRECTOR', 'ADMIN', 'PROJECT_MANAGER')")

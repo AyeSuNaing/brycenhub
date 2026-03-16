@@ -35,13 +35,19 @@ export class Login {
           localStorage.setItem('user', JSON.stringify(res));
           // Role-based redirect
           const role = res.role;
+          // if (role === 'BOSS' || role === 'COUNTRY_DIRECTOR') {
+          //   this.router.navigate(['/dashboard/boss']);
+          // } else if (role === 'PROJECT_MANAGER' || role === 'LEADER') {
+          //   this.router.navigate(['/dashboard/member']);
+          // } else {
+          //   this.router.navigate(['/dashboard/dev']);
+          // }
           if (role === 'BOSS' || role === 'COUNTRY_DIRECTOR') {
             this.router.navigate(['/dashboard/boss']);
-          } else if (role === 'PROJECT_MANAGER' || role === 'LEADER') {
+          } else  {
             this.router.navigate(['/dashboard/member']);
-          } else {
-            this.router.navigate(['/dashboard/dev']);
-          }
+          } 
+
         },
         error: () => {
           this.isLoading = false;

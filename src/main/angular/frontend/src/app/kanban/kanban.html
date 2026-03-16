@@ -1,0 +1,622 @@
+<div class="app-shell" [class.dark]="isDark" [class.light]="!isDark">
+
+  <!-- ════════════ TOPBAR ════════════ -->
+  <header class="topbar">
+    <div class="logo-wrap">
+      <div style="width:32px;height:32px;background:linear-gradient(135deg,#14532d,#16a34a);
+        border-radius:8px;display:flex;align-items:center;justify-content:center;">
+        <span style="color:#86efac;font-weight:900;font-size:16px">B</span>
+      </div>
+      <div>
+        <div class="logo-text">Brycen Hub</div>
+        <div class="logo-slogan">One Group. One Platform. Full Visibility.</div>
+      </div>
+    </div>
+
+    <div class="topbar-spacer"></div>
+
+    <!-- Breadcrumb -->
+    <button (click)="goBack()"
+      style="background:none;border:none;color:inherit;cursor:pointer;opacity:0.7;font-size:11px;"
+      onmouseenter="this.style.opacity='1'" onmouseleave="this.style.opacity='0.7'">
+      ← Back to {{ project?.title || 'Project' }}
+    </button>
+    <!-- <div style="display:flex;align-items:center;gap:8px;font-size:11px;opacity:0.5;">
+      <button (click)="router.navigate(['/dashboard/member'])"
+        style="background:none;border:none;color:inherit;cursor:pointer;opacity:0.7;"
+        onmouseenter="this.style.opacity='1'" onmouseleave="this.style.opacity='0.7'">
+        Dashboard
+      </button>
+      <span>›</span>
+      <button (click)="router.navigate(['/projects', projectId])"
+        style="background:none;border:none;color:inherit;cursor:pointer;opacity:0.7;"
+        onmouseenter="this.style.opacity='1'" onmouseleave="this.style.opacity='0.7'">
+        {{ project?.title || 'Project' }}
+      </button>
+      <span>›</span>
+      <span style="opacity:1;color:#22c55e;font-weight:600;">Kanban Board</span>
+    </div> -->
+
+    <div class="topbar-spacer"></div>
+
+    <!-- Sprint filter -->
+    <select *ngIf="sprints.length" style="background:#131929;border:1px solid #1e2d4a;color:#94a3b8;
+        border-radius:9px;padding:6px 10px;font-size:11px;outline:none;cursor:pointer;">
+      <option value="">All Sprints</option>
+      <option *ngFor="let s of sprints" [value]="s.id">{{ s.name }}</option>
+    </select>
+
+    <!-- Add Task -->
+    <button *ngIf="canAddTask()" (click)="openAddTask('TODO')" style="display:flex;align-items:center;gap:6px;background:linear-gradient(135deg,#14532d,#16a34a);
+        border:none;color:white;padding:7px 14px;border-radius:9px;font-size:11px;
+        font-weight:600;cursor:pointer;transition:opacity 0.2s;" onmouseenter="this.style.opacity='0.85'"
+      onmouseleave="this.style.opacity='1'">
+      ＋ New Task
+    </button>
+
+    <!-- Language selector -->
+    <div style="position:relative;" (click)="showLangMenu = !showLangMenu; $event.stopPropagation()">
+
+      <div style="display:flex;align-items:center;gap:5px;
+    border-radius:9px;padding:6px 10px;cursor:pointer;font-size:11px;"
+        [style.background]="isDark ? '#131929' : '#f8fafc'"
+        [style.border]="isDark ? '1px solid #1e2d4a' : '1px solid #e2e8f0'"
+        [style.color]="isDark ? '#94a3b8' : '#64748b'">
+        <span>{{ currentLang.flag }}</span>
+        <span style="font-weight:600;">{{ currentLang.code | uppercase }}</span>
+        <span style="font-size:9px;opacity:0.6;">▾</span>
+      </div>
+
+      <!-- Dropdown -->
+      <div *ngIf="showLangMenu" (click)="$event.stopPropagation()" style="position:absolute;top:calc(100% + 6px);right:0;
+      min-width:140px;border-radius:10px;border:1px solid;
+      z-index:999;padding:4px;animation:dropIn 0.15s ease;" [style.background]="isDark ? '#131929' : 'white'"
+        [style.borderColor]="isDark ? '#1e2d4a' : '#e2e8f0'" [style.boxShadow]="'0 8px 24px rgba(0,0,0,0.2)'">
+
+        <div *ngFor="let lang of langs" (click)="setLang(lang)" style="display:flex;align-items:center;gap:8px;
+        padding:7px 10px;border-radius:7px;cursor:pointer;
+        font-size:11px;transition:background 0.15s;" [style.background]="currentLang.code === lang.code
+        ? (isDark ? '#14532d33' : '#f0fdf4') : 'transparent'"
+          [style.color]="currentLang.code === lang.code ? '#22c55e' : ''">
+          <span style="font-size:14px;">{{ lang.flag }}</span>
+          <span style="font-weight:600;">{{ lang.code | uppercase }}</span>
+          <span style="opacity:0.5;font-size:10px;">{{ lang.name }}</span>
+          <span *ngIf="currentLang.code === lang.code" style="margin-left:auto;color:#22c55e;">✓</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Theme toggle -->
+    <div class="icon-btn" (click)="isDark = !isDark">
+      <span style="font-size:13px">{{ isDark ? '🌙' : '☀️' }}</span>
+    </div>
+  </header>
+
+  <!-- ════════════ BOARD ════════════ -->
+  <div style="flex:1;overflow:hidden;display:flex;flex-direction:column;">
+
+    <!-- Board header info -->
+    <div style="padding:12px 20px 0;display:flex;align-items:center;gap:12px;flex-shrink:0;">
+      <span style="font-size:13px;font-weight:700;">{{ project?.title }}</span>
+      <span style="font-size:10px;padding:2px 8px;border-radius:20px;
+        background:#16a34a22;color:#22c55e;font-weight:600;">
+        {{ project?.status }}
+      </span>
+      <span style="font-size:10px;opacity:0.35;">{{ tasks.length }} tasks total</span>
+    </div>
+
+    <!-- Loading -->
+    <div *ngIf="isLoading" style="flex:1;display:flex;align-items:center;justify-content:center;">
+      <div style="width:28px;height:28px;border:3px solid #16a34a;border-top-color:transparent;
+        border-radius:50%;animation:spin 0.8s linear infinite;"></div>
+    </div>
+
+    <!-- Kanban columns -->
+    <div *ngIf="!isLoading" style="flex:1;overflow-x:auto;overflow-y:hidden;display:flex;
+        gap:12px;padding:14px 20px;align-items:flex-start;">
+
+      <div *ngFor="let col of columns; let ci = index" style="flex-shrink:0;width:260px;display:flex;flex-direction:column;
+          border-radius:12px;height:100%;" [style.background]="isDark ? '#0d1424' : '#f8fafc'"
+        [style.border]="isDark ? '1px solid #1e2d4a' : '1px solid #e2e8f0'">
+
+        <!-- Column Header -->
+        <div style="padding:12px 14px 8px;display:flex;align-items:center;
+          justify-content:space-between;flex-shrink:0;">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <div style="width:10px;height:10px;border-radius:3px;" [style.background]="col.color"></div>
+            <span style="font-size:12px;font-weight:700;">{{ col.label }}</span>
+            <span style="font-size:10px;padding:1px 7px;border-radius:20px;font-weight:700;"
+              [style.background]="col.color + '22'" [style.color]="col.color">
+              {{ getTasksByStatus(col.status).length }}
+            </span>
+          </div>
+          <button *ngIf="canAddTask()" (click)="openAddTask(col.status)" style="width:22px;height:22px;border-radius:6px;border:none;
+              background:transparent;color:#64748b;cursor:pointer;font-size:16px;
+              display:flex;align-items:center;justify-content:center;
+              transition:all 0.15s;" onmouseenter="this.style.background='#1e2d4a';this.style.color='white'"
+            onmouseleave="this.style.background='transparent';this.style.color='#64748b'">
+            +
+          </button>
+        </div>
+
+        <!-- Color bar -->
+        <div style="height:3px;margin:0 14px 10px;border-radius:2px;" [style.background]="col.color + '60'"></div>
+
+        <!-- CDK Drop List -->
+        <div cdkDropList [id]="col.listId" [cdkDropListData]="getTasksByStatus(col.status)"
+          [cdkDropListConnectedTo]="connectedLists" (cdkDropListDropped)="drop($event, col.status)" style="flex:1;overflow-y:auto;padding:0 10px 10px;
+            display:flex;flex-direction:column;gap:8px;min-height:60px;">
+
+          <!-- Task Card -->
+          <div *ngFor="let task of getTasksByStatus(col.status)" cdkDrag [cdkDragData]="task"
+            (click)="onTaskClick(task, $event)" style="border-radius:10px;padding:10px 12px;cursor:grab;
+              transition:all 0.15s;position:relative;border:1px solid;"
+            [style.background]="isDark ? '#131929' : 'white'" [style.borderColor]="isDark ? '#1e2d4a' : '#e2e8f0'"
+            [style.borderLeftWidth]="'3px'" [style.borderLeftColor]="getPriorityColor(task.priority)"
+            onmouseenter="this.style.transform='translateY(-1px)';this.style.boxShadow='0 4px 12px rgba(0,0,0,0.3)'"
+            onmouseleave="this.style.transform='translateY(0)';this.style.boxShadow='none'">
+
+            <!-- Drag placeholder -->
+            <div *cdkDragPlaceholder style="border-radius:10px;background:#16a34a22;border:2px dashed #22c55e55;
+                height:80px;"></div>
+
+            <!-- Priority badge + Label -->
+            <div style="display:flex;align-items:center;gap:6px;margin-bottom:7px;">
+              <span style="font-size:8px;font-weight:700;padding:2px 6px;border-radius:20px;"
+                [style.background]="getPriorityBg(task.priority)" [style.color]="getPriorityColor(task.priority)">
+                {{ task.priority }}
+              </span>
+              <span *ngIf="task.label" style="font-size:8px;padding:2px 6px;border-radius:20px;
+                  background:rgba(99,102,241,0.15);color:#818cf8;max-width:80px;
+                  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+                {{ task.label }}
+              </span>
+            </div>
+
+            <!-- Title -->
+            <p style="font-size:11px;font-weight:600;line-height:1.4;margin-bottom:8px;"
+              [style.color]="isDark ? '#e2e8f0' : '#1e293b'">
+              {{ task.title }}
+            </p>
+
+            <!-- Footer -->
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;">
+              <!-- Assignee -->
+              <div *ngIf="task.assigneeId" style="width:20px;height:20px;border-radius:50%;display:flex;
+                  align-items:center;justify-content:center;font-size:9px;
+                  font-weight:700;color:white;flex-shrink:0;" [style.background]="getMemberColor(task.assigneeId)"
+                [title]="getMemberName(task.assigneeId)">
+                {{ getMemberInitial(task.assigneeId) }}
+              </div>
+              <div *ngIf="!task.assigneeId" style="width:20px;height:20px;border-radius:50%;
+                  background:rgba(255,255,255,0.06);flex-shrink:0;">
+              </div>
+
+              <!-- Due date -->
+              <span *ngIf="task.dueDate" style="font-size:9px;font-weight:600;flex:1;"
+                [style.color]="isOverdue(task) ? '#ef4444' : '#64748b'">
+                {{ isOverdue(task) ? '⚠ ' : '📅 ' }}{{ task.dueDate | date:'MMM d' }}
+              </span>
+
+              <!-- Double-click hint -->
+              <span style="font-size:8px;opacity:0.25;">dbl-click</span>
+            </div>
+          </div>
+
+          <!-- Empty state -->
+          <div *ngIf="getTasksByStatus(col.status).length === 0" style="border:2px dashed;border-radius:10px;padding:20px;
+              text-align:center;font-size:11px;opacity:0.25;" [style.borderColor]="col.color + '40'">
+            Drop here
+          </div>
+
+        </div><!-- /cdkDropList -->
+      </div><!-- /column -->
+
+    </div><!-- /kanban columns -->
+  </div>
+
+  <!-- ════════════ TASK DETAIL PANEL ════════════ -->
+  <!-- ════════════ TASK DETAIL PANEL ════════════ -->
+  <div *ngIf="showPanel" id="task-panel" (click)="$event.stopPropagation()" style="position:fixed;top:0;right:0;width:380px;height:100vh;
+    z-index:500;display:flex;flex-direction:column;
+    border-left:1px solid;overflow:hidden;
+    animation:slideInRight 0.25s ease;" [style.background]="isDark ? '#0d1424' : 'white'"
+    [style.borderColor]="isDark ? '#1e2d4a' : '#e2e8f0'" [style.boxShadow]="'-8px 0 32px rgba(0,0,0,0.3)'">
+
+    <!-- Panel Header -->
+    <div style="padding:14px 16px;border-bottom:1px solid;display:flex;
+    align-items:center;justify-content:space-between;flex-shrink:0;"
+      [style.borderColor]="isDark ? '#1e2d4a' : '#e2e8f0'">
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span style="font-size:10px;padding:2px 8px;border-radius:20px;font-weight:700;"
+          [style.background]="getStatusColor(selectedTask?.status) + '22'"
+          [style.color]="getStatusColor(selectedTask?.status)">
+          {{ selectedTask?.status }}
+        </span>
+        <span style="font-size:9px;padding:2px 6px;border-radius:20px;font-weight:700;"
+          [style.background]="getPriorityBg(selectedTask?.priority)"
+          [style.color]="getPriorityColor(selectedTask?.priority)">
+          {{ selectedTask?.priority }}
+        </span>
+      </div>
+      <button (click)="closePanel()" style="background:none;border:none;color:#64748b;cursor:pointer;
+        font-size:18px;line-height:1;transition:color 0.15s;" onmouseenter="this.style.color='#ef4444'"
+        onmouseleave="this.style.color='#64748b'">✕</button>
+    </div>
+
+    <!-- Panel Body — scroll ရမည် -->
+    <div style="flex:1;overflow-y:auto;padding:16px;
+    display:flex;flex-direction:column;gap:14px;min-height:0;">
+
+      <!-- Title + Description -->
+      <div>
+        <h2 style="font-size:14px;font-weight:700;line-height:1.5;margin-bottom:4px;"
+          [style.color]="isDark ? 'white' : '#1e293b'">
+          {{ selectedTask?.title }}
+        </h2>
+        <p *ngIf="selectedTask?.description" style="font-size:11px;opacity:0.55;line-height:1.6;">
+          {{ selectedTask?.description }}
+        </p>
+      </div>
+
+      <!-- Meta info -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <div>
+          <div style="font-size:9px;opacity:0.4;margin-bottom:4px;letter-spacing:0.5px;">ASSIGNEE</div>
+          <div style="display:flex;align-items:center;gap:6px;" *ngIf="selectedTask?.assigneeId">
+            <div style="width:20px;height:20px;border-radius:50%;display:flex;
+            align-items:center;justify-content:center;font-size:9px;font-weight:700;color:white;"
+              [style.background]="getMemberColor(selectedTask.assigneeId)">
+              {{ getMemberInitial(selectedTask.assigneeId) }}
+            </div>
+            <span style="font-size:11px;">{{ getMemberName(selectedTask.assigneeId) }}</span>
+          </div>
+          <span *ngIf="!selectedTask?.assigneeId" style="font-size:11px;opacity:0.4;">Unassigned</span>
+        </div>
+        <div>
+          <div style="font-size:9px;opacity:0.4;margin-bottom:4px;letter-spacing:0.5px;">DUE DATE</div>
+          <span style="font-size:11px;" [style.color]="isOverdue(selectedTask) ? '#ef4444' : ''">
+            {{ selectedTask?.dueDate ? (selectedTask.dueDate | date:'MMM d, yyyy') : '—' }}
+          </span>
+        </div>
+        <div>
+          <div style="font-size:9px;opacity:0.4;margin-bottom:4px;letter-spacing:0.5px;">EST. HOURS</div>
+          <span style="font-size:11px;">{{ selectedTask?.estimatedHours || '—' }}</span>
+        </div>
+        <div>
+          <div style="font-size:9px;opacity:0.4;margin-bottom:4px;letter-spacing:0.5px;">LABEL</div>
+          <span style="font-size:11px;">{{ selectedTask?.label || '—' }}</span>
+        </div>
+      </div>
+
+      <!-- Move To -->
+      <div>
+        <div style="font-size:9px;opacity:0.4;margin-bottom:8px;letter-spacing:0.5px;">MOVE TO</div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;">
+          <button *ngFor="let col of columns" (click)="changeTaskStatus(col.status)" style="font-size:9px;padding:4px 10px;border-radius:20px;border:1px solid;
+            cursor:pointer;transition:all 0.15s;font-weight:600;" [style.borderColor]="col.color + '55'"
+            [style.background]="selectedTask?.status === col.status ? col.color + '33' : 'transparent'"
+            [style.color]="selectedTask?.status === col.status ? col.color : '#64748b'">
+            {{ col.label }}
+          </button>
+        </div>
+      </div>
+
+      <!-- Divider -->
+      <div style="border-top:1px solid;" [style.borderColor]="isDark ? '#1e2d4a' : '#e2e8f0'"></div>
+
+      <!-- Comments Section -->
+      <div style="display:flex;flex-direction:column;gap:10px;">
+
+        <!-- Header -->
+        <div style="font-size:11px;font-weight:700;display:flex;align-items:center;gap:6px;"
+          [style.color]="isDark ? '#e2e8f0' : '#1e293b'">
+          💬 Comments
+          <span style="font-size:9px;opacity:0.4;font-weight:400;">{{ taskComments.length }}</span>
+        </div>
+
+        <!-- Loading -->
+        <div *ngIf="panelLoading" style="text-align:center;padding:16px;opacity:0.35;font-size:11px;">
+          Loading...
+        </div>
+
+        <!-- Comment list -->
+        <div style="display:flex;flex-direction:column;gap:12px;">
+          <div *ngFor="let c of taskComments" style="display:flex;align-items:flex-start;gap:8px;">
+
+            <!-- Avatar -->
+            <div style="width:26px;height:26px;border-radius:50%;flex-shrink:0;
+            display:flex;align-items:center;justify-content:center;
+            font-size:10px;font-weight:700;color:white;margin-top:1px;" [style.background]="getCommentColor(c)">
+              {{ getCommentInitial(c) }}
+            </div>
+
+            <!-- Content -->
+            <div style="flex:1;min-width:0;">
+              <!-- Name + time -->
+              <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
+                <span style="font-size:10px;font-weight:700;" [style.color]="isDark ? 'white' : '#1e293b'">
+                  {{ c.userName || ('User #' + c.userId) }}
+                </span>
+                <span style="font-size:8px;opacity:0.35;">
+                  {{ c.createdAt | date:'MMM d, h:mm a' }}
+                </span>
+              </div>
+
+              <!-- Text -->
+              <div *ngIf="c.content" style="font-size:11px;line-height:1.6;opacity:0.8;
+                word-break:break-word;margin-bottom:6px;">
+                {{ c.content }}
+              </div>
+
+              <!-- Attachments -->
+              <div *ngIf="c.attachments?.length > 0" style="display:flex;flex-direction:column;gap:6px;">
+                <ng-container *ngFor="let att of c.attachments">
+
+                  <!-- Image -->
+                  <div *ngIf="isImage(att)" style="border-radius:10px;overflow:hidden;max-width:220px;cursor:pointer;
+                    border:1px solid rgba(255,255,255,0.08);"
+                    (click)="openFile(getFileUrl(att.fileUrl)); $event.stopPropagation()">
+                    <img [src]="getFileUrl(att.fileUrl)" [alt]="att.fileName"
+                      style="width:100%;max-height:200px;object-fit:cover;display:block;"
+                      onmouseenter="this.style.opacity='0.85'" onmouseleave="this.style.opacity='1'">
+                  </div>
+
+                  <!-- File chip -->
+                  <div *ngIf="!isImage(att)" (click)="openFile(getFileUrl(att.fileUrl)); $event.stopPropagation()"
+                    style="display:inline-flex;align-items:center;gap:7px;
+                    padding:6px 10px;border-radius:8px;cursor:pointer;
+                    border:1px solid;transition:all 0.15s;max-width:220px;"
+                    [style.background]="isDark ? '#0f1628' : '#f8fafc'"
+                    [style.borderColor]="isDark ? '#1e2d4a' : '#e2e8f0'" onmouseenter="this.style.borderColor='#22c55e'"
+                    onmouseleave="this.style.borderColor=''">
+                    <span style="font-size:18px;flex-shrink:0;">{{ getFileIcon(att) }}</span>
+                    <div style="min-width:0;">
+                      <div style="font-size:10px;font-weight:600;overflow:hidden;
+                      text-overflow:ellipsis;white-space:nowrap;" [style.color]="isDark ? '#e2e8f0' : '#1e293b'">
+                        {{ att.fileName }}
+                      </div>
+                      <div style="font-size:8px;opacity:0.35;">{{ getFileSize(att.fileSize) }}</div>
+                    </div>
+                    <span style="font-size:10px;color:#22c55e;opacity:0.6;
+                    flex-shrink:0;margin-left:auto;">↓</span>
+                  </div>
+
+                </ng-container>
+              </div>
+            </div>
+          </div>
+
+          <!-- Empty -->
+          <div *ngIf="!panelLoading && taskComments.length === 0"
+            style="text-align:center;padding:16px;opacity:0.3;font-size:11px;">
+            No comments yet
+          </div>
+        </div>
+
+        <!-- Pending files preview -->
+        <div *ngIf="pendingFiles.length > 0" style="display:flex;flex-wrap:wrap;gap:6px;">
+          <div *ngFor="let f of pendingFiles; let i = index"
+            style="position:relative;border-radius:8px;overflow:hidden;border:1px solid #1e2d4a;">
+
+            <ng-container *ngIf="f.type.startsWith('image/')">
+              <img [src]="createObjectURL(f)" style="width:60px;height:60px;object-fit:cover;display:block;">
+              <button (click)="removePendingFile(i)" style="position:absolute;top:2px;right:2px;width:16px;height:16px;
+                background:rgba(0,0,0,0.6);border:none;color:white;cursor:pointer;
+                border-radius:50%;font-size:9px;display:flex;align-items:center;
+                justify-content:center;">✕</button>
+            </ng-container>
+
+            <ng-container *ngIf="!f.type.startsWith('image/')">
+              <div style="display:flex;align-items:center;gap:5px;padding:5px 8px;
+              background:#131929;font-size:10px;max-width:150px;">
+                <span>{{ getFileIcon(f) }}</span>
+                <span style="overflow:hidden;text-overflow:ellipsis;
+                white-space:nowrap;flex:1;opacity:0.8;">{{ f.name }}</span>
+                <button (click)="removePendingFile(i)" style="background:none;border:none;color:#ef4444;
+                  cursor:pointer;font-size:11px;flex-shrink:0;">✕</button>
+              </div>
+            </ng-container>
+          </div>
+        </div>
+
+        <!-- Add comment -->
+        <div style="display:flex;gap:6px;align-items:flex-end;">
+          <textarea [(ngModel)]="newComment" placeholder="Write a comment..." rows="2"
+            (keydown.ctrl.enter)="addComment()" style="flex:1;border-radius:9px;border:1px solid;padding:8px 10px;
+            font-size:11px;resize:none;outline:none;font-family:inherit;
+            line-height:1.5;" [style.background]="isDark ? '#131929' : '#f8fafc'"
+            [style.borderColor]="isDark ? '#1e2d4a' : '#e2e8f0'" [style.color]="isDark ? '#e2e8f0' : '#1e293b'">
+        </textarea>
+
+          <label style="width:32px;height:32px;border-radius:8px;border:1px solid;
+          display:flex;align-items:center;justify-content:center;
+          cursor:pointer;flex-shrink:0;font-size:14px;" [style.borderColor]="isDark ? '#1e2d4a' : '#e2e8f0'"
+            [style.background]="isDark ? '#131929' : '#f8fafc'" onmouseenter="this.style.borderColor='#22c55e'"
+            onmouseleave="this.style.borderColor=''">
+            📎
+            <input type="file" multiple accept="image/*,video/*,.pdf,.doc,.docx,.xls,.xlsx,.zip" style="display:none;"
+              (change)="onFileSelect($event)">
+          </label>
+
+          <button (click)="addComment()" [disabled]="!newComment.trim() || uploadingFiles" style="padding:8px 12px;border-radius:9px;border:none;
+            font-size:11px;font-weight:600;white-space:nowrap;flex-shrink:0;cursor:pointer;" [style.background]="newComment.trim() && !uploadingFiles
+            ? 'linear-gradient(135deg,#14532d,#16a34a)' : '#1e2d4a'" [style.color]="'white'"
+            [style.cursor]="newComment.trim() ? 'pointer' : 'not-allowed'">
+            {{ uploadingFiles ? '⏳' : 'Send' }}
+          </button>
+        </div>
+        <div style="font-size:8px;opacity:0.25;margin-top:4px;">
+          📎 Attach · Ctrl+Enter to send
+        </div>
+
+      </div><!-- /comments section -->
+
+    </div><!-- /panel body -->
+  </div><!-- /task panel -->
+
+  <!-- Panel backdrop -->
+  <div *ngIf="showPanel" (click)="closePanel()" style="position:fixed;inset:0;background:rgba(0,0,0,0.3);z-index:499;">
+  </div>
+  <!-- Panel backdrop (semi-transparent) -->
+  <div *ngIf="showPanel" (click)="closePanel()" style="position:fixed;inset:0;background:rgba(0,0,0,0.3);z-index:499;">
+  </div>
+
+  <!-- Add Task Modal -->
+  <div *ngIf="showAddTask" style="position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:600;
+      display:flex;align-items:center;justify-content:center;animation:fadeIn 0.2s ease;" (click)="showAddTask=false">
+    <div style="width:440px;border-radius:16px;border:1px solid;overflow:hidden;"
+      [style.background]="isDark ? '#0d1424' : 'white'" [style.borderColor]="isDark ? '#1e2d4a' : '#e2e8f0'"
+      (click)="$event.stopPropagation()">
+
+      <!-- Modal Header -->
+      <div style="padding:14px 18px;border-bottom:1px solid;
+        display:flex;align-items:center;justify-content:space-between;"
+        [style.borderColor]="isDark ? '#1e2d4a' : '#e2e8f0'">
+        <span style="font-weight:700;font-size:13px;">＋ New Task</span>
+        <button (click)="showAddTask=false"
+          style="background:none;border:none;color:#64748b;cursor:pointer;font-size:16px;">✕</button>
+      </div>
+
+      <!-- Modal Body -->
+      <div style="padding:16px;display:flex;flex-direction:column;gap:12px;">
+
+        <!-- Title -->
+        <div>
+          <label style="font-size:10px;opacity:0.5;display:block;margin-bottom:5px;">
+            TITLE *
+          </label>
+          <input [(ngModel)]="newTask.title" placeholder="Task title..." style="width:100%;border-radius:9px;border:1px solid;padding:8px 12px;
+              font-size:12px;outline:none;font-family:inherit;" [style.background]="isDark ? '#131929' : '#f8fafc'"
+            [style.borderColor]="isDark ? '#1e2d4a' : '#e2e8f0'" [style.color]="isDark ? '#e2e8f0' : '#1e293b'">
+        </div>
+
+        <!-- Description -->
+        <div>
+          <label style="font-size:10px;opacity:0.5;display:block;margin-bottom:5px;">
+            DESCRIPTION
+          </label>
+          <textarea [(ngModel)]="newTask.description" placeholder="Optional description..." rows="2" style="width:100%;border-radius:9px;border:1px solid;padding:8px 12px;
+              font-size:12px;outline:none;font-family:inherit;resize:none;"
+            [style.background]="isDark ? '#131929' : '#f8fafc'" [style.borderColor]="isDark ? '#1e2d4a' : '#e2e8f0'"
+            [style.color]="isDark ? '#e2e8f0' : '#1e293b'">
+          </textarea>
+        </div>
+
+        <!-- Priority + Status row -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+          <div>
+            <label style="font-size:10px;opacity:0.5;display:block;margin-bottom:5px;">PRIORITY</label>
+            <select [(ngModel)]="newTask.priority" style="width:100%;border-radius:9px;border:1px solid;padding:8px 10px;
+                font-size:11px;outline:none;cursor:pointer;" [style.background]="isDark ? '#131929' : '#f8fafc'"
+              [style.borderColor]="isDark ? '#1e2d4a' : '#e2e8f0'" [style.color]="isDark ? '#e2e8f0' : '#1e293b'">
+              <option value="LOW">Low</option>
+              <option value="MEDIUM">Medium</option>
+              <option value="HIGH">High</option>
+              <option value="CRITICAL">Critical</option>
+            </select>
+          </div>
+          <div>
+            <label style="font-size:10px;opacity:0.5;display:block;margin-bottom:5px;">COLUMN</label>
+            <select [(ngModel)]="addingToCol" style="width:100%;border-radius:9px;border:1px solid;padding:8px 10px;
+                font-size:11px;outline:none;cursor:pointer;" [style.background]="isDark ? '#131929' : '#f8fafc'"
+              [style.borderColor]="isDark ? '#1e2d4a' : '#e2e8f0'" [style.color]="isDark ? '#e2e8f0' : '#1e293b'">
+              <option *ngFor="let col of columns" [value]="col.status">{{ col.label }}</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Assignee + Due date -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+          <div>
+            <label style="font-size:10px;opacity:0.5;display:block;margin-bottom:5px;">ASSIGNEE</label>
+            <select [(ngModel)]="newTask.assigneeId" style="width:100%;border-radius:9px;border:1px solid;padding:8px 10px;
+                font-size:11px;outline:none;cursor:pointer;" [style.background]="isDark ? '#131929' : '#f8fafc'"
+              [style.borderColor]="isDark ? '#1e2d4a' : '#e2e8f0'" [style.color]="isDark ? '#e2e8f0' : '#1e293b'">
+              <option [ngValue]="null">Unassigned</option>
+              <option *ngFor="let m of members" [ngValue]="m.userId">
+                {{ m.userName || m.name || ('User #' + m.userId) }}
+              </option>
+            </select>
+          </div>
+          <div>
+            <label style="font-size:10px;opacity:0.5;display:block;margin-bottom:5px;">DUE DATE</label>
+            <input type="date" [(ngModel)]="newTask.dueDate" style="width:100%;border-radius:9px;border:1px solid;padding:8px 10px;
+                font-size:11px;outline:none;cursor:pointer;" [style.background]="isDark ? '#131929' : '#f8fafc'"
+              [style.borderColor]="isDark ? '#1e2d4a' : '#e2e8f0'" [style.color]="isDark ? '#e2e8f0' : '#1e293b'">
+          </div>
+        </div>
+
+        <!-- Label -->
+        <div>
+          <label style="font-size:10px;opacity:0.5;display:block;margin-bottom:5px;">LABEL</label>
+          <input [(ngModel)]="newTask.label" placeholder="bug, feature, urgent..." style="width:100%;border-radius:9px;border:1px solid;padding:8px 12px;
+              font-size:12px;outline:none;font-family:inherit;" [style.background]="isDark ? '#131929' : '#f8fafc'"
+            [style.borderColor]="isDark ? '#1e2d4a' : '#e2e8f0'" [style.color]="isDark ? '#e2e8f0' : '#1e293b'">
+        </div>
+
+        <!-- Actions -->
+        <div style="display:flex;gap:10px;margin-top:4px;">
+          <button (click)="showAddTask=false" style="flex:1;padding:9px;border-radius:9px;border:1px solid;
+              font-size:12px;font-weight:600;cursor:pointer;transition:all 0.15s;"
+            [style.borderColor]="isDark ? '#1e2d4a' : '#e2e8f0'" [style.background]="'transparent'"
+            [style.color]="'#64748b'">
+            Cancel
+          </button>
+          <button (click)="submitTask()" [disabled]="!newTask.title.trim()" style="flex:1;padding:9px;border-radius:9px;border:none;
+              font-size:12px;font-weight:600;cursor:pointer;
+              background:linear-gradient(135deg,#14532d,#16a34a);color:white;
+              transition:opacity 0.15s;" [style.opacity]="newTask.title.trim() ? '1' : '0.5'">
+            Create Task
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<style>
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  @keyframes slideInRight {
+    from {
+      transform: translateX(100%);
+      opacity: 0;
+    }
+
+    to {
+      transform: translateX(0);
+      opacity: 1;
+    }
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+
+    to {
+      opacity: 1;
+    }
+  }
+
+  .cdk-drag-preview {
+    border-radius: 10px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+    opacity: 0.9;
+  }
+
+  .cdk-drag-animating {
+    transition: transform 200ms cubic-bezier(0, 0, 0.2, 1);
+  }
+
+  .cdk-drop-list-dragging .cdk-drag:not(.cdk-drag-placeholder) {
+    transition: transform 200ms cubic-bezier(0, 0, 0.2, 1);
+  }
+</style>

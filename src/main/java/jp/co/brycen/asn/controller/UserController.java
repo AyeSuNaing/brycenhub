@@ -43,7 +43,6 @@ public class UserController {
     // GET /api/users/{id}
     // ============================================================
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('BOSS', 'COUNTRY_DIRECTOR', 'ADMIN')")
     public ResponseEntity<?> getUserById(@PathVariable Long id) {
         try {
             return ResponseEntity.ok(userService.getUserById(id));

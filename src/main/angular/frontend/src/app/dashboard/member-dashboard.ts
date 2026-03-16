@@ -6,6 +6,9 @@ import { DashboardDataService } from '../services/dashboard-data.service';
 import { AuthService } from '../services/auth.service';
 import { AnnouncementBarComponent } from '../shared/announcement-bar.component';
 import { BellNotificationComponent } from '../shared/bell-notification.component';
+import { ProjectInlineComponent } from '../projects/project-inline';
+import { ActivatedRoute } from '@angular/router';
+
 import {
   Announcement, Notification, ActiveProject, PortfolioProject,
   TeamMember, MyTask, OverdueTask, Activity, Deadline
@@ -17,16 +20,33 @@ const LOGO_SVG = `data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIiIGhlaWdodD0iMzIi
   selector: 'app-member-dashboard',
   standalone: true,
   imports: [CommonModule, RouterModule, FormsModule,
-    AnnouncementBarComponent, BellNotificationComponent],
+    AnnouncementBarComponent, BellNotificationComponent, ProjectInlineComponent],
   templateUrl: './member-dashboard.html',
   styleUrl: './member-dashboard.scss'
 })
 export class MemberDashboard implements OnInit, AfterViewInit, OnDestroy {
 
+
+
+  // Properties
+  selectedProjectId: number | null = null;
+  showProjectDetail = false;
+
   logoSrc = LOGO_SVG;
   isDark = true;
-  currentLang = 'EN';
-  langs = ['EN', 'JP', 'MM', 'KH', 'VN', 'KR'];
+
+  // ✅ သစ် (object array)
+  langs = [
+    { code: 'EN', name: 'English', flag: '🇺🇸' },
+    { code: 'JP', name: 'Japanese', flag: '🇯🇵' },
+    { code: 'MM', name: 'Myanmar', flag: '🇲🇲' },
+    { code: 'KH', name: 'Khmer', flag: '🇰🇭' },
+    { code: 'VN', name: 'Vietnamese', flag: '🇻🇳' },
+    { code: 'KR', name: 'Korean', flag: '🇰🇷' },
+  ];
+
+  currentLangObj = this.langs[0]; // default EN
+
   showLangMenu = false;
   settingsOpen = false;
   searchQuery = '';
@@ -78,7 +98,8 @@ export class MemberDashboard implements OnInit, AfterViewInit, OnDestroy {
   constructor(
     private dataService: DashboardDataService,
     private authService: AuthService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private route: ActivatedRoute,
   ) { }
 
   ngOnInit() {
@@ -94,6 +115,23 @@ export class MemberDashboard implements OnInit, AfterViewInit, OnDestroy {
       next: () => {
         this.currentUser = this.authService.getUser();
         this.cdr.detectChanges();
+      }
+    });
+
+    // ✅ သစ် — activeProjects load ပြီးမှ open
+    this.route.queryParams.subscribe(params => {
+      if (params['projectId']) {
+        const id = Number(params['projectId']);
+        // activeProjects data ရောက်လာမှ open လုပ်မယ်
+        const checkAndOpen = () => {
+          if (!this.loading.projects) {
+            this.openProject(id);
+            this.cdr.detectChanges();
+          } else {
+            setTimeout(checkAndOpen, 100);
+          }
+        };
+        setTimeout(checkAndOpen, 200);
       }
     });
 
@@ -231,9 +269,11 @@ export class MemberDashboard implements OnInit, AfterViewInit, OnDestroy {
 
   toggleTheme() { this.setTheme(!this.isDark); }
 
-  setLang(lang: string) {
-    this.currentLang = lang;
+  setLang(lang: any) {
+    this.currentLangObj = lang;
     this.showLangMenu = false;
+    // API call — user preference save
+    // this.http.put('/api/auth/language', { language: lang.code.toLowerCase() }).subscribe();
   }
 
   getTotalTasks(): number {
@@ -281,9 +321,22 @@ export class MemberDashboard implements OnInit, AfterViewInit, OnDestroy {
     return Math.max(...this.chartData.map(d => d.done + d.inProgress + d.todo));
   }
 
-  // getBarHeight(val: number, max: number): number {
-  //   return Math.round((val / max) * 72);
-  // }
+  // Methods
+  openProject(id: number) {
+    this.selectedProjectId = id;
+    this.showProjectDetail = true;
+  }
+  closeProject() {
+    this.selectedProjectId = null;
+    this.showProjectDetail = false;
+  }
+  
+  canCreateProject(): boolean {
+  const role = this.currentUser?.role || '';
+  return ['PROJECT_MANAGER', 'VICE_PRESIDENT', 'BOSS',
+          'COUNTRY_DIRECTOR'].includes(role);
+}
+
 
 
   // ✅ သစ်
