@@ -11,6 +11,7 @@ import { ProjectInlineComponent } from '../projects/project-inline';
 import { ActivatedRoute } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { API } from '../constants/api-endpoints';
+import { ProjectNewInline } from '../projects/project-new-inline';
 
 
 import {
@@ -24,7 +25,7 @@ const LOGO_SVG = `data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIiIGhlaWdodD0iMzIi
   selector: 'app-member-dashboard',
   standalone: true,
   imports: [CommonModule, RouterModule, FormsModule,
-    AnnouncementBarComponent, BellNotificationComponent, ProjectInlineComponent],
+    AnnouncementBarComponent, BellNotificationComponent, ProjectInlineComponent, ProjectNewInline],
   templateUrl: './member-dashboard.html',
   styleUrl: './member-dashboard.scss'
 })
@@ -40,7 +41,7 @@ export class MemberDashboard implements OnInit, AfterViewInit, OnDestroy {
   // Properties
   selectedProjectId: number | null = null;
   showProjectDetail = false;
-
+  showNewProject = false;
   logoSrc = LOGO_SVG;
   isDark = true;
 
@@ -360,6 +361,15 @@ export class MemberDashboard implements OnInit, AfterViewInit, OnDestroy {
     this.selectedProjectId = null;
     this.showProjectDetail = false;
   }
+
+  openNewProject() { this.showNewProject = true; this.showProjectDetail = false; }
+  closeNewProject() { this.showNewProject = false; }
+  onProjectCreated(project: any) {
+    this.showNewProject = false;
+    this.loadAll();
+    setTimeout(() => this.openProject(project.id), 500);
+  }
+
 
   canCreateProject(): boolean {
     const role = this.currentUser?.role || '';

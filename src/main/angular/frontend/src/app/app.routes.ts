@@ -15,12 +15,7 @@ export const routes: Routes = [
       { path: 'member', loadComponent: () => import('./dashboard/member-dashboard').then(m => m.MemberDashboard) },
       { path: 'dev', loadComponent: () => import('./dashboard/dev-dashboard').then(m => m.DevDashboard) },
     ],
-  },
-  {
-    path: 'projects/:id',
-    canActivate: [authGuard],
-    loadComponent: () => import('./projects/project-detail').then(m => m.ProjectDetail),
-  },
+  }, 
   {
     path: 'projects',
     canActivate: [authGuard],

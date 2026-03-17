@@ -150,7 +150,14 @@
             <span class="nav-icon">📹</span>
             <span>Video Call</span>
           </div>
-          <div class="sidebar-item" *ngIf="canCreateProject()" [routerLink]="['/projects']">
+
+          <!-- <div class="sidebar-item" *ngIf="canCreateProject()" [routerLink]="['/projects']">
+            <span class="nav-icon">➕</span>
+            <span>New Project</span>
+          </div> -->
+
+          <!-- New Project sidebar button -->
+          <div class="sidebar-item" *ngIf="canCreateProject()" (click)="openNewProject()">
             <span class="nav-icon">➕</span>
             <span>New Project</span>
           </div>
@@ -226,7 +233,7 @@
          MAIN CONTENT
     ══════════════════════════════════ -->
     <!-- <main class="main-content"> -->
-    <main *ngIf="!showProjectDetail" class="main-content">
+    <main *ngIf="!showProjectDetail && !showNewProject" class="main-content">
       <!-- Stats Row -->
       <div class="stats-grid">
         <div class="stat-card">
@@ -512,11 +519,17 @@
       </app-project-inline>
     </ng-container>
 
+    <!-- New Project inline -->
+    <ng-container *ngIf="showNewProject">
+      <app-project-new-inline (close)="closeNewProject()" (created)="onProjectCreated($event)">
+      </app-project-new-inline>
+    </ng-container>
+
     <!-- ══════════════════════════════════
          RIGHT SIDEBAR
     ══════════════════════════════════ -->
     <!-- <aside class="right-sidebar"> -->
-    <aside *ngIf="!showProjectDetail" class="right-sidebar">
+    <aside *ngIf="!showProjectDetail && !showNewProject" class="right-sidebar">
       <!-- My Tasks — v26 compact style -->
       <div class="my-tasks-section">
         <div class="rs-section-header">
