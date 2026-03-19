@@ -11,11 +11,11 @@ export const routes: Routes = [
     path: 'dashboard',
     canActivate: [authGuard],
     children: [
-      { path: 'boss', loadComponent: () => import('./dashboard/boss-dashboard').then(m => m.BossDashboard) },
+      { path: 'boss',   loadComponent: () => import('./dashboard/boss-dashboard').then(m => m.BossDashboard) },
       { path: 'member', loadComponent: () => import('./dashboard/member-dashboard').then(m => m.MemberDashboard) },
-      { path: 'dev', loadComponent: () => import('./dashboard/dev-dashboard').then(m => m.DevDashboard) },
+      { path: 'admin',  loadComponent: () => import('./dashboard/admin-dashboard').then(m => m.AdminDashboard) },
     ],
-  }, 
+  },
   {
     path: 'projects',
     canActivate: [authGuard],

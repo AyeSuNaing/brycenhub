@@ -123,18 +123,6 @@ export class ProjectInlineComponent implements OnInit, OnChanges {
       return;
     }
 
-    if (lang === 'km') {
-      this.translatedTitle = '';
-      this.translatedDesc = '';
-      this.tasks.forEach(t => {
-        t.translatedTitle = '';
-        t.translatedDesc = '';
-      });
-      this.isTranslating = false;
-      this.cdr.detectChanges();
-      return;
-    }
-
     this.isTranslating = true;
     this.cdr.detectChanges();
 
@@ -161,45 +149,6 @@ export class ProjectInlineComponent implements OnInit, OnChanges {
       this.translateTasks(lang);
     }
   }
-
-  // switchLang(lang: string) {
-  //   this.currentLang = lang;
-
-  //   if (lang === 'en' || !this.project) {
-  //     this.translatedTitle = '';
-  //     this.translatedDesc = '';
-  //     this.isTranslating = false;  // ← ပိတ်
-  //     this.cdr.detectChanges();
-  //     return;
-  //   }
-
-  //   if (lang === 'my' || lang === 'km') {
-  //     this.translatedTitle = '';
-  //     this.translatedDesc = '';
-  //     this.isTranslating = false;
-  //     this.cdr.detectChanges();
-  //     return;
-  //   }
-
-  //   this.isTranslating = true;   // ← ဖွင့် (loading ပြ)
-  //   this.cdr.detectChanges();
-
-  //   this.http.get<any>(
-  //     `${BASE}/translations/project/${this.project.id}?lang=${lang}`,
-  //     { headers: this.auth.getHeaders() }
-  //   ).subscribe({
-  //     next: res => {
-  //       this.translatedTitle = res.title || '';
-  //       this.translatedDesc = res.description || '';
-  //       this.isTranslating = false;          // ← ပိတ် (loading ဖျောက်)
-  //       this.cdr.detectChanges();
-  //     },
-  //     error: () => {
-  //       this.isTranslating = false;
-  //       this.cdr.detectChanges();
-  //     }
-  //   });
-  // }
 
 
   loadAll(id: number) {

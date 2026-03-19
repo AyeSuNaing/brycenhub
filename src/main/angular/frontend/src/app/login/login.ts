@@ -17,7 +17,7 @@ export class Login {
   errorMessage: string = '';
   isLoading: boolean = false;
 
-  constructor(private http: HttpClient, private router: Router) {}
+  constructor(private http: HttpClient, private router: Router) { }
 
   login() {
     this.isLoading = true;
@@ -44,9 +44,12 @@ export class Login {
           // }
           if (role === 'BOSS' || role === 'COUNTRY_DIRECTOR') {
             this.router.navigate(['/dashboard/boss']);
-          } else  {
+          } else if (role === 'ADMIN') {
+            this.router.navigate(['/dashboard/admin']);
+          } else {
             this.router.navigate(['/dashboard/member']);
-          } 
+          }
+
 
         },
         error: () => {

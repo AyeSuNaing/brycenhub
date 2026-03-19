@@ -1,0 +1,433 @@
+<div class="app-shell" [class.dark]="isDark" [class.light]="!isDark">
+
+  <!-- ════════════ TOPBAR ════════════ -->
+  <header class="topbar">
+    <div class="logo-wrap">
+      <img [src]="logoSrc" class="logo-img" alt="Brycen"/>
+      <div>
+        <div class="logo-text">BrycenHub</div>
+        <div class="logo-slogan">One Group. One Platform. Full Visibility.</div>
+      </div>
+    </div>
+
+    <div class="topbar-spacer"></div>
+
+    <!-- Search -->
+    <div class="search-box">
+      <span style="font-size:12px;opacity:0.4;">🔍</span>
+      <input [(ngModel)]="searchQuery" placeholder="Search staff..."/>
+    </div>
+
+    <!-- Language -->
+    <div class="lang-wrap" style="position:relative;">
+      <div class="lang-btn" (click)="showLangMenu=!showLangMenu;$event.stopPropagation()">
+        <span>{{ currentLangObj.flag }}</span>
+        <span style="font-weight:600;">{{ currentLangObj.display }}</span>
+        <span style="font-size:9px;opacity:0.6;">▾</span>
+      </div>
+      <div *ngIf="showLangMenu" (click)="$event.stopPropagation()"
+        style="position:absolute;top:calc(100% + 6px);right:0;min-width:140px;
+          border-radius:10px;border:1px solid;z-index:999;padding:4px;"
+        [style.background]="isDark ? '#131929' : 'white'"
+        [style.borderColor]="isDark ? '#1e2d4a' : '#e2e8f0'">
+        <div *ngFor="let lang of langs" (click)="setLang(lang)"
+          style="display:flex;align-items:center;gap:8px;padding:7px 10px;
+            border-radius:7px;cursor:pointer;font-size:11px;"
+          [style.color]="currentLangObj.code === lang.code ? '#22c55e' : ''">
+          <span style="font-size:14px;">{{ lang.flag }}</span>
+          <span style="font-weight:600;">{{ lang.display }}</span>
+          <span style="opacity:0.5;font-size:10px;">{{ lang.name }}</span>
+          <span *ngIf="currentLangObj.code === lang.code"
+            style="margin-left:auto;color:#22c55e;">✓</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Theme -->
+    <div class="icon-btn" (click)="toggleTheme()">
+      <span style="font-size:13px;">{{ isDark ? '🌙' : '☀️' }}</span>
+    </div>
+
+    <!-- Bell -->
+    <app-bell-notification [notifications]="notifications"></app-bell-notification>
+  </header>
+
+  <!-- ════════════ ANNOUNCEMENT BAR ════════════ -->
+  <app-announcement-bar
+    [announcements]="announcements"
+    (announcementsChange)="announcements = $event">
+  </app-announcement-bar>
+
+  <!-- ════════════ MAIN ROW ════════════ -->
+  <div class="main-row">
+
+    <!-- ══════════ LEFT SIDEBAR ══════════ -->
+    <aside class="left-sidebar">
+      <div class="sidebar-scroll">
+
+        <!-- Profile -->
+        <div class="profile-section">
+          <div class="avatar-wrap">
+            <div class="avatar-circle"
+              [style.background]="getAvatarColor(currentUser?.name || '')">
+              <span style="font-size:22px;font-weight:800;color:white;">
+                {{ getInitial(currentUser?.name || '') }}
+              </span>
+            </div>
+            <div class="online-dot"></div>
+          </div>
+          <div class="profile-name">{{ currentUser?.name || 'Admin' }}</div>
+          <span class="role-badge" [style]="getRoleBadgeStyle(currentUser?.role || '')">
+            {{ currentUser?.role || 'ADMIN' }}
+          </span>
+          <div class="member-badge">
+            <span>⚙️</span><span>HR Manager</span>
+          </div>
+        </div>
+        <hr class="profile-divider"/>
+
+        <!-- Nav sections -->
+        <div *ngFor="let section of navSections" style="margin-top:6px;">
+          <div class="proj-section-label">{{ section.label }}</div>
+          <div *ngFor="let item of section.items"
+            class="sidebar-item"
+            [class.active]="activeNav === item.key"
+            (click)="setNav(item.key, item['route'])">
+            <span class="nav-icon">{{ item.icon }}</span>
+            <span>{{ item.label }}</span>
+            <span *ngIf="item['badge'] > 0" class="item-badge"
+              [style.background]="item['badgeColor'] || '#ef4444'">
+              {{ item['badge'] }}
+            </span>
+          </div>
+          <hr class="section-divider"/>
+        </div>
+
+      </div>
+
+      <!-- Settings bottom -->
+      <div class="sidebar-bottom">
+        <div class="settings-wrap">
+          <div class="sidebar-item"
+            (click)="settingsOpen=!settingsOpen;$event.stopPropagation()">
+            <span class="nav-icon">⚙️</span>
+            <span>Settings</span>
+            <span style="margin-left:auto;font-size:10px;opacity:0.5;">
+              {{ settingsOpen ? '▲' : '▼' }}
+            </span>
+          </div>
+          <div *ngIf="settingsOpen" class="settings-submenu">
+            <div class="sub-item"><span>👤</span><span>Profile</span></div>
+            <div class="sub-item"><span>🔒</span><span>Change Password</span></div>
+            <div class="sub-item signout-item" (click)="signOut()">
+              <span>🚪</span><span>Sign out</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- ══════════ MAIN CONTENT ══════════ -->
+    <main class="main-content">
+
+      <!-- ── ROW 1: Stats ── -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-label">Total Staff</div>
+          <div class="stat-value">{{ loading.stats ? '—' : stats.totalStaff }}</div>
+          <div class="stat-sub">Branch members</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Pending OT / Total hrs</div>
+          <div class="stat-value">
+            <span style="color:#f59e0b;">{{ stats.pendingOT }}</span>
+            <span style="font-size:14px;color:#818cf8;"> / {{ stats.totalOTHours }}h</span>
+          </div>
+          <div class="stat-sub">This month</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Leave Requests / Today</div>
+          <div class="stat-value">
+            <span style="color:#a78bfa;">{{ stats.leaveRequests }}</span>
+            <span style="font-size:14px;color:#f87171;"> / {{ stats.todayLeave }}</span>
+          </div>
+          <div class="stat-sub">Pending / Out today</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Payroll</div>
+          <div class="stat-value" style="color:#22c55e;">{{ currentMonth }}</div>
+          <div class="stat-sub" style="color:#f59e0b;">● {{ payrollStatus }}</div>
+        </div>
+      </div>
+
+      <!-- ── ROW 2: Holidays | Quick Actions | Today Leave (equal 3-col) ── -->
+      <div class="row2-grid">
+
+        <!-- March Holidays -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">🗓️ {{ currentMonth }} Holidays</div>
+            <span class="badge-purple">{{ holidays.length }}</span>
+          </div>
+          <div *ngIf="loading.holiday" class="loading-txt">Loading...</div>
+          <div *ngIf="!loading.holiday">
+            <div *ngFor="let h of holidays" class="holiday-item">
+              <span class="holiday-date">{{ h.holidayDate | date:'MMM d' }}</span>
+              <span class="holiday-name">{{ h.name }}</span>
+              <span class="holiday-day">{{ h.holidayDate | date:'EEE' }}</span>
+            </div>
+            <div *ngIf="holidays.length === 0"
+              style="font-size:10px;opacity:0.4;text-align:center;padding:8px 0;">
+              No holidays this month
+            </div>
+          </div>
+          <div *ngIf="nextHoliday" class="next-box">
+            <div style="font-size:9px;opacity:0.5;">Next month</div>
+            <div style="font-size:10px;color:#818cf8;font-weight:600;margin-top:2px;">
+              {{ nextHoliday.holidayDate | date:'MMM d' }} — {{ nextHoliday.name }}
+            </div>
+          </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">⚡ Quick Actions</div>
+          </div>
+          <div class="quick-grid">
+            <div class="quick-btn" (click)="setNav('payroll')">
+              <span class="quick-icon">📅</span>
+              <div>
+                <div class="quick-title">Upload Attendance</div>
+                <div class="quick-sub">Fingerprint Excel</div>
+              </div>
+            </div>
+            <div class="quick-btn" (click)="setNav('payroll')">
+              <span class="quick-icon">💰</span>
+              <div>
+                <div class="quick-title">Monthly Payroll</div>
+                <div class="quick-sub">{{ currentMonth }} · {{ payrollStatus }}</div>
+              </div>
+            </div>
+            <div class="quick-btn" (click)="setNav('holidays')">
+              <span class="quick-icon">🗓️</span>
+              <div>
+                <div class="quick-title">Add Holiday</div>
+                <div class="quick-sub">Next month</div>
+              </div>
+            </div>
+            <div class="quick-btn" (click)="setNav('tax')">
+              <span class="quick-icon">🌏</span>
+              <div>
+                <div class="quick-title">Tax Brackets</div>
+                <div class="quick-sub">Manage tiers</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Today on Leave -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">📋 Today on Leave</div>
+            <span class="badge-red">{{ stats.todayLeave }} out</span>
+          </div>
+          <div *ngIf="todayLeaveList.length === 0"
+            style="font-size:10px;opacity:0.4;text-align:center;padding:8px 0;">
+            Everyone is in today
+          </div>
+          <div *ngFor="let l of todayLeaveList" class="today-item">
+            <div class="today-avatar"
+              [style.background]="getAvatarColor(l.userName || '')">
+              {{ getInitial(l.userName || '') }}
+            </div>
+            <span class="today-name">{{ l.userName }}</span>
+            <span class="leave-badge" [style]="getLeaveTypeStyle(l.leaveType)">
+              {{ l.leaveType }}
+            </span>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ── ROW 3: OT Requests (table view) ── -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">⏰ OT Requests</div>
+          <span class="badge-yellow">{{ stats.pendingOT }} pending</span>
+        </div>
+        <div *ngIf="loading.ot" class="loading-txt">Loading...</div>
+        <div *ngIf="!loading.ot && otRequests.length === 0"
+          class="empty-txt">No pending OT requests</div>
+        <table *ngIf="!loading.ot && otRequests.length > 0" class="data-table">
+          <thead>
+            <tr>
+              <th>Staff</th>
+              <th>Date</th>
+              <th>Day</th>
+              <th>Hours</th>
+              <th>Rate</th>
+              <th>Project</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let ot of otRequests">
+              <td>
+                <div class="table-user">
+                  <div class="tbl-avatar"
+                    [style.background]="getAvatarColor(ot.userName || '')">
+                    {{ getInitial(ot.userName || '') }}
+                  </div>
+                  {{ ot.userName }}
+                </div>
+              </td>
+              <td class="muted">{{ ot.workDate | date:'MMM d' }}</td>
+              <td class="muted">{{ ot.dayType }}</td>
+              <td>{{ ot.otHours }}hrs</td>
+              <td><span style="color:#818cf8;">×{{ ot.otRate }}</span></td>
+              <td class="muted" style="font-size:10px;">
+                {{ ot.projectName || '—' }}
+              </td>
+              <td>
+                <button class="btn-approve" (click)="approveOT(ot.id)">
+                  ✓ Approve
+                </button>
+                <button class="btn-reject" (click)="rejectOT(ot.id)">
+                  ✕ Reject
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- ── ROW 4: Leave Requests (table view) ── -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">🏖️ Leave Requests</div>
+          <span class="badge-purple">{{ stats.leaveRequests }} pending</span>
+        </div>
+        <div *ngIf="loading.leave" class="loading-txt">Loading...</div>
+        <div *ngIf="!loading.leave && leaveRequests.length === 0"
+          class="empty-txt">No pending leave requests</div>
+        <table *ngIf="!loading.leave && leaveRequests.length > 0" class="data-table">
+          <thead>
+            <tr>
+              <th>Staff</th>
+              <th>Type</th>
+              <th>Dates</th>
+              <th>Days</th>
+              <th>Reason</th>
+              <th>Status</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let lv of leaveRequests">
+              <td>
+                <div class="table-user">
+                  <div class="tbl-avatar"
+                    [style.background]="getAvatarColor(lv.userName || '')">
+                    {{ getInitial(lv.userName || '') }}
+                  </div>
+                  {{ lv.userName }}
+                </div>
+              </td>
+              <td>
+                <span class="leave-badge" [style]="getLeaveTypeStyle(lv.leaveType)">
+                  {{ lv.leaveType }}
+                </span>
+              </td>
+              <td class="muted">
+                {{ lv.startDate | date:'MMM d' }}
+                <span *ngIf="lv.startDate !== lv.endDate">
+                  – {{ lv.endDate | date:'MMM d' }}
+                </span>
+              </td>
+              <td class="muted">{{ lv.totalDays }} days</td>
+              <td class="reason-cell">{{ lv.reason || '—' }}</td>
+              <td>
+                <span class="badge-yellow">Pending</span>
+              </td>
+              <td>
+                <button class="btn-approve" (click)="approveLeave(lv.id)">
+                  ✓ Approve
+                </button>
+                <button class="btn-reject" (click)="rejectLeave(lv.id)">
+                  ✕ Reject
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- ── ROW 5: Staff List ── -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">
+            👥 Staff List
+            <span style="font-size:10px;font-weight:400;opacity:0.4;margin-left:6px;">
+              {{ staffList.length }} members
+            </span>
+          </div>
+          <button class="btn-primary" (click)="setNav('add-staff')">
+            + Add Staff
+          </button>
+        </div>
+        <div *ngIf="loading.staff" class="loading-txt">Loading...</div>
+        <table *ngIf="!loading.staff" class="data-table">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Role</th>
+              <th>Email</th>
+              <th>Status</th>
+              <th>Skills</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let s of staffList">
+              <td>
+                <div class="table-user">
+                  <div class="tbl-avatar"
+                    [style.background]="getAvatarColor(s.name)">
+                    {{ getInitial(s.name) }}
+                  </div>
+                  {{ s.name }}
+                </div>
+              </td>
+              <td>
+                <span class="role-pill" [style]="getRoleBadgeStyle(s.role)">
+                  {{ s.role }}
+                </span>
+              </td>
+              <td class="muted">{{ s.email }}</td>
+              <td>
+                <span class="status-dot"
+                  [style.background]="s.isActive ? '#22c55e' : '#ef4444'">
+                </span>
+                <span [style.color]="s.isActive ? '#22c55e' : '#ef4444'"
+                  style="font-size:11px;">
+                  {{ s.isActive ? 'Active' : 'Inactive' }}
+                </span>
+              </td>
+              <td class="muted" style="font-size:10px;">
+                {{ s.skills || '— (upload CV)' }}
+              </td>
+              <td>
+                <button class="btn-sm">Edit</button>
+                <button class="btn-sm btn-danger" style="margin-left:4px;">
+                  {{ s.isActive ? 'Deactivate' : 'Activate' }}
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+    </main>
+  </div>
+</div>

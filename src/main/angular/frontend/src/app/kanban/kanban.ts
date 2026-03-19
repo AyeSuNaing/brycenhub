@@ -135,7 +135,7 @@ export class Kanban implements OnInit {
       }
     });
 
-    if (lang.code === 'en' || lang.code === 'km') {
+    if (lang.code === 'en') {
       this.tasks.forEach(t => {
         t.translatedTitle = '';
         t.translatedDesc = '';
@@ -164,7 +164,7 @@ export class Kanban implements OnInit {
 
         // saved lang ရှိရင် translate
         const savedLang = this.auth.getUser()?.preferredLanguage || 'en';
-        if (savedLang !== 'en' && savedLang !== 'km') {
+        if (savedLang !== 'en') {
           this.translateTasks(savedLang);
         }
       },
@@ -308,7 +308,7 @@ export class Kanban implements OnInit {
 
           // ③ comment translate ← ထည့်
           const lang = this.currentLang.code;
-          if (lang !== 'en' && lang !== 'km') {
+          if (lang !== 'en') {
             try {
               const res: any = await this.http.get(
                 `${BASE}/translations/comment/${c.id}?lang=${lang}`,
