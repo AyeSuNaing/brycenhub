@@ -118,4 +118,14 @@ export const API = {
 },
 
 
+// constants/api-endpoints.ts ထဲ ထပ်ထည့်
+ADMIN: {
+  STATS:          `${BASE}/admin/dashboard/stats`,
+  OT_REQUESTS:    `${BASE}/admin/dashboard/ot-requests`,
+  LEAVE_REQUESTS: `${BASE}/admin/dashboard/leave-requests`,
+  TODAY_LEAVE:    `${BASE}/admin/dashboard/today-leave`,
+  HOLIDAYS:       `${BASE}/admin/dashboard/holidays`,
+}
+
+
 };

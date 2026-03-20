@@ -28,7 +28,6 @@ public class User {
 
     // ⚠️ role String ဖြုတ်ပြီ — DB မှာ role column မရှိ
     // role_id FK → user_roles table သုံးမယ်
-
     @Column(name = "role_id")
     private Long roleId;
 
@@ -37,6 +36,10 @@ public class User {
 
     @Column(name = "branch_id")
     private Long branchId;
+
+    @Column(name = "department_id")
+    private Long departmentId;
+    // FK → departments.id
 
     @Column(name = "preferred_language")
     private String preferredLanguage = "en";
@@ -50,7 +53,7 @@ public class User {
 
     private String phone;
 
-    // ── NEW: last_seen — online status ────────────────────
+    // ── last_seen — online status ──────────────────────────
     @Column(name = "last_seen")
     private LocalDateTime lastSeen;
     // online = lastSeen within 5 minutes

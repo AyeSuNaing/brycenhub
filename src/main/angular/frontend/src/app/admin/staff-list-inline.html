@@ -1,0 +1,170 @@
+<!-- ════════════════════════════════════════════
+     STAFF LIST INLINE
+     admin-dashboard မှာ main content area ထဲ ပြမယ်
+     project-inline pattern အတိုင်း
+════════════════════════════════════════════ -->
+
+<main class="main-content" style="overflow-y:auto;">
+
+  <!-- ① Back + Title -->
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
+    <button (click)="back.emit()"
+      style="display:flex;align-items:center;gap:5px;font-size:11px;opacity:0.5;
+        cursor:pointer;background:none;border:none;color:inherit;
+        transition:opacity 0.15s;padding:0;"
+      onmouseenter="this.style.opacity='1'"
+      onmouseleave="this.style.opacity='0.5'">
+      ← Back to Dashboard
+    </button>
+    <span style="opacity:0.2;">|</span>
+    <span style="font-size:14px;font-weight:700;">👥 Staff List</span>
+    <span style="font-size:10px;opacity:0.4;">{{ filteredList.length }} members</span>
+  </div>
+
+  <!-- ② Search + Filter + Add Button -->
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap;">
+
+    <!-- Search -->
+    <div class="search-box" style="flex:1;min-width:180px;">
+      <span style="font-size:12px;opacity:0.4;">🔍</span>
+      <input [(ngModel)]="searchQuery" placeholder="Search name or email..."/>
+    </div>
+
+    <!-- Filter: Department -->
+    <select [(ngModel)]="filterDept"
+      style="border-radius:9px;padding:6px 10px;font-size:11px;
+        border:1px solid;cursor:pointer;background:transparent;color:inherit;"
+      [style.borderColor]="'var(--color-border)'">
+      <option value="">All Departments</option>
+      <option *ngFor="let d of departments" [value]="d.id">{{ d.name }}</option>
+    </select>
+
+    <!-- Filter: Role -->
+    <select [(ngModel)]="filterRole"
+      style="border-radius:9px;padding:6px 10px;font-size:11px;
+        border:1px solid;cursor:pointer;background:transparent;color:inherit;"
+      [style.borderColor]="'var(--color-border)'">
+      <option value="">All Roles</option>
+      <option *ngFor="let r of roles" [value]="r.id">{{ r.displayName }}</option>
+    </select>
+
+    <!-- Filter: Status -->
+    <select [(ngModel)]="filterStatus"
+      style="border-radius:9px;padding:6px 10px;font-size:11px;
+        border:1px solid;cursor:pointer;background:transparent;color:inherit;"
+      [style.borderColor]="'var(--color-border)'">
+      <option value="">All Status</option>
+      <option value="active">Active</option>
+      <option value="inactive">Inactive</option>
+    </select>
+
+    <!-- Add Staff Button -->
+    <button class="btn-primary" (click)="addStaff.emit()">
+      + Add Staff
+    </button>
+
+  </div>
+
+  <!-- ③ Staff Table -->
+  <div class="card">
+    <div *ngIf="isLoading" class="loading-txt">Loading staff...</div>
+    <div *ngIf="!isLoading" style="overflow-x:auto;">
+      <table class="data-table" style="min-width:950px;">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Role</th>
+            <th>Department</th>
+            <th>Email</th>
+            <th>Phone</th>
+            <th>Status</th>
+            <th>Skills</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let s of filteredList">
+
+            <!-- Name -->
+            <td>
+              <div class="table-user">
+                <div class="tbl-avatar" [style.background]="getAvatarColor(s.name)">
+                  {{ getInitial(s.name) }}
+                </div>
+                <span>{{ s.name }}</span>
+              </div>
+            </td>
+
+            <!-- Role -->
+            <td>
+              <span class="role-pill"
+                [style.background]="s.roleColor + '22'"
+                [style.color]="s.roleColor || '#94a3b8'"
+                [style.border]="'1px solid ' + (s.roleColor || '#94a3b8') + '44'">
+                {{ s.roleDisplayName || '—' }}
+              </span>
+            </td>
+
+            <!-- Department -->
+            <td>
+              <span *ngIf="s.departmentName; else noDept"
+                style="font-size:10px;padding:2px 8px;border-radius:20px;
+                  background:#818cf822;color:#818cf8;font-weight:600;">
+                {{ s.departmentName }}
+              </span>
+              <ng-template #noDept>
+                <span class="muted">—</span>
+              </ng-template>
+            </td>
+
+            <!-- Email -->
+            <td class="muted">{{ s.email }}</td>
+
+            <!-- Phone -->
+            <td class="muted">{{ s.phone || '—' }}</td>
+
+            <!-- Status -->
+            <td>
+              <span class="status-dot"
+                [style.background]="s.isActive ? '#22c55e' : '#ef4444'">
+              </span>
+              <span [style.color]="s.isActive ? '#22c55e' : '#ef4444'"
+                style="font-size:11px;">
+                {{ s.isActive ? 'Active' : 'Inactive' }}
+              </span>
+            </td>
+
+            <!-- Skills -->
+            <td style="font-size:10px;">
+              <span *ngIf="s.skills?.length; else noSkills">
+                {{ s.skills.join(', ') }}
+              </span>
+              <ng-template #noSkills>
+                <span class="muted" style="font-style:italic;">— (upload CV)</span>
+              </ng-template>
+            </td>
+
+            <!-- Actions -->
+            <td style="white-space:nowrap;">
+              <button class="btn-sm" (click)="editStaff.emit(s)">Edit</button>
+              <button class="btn-sm btn-danger" style="margin-left:4px;"
+                (click)="toggleActivation(s)">
+                {{ s.isActive ? 'Deactivate' : 'Activate' }}
+              </button>
+            </td>
+
+          </tr>
+
+          <!-- Empty state -->
+          <tr *ngIf="filteredList.length === 0">
+            <td colspan="8" style="text-align:center;padding:24px;opacity:0.4;font-size:12px;">
+              No staff found
+            </td>
+          </tr>
+
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</main>

@@ -286,3 +286,68 @@
   .data-table td   { border-top: 1px solid #e2e8f044; color: #1e293b; }
   .btn-sm          { background: #f1f5f9; color: #64748b; }
 }
+
+/* ── Add Staff Inline inputs ─────────────────────── */
+.staff-input {
+  width: 100%;
+  padding: 10px 13px;
+  border-radius: 9px;
+  font-size: 12px;
+  border: 1px solid;
+  background: transparent;
+  color: inherit;
+  outline: none;
+  transition: border-color 0.2s;
+  box-sizing: border-box;
+  font-family: inherit;
+}
+
+.dark .staff-input {
+  border-color: #1e2d4a;
+}
+.dark .staff-input:focus {
+  border-color: #16a34a;
+}
+
+.light .staff-input {
+  border-color: #e2e8f0;
+  background: white;
+  color: #1e293b;
+}
+.light .staff-input:focus {
+  border-color: #16a34a;
+}
+
+.light .staff-input::placeholder {
+  color: #94a3b8;
+}
+
+/* ── FORM INPUTS (Add Staff page) ─────────── */
+.form-input {
+  padding: 10px 13px;
+  border-radius: 9px;
+  font-size: 12px;
+  border: 1px solid;
+  outline: none;
+  transition: border-color 0.2s;
+  font-family: inherit;
+  width: 100%;
+  box-sizing: border-box;
+}
+.form-input:focus { border-color: #16a34a !important; }
+
+.dark .form-input {
+  background: #131929;
+  border-color: #1e2d4a;
+  color: #e2e8f0;
+}
+.dark .form-input::placeholder { color: #475569; }
+.dark .form-input option { background: #131929; }
+
+.light .form-input {
+  background: white;
+  border-color: #e2e8f0;
+  color: #1e293b;
+}
+.light .form-input::placeholder { color: #94a3b8; }
+.light .form-input:hover { border-color: #cbd5e1; }

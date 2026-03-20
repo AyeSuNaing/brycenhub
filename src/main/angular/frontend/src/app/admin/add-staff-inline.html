@@ -1,0 +1,347 @@
+<main class="main-content" style="overflow-y:auto;padding-bottom:40px;">
+
+  <!-- ══ Header ══ -->
+  <div style="display:flex;align-items:center;gap:12px;margin-bottom:24px;">
+    <button (click)="close.emit()"
+      style="font-size:11px;opacity:0.45;cursor:pointer;background:none;
+        border:none;color:inherit;padding:0;transition:opacity 0.2s;"
+      onmouseenter="this.style.opacity='1'" onmouseleave="this.style.opacity='0.45'">
+      ← Back to Staff List
+    </button>
+    <span style="opacity:0.15;">|</span>
+    <div>
+      <div style="font-size:15px;font-weight:700;letter-spacing:-0.3px;">Add New Staff</div>
+      <div style="font-size:10px;opacity:0.35;margin-top:1px;">Onboard a new team member</div>
+    </div>
+  </div>
+
+  <!-- ══ Step Tabs ══ -->
+  <div style="display:flex;align-items:center;gap:4px;margin-bottom:24px;">
+    <ng-container *ngFor="let tab of [
+        {key:'basic', num:'1', label:'Basic Info'},
+        {key:'cv',    num:'2', label:'CV Upload'},
+        {key:'skills',num:'3', label:'Skills'}
+      ]; let last = last">
+      <div (click)="activeSection = tab.key"
+        style="display:flex;align-items:center;gap:8px;cursor:pointer;
+          padding:8px 14px;border-radius:10px;transition:all 0.2s;"
+        [style.background]="activeSection === tab.key ? 'rgba(22,163,74,0.12)' : 'transparent'"
+        [style.border]="activeSection === tab.key
+          ? '1px solid rgba(22,163,74,0.3)' : '1px solid transparent'">
+        <div style="width:24px;height:24px;border-radius:50%;display:flex;
+          align-items:center;justify-content:center;font-size:10px;font-weight:700;"
+          [style.background]="activeSection === tab.key ? '#16a34a' : 'rgba(128,128,128,0.15)'"
+          [style.color]="activeSection === tab.key ? 'white' : 'inherit'">
+          {{ tab.num }}
+        </div>
+        <span style="font-size:11px;font-weight:600;"
+          [style.color]="activeSection === tab.key ? '#16a34a' : ''">
+          {{ tab.label }}
+        </span>
+      </div>
+      <div *ngIf="!last" style="width:24px;height:1px;opacity:0.15;background:currentColor;"></div>
+    </ng-container>
+  </div>
+
+  <!-- Messages -->
+  <div *ngIf="successMsg" style="margin-bottom:16px;padding:12px 16px;border-radius:10px;
+    background:rgba(22,163,74,0.1);border:1px solid rgba(22,163,74,0.3);
+    color:#16a34a;font-size:12px;">✓ {{ successMsg }}</div>
+  <div *ngIf="errorMsg" style="margin-bottom:16px;padding:12px 16px;border-radius:10px;
+    background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.3);
+    color:#ef4444;font-size:12px;">⚠ {{ errorMsg }}</div>
+
+  <!-- ══════════ SECTION 1: Basic Info ══════════ -->
+  <div *ngIf="activeSection === 'basic'" class="card" style="padding:24px;">
+
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px;
+      padding-bottom:14px;border-bottom:1px solid rgba(128,128,128,0.15);">
+      <div style="width:32px;height:32px;border-radius:9px;background:rgba(22,163,74,0.15);
+        display:flex;align-items:center;justify-content:center;font-size:16px;">👤</div>
+      <div>
+        <div class="card-title" style="margin-bottom:2px;font-size:13px;">Basic Information</div>
+        <div style="font-size:10px;opacity:0.45;">Personal details and account setup</div>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;">
+
+      <!-- Name -->
+      <div style="display:flex;flex-direction:column;gap:6px;">
+        <label style="font-size:9px;font-weight:700;text-transform:uppercase;
+          letter-spacing:1px;opacity:0.5;">
+          Full Name <span style="color:#ef4444;">*</span></label>
+        <input class="form-input" [(ngModel)]="form.name"
+          placeholder="e.g. Aye Su Naing" style="width:100%;"/>
+      </div>
+
+      <!-- Email -->
+      <div style="display:flex;flex-direction:column;gap:6px;">
+        <label style="font-size:9px;font-weight:700;text-transform:uppercase;
+          letter-spacing:1px;opacity:0.5;">
+          Email <span style="color:#ef4444;">*</span></label>
+        <input class="form-input" [(ngModel)]="form.email"
+          type="email" placeholder="staff@brycen.kh" style="width:100%;"/>
+      </div>
+
+      <!-- Password -->
+      <div style="display:flex;flex-direction:column;gap:6px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;">
+          <label style="font-size:9px;font-weight:700;text-transform:uppercase;
+            letter-spacing:1px;opacity:0.5;">
+            Password <span style="color:#ef4444;">*</span>
+          </label>
+          <button (click)="generatePassword()"
+            style="font-size:9px;color:#16a34a;background:none;border:none;
+              cursor:pointer;padding:0;font-weight:600;">
+            🔄 Regenerate
+          </button>
+        </div>
+        <div style="display:flex;gap:6px;align-items:center;">
+          <input class="form-input" [(ngModel)]="form.password"
+            type="text" placeholder="Auto-generated"
+            style="flex:1;font-family:monospace;letter-spacing:1.5px;
+              color:#16a34a;font-weight:700;"/>
+          <button (click)="copyPassword()"
+            style="padding:0 14px;height:38px;border-radius:8px;border:1px solid;
+              font-size:10px;font-weight:700;cursor:pointer;flex-shrink:0;
+              transition:all 0.2s;white-space:nowrap;"
+            [style.borderColor]="copied ? '#16a34a' : 'rgba(128,128,128,0.3)'"
+            [style.color]="copied ? '#16a34a' : ''">
+            {{ copied ? '✓ Copied' : '📋 Copy' }}
+          </button>
+        </div>
+        <div style="font-size:9px;opacity:0.4;">Share with the new staff member</div>
+      </div>
+
+      <!-- Phone -->
+      <div style="display:flex;flex-direction:column;gap:6px;">
+        <label style="font-size:9px;font-weight:700;text-transform:uppercase;
+          letter-spacing:1px;opacity:0.5;">Phone</label>
+        <input class="form-input" [(ngModel)]="form.phone"
+          placeholder="+855 12 345 678" style="width:100%;"/>
+      </div>
+
+      <!-- Role -->
+      <div style="display:flex;flex-direction:column;gap:6px;">
+        <label style="font-size:9px;font-weight:700;text-transform:uppercase;
+          letter-spacing:1px;opacity:0.5;">
+          Role <span style="color:#ef4444;">*</span></label>
+        <select class="form-input" [(ngModel)]="form.roleId" style="width:100%;cursor:pointer;">
+          <option [ngValue]="null">Select role...</option>
+          <option *ngFor="let r of roles" [ngValue]="r.id">{{ r.displayName }}</option>
+        </select>
+      </div>
+
+      <!-- Department -->
+      <div style="display:flex;flex-direction:column;gap:6px;">
+        <label style="font-size:9px;font-weight:700;text-transform:uppercase;
+          letter-spacing:1px;opacity:0.5;">Department</label>
+        <select class="form-input" [(ngModel)]="form.departmentId" style="width:100%;cursor:pointer;">
+          <option [ngValue]="null">Select department...</option>
+          <option *ngFor="let d of departments" [ngValue]="d.id">{{ d.name }}</option>
+        </select>
+      </div>
+
+      <!-- Language -->
+      <div style="display:flex;flex-direction:column;gap:6px;">
+        <label style="font-size:9px;font-weight:700;text-transform:uppercase;
+          letter-spacing:1px;opacity:0.5;">Preferred Language</label>
+        <select class="form-input" [(ngModel)]="form.preferredLanguage" style="width:100%;cursor:pointer;">
+          <option *ngFor="let l of langs" [value]="l.code">{{ l.label }}</option>
+        </select>
+      </div>
+
+    </div>
+
+    <div style="display:flex;justify-content:flex-end;margin-top:20px;
+      padding-top:14px;border-top:1px solid rgba(128,128,128,0.15);">
+      <button class="btn-primary" (click)="activeSection = 'cv'">
+        Next — CV Upload →
+      </button>
+    </div>
+  </div>
+
+  <!-- ══════════ SECTION 2: CV Upload ══════════ -->
+  <div *ngIf="activeSection === 'cv'" class="card" style="padding:24px;">
+
+    <div style="display:flex;align-items:center;justify-content:space-between;
+      margin-bottom:20px;padding-bottom:14px;border-bottom:1px solid rgba(128,128,128,0.15);">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div style="width:32px;height:32px;border-radius:9px;background:rgba(129,140,248,0.15);
+          display:flex;align-items:center;justify-content:center;font-size:16px;">📄</div>
+        <div>
+          <div class="card-title" style="margin-bottom:2px;font-size:13px;">CV Upload & AI Analysis</div>
+          <div style="font-size:10px;opacity:0.45;">Claude extracts skills automatically</div>
+        </div>
+      </div>
+      <div style="padding:4px 10px;border-radius:20px;
+        background:linear-gradient(135deg,#065f46,#059669);
+        font-size:9px;font-weight:700;color:white;">🤖 AI</div>
+    </div>
+
+    <!-- Drop zone -->
+    <div (click)="cvInput.click()"
+      style="border:2px dashed;border-radius:14px;padding:48px 24px;
+        text-align:center;margin-bottom:20px;transition:all 0.2s;cursor:pointer;"
+      [style.borderColor]="cvFile ? '#16a34a' : 'rgba(128,128,128,0.2)'"
+      [style.background]="cvFile ? 'rgba(22,163,74,0.06)' : 'transparent'">
+      <div style="font-size:36px;margin-bottom:12px;">{{ cvFile ? '✅' : '📁' }}</div>
+      <div style="font-size:13px;font-weight:600;margin-bottom:6px;"
+        [style.color]="cvFile ? '#16a34a' : ''">
+        {{ cvFile ? cvFile.name : 'Click to browse or drag & drop' }}
+      </div>
+      <div style="font-size:11px;opacity:0.35;">
+        {{ cvFile ? 'Click to change file' : 'PDF only · Max 10MB' }}
+      </div>
+      <input type="file" accept=".pdf" (change)="onCvSelected($event)" style="display:none;" #cvInput/>
+    </div>
+
+    <div *ngIf="cvFile && !showCvPreview" style="text-align:center;margin-bottom:20px;">
+      <button (click)="analyzeCv()" [disabled]="cvAnalyzing" class="btn-primary"
+        style="background:linear-gradient(135deg,#065f46,#16a34a);display:inline-flex;
+          align-items:center;gap:8px;"
+        [style.opacity]="cvAnalyzing ? '0.6' : '1'">
+        <span>{{ cvAnalyzing ? '⏳' : '🤖' }}</span>
+        {{ cvAnalyzing ? 'Analyzing...' : 'Analyze with AI' }}
+      </button>
+    </div>
+
+    <!-- CV Preview -->
+    <div *ngIf="showCvPreview && cvPreview"
+      style="border:1px solid rgba(22,163,74,0.25);border-radius:12px;padding:16px;
+        background:rgba(22,163,74,0.06);margin-bottom:20px;">
+      <div style="font-size:12px;font-weight:700;color:#16a34a;margin-bottom:14px;">
+        ✨ Analysis Complete
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
+        <div *ngIf="cvPreview.education"
+          style="padding:10px;border-radius:9px;background:rgba(129,140,248,0.08);
+            border:1px solid rgba(129,140,248,0.15);">
+          <div style="font-size:9px;font-weight:700;color:#818cf8;margin-bottom:5px;
+            text-transform:uppercase;letter-spacing:0.8px;">🎓 Education</div>
+          <div style="font-size:11px;line-height:1.5;opacity:0.8;">{{ cvPreview.education }}</div>
+        </div>
+        <div *ngIf="cvPreview.experienceDetail"
+          style="padding:10px;border-radius:9px;background:rgba(245,158,11,0.08);
+            border:1px solid rgba(245,158,11,0.15);">
+          <div style="font-size:9px;font-weight:700;color:#f59e0b;margin-bottom:5px;
+            text-transform:uppercase;letter-spacing:0.8px;">💼 Experience</div>
+          <div style="font-size:11px;line-height:1.5;opacity:0.8;">{{ cvPreview.experienceDetail }}</div>
+        </div>
+      </div>
+      <div *ngIf="cvPreview.skills?.length">
+        <div style="font-size:9px;font-weight:700;color:#16a34a;margin-bottom:8px;
+          text-transform:uppercase;letter-spacing:0.8px;">⚡ Skills Detected</div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;">
+          <span *ngFor="let s of cvPreview.skills"
+            style="font-size:10px;padding:4px 10px;border-radius:20px;
+              background:rgba(129,140,248,0.1);border:1px solid rgba(129,140,248,0.2);
+              color:#818cf8;font-weight:600;">
+            {{ s.skillNameEn }}
+            <span *ngIf="s.skillLevel" style="opacity:0.5;"> · {{ s.skillLevel }}</span>
+          </span>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:14px;">
+        <button class="btn-primary" (click)="confirmCvPreview()" style="font-size:11px;">
+          ✓ Confirm & Continue
+        </button>
+        <button (click)="showCvPreview=false;cvFile=null"
+          style="padding:8px 14px;border-radius:8px;background:transparent;
+            border:1px solid rgba(128,128,128,0.3);font-size:11px;cursor:pointer;">
+          Re-upload
+        </button>
+      </div>
+    </div>
+
+    <div style="text-align:center;margin-bottom:4px;">
+      <span style="font-size:10px;opacity:0.35;cursor:pointer;
+        border-bottom:1px dashed rgba(128,128,128,0.3);"
+        (click)="activeSection = 'skills'">
+        Skip — add skills manually
+      </span>
+    </div>
+
+    <div style="display:flex;justify-content:space-between;margin-top:20px;
+      padding-top:14px;border-top:1px solid rgba(128,128,128,0.15);">
+      <button (click)="activeSection = 'basic'"
+        style="padding:9px 16px;border-radius:9px;background:transparent;
+          border:1px solid rgba(128,128,128,0.3);font-size:12px;cursor:pointer;">
+        ← Basic Info
+      </button>
+      <button class="btn-primary" (click)="activeSection = 'skills'">
+        Next — Skills →
+      </button>
+    </div>
+  </div>
+
+  <!-- ══════════ SECTION 3: Skills ══════════ -->
+  <div *ngIf="activeSection === 'skills'" class="card" style="padding:24px;">
+
+    <div style="display:flex;align-items:center;justify-content:space-between;
+      margin-bottom:20px;padding-bottom:14px;border-bottom:1px solid rgba(128,128,128,0.15);">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div style="width:32px;height:32px;border-radius:9px;background:rgba(245,158,11,0.15);
+          display:flex;align-items:center;justify-content:center;font-size:16px;">⚡</div>
+        <div>
+          <div class="card-title" style="margin-bottom:2px;font-size:13px;">Skills</div>
+          <div style="font-size:10px;opacity:0.45;">Technical skills from CV or manual entry</div>
+        </div>
+      </div>
+      <span style="font-size:10px;opacity:0.4;padding:3px 10px;border-radius:20px;
+        background:rgba(128,128,128,0.1);">
+        {{ skillsInput.length }} skills
+      </span>
+    </div>
+
+    <div *ngIf="skillsInput.length === 0"
+      style="text-align:center;padding:32px;opacity:0.25;">
+      <div style="font-size:28px;margin-bottom:8px;">⚡</div>
+      <div style="font-size:12px;">No skills added yet</div>
+    </div>
+
+    <div *ngFor="let skill of skillsInput; let i = index"
+      style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+      <input class="form-input" [(ngModel)]="skill.name"
+        placeholder="e.g. iOS (Swift), Angular" style="flex:2;"/>
+      <select class="form-input" [(ngModel)]="skill.level" style="flex:1;cursor:pointer;">
+        <option value="">Level</option>
+        <option value="BEGINNER">Beginner</option>
+        <option value="MID">Mid</option>
+        <option value="SENIOR">Senior</option>
+      </select>
+      <button (click)="removeSkill(i)"
+        style="width:30px;height:30px;border-radius:7px;border:none;
+          background:rgba(239,68,68,0.1);color:#ef4444;cursor:pointer;font-size:13px;
+          flex-shrink:0;transition:background 0.15s;"
+        onmouseenter="this.style.background='rgba(239,68,68,0.2)'"
+        onmouseleave="this.style.background='rgba(239,68,68,0.1)'">✕</button>
+    </div>
+
+    <button (click)="addSkill()"
+      style="width:100%;padding:10px;border-radius:9px;margin-top:6px;
+        border:1px dashed rgba(128,128,128,0.25);background:transparent;
+        cursor:pointer;font-size:11px;opacity:0.5;transition:all 0.15s;"
+      onmouseenter="this.style.opacity='1';this.style.borderColor='#16a34a55'"
+      onmouseleave="this.style.opacity='0.5';this.style.borderColor='rgba(128,128,128,0.25)'">
+      + Add Skill
+    </button>
+
+    <div style="display:flex;justify-content:space-between;align-items:center;
+      margin-top:20px;padding-top:14px;border-top:1px solid rgba(128,128,128,0.15);">
+      <button (click)="activeSection = 'cv'"
+        style="padding:9px 16px;border-radius:9px;background:transparent;
+          border:1px solid rgba(128,128,128,0.3);font-size:12px;cursor:pointer;">
+        ← CV Upload
+      </button>
+      <button (click)="submit()" [disabled]="isSubmitting" class="btn-primary"
+        style="display:flex;align-items:center;gap:8px;padding:11px 24px;font-size:12px;"
+        [style.opacity]="isSubmitting ? '0.65' : '1'">
+        <span>{{ isSubmitting ? '⏳' : '✓' }}</span>
+        {{ isSubmitting ? 'Creating...' : 'Create Staff Member' }}
+      </button>
+    </div>
+  </div>
+
+</main>

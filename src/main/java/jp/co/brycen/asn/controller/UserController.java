@@ -7,6 +7,7 @@ import jp.co.brycen.asn.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
@@ -37,6 +38,24 @@ public class UserController {
     public ResponseEntity<List<User>> getUsersByBranch(
             @PathVariable Long branchId) {
         return ResponseEntity.ok(userService.getUsersByBranch(branchId));
+    }
+
+    // ============================================================
+    // GET /api/users/staff-list
+    // Dashboard staff list — with role name + skills
+    // ============================================================
+    @GetMapping("/staff-list")
+    @PreAuthorize("hasAnyRole('BOSS', 'COUNTRY_DIRECTOR', 'ADMIN')")
+    public ResponseEntity<List<UserDto.UserResponse>> getStaffList(
+            @AuthenticationPrincipal User admin) {
+
+        System.out.println(">>> admin id: " + admin.getId());
+        System.out.println(">>> admin branchId: " + admin.getBranchId());
+        
+        
+        return ResponseEntity.ok(
+            userService.getUsersByBranchAsResponse(admin.getBranchId())
+        );
     }
 
     // ============================================================

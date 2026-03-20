@@ -18,4 +18,9 @@ public interface UserRepository extends JpaRepository<User, Long> {
     List<User> findByRoleId(Long roleId);      // ← NEW (roleId Long)
 
     List<User> findByIsActive(Boolean isActive);
+    
+    // ── Admin Dashboard stats ─────────────────────────────────────
+    long countByIsActive(Boolean isActive);
+ 
+    long countByBranchIdAndIsActive(Long branchId, Boolean isActive);
 }
