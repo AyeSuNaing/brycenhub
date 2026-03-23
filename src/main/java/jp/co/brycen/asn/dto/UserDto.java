@@ -23,17 +23,21 @@ public class UserDto {
         @NotBlank(message = "Password is required")
         private String password;
 
-        @NotBlank(message = "Role is required")
-        private String role;
-        // BOSS, VICE_PRESIDENT, COUNTRY_DIRECTOR, ADMIN,
-        // PROJECT_MANAGER, LEADER, UI_UX, DEVELOPER, QA, CLIENT
+        // role String ဖြုတ်ပြီ —
+        // DB မှာ role column မရှိ၊ role_id FK သာ ရှိ
+        // role name က login ချိန်မှာ role_id → user_roles lookup ဖြင့် ရတယ်
 
-        @NotNull(message = "Branch ID is required")
+        // role_id — DB role_id INT NOT NULL FK → user_roles
+        // Long ဆိုတော့ @NotBlank မသုံးနိုင် → @NotNull သုံး
+        @NotNull(message = "Role is required")
+        private Long roleId;
+
+        // branch_id — DB NULL allowed → @NotNull မထည့်
         private Long branchId;
 
-        private Long   roleId;              // FK → user_roles.id
-        private Long   clientId;            // FK → clients.id (null = staff)
-        private Long   departmentId;        // FK → departments.id
+        // optional fields
+        private Long   clientId;
+        private Long   departmentId;
         private String preferredLanguage = "en";
         private String phone;
         private String profileImage;
@@ -47,10 +51,9 @@ public class UserDto {
         private String profileImage;
         private String preferredLanguage;
         private Long   branchId;
-        private String role;
         private Long   roleId;
         private Long   clientId;
-        private Long   departmentId;        // FK → departments.id
+        private Long   departmentId;
     }
 
     // ── Change password request ──────────────────────────────────
@@ -75,18 +78,18 @@ public class UserDto {
 
         // user_roles join
         private Long   roleId;
-        private String roleName;            // DEVELOPER / LEADER...
-        private String roleDisplayName;     // "Developer" / "Leader"...
-        private String roleColor;           // #6366f1
+        private String roleName;         // DEVELOPER / LEADER ...
+        private String roleDisplayName;  // "Developer" / "Leader" ...
+        private String roleColor;        // #6366f1
 
         // departments join
         private Long   departmentId;
-        private String departmentName;      // "Engineering" / "Admin"
+        private String departmentName;   // "Engineering" / "Admin"
 
         // member_profiles join
-        private Boolean cvAnalyzed;         // true = CV uploaded & analyzed
+        private Boolean cvAnalyzed;      // true = CV uploaded & analyzed
 
-        // member_skills join — top 3 EN standard
-        private List<String> skills;        // ["iOS (Swift)", "Angular"]
+        // member_skills — top 3 EN standard
+        private List<String> skills;     // ["iOS (Swift)", "Angular"]
     }
 }

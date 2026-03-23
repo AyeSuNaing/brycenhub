@@ -4,6 +4,9 @@ import jp.co.brycen.asn.dto.AuthDto;
 import jp.co.brycen.asn.dto.UserDto;
 import jp.co.brycen.asn.model.User;
 import jp.co.brycen.asn.service.UserService;
+import jp.co.brycen.asn.service.ProfileTranslationService;
+import jp.co.brycen.asn.dto.UserFullProfileDto;
+import jp.co.brycen.asn.service.ProfileTranslationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -17,158 +20,193 @@ import java.util.List;
 @RequestMapping("/api/users")
 public class UserController {
 
-    @Autowired
-    private UserService userService;
+	@Autowired
+	private UserService userService;
 
+	@Autowired
+	private ProfileTranslationService profileTranslationService;
+
+	// ============================================================
+	// GET /api/users
+	// BOSS + COUNTRY_DIRECTOR + ADMIN
+	// ============================================================
+	@GetMapping
+	@PreAuthorize("hasAnyRole('BOSS', 'COUNTRY_DIRECTOR', 'ADMIN')")
+	public ResponseEntity<List<User>> getAllUsers() {
+		return ResponseEntity.ok(userService.getAllUsers());
+	}
+
+	// ============================================================
+	// GET /api/users/by-branch/{branchId}
+	// ============================================================
+	@GetMapping("/by-branch/{branchId}")
+	@PreAuthorize("hasAnyRole('BOSS', 'COUNTRY_DIRECTOR', 'ADMIN')")
+	public ResponseEntity<List<User>> getUsersByBranch(@PathVariable Long branchId) {
+		return ResponseEntity.ok(userService.getUsersByBranch(branchId));
+	}
+
+	// ============================================================
+	// GET /api/users/staff-list
+	// Dashboard staff list — with role name + skills
+	// ============================================================
+	@GetMapping("/staff-list")
+	@PreAuthorize("hasAnyRole('BOSS', 'COUNTRY_DIRECTOR', 'ADMIN')")
+	public ResponseEntity<List<UserDto.UserResponse>> getStaffList(@AuthenticationPrincipal User admin) {
+
+		System.out.println(">>> admin id: " + admin.getId());
+		System.out.println(">>> admin branchId: " + admin.getBranchId());
+
+		return ResponseEntity.ok(userService.getUsersByBranchAsResponse(admin.getBranchId()));
+	}
+
+	// ============================================================
+	// GET /api/users/{id}
+	// ============================================================
+	@GetMapping("/{id}")
+	public ResponseEntity<?> getUserById(@PathVariable Long id) {
+		try {
+			return ResponseEntity.ok(userService.getUserById(id));
+		} catch (RuntimeException e) {
+			return ResponseEntity.badRequest().body(new AuthDto.MessageResponse(e.getMessage(), false));
+		}
+	}
+
+	// ============================================================
+	// POST /api/users
+	// BOSS + COUNTRY_DIRECTOR + ADMIN
+	// ============================================================
+	@PostMapping
+	@PreAuthorize("hasAnyRole('BOSS', 'COUNTRY_DIRECTOR', 'ADMIN')")
+	public ResponseEntity<?> createUser(@Valid @RequestBody UserDto.CreateUserRequest request) {
+		try {
+			User user = userService.createUser(request);
+			return ResponseEntity.ok(user);
+		} catch (RuntimeException e) {
+			return ResponseEntity.badRequest().body(new AuthDto.MessageResponse(e.getMessage(), false));
+		}
+	}
+
+	// ============================================================
+	// PUT /api/users/{id}
+	// ============================================================
+	@PutMapping("/{id}")
+	@PreAuthorize("hasAnyRole('BOSS', 'COUNTRY_DIRECTOR', 'ADMIN')")
+	public ResponseEntity<?> updateUser(@PathVariable Long id, @RequestBody UserDto.UpdateUserRequest request) {
+		try {
+			return ResponseEntity.ok(userService.updateUser(id, request));
+		} catch (RuntimeException e) {
+			return ResponseEntity.badRequest().body(new AuthDto.MessageResponse(e.getMessage(), false));
+		}
+	}
+
+	// ============================================================
+	// PUT /api/users/{id}/activate
+	// ============================================================
+	@PutMapping("/{id}/activate")
+	@PreAuthorize("hasAnyRole('BOSS', 'COUNTRY_DIRECTOR', 'ADMIN')")
+	public ResponseEntity<?> activateUser(@PathVariable Long id) {
+		try {
+			userService.activateUser(id);
+			return ResponseEntity.ok(new AuthDto.MessageResponse("User activated", true));
+		} catch (RuntimeException e) {
+			return ResponseEntity.badRequest().body(new AuthDto.MessageResponse(e.getMessage(), false));
+		}
+	}
+
+	// ============================================================
+	// PUT /api/users/{id}/deactivate
+	// ============================================================
+	@PutMapping("/{id}/deactivate")
+	@PreAuthorize("hasAnyRole('BOSS', 'COUNTRY_DIRECTOR', 'ADMIN')")
+	public ResponseEntity<?> deactivateUser(@PathVariable Long id) {
+		try {
+			userService.deactivateUser(id);
+			return ResponseEntity.ok(new AuthDto.MessageResponse("User deactivated", true));
+		} catch (RuntimeException e) {
+			return ResponseEntity.badRequest().body(new AuthDto.MessageResponse(e.getMessage(), false));
+		}
+	}
+
+	// ============================================================
+	// PUT /api/users/{id}/change-password
+	// BOSS + ADMIN only
+	// ============================================================
+	@PutMapping("/{id}/change-password")
+	@PreAuthorize("hasAnyRole('BOSS', 'ADMIN')")
+	public ResponseEntity<?> changePassword(@PathVariable Long id,
+			@Valid @RequestBody UserDto.ChangePasswordRequest request) {
+		try {
+			userService.changePassword(id, request.getNewPassword());
+			return ResponseEntity.ok(new AuthDto.MessageResponse("Password changed", true));
+		} catch (RuntimeException e) {
+			return ResponseEntity.badRequest().body(new AuthDto.MessageResponse(e.getMessage(), false));
+		}
+	}
+
+	// ============================================================
+	// DELETE /api/users/{id}
+	// BOSS only
+	// ============================================================
+	@DeleteMapping("/{id}")
+	@PreAuthorize("hasRole('BOSS')")
+	public ResponseEntity<?> deleteUser(@PathVariable Long id) {
+		try {
+			userService.deleteUser(id);
+			return ResponseEntity.ok(new AuthDto.MessageResponse("User deleted", true));
+		} catch (RuntimeException e) {
+			return ResponseEntity.badRequest().body(new AuthDto.MessageResponse(e.getMessage(), false));
+		}
+	}
+
+	// ============================================================
+	// GET /api/users/check-email?email=xxx
+	// Email duplicate check — Add Staff form blur event
+	// ============================================================
+	@GetMapping("/check-email")
+	@PreAuthorize("hasAnyRole('BOSS', 'COUNTRY_DIRECTOR', 'ADMIN')")
+	public ResponseEntity<?> checkEmail(@RequestParam String email) {
+		boolean exists = userService.existsByEmail(email);
+		return ResponseEntity.ok(java.util.Map.of("exists", exists));
+	}
+
+	// ============================================================
+	// GET /api/users/{id}/full-profile
+	// Staff profile page — all data in one call
+	// ============================================================
+//	@GetMapping("/{id}/full-profile")
+//	@PreAuthorize("hasAnyRole('BOSS', 'COUNTRY_DIRECTOR', 'ADMIN')")
+//	public ResponseEntity<?> getFullProfile(@PathVariable Long id) {
+//		try {
+//			UserFullProfileDto profile = userService.getFullProfile(id);
+//			return ResponseEntity.ok(profile);
+//		} catch (RuntimeException e) {
+//			return ResponseEntity.badRequest().body(new AuthDto.MessageResponse(e.getMessage(), false));
+//		}
+//	} 
+	
+	 // ============================================================
+    // GET /api/users/{id}/full-profile?lang=ja
+    // Staff profile page — all data in one call
+    // lang param: en(default) / ja / my / km / vi / ko
     // ============================================================
-    // GET /api/users
-    // BOSS + COUNTRY_DIRECTOR + ADMIN
-    // ============================================================
-    @GetMapping
+    @GetMapping("/{id}/full-profile")
     @PreAuthorize("hasAnyRole('BOSS', 'COUNTRY_DIRECTOR', 'ADMIN')")
-    public ResponseEntity<List<User>> getAllUsers() {
-        return ResponseEntity.ok(userService.getAllUsers());
-    }
-
-    // ============================================================
-    // GET /api/users/by-branch/{branchId}
-    // ============================================================
-    @GetMapping("/by-branch/{branchId}")
-    @PreAuthorize("hasAnyRole('BOSS', 'COUNTRY_DIRECTOR', 'ADMIN')")
-    public ResponseEntity<List<User>> getUsersByBranch(
-            @PathVariable Long branchId) {
-        return ResponseEntity.ok(userService.getUsersByBranch(branchId));
-    }
-
-    // ============================================================
-    // GET /api/users/staff-list
-    // Dashboard staff list — with role name + skills
-    // ============================================================
-    @GetMapping("/staff-list")
-    @PreAuthorize("hasAnyRole('BOSS', 'COUNTRY_DIRECTOR', 'ADMIN')")
-    public ResponseEntity<List<UserDto.UserResponse>> getStaffList(
-            @AuthenticationPrincipal User admin) {
-
-        System.out.println(">>> admin id: " + admin.getId());
-        System.out.println(">>> admin branchId: " + admin.getBranchId());
-        
-        
-        return ResponseEntity.ok(
-            userService.getUsersByBranchAsResponse(admin.getBranchId())
-        );
-    }
-
-    // ============================================================
-    // GET /api/users/{id}
-    // ============================================================
-    @GetMapping("/{id}")
-    public ResponseEntity<?> getUserById(@PathVariable Long id) {
-        try {
-            return ResponseEntity.ok(userService.getUserById(id));
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest()
-                    .body(new AuthDto.MessageResponse(e.getMessage(), false));
-        }
-    }
-
-    // ============================================================
-    // POST /api/users
-    // BOSS + COUNTRY_DIRECTOR + ADMIN
-    // ============================================================
-    @PostMapping
-    @PreAuthorize("hasAnyRole('BOSS', 'COUNTRY_DIRECTOR', 'ADMIN')")
-    public ResponseEntity<?> createUser(
-            @Valid @RequestBody UserDto.CreateUserRequest request) {
-        try {
-            User user = userService.createUser(request);
-            return ResponseEntity.ok(user);
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest()
-                    .body(new AuthDto.MessageResponse(e.getMessage(), false));
-        }
-    }
-
-    // ============================================================
-    // PUT /api/users/{id}
-    // ============================================================
-    @PutMapping("/{id}")
-    @PreAuthorize("hasAnyRole('BOSS', 'COUNTRY_DIRECTOR', 'ADMIN')")
-    public ResponseEntity<?> updateUser(
+    public ResponseEntity<?> getFullProfile(
             @PathVariable Long id,
-            @RequestBody UserDto.UpdateUserRequest request) {
+            @RequestParam(value = "lang", defaultValue = "en") String lang) {
         try {
-            return ResponseEntity.ok(userService.updateUser(id, request));
+            UserFullProfileDto profile = userService.getFullProfile(id);
+ 
+            // On-demand translation (cache-backed)
+            if (!"en".equals(lang)) {
+                profileTranslationService.applyTranslation(profile, lang);
+            }
+ 
+            return ResponseEntity.ok(profile);
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest()
                     .body(new AuthDto.MessageResponse(e.getMessage(), false));
         }
     }
 
-    // ============================================================
-    // PUT /api/users/{id}/activate
-    // ============================================================
-    @PutMapping("/{id}/activate")
-    @PreAuthorize("hasAnyRole('BOSS', 'COUNTRY_DIRECTOR', 'ADMIN')")
-    public ResponseEntity<?> activateUser(@PathVariable Long id) {
-        try {
-            userService.activateUser(id);
-            return ResponseEntity.ok(
-                    new AuthDto.MessageResponse("User activated", true));
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest()
-                    .body(new AuthDto.MessageResponse(e.getMessage(), false));
-        }
-    }
-
-    // ============================================================
-    // PUT /api/users/{id}/deactivate
-    // ============================================================
-    @PutMapping("/{id}/deactivate")
-    @PreAuthorize("hasAnyRole('BOSS', 'COUNTRY_DIRECTOR', 'ADMIN')")
-    public ResponseEntity<?> deactivateUser(@PathVariable Long id) {
-        try {
-            userService.deactivateUser(id);
-            return ResponseEntity.ok(
-                    new AuthDto.MessageResponse("User deactivated", true));
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest()
-                    .body(new AuthDto.MessageResponse(e.getMessage(), false));
-        }
-    }
-
-    // ============================================================
-    // PUT /api/users/{id}/change-password
-    // BOSS + ADMIN only
-    // ============================================================
-    @PutMapping("/{id}/change-password")
-    @PreAuthorize("hasAnyRole('BOSS', 'ADMIN')")
-    public ResponseEntity<?> changePassword(
-            @PathVariable Long id,
-            @Valid @RequestBody UserDto.ChangePasswordRequest request) {
-        try {
-            userService.changePassword(id, request.getNewPassword());
-            return ResponseEntity.ok(
-                    new AuthDto.MessageResponse("Password changed", true));
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest()
-                    .body(new AuthDto.MessageResponse(e.getMessage(), false));
-        }
-    }
-
-    // ============================================================
-    // DELETE /api/users/{id}
-    // BOSS only
-    // ============================================================
-    @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('BOSS')")
-    public ResponseEntity<?> deleteUser(@PathVariable Long id) {
-        try {
-            userService.deleteUser(id);
-            return ResponseEntity.ok(
-                    new AuthDto.MessageResponse("User deleted", true));
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest()
-                    .body(new AuthDto.MessageResponse(e.getMessage(), false));
-        }
-    }
 }

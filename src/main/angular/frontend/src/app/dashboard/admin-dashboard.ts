@@ -11,10 +11,11 @@ import { AnnouncementBarComponent } from '../shared/announcement-bar.component';
 import { BellNotificationComponent } from '../shared/bell-notification.component';
 import { API } from '../constants/api-endpoints';
 import { environment } from '../../environments/environment';
-import { StaffListInline }  from '../admin/staff-list-inline';
-import { AddStaffInline }   from '../admin/add-staff-inline';
+import { StaffListInline } from '../admin/staff-list-inline';
+import { AddStaffInline } from '../admin/add-staff-inline';
+import { StaffProfileInline } from '../admin/staff-profile-inline';
 
-const BASE       = environment.apiBaseUrl;
+const BASE = environment.apiBaseUrl;
 const ADMIN_BASE = `${environment.apiBaseUrl}/admin/dashboard`;
 
 const LOGO_SVG = `data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIHZpZXdCb3g9IjAgMCAzMiAzMiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIHJ4PSI4IiBmaWxsPSIjMTY1MzM0Ii8+PHRleHQgeD0iNiIgeT0iMjIiIGZvbnQtc2l6ZT0iMTgiIGZpbGw9IiM4NmVmYWMiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC13ZWlnaHQ9ImJvbGQiPkI8L3RleHQ+PC9zdmc+`;
@@ -27,46 +28,48 @@ const LOGO_SVG = `data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIiIGhlaWdodD0iMzIi
     AnnouncementBarComponent, BellNotificationComponent,
     StaffListInline,
     AddStaffInline,
+    StaffProfileInline,
   ],
   templateUrl: './admin-dashboard.html',
-  styleUrl:    './admin-dashboard.scss'
+  styleUrl: './admin-dashboard.scss'
 })
 export class AdminDashboard implements OnInit, OnDestroy {
 
   // ── Shell state (same as member-dashboard) ──
-  logoSrc      = LOGO_SVG;
-  isDark       = true;
+  logoSrc = LOGO_SVG;
+  isDark = true;
   showLangMenu = false;
   settingsOpen = false;
-  searchQuery  = '';
+  searchQuery = '';
   currentUser: any = null;
 
   // ── Inline view state (same pattern as showProjectDetail) ──
-  activeView   = 'dashboard';
+  activeView = 'dashboard';
+  selectedStaffId = 0;
   // dashboard | staff-list | add-staff | department | leave | payroll | holidays
 
   // ── Stats ──────────────────────────────────
   stats = {
-    totalStaff:   0,
-    pendingOT:    0,
+    totalStaff: 0,
+    pendingOT: 0,
     totalOTHours: 0,
-    leaveRequests:0,
-    todayLeave:   0,
-    active:       0,
-    inactive:     0,
+    leaveRequests: 0,
+    todayLeave: 0,
+    active: 0,
+    inactive: 0,
   };
 
-  currentMonth  = new Date().toLocaleString('en', { month: 'long' });
+  currentMonth = new Date().toLocaleString('en', { month: 'long' });
   payrollStatus = 'DRAFT';
 
   // ── Data ───────────────────────────────────
-  announcements:  any[] = [];
-  notifications:  any[] = [];
-  staffList:      any[] = [];
-  otRequests:     any[] = [];
-  leaveRequests:  any[] = [];
+  announcements: any[] = [];
+  notifications: any[] = [];
+  staffList: any[] = [];
+  otRequests: any[] = [];
+  leaveRequests: any[] = [];
   todayLeaveList: any[] = [];
-  holidays:       any[] = [];
+  holidays: any[] = [];
 
   loading = {
     stats: true, staff: true, ot: true,
@@ -87,16 +90,16 @@ export class AdminDashboard implements OnInit, OnDestroy {
     {
       label: 'MAIN', items: [
         { key: 'dashboard', icon: '📊', label: 'Dashboard' },
-        { key: 'chat',      icon: '💬', label: 'Chat', route: '/chat' },
-        { key: 'announce',  icon: '📢', label: 'Announcements' },
+        { key: 'chat', icon: '💬', label: 'Chat', route: '/chat' },
+        { key: 'announce', icon: '📢', label: 'Announcements' },
       ]
     },
     {
       label: 'STAFF', items: [
-        { key: 'staff-list',  icon: '👥', label: 'Staff List' },
-        { key: 'add-staff',   icon: '➕', label: 'Add Staff' },
-        { key: 'department',  icon: '🏢', label: 'Departments' },
-        { key: 'leave',       icon: '🏖️', label: 'Leave Requests', badge: 0, badgeColor: '#818cf8' },
+        { key: 'staff-list', icon: '👥', label: 'Staff List' },
+        { key: 'add-staff', icon: '➕', label: 'Add Staff' },
+        { key: 'department', icon: '🏢', label: 'Departments' },
+        { key: 'leave', icon: '🏖️', label: 'Leave Requests', badge: 0, badgeColor: '#818cf8' },
       ]
     },
     {
@@ -107,7 +110,7 @@ export class AdminDashboard implements OnInit, OnDestroy {
     {
       label: 'SETTINGS', items: [
         { key: 'holidays', icon: '🗓️', label: 'Public Holidays' },
-        { key: 'tax',      icon: '🌏', label: 'Tax Brackets' },
+        { key: 'tax', icon: '🌏', label: 'Tax Brackets' },
       ]
     },
   ];
@@ -118,18 +121,18 @@ export class AdminDashboard implements OnInit, OnDestroy {
     private dataService: DashboardDataService,
     private router: Router,
     private cdr: ChangeDetectorRef,
-  ) {}
+  ) { }
 
   ngOnInit() {
     const saved = localStorage.getItem('brycen-theme');
     this.setTheme(saved !== 'light');
-    this.currentUser   = this.auth.getUser();
-    const savedLang    = this.currentUser?.preferredLanguage || 'en';
+    this.currentUser = this.auth.getUser();
+    const savedLang = this.currentUser?.preferredLanguage || 'en';
     this.currentLangObj = this.langs.find(l => l.code === savedLang) || this.langs[0];
     this.loadAll();
   }
 
-  ngOnDestroy() {}
+  ngOnDestroy() { }
 
   // ── Load all (same as member-dashboard.loadAll) ──
   loadAll() {
@@ -148,13 +151,13 @@ export class AdminDashboard implements OnInit, OnDestroy {
     this.http.get<any>(`${ADMIN_BASE}/stats`, { headers: this.auth.getHeaders() })
       .subscribe({
         next: s => {
-          this.stats.totalStaff    = s.totalStaff;
-          this.stats.pendingOT     = s.pendingOT;
-          this.stats.totalOTHours  = s.totalOTHours;
+          this.stats.totalStaff = s.totalStaff;
+          this.stats.pendingOT = s.pendingOT;
+          this.stats.totalOTHours = s.totalOTHours;
           this.stats.leaveRequests = s.leaveRequests;
-          this.stats.todayLeave    = s.todayLeave;
-          this.payrollStatus       = s.payrollStatus;
-          this.loading.stats       = false;
+          this.stats.todayLeave = s.todayLeave;
+          this.payrollStatus = s.payrollStatus;
+          this.loading.stats = false;
           this.cdr.detectChanges();
         },
         error: () => { this.loading.stats = false; }
@@ -166,10 +169,10 @@ export class AdminDashboard implements OnInit, OnDestroy {
     this.http.get<any[]>(`${BASE}/users/staff-list`, { headers: this.auth.getHeaders() })
       .subscribe({
         next: users => {
-          this.staffList      = users;
-          this.stats.active   = users.filter(u => u.isActive).length;
+          this.staffList = users;
+          this.stats.active = users.filter(u => u.isActive).length;
           this.stats.inactive = users.filter(u => !u.isActive).length;
-          this.loading.staff  = false;
+          this.loading.staff = false;
           this.cdr.detectChanges();
         },
         error: () => { this.loading.staff = false; }
@@ -212,20 +215,20 @@ export class AdminDashboard implements OnInit, OnDestroy {
           this.todayLeaveList = list.filter(l => l.isToday);
           this.cdr.detectChanges();
         },
-        error: () => {}
+        error: () => { }
       });
   }
 
   loadHolidays() {
     this.loading.holiday = true;
-    const now   = new Date();
-    const year  = now.getFullYear();
+    const now = new Date();
+    const year = now.getFullYear();
     const month = now.getMonth() + 1;
     this.http.get<any[]>(`${ADMIN_BASE}/holidays?year=${year}&month=${month}`,
       { headers: this.auth.getHeaders() })
       .subscribe({
         next: list => {
-          this.holidays        = list;
+          this.holidays = list;
           this.loading.holiday = false;
           this.cdr.detectChanges();
         },
@@ -236,14 +239,14 @@ export class AdminDashboard implements OnInit, OnDestroy {
   loadAnnouncements() {
     this.dataService.getAnnouncements().subscribe({
       next: d => { this.announcements = d; this.cdr.detectChanges(); },
-      error: () => {}
+      error: () => { }
     });
   }
 
   loadNotifications() {
     this.dataService.getNotifications().subscribe({
       next: d => { this.notifications = d; this.cdr.detectChanges(); },
-      error: () => {}
+      error: () => { }
     });
   }
 
@@ -261,6 +264,10 @@ export class AdminDashboard implements OnInit, OnDestroy {
     this.loadStaff();
   }
 
+  onViewProfile(staff: any) {
+    this.selectedStaffId = staff.id;
+    this.activeView = 'staff-profile';
+  }
   // ── Staff activate / deactivate (dashboard preview table) ──
   toggleActivation(staff: any) {
     const url = staff.isActive
@@ -273,7 +280,7 @@ export class AdminDashboard implements OnInit, OnDestroy {
           this.loadStats();
           this.cdr.detectChanges();
         },
-        error: () => {}
+        error: () => { }
       });
   }
 
@@ -311,7 +318,7 @@ export class AdminDashboard implements OnInit, OnDestroy {
   // ── Theme / Lang ───────────────────────────
   setTheme(dark: boolean) {
     this.isDark = dark;
-    document.body.classList.toggle('dark',  dark);
+    document.body.classList.toggle('dark', dark);
     document.body.classList.toggle('light', !dark);
     localStorage.setItem('brycen-theme', dark ? 'dark' : 'light');
   }
@@ -319,7 +326,7 @@ export class AdminDashboard implements OnInit, OnDestroy {
 
   setLang(lang: any) {
     this.currentLangObj = lang;
-    this.showLangMenu   = false;
+    this.showLangMenu = false;
     this.http.put(API.AUTH.LANGUAGE, { language: lang.code },
       { headers: this.auth.getHeaders() }).subscribe();
   }
@@ -329,7 +336,7 @@ export class AdminDashboard implements OnInit, OnDestroy {
     return this.notifications.filter((n: any) => !n.isRead).length;
   }
   getAvatarColor(name: string): string {
-    const c = ['#16a34a','#0284c7','#7c3aed','#db2777','#ea580c','#0891b2'];
+    const c = ['#16a34a', '#0284c7', '#7c3aed', '#db2777', '#ea580c', '#0891b2'];
     return c[(name?.charCodeAt(0) || 0) % c.length];
   }
   getInitial(name: string): string {
@@ -338,7 +345,7 @@ export class AdminDashboard implements OnInit, OnDestroy {
   getLeaveTypeStyle(type: string): string {
     const m: Record<string, string> = {
       ANNUAL: 'background:#22c55e22;color:#22c55e',
-      SICK:   'background:#f59e0b22;color:#f59e0b',
+      SICK: 'background:#f59e0b22;color:#f59e0b',
       UNPAID: 'background:#ef444422;color:#ef4444',
     };
     return m[type] || 'background:#1e293b;color:#94a3b8';
@@ -352,7 +359,7 @@ export class AdminDashboard implements OnInit, OnDestroy {
   @HostListener('document:click', ['$event'])
   onDocClick(e: MouseEvent) {
     const t = e.target as HTMLElement;
-    if (!t.closest('.lang-wrap'))     this.showLangMenu = false;
+    if (!t.closest('.lang-wrap')) this.showLangMenu = false;
     if (!t.closest('.settings-wrap')) this.settingsOpen = false;
   }
 }

@@ -18,26 +18,25 @@ const BASE = environment.apiBaseUrl;
 })
 export class StaffListInline implements OnInit {
 
-  @Output() addStaff = new EventEmitter<void>();
-  @Output() editStaff = new EventEmitter<any>();
-  @Output() back = new EventEmitter<void>();
+  @Output() addStaff     = new EventEmitter<void>();
+  @Output() editStaff    = new EventEmitter<any>();
+  @Output() viewProfile  = new EventEmitter<any>();  // ← row click
+  @Output() back         = new EventEmitter<void>();
 
-  staffList:    any[] = [];
-  departments:  any[] = [];
-  roles:        any[] = [];
+  staffList:   any[] = [];
+  departments: any[] = [];
+  roles:       any[] = [];
+  isLoading    = true;
 
-  isLoading = true;
-
-  // ── Filter ──────────────────────────────────
-  searchQuery    = '';
-  filterDept     = '';
-  filterRole     = '';
-  filterStatus   = '';
+  searchQuery  = '';
+  filterDept   = '';
+  filterRole   = '';
+  filterStatus = '';
 
   constructor(
     private http: HttpClient,
     private auth: AuthService,
-    private cdr: ChangeDetectorRef,
+    private cdr:  ChangeDetectorRef,
   ) {}
 
   ngOnInit() {
@@ -78,7 +77,6 @@ export class StaffListInline implements OnInit {
       });
   }
 
-  // ── Filter logic ──────────────────────────
   get filteredList(): any[] {
     return this.staffList.filter(s => {
       const matchSearch = !this.searchQuery ||
@@ -93,7 +91,6 @@ export class StaffListInline implements OnInit {
     });
   }
 
-  // ── Actions ───────────────────────────────
   toggleActivation(staff: any) {
     const url = staff.isActive
       ? `${BASE}/users/${staff.id}/deactivate`
@@ -108,11 +105,11 @@ export class StaffListInline implements OnInit {
       });
   }
 
-  // ── Helpers ───────────────────────────────
   getAvatarColor(name: string): string {
     const c = ['#16a34a','#0284c7','#7c3aed','#db2777','#ea580c','#0891b2'];
     return c[(name?.charCodeAt(0) || 0) % c.length];
   }
+
   getInitial(name: string): string {
     return name ? name.charAt(0).toUpperCase() : '?';
   }
