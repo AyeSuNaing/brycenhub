@@ -43,8 +43,13 @@ public class Client {
     @Column(columnDefinition = "TEXT")
     private String requirements;
 
-    @Column(name = "is_active")
-    private Boolean isActive = true;
+    @Column(name = "branch_id")
+    private Long branchId;
+    // FK → branches.id
+
+    @Column(name = "status")
+    private String status = "ACTIVE";
+    // ACTIVE | INACTIVE
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;

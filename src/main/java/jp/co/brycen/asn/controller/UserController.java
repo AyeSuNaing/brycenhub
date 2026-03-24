@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/users")
@@ -183,30 +184,29 @@ public class UserController {
 //			return ResponseEntity.badRequest().body(new AuthDto.MessageResponse(e.getMessage(), false));
 //		}
 //	} 
-	
-	 // ============================================================
-    // GET /api/users/{id}/full-profile?lang=ja
-    // Staff profile page — all data in one call
-    // lang param: en(default) / ja / my / km / vi / ko
-    // ============================================================
-    @GetMapping("/{id}/full-profile")
-    @PreAuthorize("hasAnyRole('BOSS', 'COUNTRY_DIRECTOR', 'ADMIN')")
-    public ResponseEntity<?> getFullProfile(
-            @PathVariable Long id,
-            @RequestParam(value = "lang", defaultValue = "en") String lang) {
-        try {
-            UserFullProfileDto profile = userService.getFullProfile(id);
- 
-            // On-demand translation (cache-backed)
-            if (!"en".equals(lang)) {
-                profileTranslationService.applyTranslation(profile, lang);
-            }
- 
-            return ResponseEntity.ok(profile);
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest()
-                    .body(new AuthDto.MessageResponse(e.getMessage(), false));
-        }
-    }
+
+	// ============================================================
+	// GET /api/users/{id}/full-profile?lang=ja
+	// Staff profile page — all data in one call
+	// lang param: en(default) / ja / my / km / vi / ko
+	// ============================================================
+	@GetMapping("/{id}/full-profile")
+	@PreAuthorize("hasAnyRole('BOSS', 'COUNTRY_DIRECTOR', 'ADMIN')")
+	public ResponseEntity<?> getFullProfile(@PathVariable Long id,
+			@RequestParam(value = "lang", defaultValue = "en") String lang) {
+		try {
+			UserFullProfileDto profile = userService.getFullProfile(id);
+
+			// On-demand translation (cache-backed)
+			if (!"en".equals(lang)) {
+				profileTranslationService.applyTranslation(profile, lang);
+			}
+
+			return ResponseEntity.ok(profile);
+		} catch (RuntimeException e) {
+			return ResponseEntity.badRequest().body(new AuthDto.MessageResponse(e.getMessage(), false));
+		}
+	}
+
 
 }

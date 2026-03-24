@@ -366,8 +366,10 @@ export class MemberDashboard implements OnInit, AfterViewInit, OnDestroy {
   closeNewProject() { this.showNewProject = false; }
   onProjectCreated(project: any) {
     this.showNewProject = false;
+    this.openProject(project.id);
     this.loadAll();
-    setTimeout(() => this.openProject(project.id), 500);
+    this.cdr.detectChanges();
+    // setTimeout(() => this.openProject(project.id), 500);
   }
 
 

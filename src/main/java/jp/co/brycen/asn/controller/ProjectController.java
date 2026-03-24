@@ -61,7 +61,7 @@ public class ProjectController {
 
     // POST /api/projects
     @PostMapping
-    @PreAuthorize("hasAnyRole('BOSS', 'COUNTRY_DIRECTOR', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('BOSS', 'COUNTRY_DIRECTOR', 'ADMIN', 'PROJECT_MANAGER')")
     public ResponseEntity<?> createProject(
             @Valid @RequestBody ProjectDto.CreateProjectRequest request,
             @AuthenticationPrincipal User user) {

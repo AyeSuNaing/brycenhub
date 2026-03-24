@@ -1,438 +1,1346 @@
-<main class="main-content" style="overflow-y:auto;">
-  <div style="padding:16px 24px;height:100%;display:flex;flex-direction:column;">
+<main class="main-content" style="overflow-y:auto; height:100%;">
+  <div class="new-proj-wrapper" style="padding:16px 24px; min-height:100%; display:flex; flex-direction:column;">
 
-    <!-- Back + Title -->
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-shrink:0;">
-      <button (click)="close.emit()" style="font-size:11px;opacity:0.5;cursor:pointer;background:none;
-          border:none;color:inherit;padding:0;" onmouseenter="this.style.opacity='1'"
-        onmouseleave="this.style.opacity='0.5'">
-        ← Back to Dashboard
+    <!-- ══ Header ══ -->
+    <div style="display:flex; align-items:center; gap:10px; margin-bottom:16px; flex-shrink:0;">
+      <button (click)="close.emit()"
+        style="font-size:11px; opacity:0.5; cursor:pointer; background:none;
+               border:none; color:inherit; padding:0; transition:opacity 0.15s;"
+        onmouseenter="this.style.opacity='1'" onmouseleave="this.style.opacity='0.5'">
+        ← Back
       </button>
       <span style="opacity:0.2;">|</span>
-      <span style="font-size:13px;font-weight:700;">✨ New Project</span>
+      <span style="font-size:13px; font-weight:700;">✨ New Project</span>
+
+      <!-- Progress bar -->
+      <div style="flex:1; height:4px; background:#1e2d4a; border-radius:2px; margin-left:8px;">
+        <div [style.width]="getFormProgress() + '%'"
+          style="height:100%; border-radius:2px; transition:width 0.4s ease;
+                 background:linear-gradient(90deg,#14532d,#22c55e);">
+        </div>
+      </div>
+      <span class="preview-label">{{ getFormProgress() }}%</span>
     </div>
 
-    <!-- 2-panel layout -->
-    <div style="flex:1;display:grid;grid-template-columns:1fr 1fr;
-      gap:20px;min-height:0;">
+    <!-- ══ Step Tabs ══ -->
+    <div style="display:flex; gap:0; margin-bottom:20px;
+                border-bottom:1px solid var(--color-border,#1e2d4a); flex-shrink:0;">
+      <div *ngFor="let s of [
+          {n:1, label:'📋 Basic'},
+          {n:2, label:'🤖 Team'},
+          {n:3, label:'⊞ Columns'},
+          {n:4, label:'👁 Preview'}
+        ]"
+        (click)="s.n < currentStep ? currentStep = s.n : null"
+        style="padding:8px 16px; font-size:11px; font-weight:600;
+               border-bottom:2px solid transparent; margin-bottom:-1px;
+               transition:all 0.15s;"
+        [style.borderBottomColor]="currentStep === s.n ? '#22c55e' : 'transparent'"
+        [style.color]="currentStep === s.n ? '#22c55e' : (s.n < currentStep ? '#64748b' : '#334155')"
+        [style.cursor]="s.n < currentStep ? 'pointer' : 'default'">
+        {{ s.label }}
+        <span *ngIf="s.n < currentStep" style="margin-left:4px; color:#22c55e;">✓</span>
+      </div>
+    </div>
 
-      <!-- ════ LEFT — Form ════ -->
-      <div style="overflow-y:auto;min-height:0;padding-right:4px;">
+    <!-- ══════════════════════════════════════════
+         STEP 1 — BASIC INFO
+    ══════════════════════════════════════════ -->
+    <div *ngIf="currentStep === 1"
+      style="flex:1; display:flex; flex-direction:column; gap:14px; overflow-y:auto; padding-bottom:16px;">
 
-        <!-- Step tabs -->
-        <div style="display:flex;gap:4px;margin-bottom:20px;
-          border-bottom:1px solid #1e2d4a;flex-shrink:0;">
-          <div *ngFor="let step of [
-              {n:1, label:'📋 Basic Info'},
-              {n:2, label:'👥 Team & Budget'},
-              {n:3, label:'⊞ Board Columns'}
-            ]" (click)="currentStep = step.n" style="padding:8px 14px;font-size:11px;font-weight:600;cursor:pointer;
-              border-bottom:2px solid transparent;margin-bottom:-1px;transition:all 0.15s;"
-            [style.borderBottomColor]="currentStep === step.n ? '#22c55e' : 'transparent'"
-            [style.color]="currentStep === step.n ? '#22c55e' : '#64748b'">
-            {{ step.label }}
+      <!-- Title -->
+      <div>
+        <label class="form-label">
+          PROJECT TITLE *
+        </label>
+        <input [(ngModel)]="form.title" placeholder="e.g. One-Stop Online Shop"
+          class="form-input"
+          [class.input-error]="errors.title">
+        <div *ngIf="errors.title" style="font-size:10px; color:#ef4444; margin-top:3px;">
+          {{ errors.title }}
+        </div>
+      </div>
+
+      <!-- Description -->
+      <div>
+        <label class="form-label">
+          DESCRIPTION
+          <span style="opacity:0.5; font-weight:400; margin-left:6px;">
+            (AI will analyze this to detect tech stack)
+          </span>
+        </label>
+        <textarea [(ngModel)]="form.description" (input)="autoResize($event)"
+          placeholder="Describe the project goals, features, and tech requirements..."
+          class="form-input"
+          style="resize:none; line-height:1.6; min-height:80px; overflow:hidden; font-family:inherit;">
+        </textarea>
+      </div>
+
+      <!-- Priority + Language -->
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+        <!-- Priority -->
+        <div>
+          <label class="form-label">
+            PRIORITY
+          </label>
+          <div style="display:flex; gap:6px; flex-wrap:wrap;">
+            <div *ngFor="let p of priorities"
+              (click)="form.priority = p.value"
+              style="padding:5px 12px; border-radius:20px; border:1px solid;
+                     font-size:10px; font-weight:600; cursor:pointer; transition:all 0.15s;"
+              [style.borderColor]="form.priority === p.value ? p.color : '#1e2d4a'"
+              [style.background]="form.priority === p.value ? p.color + '22' : 'transparent'"
+              [style.color]="form.priority === p.value ? p.color : '#64748b'">
+              {{ p.label }}
+            </div>
           </div>
         </div>
 
-        <!-- ════ STEP 1 ════ -->
-        <div *ngIf="currentStep === 1" style="display:flex;flex-direction:column;gap:14px;">
-
-          <!-- Branch + Priority -->
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-            <div>
-              <label style="font-size:10px;opacity:0.5;display:block;
-                margin-bottom:5px;letter-spacing:0.5px;font-weight:600;">
-                BRANCH *
-              </label>
-              <select [(ngModel)]="form.branchId" (ngModelChange)="onBranchChange()" style="width:100%;border-radius:9px;border:1px solid;
-                  padding:9px 12px;font-size:12px;outline:none;cursor:pointer;
-                  background:#131929;color:#e2e8f0;" [style.borderColor]="errors.branchId ? '#ef4444' : '#1e2d4a'">
-                <option [ngValue]="null">Select branch...</option>
-                <option *ngFor="let b of branches" [ngValue]="b.id">
-                  {{ b.name }}
-                </option>
-              </select>
-              <div *ngIf="errors.branchId" style="font-size:10px;color:#ef4444;margin-top:3px;">
-                {{ errors.branchId }}
-              </div>
-            </div>
-
-            <div>
-              <label style="font-size:10px;opacity:0.5;display:block;
-                margin-bottom:5px;letter-spacing:0.5px;font-weight:600;">
-                PRIORITY
-              </label>
-              <div style="display:flex;gap:5px;">
-                <button *ngFor="let p of priorities" (click)="form.priority = p.value" style="flex:1;padding:8px 4px;border-radius:8px;border:1px solid;
-                    font-size:10px;font-weight:700;cursor:pointer;transition:all 0.15s;"
-                  [style.borderColor]="form.priority === p.value ? p.color : '#1e2d4a'"
-                  [style.background]="form.priority === p.value ? p.color+'22' : 'transparent'"
-                  [style.color]="form.priority === p.value ? p.color : '#64748b'">
-                  {{ p.label }}
-                </button>
-              </div>
+        <!-- Language -->
+        <div>
+          <label class="form-label">
+            LANGUAGE
+          </label>
+          <div style="display:flex; gap:4px; flex-wrap:wrap;">
+            <div *ngFor="let l of langs"
+              (click)="form.originalLanguage = l.code"
+              style="padding:4px 10px; border-radius:6px; border:1px solid;
+                     font-size:10px; cursor:pointer; transition:all 0.15s;"
+              [style.borderColor]="form.originalLanguage === l.code ? '#22c55e' : '#1e2d4a'"
+              [style.background]="form.originalLanguage === l.code ? '#22c55e22' : 'transparent'"
+              [style.color]="form.originalLanguage === l.code ? '#22c55e' : '#64748b'">
+              {{ l.flag }} {{ l.display }}
             </div>
           </div>
+        </div>
+      </div>
 
-          <!-- Start + End Date -->
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-            <div>
-              <label style="font-size:10px;opacity:0.5;display:block;
-                margin-bottom:5px;letter-spacing:0.5px;font-weight:600;">
-                START DATE *
-              </label>
-              <input type="date" [(ngModel)]="form.startDate" style="width:100%;border-radius:9px;border:1px solid;
-                  padding:9px 12px;font-size:12px;outline:none;cursor:pointer;
-                  background:#131929;color:#e2e8f0;" [style.borderColor]="errors.startDate ? '#ef4444' : '#1e2d4a'">
-            </div>
-            <div>
-              <label style="font-size:10px;opacity:0.5;display:block;
-                margin-bottom:5px;letter-spacing:0.5px;font-weight:600;">
-                END DATE (DEADLINE)
-              </label>
-              <input type="date" [(ngModel)]="form.endDate" style="width:100%;border-radius:9px;border:1px solid #1e2d4a;
-                  padding:9px 12px;font-size:12px;outline:none;cursor:pointer;
-                  background:#131929;color:#e2e8f0;">
-            </div>
+      <!-- Budget + Dates -->
+      <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px;">
+        <div>
+          <label class="form-label">
+            BUDGET (USD)
+          </label>
+          <div style="position:relative;">
+            <span style="position:absolute; left:10px; top:50%; transform:translateY(-50%);
+                         opacity:0.4; font-size:12px;">$</span>
+            <input type="number" [(ngModel)]="form.budget" placeholder="0" class="form-input budget-input">
           </div>
+        </div>
+        <div>
+          <label class="form-label">
+            START DATE
+          </label>
+          <input type="date" [(ngModel)]="form.startDate" class="form-input date-input">
+        </div>
+        <div>
+          <label class="form-label">
+            END DATE
+          </label>
+          <input type="date" [(ngModel)]="form.endDate" class="form-input date-input">
+        </div>
+      </div>
 
-          <!-- Language -->
-          <div>
-            <label style="font-size:10px;opacity:0.5;display:block;
-              margin-bottom:5px;letter-spacing:0.5px;font-weight:600;">
-              PROJECT LANGUAGE
-              <span style="font-size:9px;opacity:0.5;font-weight:400;margin-left:4px;">
-                (auto-detected)
+      <!-- Client -->
+      <div>
+        <label class="form-label">
+          CLIENT (OPTIONAL)
+        </label>
+        <select [(ngModel)]="form.clientId" class="form-input form-select">
+          <option [ngValue]="null">No client</option>
+          <option *ngFor="let c of clients" [ngValue]="c.id">
+            {{ c.companyName }}
+          </option>
+        </select>
+      </div>
+
+      <!-- Next Button -->
+      <div style="display:flex; justify-content:flex-end; padding-top:8px; flex-shrink:0;">
+        <button (click)="goToStep2()"
+          style="padding:10px 24px; border-radius:9px; border:none;
+                 background:linear-gradient(135deg,#14532d,#16a34a);
+                 color:white; font-size:12px; font-weight:700; cursor:pointer;">
+          Next → AI Team Suggest ▶
+        </button>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════
+         STEP 2 — AI TEAM SUGGEST
+    ══════════════════════════════════════════ -->
+    <div *ngIf="currentStep === 2"
+      style="flex:1; display:flex; flex-direction:column; gap:16px; overflow-y:auto; padding-bottom:16px; padding-right:4px;">
+
+      <!-- PM Row (readonly) -->
+      <div class="team-card pm-card">
+        <div style="width:32px; height:32px; border-radius:50%;
+                    background:linear-gradient(135deg,#14532d,#16a34a);
+                    display:flex; align-items:center; justify-content:center;
+                    font-size:12px; font-weight:700; color:white; flex-shrink:0;">
+          {{ getMemberInitial(currentUser?.name) }}
+        </div>
+        <div style="flex:1;">
+          <div style="font-size:12px; font-weight:600; color:var(--input-text,#e2e8f0);">
+            {{ currentUser?.name }}
+          </div>
+          <div style="font-size:10px; color:#16a34a;">PROJECT_MANAGER (You)</div>
+        </div>
+        <span style="font-size:9px; padding:3px 8px; border-radius:20px;
+                     background:#16a34a22; color:#22c55e; font-weight:600;">
+          PM
+        </span>
+      </div>
+
+      <!-- Tech Stack Section -->
+      <div class="section-card">
+        <div style="display:flex; align-items:center; justify-content:space-between;
+                    margin-bottom:10px;">
+          <span style="font-size:11px; font-weight:700; color:var(--input-text,#e2e8f0);">
+            🤖 Detected Tech Stack
+          </span>
+          <button (click)="detectTechStack()" [disabled]="isDetecting"
+            style="font-size:10px; padding:4px 12px; border-radius:6px; border:1px solid var(--color-border,#1e2d4a);
+                   background:transparent; color:#64748b; cursor:pointer; transition:all 0.15s;"
+            onmouseenter="this.style.borderColor='#22c55e'; this.style.color='#22c55e'"
+            onmouseleave="this.style.borderColor='#1e2d4a'; this.style.color='#64748b'">
+            <span *ngIf="isDetecting">⏳ Detecting...</span>
+            <span *ngIf="!isDetecting">🔄 Re-analyze</span>
+          </button>
+        </div>
+
+        <!-- Loading -->
+        <div *ngIf="isDetecting" style="display:flex; align-items:center; gap:8px; padding:8px 0;">
+          <div style="width:14px; height:14px; border:2px solid #22c55e;
+                      border-top-color:transparent; border-radius:50%;
+                      animation:spin 0.8s linear infinite;"></div>
+          <span style="font-size:11px; opacity:0.5;">Analyzing project description...</span>
+        </div>
+
+        <!-- Tech chips — grouped by category -->
+        <div *ngIf="!isDetecting" style="display:flex; flex-direction:column; gap:10px; margin-bottom:10px;">
+
+          <div *ngFor="let group of groupedTechStack"
+            style="display:flex; flex-direction:column; gap:6px;">
+            <!-- Category header -->
+            <div style="display:flex; align-items:center; gap:5px;">
+              <span style="font-size:10px;">{{ getCategoryIcon(group.category) }}</span>
+              <span style="font-size:9px; font-weight:700; text-transform:uppercase;
+                           letter-spacing:0.5px;"
+                [style.color]="getCategoryColor(group.category)">
+                {{ group.category }}
               </span>
-            </label>
-            <div style="display:flex;gap:5px;flex-wrap:wrap;">
-              <button *ngFor="let l of langs" (click)="form.originalLanguage = l.code" style="display:flex;align-items:center;gap:5px;
-                  padding:5px 10px;border-radius:8px;border:1px solid;
-                  font-size:11px;font-weight:600;cursor:pointer;transition:all 0.15s;"
-                [style.borderColor]="form.originalLanguage === l.code ? '#22c55e' : '#1e2d4a'" [style.background]="form.originalLanguage === l.code
-                  ? 'rgba(34,197,94,0.15)' : 'transparent'"
-                [style.color]="form.originalLanguage === l.code ? '#22c55e' : '#64748b'">
-                <span>{{ l.flag }}</span>
-                <span>{{ l.display }}</span>
-              </button>
+              <div style="flex:1; height:1px; background:#1e2d4a;"></div>
+            </div>
+            <!-- Chips -->
+            <div style="display:flex; flex-wrap:wrap; gap:6px; padding-left:4px;">
+              <div *ngFor="let t of group.items"
+                style="display:flex; align-items:center; gap:5px; padding:4px 10px;
+                       border-radius:20px; border:1px solid; font-size:11px;
+                       font-weight:600; transition:all 0.15s;"
+                [style.borderColor]="getCategoryColor(t.category) + '44'"
+                [style.background]="getCategoryColor(t.category) + '15'"
+                [style.color]="getCategoryColor(t.category)">
+                {{ t.name }}
+                <span (click)="removeTech(t.index)"
+                  style="cursor:pointer; opacity:0.5; font-size:12px; line-height:1;"
+                  onmouseenter="this.style.opacity='1'" onmouseleave="this.style.opacity='0.5'">
+                  ✕
+                </span>
+              </div>
             </div>
           </div>
+
+          <div *ngIf="techStack.length === 0"
+            style="font-size:11px; opacity:0.4; padding:4px 0;">
+            No tech stack detected yet
+          </div>
+        </div>
+
+        <!-- Manual add -->
+        <div style="display:flex; gap:6px;">
+          <input [(ngModel)]="newTech" placeholder="e.g. Angular, Flutter..."
+            (keyup.enter)="addTech()"
+            style="flex:1; border-radius:7px; border:1px solid var(--color-border,#1e2d4a);
+                   padding:6px 10px; font-size:11px; outline:none;
+                   background:var(--input-bg,#131929); color:var(--input-text,#e2e8f0);">
+          <select [(ngModel)]="newTechCategory"
+            style="border-radius:7px; border:1px solid var(--color-border,#1e2d4a);
+                   padding:6px 8px; font-size:10px; outline:none; cursor:pointer;
+                   background:var(--input-bg,#131929); color:#94a3b8;">
+            <option value="frontend">Frontend</option>
+            <option value="backend">Backend</option>
+            <option value="database">Database</option>
+            <option value="mobile">Mobile</option>
+            <option value="payment">Payment</option>
+            <option value="realtime">Realtime</option>
+            <option value="devops">DevOps</option>
+            <option value="other">Other</option>
+          </select>
+          <button (click)="addTech()"
+            style="padding:6px 12px; border-radius:7px; border:none;
+                   background:#1e2d4a; color:#22c55e; font-size:11px;
+                   font-weight:600; cursor:pointer;">
+            + Add
+          </button>
+        </div>
+      </div>
+
+      <!-- Suggest Button -->
+      <button (click)="suggestTeam()" [disabled]="isSuggesting || techStack.length === 0"
+        style="padding:10px; border-radius:10px; border:none; width:100%;
+               background:linear-gradient(135deg,#1e1b4b,#3730a3);
+               color:white; font-size:12px; font-weight:700; cursor:pointer;
+               transition:opacity 0.15s;"
+        [style.opacity]="techStack.length === 0 ? '0.4' : '1'">
+        <span *ngIf="isSuggesting">⏳ Finding best matches...</span>
+        <span *ngIf="!isSuggesting">👥 Find Matching Members</span>
+      </button>
+
+      <!-- Suggested Members -->
+      <div *ngIf="suggestedMembers.length > 0">
+        <div style="font-size:11px; font-weight:700; margin-bottom:8px; color:var(--input-text,#e2e8f0);">
+          ✨ AI Suggested Members
+        </div>
+        <div style="display:flex; flex-direction:column; gap:8px;">
+          <div *ngFor="let m of suggestedMembers"
+            class="team-card"
+            [class.team-card-selected]="isMemberSelected(m.userId)">
+
+            <!-- Avatar -->
+            <div style="width:32px; height:32px; border-radius:50%; flex-shrink:0;
+                        display:flex; align-items:center; justify-content:center;
+                        font-size:12px; font-weight:700; color:white;"
+              [style.background]="getRoleColor(m.role)">
+              {{ getMemberInitial(m.name) }}
+            </div>
+
+            <!-- Info -->
+            <div style="flex:1; min-width:0;">
+              <div style="font-size:12px; font-weight:600; color:var(--input-text,#e2e8f0);">{{ m.name }}</div>
+              <div style="display:flex; gap:6px; align-items:center; margin-top:2px; flex-wrap:wrap;">
+                <span style="font-size:9px; padding:1px 6px; border-radius:4px; font-weight:600;"
+                  [style.background]="getRoleColor(m.role) + '22'"
+                  [style.color]="getRoleColor(m.role)">
+                  {{ m.role }}
+                </span>
+                <span *ngFor="let sk of m.matchedSkills"
+                  style="font-size:9px; color:#22c55e; opacity:0.8;">
+                  {{ sk }} ✓
+                </span>
+              </div>
+            </div>
+
+            <!-- Score -->
+            <div style="text-align:right; flex-shrink:0;">
+              <div style="font-size:12px; font-weight:700;"
+                [style.color]="getScoreColor(m.score)">
+                {{ m.score }}%
+              </div>
+              <div style="font-size:9px; opacity:0.4; max-width:100px;
+                          text-align:right; line-height:1.3;">
+                {{ m.reason }}
+              </div>
+            </div>
+
+            <!-- Add Button -->
+            <button (click)="isMemberSelected(m.userId) ? removeMember(m.userId) : addMember(m)"
+              style="padding:5px 12px; border-radius:7px; border:1px solid;
+                     font-size:10px; font-weight:600; cursor:pointer;
+                     transition:all 0.15s; flex-shrink:0;"
+              [style.borderColor]="isMemberSelected(m.userId) ? '#ef4444' : '#22c55e'"
+              [style.color]="isMemberSelected(m.userId) ? '#ef4444' : '#22c55e'"
+              [style.background]="'transparent'">
+              {{ isMemberSelected(m.userId) ? '✕ Remove' : '+ Add' }}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Manual Member Search -->
+      <div>
+        <button (click)="showMemberSearch = !showMemberSearch"
+          style="font-size:11px; color:#64748b; background:none; border:none;
+                 cursor:pointer; padding:0; text-decoration:underline;">
+          {{ showMemberSearch ? '▲ Hide' : '▼ Add member manually' }}
+        </button>
+
+        <div *ngIf="showMemberSearch" style="margin-top:8px;">
+          <input [(ngModel)]="memberSearch" placeholder="Search by name or role..."
+            style="width:100%; border-radius:9px; border:1px solid var(--color-border,#1e2d4a);
+                   padding:8px 12px; font-size:12px; outline:none;
+                   background:var(--input-bg,#131929); color:var(--input-text,#e2e8f0); box-sizing:border-box;
+                   margin-bottom:8px;">
+          <div style="max-height:180px; overflow-y:auto; display:flex;
+                      flex-direction:column; gap:4px;">
+            <div *ngFor="let m of filteredBranchMembers"
+              style="display:flex; align-items:center; gap:8px; padding:8px 10px;
+                     border-radius:8px; border:1px solid var(--color-border,#1e2d4a); cursor:pointer;
+                     transition:border-color 0.15s;"
+              [style.borderColor]="isMemberSelected(m.id) ? '#22c55e44' : '#1e2d4a'"
+              (click)="isMemberSelected(m.id) ? removeMember(m.id) : addMember({userId:m.id, name:m.name, role:m.role||m.roleName, profileImage:m.profileImage})">
+              <div style="width:26px; height:26px; border-radius:50%; flex-shrink:0;
+                          display:flex; align-items:center; justify-content:center;
+                          font-size:10px; font-weight:700; color:white;"
+                [style.background]="getRoleColor(m.role || m.roleName)">
+                {{ getMemberInitial(m.name) }}
+              </div>
+              <div style="flex:1;">
+                <div style="font-size:11px; font-weight:600; color:var(--input-text,#e2e8f0);">{{ m.name }}</div>
+                <div style="font-size:9px; opacity:0.5;">{{ m.role || m.roleName }}</div>
+              </div>
+              <span *ngIf="isMemberSelected(m.id)"
+                style="font-size:10px; color:#22c55e;">✓</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Selected chips -->
+      <div *ngIf="selectedMembers.length > 0">
+        <div style="font-size:10px; opacity:0.5; margin-bottom:6px; font-weight:600;">
+          SELECTED TEAM ({{ selectedMembers.length }})
+        </div>
+        <div style="display:flex; flex-wrap:wrap; gap:6px;">
+          <div *ngFor="let m of selectedMembers"
+            style="display:flex; align-items:center; gap:5px; padding:4px 10px;
+                   border-radius:20px; border:1px solid var(--color-border,#1e2d4a); font-size:11px; color:var(--input-text,#e2e8f0);">
+            <div style="width:16px; height:16px; border-radius:50%; flex-shrink:0;
+                        display:flex; align-items:center; justify-content:center;
+                        font-size:8px; font-weight:700; color:white;"
+              [style.background]="getRoleColor(m.role)">
+              {{ getMemberInitial(m.name) }}
+            </div>
+            {{ m.name }}
+            <span style="font-size:9px; opacity:0.5;">· {{ m.roleInProject }}</span>
+            <span (click)="removeMember(m.userId)"
+              style="cursor:pointer; opacity:0.5; font-size:13px;"
+              onmouseenter="this.style.opacity='1'" onmouseleave="this.style.opacity='0.5'">
+              ✕
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Navigation -->
+      <div style="display:flex; justify-content:space-between; padding-top:8px; flex-shrink:0;">
+        <button (click)="currentStep = 1"
+          style="padding:9px 18px; border-radius:9px; border:1px solid var(--color-border,#1e2d4a);
+                 font-size:12px; font-weight:600; cursor:pointer;
+                 background:transparent; color:#64748b;">
+          ← Back
+        </button>
+        <button (click)="currentStep = 3"
+          style="padding:9px 22px; border-radius:9px; border:none;
+                 background:linear-gradient(135deg,#14532d,#16a34a);
+                 color:white; font-size:12px; font-weight:700; cursor:pointer;">
+          Next → Columns ▶
+        </button>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════
+         STEP 3 — BOARD COLUMNS
+    ══════════════════════════════════════════ -->
+    <div *ngIf="currentStep === 3"
+      style="flex:1; display:flex; flex-direction:column; gap:12px; overflow-y:auto; padding-bottom:16px; padding-right:4px;">
+
+      <div style="font-size:11px; opacity:0.5;">
+        Drag to reorder · Click name to edit · Add custom columns
+      </div>
+
+      <!-- Column List — Drag & Drop -->
+      <div style="display:flex; flex-direction:column; gap:6px;">
+        <div *ngFor="let col of boardColumns; let i = index"
+          draggable="true"
+          (dragstart)="onDragStart(i)"
+          (dragover)="onDragOver($event, i)"
+          (dragend)="onDragEnd()"
+          class="col-row"
+          [class.col-row-drag]="dragIndex === i"
+          [style.opacity]="dragIndex !== null && dragIndex !== i ? '0.5' : '1'">
+
+          <!-- Drag handle -->
+          <span class="drag-handle">⠿</span>
+
+          <!-- Color dot — click to change -->
+          <input type="color" [(ngModel)]="col.color"
+            class="col-color-input"
+            [style.accentColor]="col.color"
+            title="Change color">
+
+          <!-- Name — inline edit -->
+          <input [(ngModel)]="col.name"
+            [disabled]="col.isDefault && col.isDone"
+            class="col-name-input"
+            [class.col-name-locked]="col.isDefault && col.isDone"
+            placeholder="Column name...">
+
+          <!-- Status key badge -->
+          <span class="col-status-key">{{ col.statusKey }}</span>
+
+          <!-- DONE badge -->
+          <span *ngIf="col.isDone" class="col-done-badge">DONE</span>
+
+          <!-- Delete button — custom columns only -->
+          <button *ngIf="!col.isDefault"
+            (click)="removeColumn(i)"
+            class="col-delete-btn"
+            title="Remove column">
+            🗑
+          </button>
+          <!-- Spacer for default columns -->
+          <div *ngIf="col.isDefault" style="width:26px; flex-shrink:0;"></div>
+        </div>
+      </div>
+
+      <!-- Add New Column -->
+      <div class="col-add-row">
+        <input [(ngModel)]="newColName" placeholder="New column name..."
+          (keyup.enter)="addColumn()"
+          class="col-add-input">
+        <input type="color" [(ngModel)]="newColColor"
+          class="col-add-color"
+          title="Pick color">
+        <button (click)="addColumn()"
+          [disabled]="!newColName.trim()"
+          class="col-add-btn"
+          [style.opacity]="newColName.trim() ? '1' : '0.4'">
+          + Add Column
+        </button>
+      </div>
+
+      <!-- Navigation -->
+      <div style="display:flex; justify-content:space-between; padding-top:8px; flex-shrink:0;">
+        <button (click)="currentStep = 2"
+          style="padding:9px 18px; border-radius:9px; border:1px solid var(--color-border,#1e2d4a);
+                 font-size:12px; font-weight:600; cursor:pointer;
+                 background:transparent; color:#64748b;">
+          ← Back
+        </button>
+        <button (click)="currentStep = 4"
+          style="padding:9px 22px; border-radius:9px; border:none;
+                 background:linear-gradient(135deg,#14532d,#16a34a);
+                 color:white; font-size:12px; font-weight:700; cursor:pointer;">
+          Next → Preview ▶
+        </button>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════
+         STEP 4 — PREVIEW & SUBMIT
+    ══════════════════════════════════════════ -->
+    <div *ngIf="currentStep === 4"
+      style="flex:1; display:flex; flex-direction:column; gap:16px; padding-bottom:32px;">
+
+      <!-- ── BASIC INFO ── -->
+      <div class="preview-card">
+        <div class="preview-card-header">📋 BASIC INFO</div>
+        <div class="preview-card-body">
 
           <!-- Title -->
-          <div>
-            <label style="font-size:10px;opacity:0.5;display:block;
-              margin-bottom:5px;letter-spacing:0.5px;font-weight:600;">
-              PROJECT TITLE *
-            </label>
-            <input [(ngModel)]="form.title" placeholder="e.g. Hospital Website Redesign" style="width:100%;border-radius:9px;border:1px solid;
-                padding:9px 12px;font-size:13px;outline:none;font-family:inherit;
-                background:#131929;color:#e2e8f0;" [style.borderColor]="errors.title ? '#ef4444' : '#1e2d4a'">
-            <div *ngIf="errors.title" style="font-size:10px;color:#ef4444;margin-top:3px;">
-              {{ errors.title }}
+          <div style="padding:8px 0; border-bottom:1px solid var(--color-border,#1e2d4a);">
+            <span class="pv-label">🏷 Title</span>
+            <div style="font-size:15px; font-weight:700; color:var(--input-text,#e2e8f0); margin-top:4px;">
+              {{ form.title || '—' }}
             </div>
           </div>
 
-          <!-- Description — auto expand, min-height fixed -->
-          <div>
-            <label style="font-size:10px;opacity:0.5;display:block;
-              margin-bottom:5px;letter-spacing:0.5px;font-weight:600;">
-              DESCRIPTION
-            </label>
-            <textarea [(ngModel)]="form.description" (input)="autoResize($event)"
-              placeholder="Brief description of the project goals..." style="width:100%;border-radius:9px;border:1px solid #1e2d4a;
-                background:#131929;color:#e2e8f0;padding:9px 12px;
-                font-size:12px;outline:none;resize:none;font-family:inherit;
-                line-height:1.6;overflow:hidden;min-height:96px;
-                box-sizing:border-box;">
-            </textarea>
-          </div>
-
-          <div style="display:flex;justify-content:flex-end;padding-top:4px;">
-            <button (click)="currentStep = 2" style="padding:9px 22px;border-radius:9px;border:none;
-                background:linear-gradient(135deg,#14532d,#16a34a);
-                color:white;font-size:12px;font-weight:700;cursor:pointer;">
-              Next → Team & Budget
-            </button>
-          </div>
-        </div>
-
-        <!-- ════ STEP 2 ════ -->
-        <div *ngIf="currentStep === 2" style="display:flex;flex-direction:column;gap:14px;">
-
-          <div>
-            <label style="font-size:10px;opacity:0.5;display:block;
-              margin-bottom:5px;letter-spacing:0.5px;font-weight:600;">
-              PROJECT MANAGER
-              <span style="font-size:9px;opacity:0.5;font-weight:400;margin-left:6px;">
-                (from {{ getBranchName(form.branchId) }})
-              </span>
-            </label>
-            <select [(ngModel)]="form.pmId" style="width:100%;border-radius:9px;border:1px solid #1e2d4a;
-                padding:9px 12px;font-size:12px;outline:none;cursor:pointer;
-                background:#131929;color:#e2e8f0;">
-              <option [ngValue]="null">Select PM...</option>
-              <option *ngFor="let m of managers" [ngValue]="m.id">
-                {{ m.name }} — {{ m.role }}
-              </option>
-            </select>
-            <div *ngIf="managers.length === 0 && form.branchId" style="font-size:10px;color:#f59e0b;margin-top:3px;">
-              No managers found in this branch
+          <!-- Description -->
+          <div style="padding:8px 0; border-bottom:1px solid var(--color-border,#1e2d4a);">
+            <span class="pv-label">📝 Description</span>
+            <div style="font-size:12px; line-height:1.7; color:var(--input-text,#e2e8f0);
+                        opacity:0.8; margin-top:6px; word-break:break-word; white-space:pre-wrap;">
+              {{ form.description || '—' }}
             </div>
           </div>
 
-          <div>
-            <label style="font-size:10px;opacity:0.5;display:block;
-              margin-bottom:5px;letter-spacing:0.5px;font-weight:600;">
-              BUDGET (USD)
-            </label>
-            <div style="position:relative;">
-              <span style="position:absolute;left:12px;top:50%;
-                transform:translateY(-50%);opacity:0.4;font-size:13px;">$</span>
-              <input type="number" [(ngModel)]="form.budget" placeholder="0" style="width:100%;border-radius:9px;border:1px solid #1e2d4a;
-                  padding:9px 12px 9px 26px;font-size:12px;outline:none;
-                  background:#131929;color:#e2e8f0;">
-            </div>
-          </div>
-
-          <div style="display:flex;justify-content:space-between;padding-top:4px;">
-            <button (click)="currentStep = 1" style="padding:9px 18px;border-radius:9px;border:1px solid #1e2d4a;
-                font-size:12px;font-weight:600;cursor:pointer;
-                background:transparent;color:#64748b;">
-              ← Back
-            </button>
-            <button (click)="currentStep = 3" style="padding:9px 22px;border-radius:9px;border:none;
-                background:linear-gradient(135deg,#14532d,#16a34a);
-                color:white;font-size:12px;font-weight:700;cursor:pointer;">
-              Next → Board Columns
-            </button>
-          </div>
-        </div>
-
-        <!-- ════ STEP 3 ════ -->
-        <div *ngIf="currentStep === 3" style="display:flex;flex-direction:column;gap:10px;">
-
-          <!-- Drag & Drop columns -->
-          <div style="display:flex;flex-direction:column;gap:6px;">
-            <div *ngFor="let col of boardColumns; let i = index" draggable="true" (dragstart)="onDragStart(i)"
-              (dragover)="onDragOver($event, i)" (dragend)="onDragEnd()" style="display:flex;align-items:center;gap:8px;
-                padding:9px 12px;border-radius:9px;border:1px solid;
-                transition:all 0.15s;user-select:none;" [style.background]="dragIndex === i ? '#1e2d4a' : '#0f1628'"
-              [style.borderColor]="dragIndex === i ? '#22c55e' : '#1e2d4a'"
-              [style.cursor]="col.isDone ? 'default' : 'grab'">
-              <span style="font-size:13px;opacity:0.3;flex-shrink:0;">
-                {{ col.isDone ? '🔒' : '⠿' }}
-              </span>
-              <div style="width:12px;height:12px;border-radius:3px;flex-shrink:0;" [style.background]="col.color"></div>
-              <span style="flex:1;font-size:12px;font-weight:600;color:#e2e8f0;">
-                {{ col.name }}
-              </span>
-              <span style="font-size:9px;opacity:0.35;font-family:monospace;
-                padding:2px 6px;border-radius:4px;background:#1e2d4a;">
-                {{ col.statusKey }}
-              </span>
-              <span *ngIf="col.isDone" style="font-size:8px;background:#16a34a22;color:#22c55e;
-                  padding:2px 6px;border-radius:20px;font-weight:700;">
-                DONE
-              </span>
-              <button *ngIf="!col.isDone" (click)="removeColumn(i)" style="background:none;border:none;color:#ef4444;
-                  cursor:pointer;font-size:13px;opacity:0.5;flex-shrink:0;" onmouseenter="this.style.opacity='1'"
-                onmouseleave="this.style.opacity='0.5'">✕</button>
-            </div>
-          </div>
-
-          <div style="font-size:9px;opacity:0.25;text-align:center;">
-            ⠿ Drag to reorder columns
-          </div>
-
-          <!-- Add column -->
-          <div style="border-radius:9px;border:1px dashed #1e2d4a;padding:12px;">
-            <div style="font-size:10px;opacity:0.4;margin-bottom:8px;
-              letter-spacing:0.5px;font-weight:600;">ADD COLUMN</div>
-            <div style="display:flex;gap:7px;align-items:center;flex-wrap:wrap;">
-              <input type="color" [(ngModel)]="newColColor" style="width:34px;height:34px;border-radius:7px;
-                  border:1px solid #1e2d4a;cursor:pointer;
-                  background:transparent;padding:2px;flex-shrink:0;">
-              <input [(ngModel)]="newColName" placeholder="Column name" (keyup.enter)="addColumn()" style="flex:2;min-width:120px;border-radius:8px;
-                  border:1px solid #1e2d4a;background:#131929;
-                  color:#e2e8f0;padding:7px 10px;font-size:11px;outline:none;">
-              <input [(ngModel)]="newColKey" placeholder="STATUS_KEY" (keyup.enter)="addColumn()" style="flex:1;min-width:90px;border-radius:8px;
-                  border:1px solid #1e2d4a;background:#131929;
-                  color:#e2e8f0;padding:7px 10px;
-                  font-size:11px;outline:none;font-family:monospace;">
-              <button (click)="addColumn()" style="padding:7px 14px;border-radius:8px;border:none;
-                  font-size:11px;font-weight:700;cursor:pointer;
-                  color:white;flex-shrink:0;" [style.background]="newColName.trim() && newColKey.trim()
-                  ? 'linear-gradient(135deg,#14532d,#16a34a)' : '#1e2d4a'"
-                [style.opacity]="newColName.trim() && newColKey.trim() ? '1' : '0.5'">
-                + Add
-              </button>
-            </div>
-            <div *ngIf="errors.columns" style="font-size:10px;color:#ef4444;margin-top:5px;">
-              {{ errors.columns }}
-            </div>
-          </div>
-
-          <div style="display:flex;justify-content:space-between;padding-top:4px;">
-            <button (click)="currentStep = 2" style="padding:9px 18px;border-radius:9px;border:1px solid #1e2d4a;
-                font-size:12px;font-weight:600;cursor:pointer;
-                background:transparent;color:#64748b;">
-              ← Back
-            </button>
-            <div style="display:flex;gap:8px;">
-              <button (click)="close.emit()" style="padding:9px 18px;border-radius:9px;border:1px solid #1e2d4a;
-                  font-size:12px;font-weight:600;cursor:pointer;
-                  background:transparent;color:#64748b;">
-                Cancel
-              </button>
-              <button (click)="submit()" [disabled]="isSubmitting" style="padding:9px 24px;border-radius:9px;border:none;
-                  background:linear-gradient(135deg,#14532d,#16a34a);
-                  color:white;font-size:12px;font-weight:700;cursor:pointer;
-                  display:flex;align-items:center;gap:7px;" [style.opacity]="isSubmitting ? '0.7' : '1'">
-                <span *ngIf="isSubmitting" style="width:13px;height:13px;border:2px solid white;
-                    border-top-color:transparent;border-radius:50%;
-                    animation:spin 0.8s linear infinite;display:inline-block;">
+          <!-- Priority + Language in one row -->
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;
+                      padding:8px 0; border-bottom:1px solid var(--color-border,#1e2d4a);">
+            <div>
+              <span class="pv-label">⚡ Priority</span>
+              <div style="margin-top:4px;">
+                <span class="pv-badge"
+                  [style.background]="getPriorityColor(form.priority) + '22'"
+                  [style.color]="getPriorityColor(form.priority)"
+                  [style.borderColor]="getPriorityColor(form.priority) + '44'">
+                  {{ form.priority }}
                 </span>
-                {{ isSubmitting ? 'Creating...' : '🚀 Create Project' }}
-              </button>
+              </div>
+            </div>
+            <div>
+              <span class="pv-label">🌐 Language</span>
+              <div style="font-size:12px; font-weight:500; color:var(--input-text,#e2e8f0); margin-top:4px;">
+                {{ getLangFlag(form.originalLanguage) }} {{ getLangName(form.originalLanguage) }}
+              </div>
             </div>
           </div>
-        </div>
 
-      </div><!-- /LEFT -->
-
-      <!-- ════ RIGHT — Live Preview ════ -->
-      <div style="border-radius:12px;border:1px solid #1e2d4a;
-        background:#0d1424;padding:16px;
-        display:flex;flex-direction:column;gap:14px;
-        align-self:start;position:sticky;top:0;overflow-y:auto;
-        max-height:calc(100vh - 140px);">
-
-        <div style="font-size:11px;font-weight:700;color:#22c55e;
-          display:flex;align-items:center;gap:6px;">
-          👁 Live Preview
-        </div>
-
-        <!-- Project card preview -->
-        <div style="border-radius:10px;border:1px solid #1e2d4a;
-          background:#131929;padding:12px;">
-          <div style="display:flex;align-items:flex-start;
-            justify-content:space-between;gap:8px;margin-bottom:8px;">
-            <span style="font-size:12px;font-weight:700;color:white;
-              flex:1;min-width:0;line-height:1.4;word-break:break-word;">
-              {{ form.title || 'Project Title' }}
-            </span>
-            <span style="font-size:8px;font-weight:700;padding:2px 7px;
-              border-radius:20px;flex-shrink:0;white-space:nowrap;"
-              [style.background]="getPriorityColor(form.priority) + '22'"
-              [style.color]="getPriorityColor(form.priority)">
-              {{ form.priority }}
-            </span>
-          </div>
-
-          <!-- Description — full show + scroll -->
-          <div *ngIf="form.description" style="font-size:10px;opacity:0.55;line-height:1.6;
-              margin-bottom:8px;max-height:150px;overflow-y:auto;
-              white-space:pre-wrap;word-break:break-word;
-              border-radius:6px;padding:6px 8px;
-              background:rgba(255,255,255,0.03);">
-            {{ form.description }}
-          </div>
-
-          <div style="height:3px;border-radius:2px;background:#1e2d4a;margin-bottom:6px;">
-            <div [style.width]="getFormProgress() + '%'" style="height:100%;border-radius:2px;transition:width 0.4s ease;
-      background:linear-gradient(90deg,#16a34a,#22c55e);">
+          <!-- Budget + Timeline in one row -->
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;
+                      padding:8px 0; border-bottom:1px solid var(--color-border,#1e2d4a);">
+            <div>
+              <span class="pv-label">💰 Budget</span>
+              <div style="font-size:13px; font-weight:600; color:#22c55e; margin-top:4px;">
+                {{ formatBudget(form.budget) }}
+              </div>
+            </div>
+            <div>
+              <span class="pv-label">📅 Timeline</span>
+              <div style="font-size:12px; font-weight:500; color:var(--input-text,#e2e8f0); margin-top:4px;">
+                {{ form.startDate || '?' }} → {{ form.endDate || 'TBD' }}
+              </div>
             </div>
           </div>
-          <div style="font-size:9px;opacity:0.35;">
-            {{ getFormProgress() }}% · Form completion
-          </div>
-        </div>
 
-        <!-- Info rows -->
-        <div style="display:flex;flex-direction:column;gap:8px;">
-
-          <div style="display:flex;justify-content:space-between;
-            align-items:center;padding-bottom:7px;
-            border-bottom:1px solid rgba(255,255,255,0.05);">
-            <span style="font-size:10px;opacity:0.4;">Branch</span>
-            <span style="font-size:11px;font-weight:600;color:#e2e8f0;
-              text-align:right;max-width:160px;word-break:break-word;">
-              {{ getBranchName(form.branchId) || '—' }}
-            </span>
-          </div>
-
-          <div style="display:flex;justify-content:space-between;
-            align-items:center;padding-bottom:7px;
-            border-bottom:1px solid rgba(255,255,255,0.05);">
-            <span style="font-size:10px;opacity:0.4;">PM</span>
-            <span style="font-size:11px;font-weight:600;color:#e2e8f0;">
-              {{ getPmName(form.pmId) }}
-            </span>
-          </div>
-
-          <div style="display:flex;justify-content:space-between;
-            align-items:center;padding-bottom:7px;
-            border-bottom:1px solid rgba(255,255,255,0.05);">
-            <span style="font-size:10px;opacity:0.4;">Budget</span>
-            <span style="font-size:11px;font-weight:600;color:#22c55e;">
-              {{ formatBudget(form.budget) }}
-            </span>
-          </div>
-
-          <div style="display:flex;justify-content:space-between;
-            align-items:center;padding-bottom:7px;
-            border-bottom:1px solid rgba(255,255,255,0.05);">
-            <span style="font-size:10px;opacity:0.4;">Timeline</span>
-            <span style="font-size:10px;color:#e2e8f0;">
-              {{ form.startDate || '?' }} → {{ form.endDate || 'TBD' }}
-            </span>
-          </div>
-
-          <div style="display:flex;justify-content:space-between;
-            align-items:center;padding-bottom:7px;
-            border-bottom:1px solid rgba(255,255,255,0.05);">
-            <span style="font-size:10px;opacity:0.4;">Language</span>
-            <ng-container *ngFor="let l of langs">
-              <span *ngIf="l.code === form.originalLanguage" style="font-size:11px;color:#e2e8f0;">
-                {{ l.flag }} {{ l.name }}
-              </span>
-            </ng-container>
-          </div>
-
-        </div>
-
-        <!-- Board columns preview -->
-        <div>
-          <div style="font-size:10px;opacity:0.4;margin-bottom:8px;
-            letter-spacing:0.5px;font-weight:600;">
-            BOARD COLUMNS ({{ boardColumns.length }})
-          </div>
-          <div style="display:flex;flex-direction:column;gap:4px;">
-            <div *ngFor="let col of boardColumns; let i = index" style="display:flex;align-items:center;gap:7px;
-                padding:5px 8px;border-radius:6px;
-                border:1px solid rgba(255,255,255,0.04);
-                background:rgba(255,255,255,0.02);">
-              <span style="font-size:10px;opacity:0.3;width:14px;text-align:right;">
-                {{ i + 1 }}
-              </span>
-              <div style="width:8px;height:8px;border-radius:2px;flex-shrink:0;" [style.background]="col.color"></div>
-              <span style="font-size:11px;flex:1;color:#e2e8f0;">
-                {{ col.name }}
-              </span>
-              <span *ngIf="col.isDone" style="font-size:8px;color:#22c55e;opacity:0.6;">✓</span>
+          <!-- Client -->
+          <div *ngIf="form.clientId" style="padding:8px 0;">
+            <span class="pv-label">🏢 Client</span>
+            <div style="font-size:12px; font-weight:500; color:var(--input-text,#e2e8f0); margin-top:4px;">
+              {{ getClientName(form.clientId) }}
             </div>
           </div>
-        </div>
 
-      </div><!-- /RIGHT -->
+        </div>
+      </div>
+
+      <!-- ── TECH STACK ── -->
+      <div class="preview-card">
+        <div class="preview-card-header">🤖 TECH STACK</div>
+        <div style="padding:12px 14px; display:flex; flex-direction:column; gap:8px;">
+          <div *ngFor="let group of groupedTechStack"
+            style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+            <span style="font-size:9px; font-weight:700; text-transform:uppercase;
+                         min-width:60px; letter-spacing:0.5px;"
+              [style.color]="getCategoryColor(group.category)">
+              {{ getCategoryIcon(group.category) }} {{ group.category }}
+            </span>
+            <div style="display:flex; flex-wrap:wrap; gap:4px;">
+              <span *ngFor="let t of group.items"
+                style="padding:2px 8px; border-radius:20px; font-size:10px; font-weight:600;
+                       border:1px solid;"
+                [style.borderColor]="getCategoryColor(t.category) + '44'"
+                [style.background]="getCategoryColor(t.category) + '15'"
+                [style.color]="getCategoryColor(t.category)">
+                {{ t.name }}
+              </span>
+            </div>
+          </div>
+          <span *ngIf="techStack.length === 0" style="font-size:11px; opacity:0.4;">—</span>
+        </div>
+      </div>
+
+      <!-- ── TEAM MEMBERS ── -->
+      <div class="preview-card">
+        <div class="preview-card-header">
+          👥 TEAM MEMBERS
+          <span style="margin-left:6px; background:rgba(34,197,94,0.15);
+                       color:#22c55e; border-radius:20px; padding:1px 8px;
+                       font-size:10px;">
+            {{ selectedMembers.length + 1 + (form.clientId ? 1 : 0) }}
+          </span>
+        </div>
+        <div class="preview-card-body">
+
+          <!-- PM row -->
+          <div class="pv-member-row">
+            <div class="pv-avatar pv-avatar-pm">{{ getMemberInitial(currentUser?.name) }}</div>
+            <div class="pv-member-info">
+              <span class="pv-member-name">{{ currentUser?.name }}</span>
+              <span class="pv-member-role" style="color:#22c55e; background:#22c55e15;">PROJECT MANAGER</span>
+            </div>
+          </div>
+
+          <!-- Selected members -->
+          <div *ngFor="let m of selectedMembers" class="pv-member-row">
+            <div class="pv-avatar"
+              [style.background]="getRoleColor(m.role)">
+              {{ getMemberInitial(m.name) }}
+            </div>
+            <div class="pv-member-info">
+              <span class="pv-member-name">{{ m.name }}</span>
+              <span class="pv-member-role"
+                [style.color]="getRoleColor(m.role)"
+                [style.background]="getRoleColor(m.role) + '18'">
+                {{ m.roleInProject }}
+              </span>
+            </div>
+          </div>
+
+          <!-- Client row -->
+          <!-- <div *ngIf="form.clientId" class="pv-member-row pv-client-row">
+            <div class="pv-avatar pv-avatar-client">
+              {{ getMemberInitial(getClientName(form.clientId)) }}
+            </div>
+            <div class="pv-member-info">
+              <span class="pv-member-name">{{ getClientName(form.clientId) }}</span>
+              <span class="pv-member-role" style="color:#94a3b8; background:#47556918;">
+                CLIENT
+              </span>
+            </div>
+            <span class="pv-client-badge">🏢</span>
+          </div> -->
+
+          <div *ngIf="selectedMembers.length === 0" class="pv-empty">
+            No team members added yet
+          </div>
+        </div>
+      </div>
+
+      <!-- ── BOARD COLUMNS ── -->
+      <div class="preview-card">
+        <div class="preview-card-header">
+          ⊞ BOARD COLUMNS
+          <span style="margin-left:6px; background:rgba(34,197,94,0.15);
+                       color:#22c55e; border-radius:20px; padding:1px 8px;
+                       font-size:10px;">{{ boardColumns.length }}</span>
+        </div>
+        <div style="padding:12px 14px; display:flex; flex-wrap:wrap; gap:8px; min-height:20px;">
+          <div *ngFor="let col of boardColumns; let i = index"
+            class="pv-col-chip"
+            [class.pv-col-done]="col.isDone">
+            <span class="pv-col-dot" [style.background]="col.color"></span>
+            <span class="pv-col-num">{{ i + 1 }}</span>
+            {{ col.name }}
+            <span *ngIf="col.isDone" class="pv-done-tag">DONE</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Navigation + Submit -->
+      <div class="pv-nav-row">
+        <button (click)="currentStep = 3" class="btn-back">← Back</button>
+        <button (click)="submit()" [disabled]="isSubmitting" class="btn-create"
+          [style.opacity]="isSubmitting ? '0.7' : '1'">
+          <span *ngIf="isSubmitting" class="spin-icon"></span>
+          {{ isSubmitting ? 'Creating...' : '🚀 Create Project' }}
+        </button>
+      </div>
     </div>
+
   </div>
 </main>
 
 <style>
-  @keyframes spin {
-    to {
-      transform: rotate(360deg);
-    }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ══ Form Elements — Dark/Light aware ══════════════════════ */
+  .form-label {
+    font-size: 10px;
+    opacity: 0.5;
+    display: block;
+    margin-bottom: 5px;
+    letter-spacing: 0.5px;
+    font-weight: 600;
+    color: var(--label-color, #64748b);
+    text-transform: uppercase;
+  }
+
+  .form-input {
+    width: 100%;
+    border-radius: 9px;
+    border: 1px solid var(--color-border, #1e2d4a);
+    padding: 9px 12px;
+    font-size: 12px;
+    outline: none;
+    background: var(--input-bg, #0d1424);
+    color: var(--input-text, #e2e8f0);
+    box-sizing: border-box;
+    font-family: inherit;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  .form-input:focus {
+    border-color: #22c55e66;
+    box-shadow: 0 0 0 3px var(--input-focus-shadow, rgba(22,163,74,0.18));
+  }
+  .form-input::placeholder {
+    color: var(--input-placeholder, #475569);
+  }
+  .input-error {
+    border-color: #ef4444 !important;
+  }
+  .form-textarea {
+    resize: none;
+    line-height: 1.6;
+    min-height: 90px;
+  }
+  .form-select {
+    cursor: pointer;
+    appearance: auto;
+  }
+  .budget-input {
+    padding-left: 24px;
+  }
+
+  /* ══ Date input calendar icon — dark/light fix ══════════════ */
+  .date-input {
+    color-scheme: dark;
+  }
+  .light .date-input {
+    color-scheme: light;
+  }
+  /* Calendar picker icon color */
+  .date-input::-webkit-calendar-picker-indicator {
+    filter: invert(1) opacity(0.5);
+    cursor: pointer;
+  }
+  .light .date-input::-webkit-calendar-picker-indicator {
+    filter: invert(0) opacity(0.5);
+    cursor: pointer;
+  }
+  .date-input::-webkit-calendar-picker-indicator:hover {
+    filter: invert(1) opacity(1);
+  }
+  .light .date-input::-webkit-calendar-picker-indicator:hover {
+    filter: invert(0) opacity(1);
+  }
+
+  /* ══ Column Row ══════════════════════════════════════════ */
+  .col-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    border-radius: 10px;
+    border: 1px solid var(--color-border, #1e2d4a);
+    background: var(--input-bg, #0d1424);
+    cursor: grab;
+    transition: all 0.15s;
+    user-select: none;
+  }
+  .col-row:hover {
+    border-color: #22c55e44;
+  }
+  .col-row-drag {
+    border-color: #22c55e !important;
+    background: #22c55e08 !important;
+    box-shadow: 0 0 0 2px #22c55e22;
+  }
+  .drag-handle {
+    font-size: 14px;
+    opacity: 0.25;
+    flex-shrink: 0;
+    cursor: grab;
+    color: var(--input-text, #e2e8f0);
+    letter-spacing: -1px;
+  }
+  .col-row:hover .drag-handle {
+    opacity: 0.6;
+  }
+  .col-color-input {
+    width: 22px;
+    height: 22px;
+    border-radius: 5px;
+    border: 2px solid var(--color-border, #1e2d4a);
+    cursor: pointer;
+    padding: 0;
+    flex-shrink: 0;
+    background: none;
+  }
+  .col-name-input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid transparent;
+    outline: none;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--input-text, #e2e8f0);
+    font-family: inherit;
+    transition: border-color 0.15s;
+    min-width: 0;
+  }
+  .col-name-input:focus {
+    border-bottom-color: #22c55e44;
+  }
+  .col-name-locked {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  .col-status-key {
+    font-size: 9px;
+    font-family: monospace;
+    opacity: 0.35;
+    flex-shrink: 0;
+    color: var(--input-text, #e2e8f0);
+  }
+  .col-done-badge {
+    font-size: 9px;
+    color: #22c55e;
+    padding: 2px 7px;
+    border-radius: 10px;
+    background: #22c55e11;
+    font-weight: 700;
+    flex-shrink: 0;
+    border: 1px solid #22c55e33;
+  }
+  .col-delete-btn {
+    background: none;
+    border: 1px solid transparent;
+    cursor: pointer;
+    color: #ef4444;
+    font-size: 13px;
+    flex-shrink: 0;
+    padding: 3px 6px;
+    border-radius: 6px;
+    opacity: 0.4;
+    transition: all 0.15s;
+    line-height: 1;
+  }
+  .col-delete-btn:hover {
+    opacity: 1;
+    background: #ef444411;
+    border-color: #ef444433;
+  }
+
+  /* ══ Add Column Row ══════════════════════════════════════ */
+  .col-add-row {
+    border-radius: 10px;
+    border: 1px dashed var(--color-border, #1e2d4a);
+    padding: 12px 14px;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    transition: border-color 0.15s;
+  }
+  .col-add-row:focus-within {
+    border-color: #22c55e44;
+    border-style: solid;
+  }
+  .col-add-input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid var(--color-border, #1e2d4a);
+    outline: none;
+    font-size: 12px;
+    color: var(--input-text, #e2e8f0);
+    font-family: inherit;
+    padding-bottom: 2px;
+    transition: border-color 0.15s;
+  }
+  .col-add-input::placeholder {
+    color: var(--input-placeholder, #475569);
+  }
+  .col-add-input:focus {
+    border-bottom-color: #22c55e;
+  }
+  .col-add-color {
+    width: 30px;
+    height: 30px;
+    border-radius: 7px;
+    border: 1px solid var(--color-border, #1e2d4a);
+    cursor: pointer;
+    padding: 0;
+    flex-shrink: 0;
+    background: none;
+  }
+  .col-add-btn {
+    padding: 7px 16px;
+    border-radius: 8px;
+    border: none;
+    background: linear-gradient(135deg, #14532d, #16a34a);
+    color: white;
+    font-size: 11px;
+    font-weight: 700;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: opacity 0.15s;
+  }
+  .col-add-btn:hover:not(:disabled) {
+    opacity: 0.9;
+  }
+
+  /* ══ Light mode overrides ════════════════════════════════ */
+  .light .col-row {
+    background: white;
+    border-color: #e2e8f0;
+  }
+  .light .col-row:hover {
+    border-color: #16a34a44;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  }
+  .light .col-row-drag {
+    background: #f0fdf4 !important;
+    border-color: #16a34a !important;
+  }
+  .light .col-name-input {
+    color: #1e293b;
+  }
+  .light .col-status-key {
+    color: #64748b;
+  }
+  .light .drag-handle {
+    color: #64748b;
+  }
+  .light .col-add-row {
+    border-color: #d1d5db;
+    background: #f8fafc;
+  }
+  .light .col-add-input {
+    color: #1e293b;
+    border-bottom-color: #d1d5db;
+  }
+
+  /* ══ Team Section Cards ═════════════════════════════════════ */
+  .new-proj-wrapper {
+    color: var(--input-text, #e2e8f0);
+  }
+  .section-card {
+    border-radius: 10px;
+    border: 1px solid var(--color-border, #1e2d4a);
+    background: var(--input-bg, #0d1424);
+    padding: 14px;
+  }
+  .team-card {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    border-radius: 10px;
+    border: 1px solid var(--color-border, #1e2d4a);
+    background: var(--input-bg, #0d1424);
+    transition: border-color 0.15s, background 0.15s;
+  }
+  .team-card:hover {
+    border-color: #22c55e33;
+  }
+  .team-card-selected {
+    border-color: #22c55e44 !important;
+    background: #22c55e08 !important;
+  }
+  .pm-card {
+    border-color: #22c55e22;
+    background: linear-gradient(135deg, #14532d11, #22c55e08);
+  }
+  .team-card-sm {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    border-radius: 8px;
+    border: 1px solid var(--color-border, #1e2d4a);
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s;
+    background: var(--input-bg, #0d1424);
+  }
+  .team-card-sm:hover {
+    border-color: #22c55e33;
+  }
+
+  /* ══ Light mode card overrides ═══════════════════════════════ */
+  .light .section-card {
+    background: white;
+    border-color: #e2e8f0;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  }
+  .light .team-card {
+    background: white;
+    border-color: #e2e8f0;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  }
+  .light .team-card:hover {
+    border-color: #16a34a44;
+    box-shadow: 0 2px 6px rgba(22,163,74,0.08);
+  }
+  .light .team-card-selected {
+    background: #f0fdf4 !important;
+    border-color: #16a34a44 !important;
+  }
+  .light .pm-card {
+    background: #f0fdf4;
+    border-color: #86efac44;
+  }
+  .light .team-card-sm {
+    background: white;
+    border-color: #e2e8f0;
+  }
+  .light .team-card-sm:hover {
+    border-color: #16a34a44;
+    background: #f0fdf4;
+  }
+  .light .new-proj-wrapper {
+    color: #1e293b;
+  }
+
+  /* ══ Preview section cards ══════════════════════════════════ */
+  .preview-card {
+    border-radius: 12px;
+    border: 1px solid var(--color-border, #1e2d4a);
+    background: var(--input-bg, #0d1424);
+    overflow: hidden;
+  }
+  .preview-card-header {
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--color-border, #1e2d4a);
+    font-size: 10px;
+    font-weight: 700;
+    color: #22c55e;
+    letter-spacing: 0.5px;
+  }
+  .preview-card-body {
+    padding: 12px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .preview-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .preview-label {
+    font-size: 10px;
+    opacity: 0.4;
+    color: var(--input-text, #e2e8f0);
+  }
+  .preview-value {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--input-text, #e2e8f0);
+    text-align: right;
+    max-width: 220px;
+  }
+  .light .preview-card {
+    background: white;
+    border-color: #e2e8f0;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  }
+  .light .preview-card-header {
+    border-bottom-color: #e2e8f0;
+    color: #16a34a;
+  }
+  .light .preview-label { color: #64748b; }
+  .light .preview-value { color: #1e293b; }
+
+  /* ══ Preview — Basic Info layout ═══════════════════════════ */
+  .pv-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    padding: 6px 0;
+    border-bottom: 1px solid var(--color-border, #1e2d4a);
+  }
+  .pv-row:last-child { border-bottom: none; }
+  .pv-row-col {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+  .pv-half {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .pv-label {
+    font-size: 10px;
+    opacity: 0.45;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    color: var(--label-color, #64748b);
+    flex-shrink: 0;
+  }
+  .pv-val { font-size: 13px; font-weight: 700; color: var(--input-text, #e2e8f0); }
+  .pv-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--input-text, #e2e8f0);
+  }
+  .pv-desc {
+    font-size: 12px;
+    line-height: 1.6;
+    color: var(--input-text, #e2e8f0);
+    opacity: 0.75;
+    word-break: break-word;
+  }
+  .pv-text {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--input-text, #e2e8f0);
+  }
+  .pv-green { color: #22c55e !important; font-weight: 600; }
+  .pv-badge {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 10px;
+    border-radius: 20px;
+    border: 1px solid;
+    display: inline-block;
+    width: fit-content;
+  }
+  .light .pv-row { border-bottom-color: #e2e8f0; }
+  .light .pv-title  { color: #0f172a; }
+  .light .pv-desc   { color: #334155; }
+  .light .pv-text   { color: #1e293b; }
+
+  /* ══ Preview — Members ════════════════════════════════════════ */
+  .pv-member-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 7px 0;
+    border-bottom: 1px solid var(--color-border, #1e2d4a);
+  }
+  .pv-member-row:last-child { border-bottom: none; }
+  .pv-client-row {
+    border-top: 1px dashed var(--color-border, #1e2d4a);
+    margin-top: 4px;
+    padding-top: 10px;
+  }
+  .pv-avatar {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: #475569;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 700;
+    color: white;
+    flex-shrink: 0;
+  }
+  .pv-avatar-pm {
+    background: linear-gradient(135deg, #14532d, #16a34a);
+  }
+  .pv-avatar-client {
+    background: linear-gradient(135deg, #334155, #475569);
+  }
+  .pv-member-info {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+  }
+  .pv-member-name {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--input-text, #e2e8f0);
+    flex: 1;
+  }
+  .pv-member-role {
+    font-size: 9px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 20px;
+    flex-shrink: 0;
+  }
+  .pv-client-badge {
+    font-size: 14px;
+    flex-shrink: 0;
+  }
+  .pv-empty {
+    font-size: 11px;
+    opacity: 0.4;
+    text-align: center;
+    padding: 8px 0;
+    color: var(--input-text, #e2e8f0);
+  }
+  .light .pv-member-row { border-bottom-color: #e2e8f0; }
+  .light .pv-client-row { border-top-color: #e2e8f0; }
+  .light .pv-member-name { color: #1e293b; }
+
+  /* ══ Preview — Board Columns ═════════════════════════════════ */
+  .pv-col-chip {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 12px;
+    border-radius: 20px;
+    border: 1px solid var(--color-border, #1e2d4a);
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--input-text, #e2e8f0);
+    background: var(--input-bg, #0d1424);
+  }
+  .pv-col-done {
+    border-color: #22c55e33;
+    background: #22c55e08;
+    color: #22c55e;
+  }
+  .pv-col-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 2px;
+    flex-shrink: 0;
+  }
+  .pv-col-num {
+    font-size: 9px;
+    opacity: 0.4;
+    flex-shrink: 0;
+  }
+  .pv-done-tag {
+    font-size: 8px;
+    font-weight: 700;
+    color: #22c55e;
+    background: #22c55e11;
+    padding: 1px 5px;
+    border-radius: 4px;
+  }
+  .light .pv-col-chip {
+    background: #f8fafc;
+    border-color: #e2e8f0;
+    color: #1e293b;
+  }
+  .light .pv-col-done {
+    background: #f0fdf4;
+    border-color: #86efac44;
+    color: #16a34a;
+  }
+
+  /* ══ Preview — Nav Buttons ═══════════════════════════════════ */
+  .pv-nav-row {
+    display: flex;
+    justify-content: space-between;
+    padding-top: 8px;
+    flex-shrink: 0;
+  }
+  .btn-back {
+    padding: 10px 18px;
+    border-radius: 9px;
+    border: 1px solid var(--color-border, #1e2d4a);
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    background: transparent;
+    color: var(--input-placeholder, #64748b);
+    transition: all 0.15s;
+  }
+  .btn-back:hover {
+    border-color: #22c55e44;
+    color: var(--input-text, #e2e8f0);
+  }
+  .btn-create {
+    padding: 10px 28px;
+    border-radius: 9px;
+    border: none;
+    background: linear-gradient(135deg, #14532d, #16a34a);
+    color: white;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 4px 12px rgba(22, 163, 74, 0.3);
+    transition: opacity 0.15s, box-shadow 0.15s;
+  }
+  .btn-create:hover { box-shadow: 0 6px 16px rgba(22, 163, 74, 0.4); }
+  .spin-icon {
+    width: 13px;
+    height: 13px;
+    border: 2px solid white;
+    border-top-color: transparent;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    display: inline-block;
+  }
+  .light .btn-back {
+    border-color: #e2e8f0;
+    color: #64748b;
   }
 </style>

@@ -77,7 +77,7 @@ public class ProjectService {
         project.setStartDate(request.getStartDate());
         project.setEndDate(request.getEndDate());
         project.setBudget(request.getBudget());
-        project.setStatus("PLANNING");
+        project.setStatus("ACTIVE");
         project.setProgress(0);
         project.setCreatedBy(createdBy);
         return projectRepository.save(project);

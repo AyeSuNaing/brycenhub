@@ -36,6 +36,8 @@ export class ProjectInlineComponent implements OnInit, OnChanges {
   showApi = false;
   showDb = false;
 
+  showFullDesc = false;
+  
   // ── BOARD COLUMNS ─────────────────────────────
   boardColumns = [
     { label: 'Backlog', status: 'TODO', color: '#6366f1' },

@@ -1,100 +1,73 @@
-<!-- ══════════════════════════════════════════
-     PROJECT INLINE — Main Content Area
-     member-dashboard မှာ inline ပြတာ
-     Topbar / Sidebar / Announcement မထိဘူး
-══════════════════════════════════════════ -->
-<!-- ════ TRANSLATION LOADING OVERLAY ════ -->
-<div *ngIf="isTranslating"
-  style="position:fixed;inset:0;z-index:999;
-    display:flex;flex-direction:column;
-    align-items:center;justify-content:center;
-    background:rgba(10,15,30,0.3);
-    backdrop-filter:blur(4px);
-    animation:fadeIn 0.2s ease;">
+<!-- ════════ LOADING ANIMATION (outside main) ════════ -->
+<div *ngIf="isLoading" style="display:flex;align-items:center;justify-content:center;
+    height:100%;width:100%;position:absolute;top:0;left:0;z-index:10;">
+  <div style="display:flex;flex-direction:column;align-items:center;gap:16px;opacity:0.6;">
+    <!-- Animated ship SVG -->
+    <svg viewBox="0 0 100 90" width="80" height="72" xmlns="http://www.w3.org/2000/svg">
+      <style>
+        .sail {
+          animation: sailFloat 2s ease-in-out infinite;
+          transform-origin: 50px 50px;
+        }
 
-  <!-- Ship SVG Animation -->
-  <!-- Ship SVG Animation — ပုံ ၂ logo အတိုင်း -->
-<div style="animation:sailFloat 1.2s ease-in-out infinite;">
-  <svg width="80" height="80" viewBox="0 0 100 100"
-    xmlns="http://www.w3.org/2000/svg">
+        @keyframes sailFloat {
 
-    <!-- Sail 1 — far left small -->
-    <path d="M8 78 C8 78 12 55 22 45 C18 58 14 72 8 78Z"
-      fill="#4ade80"/>
+          0%,
+          100% {
+            transform: translateY(0px);
+          }
 
-    <!-- Sail 2 — left medium -->
-    <path d="M20 80 C20 80 28 48 42 30 C40 52 34 68 20 80Z"
-      fill="#22c55e"/>
-
-    <!-- Sail 3 — center tall (tallest) -->
-    <path d="M40 82 C40 82 50 35 62 15 C64 42 58 65 40 82Z"
-      fill="#16a34a"/>
-
-    <!-- Sail 4 — right medium -->
-    <path d="M60 80 C60 80 70 48 80 32 C82 52 78 68 60 80Z"
-      fill="#22c55e"/>
-
-    <!-- Sail 5 — far right small -->
-    <path d="M78 76 C78 76 84 58 90 48 C91 62 88 72 78 76Z"
-      fill="#4ade80"/>
-
-    <!-- Base curve (hull) -->
-    <path d="M5 82 Q30 88 50 86 Q70 84 95 80"
-      stroke="#22c55e" stroke-width="2.5"
-      fill="none" stroke-linecap="round" opacity="0.6"/>
-
-  </svg>
-</div>
-
-  <!-- Text -->
-  <div style="margin-top:16px;font-size:13px;font-weight:600;
-    color:#22c55e;letter-spacing:1px;
-    animation:pulse 1.2s ease-in-out infinite;">
-    Translating...
+          50% {
+            transform: translateY(-6px);
+          }
+        }
+      </style>
+      <g class="sail">
+        <polygon points="50,10 50,60 80,60" fill="#16a34a" opacity="0.9" />
+        <polygon points="50,18 50,60 22,60" fill="#22c55e" opacity="0.7" />
+        <rect x="48" y="8" width="4" height="54" fill="#14532d" rx="2" />
+      </g>
+      <path d="M10 65 Q30 58 50 65 Q70 72 90 65 L85 78 Q65 85 50 78 Q30 85 15 78 Z" fill="#0891b2" opacity="0.8" />
+      <path d="M5 72 Q25 68 45 72 Q65 76 90 72" fill="none" stroke="#67e8f9" stroke-width="2" stroke-dasharray="4,3"
+        opacity="0.5" />
+    </svg>
+    <div style="font-size:11px;color:#22c55e;font-weight:600;letter-spacing:0.5px;">
+      Loading project...
+    </div>
   </div>
-  <div style="margin-top:6px;font-size:10px;opacity:0.4;">
-    Powered by Claude AI
-  </div>
-
 </div>
 
 <style>
-  @keyframes sailFloat {
-    0%, 100% { transform: translateY(0px) rotate(-1deg); }
-    50%       { transform: translateY(-10px) rotate(1deg); }
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
   }
-  @keyframes wave {
-    0%, 100% { d: path("M5 78 Q25 74 50 78 Q75 82 95 78"); }
-    50%       { d: path("M5 78 Q25 82 50 78 Q75 74 95 78"); }
-  }
-  @keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50%       { opacity: 0.4; }
-  }
+
   @keyframes fadeIn {
-    from { opacity: 0; }
-    to   { opacity: 1; }
+    from {
+      opacity: 0;
+      transform: translateY(4px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
 </style>
 
-
 <!-- ════════ MAIN CONTENT ════════ -->
-
-<!-- <main class="main-content"> -->
 <main class="main-content" style="overflow-y:auto;">
-  <!-- Loading -->
-  <div *ngIf="isLoading" style="display:flex;align-items:center;justify-content:center;padding:80px 0;">
-    <div style="width:28px;height:28px;border:3px solid #16a34a;border-top-color:transparent;
-      border-radius:50%;animation:spin 0.8s linear infinite;"></div>
-  </div>
 
   <ng-container *ngIf="!isLoading && project">
 
     <!-- ① Back + Title -->
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px;">
       <button (click)="close.emit()" style="display:flex;align-items:center;gap:5px;font-size:11px;opacity:0.5;
-          cursor:pointer;background:none;border:none;color:inherit;transition:opacity 0.15s;padding:0;"
-        onmouseenter="this.style.opacity='1'" onmouseleave="this.style.opacity='0.5'">
+               cursor:pointer;background:none;border:none;color:inherit;
+               transition:opacity 0.15s;padding:0;" onmouseenter="this.style.opacity='1'"
+        onmouseleave="this.style.opacity='0.5'">
         ← Back to Dashboard
       </button>
       <span style="opacity:0.2;">|</span>
@@ -116,57 +89,77 @@
       </div>
     </div>
 
-    <!-- ③ Project Info | Board Preview -->
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+    <!-- ③ Project Information — FULL WIDTH -->
+    <div class="card" style="animation:fadeIn 0.3s ease;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+        <div class="card-title" style="margin-bottom:0;">📋 Project Information</div>
+        <span [ngClass]="getStatusClass(project.status)"
+          style="font-size:9px;padding:2px 8px;border-radius:20px;font-weight:600;">
+          {{ project.status }}
+        </span>
+      </div>
 
-      <!-- 📋 Project Information -->
-      <div class="card">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
-          <div class="card-title" style="margin-bottom:0;">📋 Project Information</div>
-          <span [ngClass]="getStatusClass(project.status)"
-            style="font-size:9px;padding:2px 8px;border-radius:20px;font-weight:600;">
-            {{ project.status }}
+      <!-- Info grid — 4 cols -->
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:14px;">
+        <div>
+          <div style="font-size:9px;opacity:0.4;margin-bottom:4px;letter-spacing:0.5px;font-weight:600;">PROJECT</div>
+          <div style="font-size:14px;font-weight:700;">{{ translatedTitle || project.title }}</div>
+        </div>
+        <div>
+          <div style="font-size:9px;opacity:0.4;margin-bottom:4px;letter-spacing:0.5px;font-weight:600;">PM</div>
+          <div style="font-size:12px;font-weight:600;">{{ getPmName() }}</div>
+        </div>
+        <div>
+          <div style="font-size:9px;opacity:0.4;margin-bottom:4px;letter-spacing:0.5px;font-weight:600;">START DATE
+          </div>
+          <div style="font-size:12px;font-weight:600;">{{ project.startDate | date:'yyyy-MM-dd' }}</div>
+        </div>
+        <div>
+          <div style="font-size:9px;opacity:0.4;margin-bottom:4px;letter-spacing:0.5px;font-weight:600;">DEADLINE</div>
+          <div style="font-size:12px;font-weight:600;" [style.color]="isOverdue() ? '#ef4444' : ''">
+            {{ project.endDate | date:'yyyy-MM-dd' }}
+            <span *ngIf="isOverdue()" style="font-size:9px;color:#ef4444;margin-left:4px;">⚠</span>
+          </div>
+        </div>
+        <div>
+          <div style="font-size:9px;opacity:0.4;margin-bottom:4px;letter-spacing:0.5px;font-weight:600;">BUDGET</div>
+          <div style="font-size:12px;font-weight:600;">{{ getBudget() }}</div>
+        </div>
+        <div>
+          <div style="font-size:9px;opacity:0.4;margin-bottom:4px;letter-spacing:0.5px;font-weight:600;">PRIORITY</div>
+          <span [ngClass]="getPriorityClass(project.priority || 'MEDIUM')"
+            style="font-size:9px;padding:2px 8px;border-radius:20px;font-weight:700;">
+            {{ project.priority || 'MEDIUM' }}
           </span>
         </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
-          <div>
-            <div style="font-size:9px;opacity:0.4;margin-bottom:3px;letter-spacing:0.5px;">PROJECT</div>
-            <span style="font-size:13px;font-weight:700;">
-              {{ translatedTitle || project.title }}
-            </span>
-          </div>
-          <div>
-            <div style="font-size:9px;opacity:0.4;margin-bottom:3px;letter-spacing:0.5px;">PM</div>
-            <div style="font-size:12px;font-weight:600;">{{ getPmName() }}</div>
-          </div>
-          <div>
-            <div style="font-size:9px;opacity:0.4;margin-bottom:3px;letter-spacing:0.5px;">DEADLINE</div>
-            <div style="font-size:12px;font-weight:600;" [style.color]="isOverdue() ? '#ef4444' : ''">
-              {{ project.endDate | date:'yyyy-MM-dd' }}
-              <span *ngIf="isOverdue()" style="font-size:9px;color:#ef4444;margin-left:4px;">⚠</span>
-            </div>
-          </div>
-          <div>
-            <div style="font-size:9px;opacity:0.4;margin-bottom:3px;letter-spacing:0.5px;">BUDGET</div>
-            <div style="font-size:12px;font-weight:600;">{{ getBudget() }}</div>
-          </div>
-          <div>
-            <div style="font-size:9px;opacity:0.4;margin-bottom:3px;letter-spacing:0.5px;">START DATE</div>
-            <div style="font-size:12px;font-weight:600;">{{ project.startDate | date:'yyyy-MM-dd' }}</div>
-          </div>
-          <div>
-            <div style="font-size:9px;opacity:0.4;margin-bottom:3px;letter-spacing:0.5px;">PRIORITY</div>
-            <span [ngClass]="getPriorityClass(project.priority || 'MEDIUM')"
-              style="font-size:9px;padding:2px 8px;border-radius:20px;font-weight:700;">
-              {{ project.priority || 'MEDIUM' }}
-            </span>
-          </div>
+        <div>
+          <div style="font-size:9px;opacity:0.4;margin-bottom:4px;letter-spacing:0.5px;font-weight:600;">TEAM SIZE</div>
+          <div style="font-size:12px;font-weight:600;">{{ members.length }} members</div>
         </div>
-        <div *ngIf="project.description" style="font-size:11px;opacity:0.5;line-height:1.6;
-            padding-top:10px;border-top:1px solid rgba(255,255,255,0.05);">
-          {{ translatedDesc || project.description }}
+        <div>
+          <div style="font-size:9px;opacity:0.4;margin-bottom:4px;letter-spacing:0.5px;font-weight:600;">PROGRESS</div>
+          <div style="font-size:12px;font-weight:700;color:#22c55e;">{{ project.progress || 0 }}%</div>
         </div>
       </div>
+
+      <!-- Description -->
+      <div *ngIf="project.description" style="font-size:12px;opacity:0.6;line-height:1.7;
+         padding:12px 14px;border-radius:8px;
+         border:1px solid rgba(255,255,255,0.05);
+         background:rgba(255,255,255,0.02);
+         white-space:pre-wrap;word-break:break-word;
+         overflow:hidden;transition:max-height 0.3s ease;" [style.maxHeight]="showFullDesc ? '1000px' : '72px'">
+        {{ translatedDesc || project.description }}
+      </div>
+      <button *ngIf="project.description" (click)="showFullDesc = !showFullDesc" style="font-size:10px;color:#22c55e;background:none;border:none;
+         cursor:pointer;padding:4px 0;opacity:0.7;margin-top:4px;" onmouseenter="this.style.opacity='1'"
+        onmouseleave="this.style.opacity='0.7'">
+        {{ showFullDesc ? '▲ Show less' : '▼ Show more' }}
+      </button>
+    </div>
+
+    <!-- ④ Board Preview | UI/UX Design — 2 COLUMNS -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
 
       <!-- ⊞ Board Preview -->
       <div class="card">
@@ -178,8 +171,8 @@
               {{ boardPct }}% done
             </span>
             <a [routerLink]="['/kanban', project.id]" style="font-size:10px;background:#16a34a22;color:#22c55e;
-                padding:4px 10px;border-radius:7px;font-weight:600;
-                text-decoration:none;cursor:pointer;">
+                     padding:4px 10px;border-radius:7px;font-weight:600;
+                     text-decoration:none;cursor:pointer;">
               Open Board →
             </a>
           </div>
@@ -188,21 +181,13 @@
         <!-- Column counts -->
         <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:12px;">
           <div *ngFor="let col of boardColumns" style="display:flex;flex-direction:column;align-items:center;gap:6px;">
-
-            <!-- Box (empty rectangle) -->
             <div style="width:100%;height:60px;border-radius:8px;
-      background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.06);">
+              background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.06);">
             </div>
-
-            <!-- Color bar — box အောက်မှာ -->
             <div style="width:100%;height:5px;border-radius:3px;" [style.background]="col.color"></div>
-
-            <!-- Count -->
             <div style="font-size:22px;font-weight:800;line-height:1;" [style.color]="col.color">
               {{ getTasksByStatus(col.status).length }}
             </div>
-
-            <!-- Label -->
             <div style="font-size:9px;opacity:0.45;text-align:center;line-height:1.3;">
               {{ col.label }}
             </div>
@@ -225,10 +210,6 @@
           </div>
         </div>
       </div>
-    </div>
-
-    <!-- ④ Design Preview | API Docs -->
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
 
       <!-- 🎨 UI/UX Design Preview -->
       <div class="card">
@@ -239,7 +220,7 @@
               background:#1e78c822;color:#60a5fa;font-weight:700;
               border:1px solid #3b82f633;">Figma</span>
             <button (click)="showDesign=true" style="font-size:10px;cursor:pointer;background:#3b82f622;border:none;
-                color:#60a5fa;padding:4px 10px;border-radius:7px;font-weight:600;">
+                     color:#60a5fa;padding:4px 10px;border-radius:7px;font-weight:600;">
               Open Design →
             </button>
           </div>
@@ -275,59 +256,47 @@
           </div>
         </div>
       </div>
+    </div>
 
-      <!-- ⚡ API Documentation -->
-      <div class="card">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
-          <div class="card-title" style="margin-bottom:0;">⚡ API Documentation</div>
-          <div style="display:flex;gap:6px;">
-            <span style="font-size:9px;padding:2px 7px;border-radius:5px;
-              background:#22c55e22;color:#22c55e;font-weight:700;
-              border:1px solid #22c55e33;">REST v1</span>
-            <button (click)="showApi=true" style="font-size:10px;cursor:pointer;background:#6366f122;border:none;
-                color:#818cf8;padding:4px 10px;border-radius:7px;font-weight:600;">
-              Open API →
-            </button>
-          </div>
+    <!-- ⑤ API Documentation — FULL WIDTH -->
+    <div class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+        <div class="card-title" style="margin-bottom:0;">⚡ API Documentation</div>
+        <div style="display:flex;gap:6px;">
+          <span style="font-size:9px;padding:2px 7px;border-radius:5px;
+            background:#22c55e22;color:#22c55e;font-weight:700;
+            border:1px solid #22c55e33;">REST v1</span>
+          <button (click)="showApi=true" style="font-size:10px;cursor:pointer;background:#6366f122;border:none;
+                   color:#818cf8;padding:4px 10px;border-radius:7px;font-weight:600;">
+            Open API →
+          </button>
         </div>
-        <div style="display:flex;flex-direction:column;gap:3px;max-height:190px;overflow-y:auto;">
-          <div *ngFor="let ep of (apiEndpoints.length ? apiEndpoints.slice(0,7) : mockEndpoints)" style="display:flex;align-items:center;gap:8px;padding:5px 7px;border-radius:6px;
-              cursor:pointer;transition:background 0.15s;"
-            onmouseenter="this.style.background='rgba(255,255,255,0.05)'"
-            onmouseleave="this.style.background='transparent'">
-            <span [ngClass]="getMethodClass(ep.method)" style="font-size:8px;font-weight:700;padding:2px 6px;border-radius:4px;
-                min-width:44px;text-align:center;flex-shrink:0;">
-              {{ ep.method }}
-            </span>
-            <span style="font-size:10px;font-family:monospace;opacity:0.8;
-              flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
-              {{ ep.url }}
-            </span>
-            <span style="font-size:9px;opacity:0.35;white-space:nowrap;">
-              {{ ep.title || ep.desc }}
-            </span>
-          </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:3px;">
+        <div *ngFor="let ep of (apiEndpoints.length ? apiEndpoints : mockEndpoints).slice(0,6)" style="display:flex;align-items:center;gap:10px;padding:8px 12px;
+                 border-radius:8px;border:1px solid rgba(30,45,74,0.3);margin-bottom:4px;">
+          <span [ngClass]="getMethodClass(ep.method)" style="font-size:9px;font-weight:700;padding:3px 8px;border-radius:4px;
+                   min-width:52px;text-align:center;flex-shrink:0;">
+            {{ ep.method }}
+          </span>
+          <span style="font-size:11px;font-family:monospace;flex:1;">{{ ep.url }}</span>
+          <span style="font-size:10px;opacity:0.45;">{{ ep.title || ep.desc }}</span>
         </div>
       </div>
     </div>
 
-    <!-- ⑤ Database Design -->
+    <!-- ⑥ DB Design — FULL WIDTH -->
     <div class="card">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
         <div class="card-title" style="margin-bottom:0;">🗄️ Database Design</div>
-        <div style="display:flex;gap:6px;">
-          <span style="font-size:9px;padding:2px 7px;border-radius:5px;
-            background:#3b82f622;color:#60a5fa;font-weight:700;
-            border:1px solid #3b82f633;">MySQL</span>
-          <button (click)="showDb=true" style="font-size:10px;cursor:pointer;background:#3b82f622;border:none;
-              color:#60a5fa;padding:4px 10px;border-radius:7px;font-weight:600;">
-            Open Schema →
-          </button>
-        </div>
+        <button (click)="showDb=true" style="font-size:10px;cursor:pointer;background:#1e3a5f22;border:none;
+                 color:#60a5fa;padding:4px 10px;border-radius:7px;font-weight:600;">
+          Open Schema →
+        </button>
       </div>
       <div style="display:flex;gap:10px;overflow-x:auto;padding-bottom:6px;">
         <div *ngFor="let tbl of mockTables" style="flex-shrink:0;border-radius:10px;border:1px solid #1e2d4a;
-            min-width:130px;overflow:hidden;cursor:pointer;transition:border-color 0.15s;"
+                 min-width:130px;overflow:hidden;cursor:pointer;transition:border-color 0.15s;"
           onmouseenter="this.style.borderColor='#3b82f6'" onmouseleave="this.style.borderColor='#1e2d4a'">
           <div style="background:#1e3a5f;padding:6px 10px;font-size:10px;font-weight:700;color:#60a5fa;">
             {{ tbl.name }}
@@ -340,7 +309,7 @@
       </div>
     </div>
 
-    <!-- ⑥ Activity Log -->
+    <!-- ⑦ Activity Log — FULL WIDTH -->
     <div class="card">
       <div class="card-title">🕐 Activity Log</div>
       <div *ngIf="!activities.length" style="text-align:center;padding:20px;font-size:11px;opacity:0.35;">
@@ -370,7 +339,7 @@
   </ng-container>
 </main>
 
-<!-- ════════ RIGHT SIDEBAR (project-specific) ════════ -->
+<!-- ════════ RIGHT SIDEBAR ════════ -->
 <aside class="right-sidebar">
 
   <!-- My Tasks -->
@@ -433,7 +402,8 @@
 
 <!-- Design Modal -->
 <div *ngIf="showDesign" style="position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:1000;
-    display:flex;align-items:center;justify-content:center;animation:fadeIn 0.2s ease;" (click)="showDesign=false">
+         display:flex;align-items:center;justify-content:center;animation:fadeIn 0.2s ease;"
+  (click)="showDesign=false">
   <div style="width:80vw;max-width:900px;max-height:85vh;border-radius:16px;
     border:1px solid #1e2d4a;background:#0d1424;overflow:hidden;
     display:flex;flex-direction:column;" (click)="$event.stopPropagation()">
@@ -455,7 +425,7 @@
 
 <!-- API Modal -->
 <div *ngIf="showApi" style="position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:1000;
-    display:flex;align-items:center;justify-content:center;animation:fadeIn 0.2s ease;" (click)="showApi=false">
+         display:flex;align-items:center;justify-content:center;animation:fadeIn 0.2s ease;" (click)="showApi=false">
   <div style="width:75vw;max-width:750px;max-height:85vh;border-radius:16px;
     border:1px solid #1e2d4a;background:#0d1424;overflow:hidden;
     display:flex;flex-direction:column;" (click)="$event.stopPropagation()">
@@ -467,9 +437,9 @@
     </div>
     <div style="flex:1;overflow-y:auto;padding:16px;">
       <div *ngFor="let ep of (apiEndpoints.length ? apiEndpoints : mockEndpoints)" style="display:flex;align-items:center;gap:10px;padding:8px 12px;
-          border-radius:8px;border:1px solid rgba(30,45,74,0.3);margin-bottom:4px;">
+               border-radius:8px;border:1px solid rgba(30,45,74,0.3);margin-bottom:4px;">
         <span [ngClass]="getMethodClass(ep.method)" style="font-size:9px;font-weight:700;padding:3px 8px;border-radius:4px;
-            min-width:52px;text-align:center;flex-shrink:0;">
+                 min-width:52px;text-align:center;flex-shrink:0;">
           {{ ep.method }}
         </span>
         <span style="font-size:11px;font-family:monospace;flex:1;">{{ ep.url }}</span>
@@ -481,7 +451,7 @@
 
 <!-- DB Schema Modal -->
 <div *ngIf="showDb" style="position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:1000;
-    display:flex;align-items:center;justify-content:center;animation:fadeIn 0.2s ease;" (click)="showDb=false">
+         display:flex;align-items:center;justify-content:center;animation:fadeIn 0.2s ease;" (click)="showDb=false">
   <div style="width:90vw;max-width:1000px;max-height:85vh;border-radius:16px;
     border:1px solid #1e2d4a;background:#0d1424;overflow:hidden;
     display:flex;flex-direction:column;" (click)="$event.stopPropagation()">
