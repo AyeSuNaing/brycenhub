@@ -19,6 +19,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     List<User> findByIsActive(Boolean isActive);
     
+    List<User> findByClientId(Long clientId);
+    
     // ── Admin Dashboard stats ─────────────────────────────────────
     long countByIsActive(Boolean isActive);
  

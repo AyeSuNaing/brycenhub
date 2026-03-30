@@ -7,6 +7,8 @@ import { HttpClient } from '@angular/common/http';
 import { RouterModule } from '@angular/router';
 import { AuthService } from '../services/auth.service';
 import { Router } from '@angular/router';
+import { forkJoin, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 
 const BASE = 'http://localhost:8080/api';
 
@@ -29,6 +31,7 @@ export class ProjectInlineComponent implements OnInit, OnChanges {
   tasks: any[] = [];
   activities: any[] = [];
   apiEndpoints: any[] = [];
+  clients: any[] = [];
 
   // ── STATE ─────────────────────────────────────
   isLoading = true;
@@ -37,7 +40,7 @@ export class ProjectInlineComponent implements OnInit, OnChanges {
   showDb = false;
 
   showFullDesc = false;
-  
+
   // ── BOARD COLUMNS ─────────────────────────────
   boardColumns = [
     { label: 'Backlog', status: 'TODO', color: '#6366f1' },
@@ -153,65 +156,109 @@ export class ProjectInlineComponent implements OnInit, OnChanges {
   }
 
 
+  // loadAll(id: number) {
+  //   const h = { headers: this.auth.getHeaders() };
+
+  //   this.http.get<any[]>(`${BASE}/clients`, { headers: this.auth.getHeaders() })
+  //     .subscribe({ next: c => { this.clients = c; this.cdr.detectChanges(); }, error: () => { } });
+
+  //   this.http.get<any>(`${BASE}/projects/${id}`, h).subscribe({
+  //     next: p => {
+  //       this.project = p;
+  //       this.isLoading = false;
+  //       this.cdr.detectChanges();
+
+  //       // saved language ရှိရင် translate
+  //       if (this.pendingLang && this.pendingLang !== 'en') {
+  //         this.switchLang(this.pendingLang);
+  //         this.pendingLang = '';
+  //       }
+  //     },
+  //     error: () => { this.isLoading = false; this.cdr.detectChanges(); }
+  //   });
+
+  //   this.http.get<any>(`${BASE}/projects/${id}/stats`, h).subscribe({
+  //     next: s => { this.stats = s; this.cdr.detectChanges(); },
+  //     error: () => { }
+  //   });
+
+  //   this.http.get<any[]>(`${BASE}/projects/${id}/members`, h).subscribe({
+  //     next: m => { this.members = m; this.cdr.detectChanges(); },
+  //     error: () => { }
+  //   });
+
+  //   // Tasks load
+  //   this.http.get<any[]>(`${BASE}/tasks/by-project/${id}`, h).subscribe({
+  //     next: t => {
+  //       this.tasks = t;
+  //       this.cdr.detectChanges();
+
+  //       // saved lang ရှိရင် tasks တွေကို translate
+  //       const savedLang = this.auth.getUser()?.preferredLanguage || 'en';
+  //       if (savedLang !== 'en' && savedLang !== 'km') {
+  //         this.translateTasks(savedLang);
+  //       }
+  //     },
+  //     error: () => { }
+  //   });
+
+
+  //   this.http.get<any[]>(`${BASE}/activity-logs/by-project/${id}`, h).subscribe({
+  //     next: a => { this.activities = a; this.cdr.detectChanges(); },
+  //     error: () => { }
+  //   });
+
+  //   this.http.get<any>(`${BASE}/api-docs/by-project/${id}`, h).subscribe({
+  //     next: doc => {
+  //       if (doc?.id) {
+  //         this.http.get<any[]>(`${BASE}/api-docs/${doc.id}/endpoints`, h).subscribe({
+  //           next: ep => { this.apiEndpoints = ep; this.cdr.detectChanges(); },
+  //           error: () => { }
+  //         });
+  //       }
+  //     },
+  //     error: () => { }
+  //   });
+  // }
+
   loadAll(id: number) {
     const h = { headers: this.auth.getHeaders() };
+    this.isLoading = true;
 
-    this.http.get<any>(`${BASE}/projects/${id}`, h).subscribe({
-      next: p => {
-        this.project = p;
-        this.isLoading = false;
-        this.cdr.detectChanges();
+    forkJoin({
+      project: this.http.get<any>(`${BASE}/projects/${id}`, h)
+        .pipe(catchError(() => of(null))),
+      stats: this.http.get<any>(`${BASE}/projects/${id}/stats`, h)
+        .pipe(catchError(() => of(null))),
+      members: this.http.get<any[]>(`${BASE}/projects/${id}/members`, h)
+        .pipe(catchError(() => of([]))),
+      tasks: this.http.get<any[]>(`${BASE}/tasks/by-project/${id}`, h)
+        .pipe(catchError(() => of([]))),
+      activities: this.http.get<any[]>(`${BASE}/activity-logs/by-project/${id}`, h)
+        .pipe(catchError(() => of([]))),
+      clients: this.http.get<any[]>(`${BASE}/clients`, h)
+        .pipe(catchError(() => of([]))),
+    }).subscribe(res => {
+      this.project = res.project;
+      this.stats = res.stats;
+      this.members = res.members;
+      this.tasks = res.tasks;
+      this.activities = res.activities;
+      this.clients = res.clients;
+      this.isLoading = false;
+      this.cdr.detectChanges();  // ← တစ်ကြိမ်တည်းပဲ ခေါ်
 
-        // saved language ရှိရင် translate
-        if (this.pendingLang && this.pendingLang !== 'en') {
-          this.switchLang(this.pendingLang);
-          this.pendingLang = '';
-        }
-      },
-      error: () => { this.isLoading = false; this.cdr.detectChanges(); }
-    });
+      // pending lang translate
+      if (this.pendingLang && this.pendingLang !== 'en') {
+        this.switchLang(this.pendingLang);
+        this.pendingLang = '';
+      }
 
-    this.http.get<any>(`${BASE}/projects/${id}/stats`, h).subscribe({
-      next: s => { this.stats = s; this.cdr.detectChanges(); },
-      error: () => { }
-    });
-
-    this.http.get<any[]>(`${BASE}/projects/${id}/members`, h).subscribe({
-      next: m => { this.members = m; this.cdr.detectChanges(); },
-      error: () => { }
-    });
-
-    // Tasks load
-    this.http.get<any[]>(`${BASE}/tasks/by-project/${id}`, h).subscribe({
-      next: t => {
-        this.tasks = t;
-        this.cdr.detectChanges();
-
-        // saved lang ရှိရင် tasks တွေကို translate
-        const savedLang = this.auth.getUser()?.preferredLanguage || 'en';
-        if (savedLang !== 'en' && savedLang !== 'km') {
-          this.translateTasks(savedLang);
-        }
-      },
-      error: () => { }
-    });
-
-
-    this.http.get<any[]>(`${BASE}/activity-logs/by-project/${id}`, h).subscribe({
-      next: a => { this.activities = a; this.cdr.detectChanges(); },
-      error: () => { }
-    });
-
-    this.http.get<any>(`${BASE}/api-docs/by-project/${id}`, h).subscribe({
-      next: doc => {
-        if (doc?.id) {
-          this.http.get<any[]>(`${BASE}/api-docs/${doc.id}/endpoints`, h).subscribe({
-            next: ep => { this.apiEndpoints = ep; this.cdr.detectChanges(); },
-            error: () => { }
-          });
-        }
-      },
-      error: () => { }
+      // saved lang tasks translate
+      const savedLang = this.auth.getUser()?.preferredLanguage || 'en';
+      if (savedLang !== 'en' && this.tasks.length > 0) {
+        this.translateTasks(savedLang);
+      }
     });
   }
 
@@ -269,10 +316,44 @@ export class ProjectInlineComponent implements OnInit, OnChanges {
     return this.tasks.filter(t => t.status === status);
   }
 
+  getClientName(): string {
+    if (!this.project?.clientId) return '—';
+    // clients table ကနေ ယူ
+    const client = this.clients.find(c => Number(c.id) === Number(this.project.clientId));
+    if (client) return client.companyName || client.name || '—';
+    // fallback: members ထဲမှာ ရှာ
+    const member = this.members.find(m => Number(m.userId) === Number(this.project.clientId));
+    return member?.userName || member?.name || `Client #${this.project.clientId}`;
+  }
+
   getPmName(): string {
     if (!this.project?.pmId) return '—';
-    const pm = this.members.find(m => m.userId === this.project.pmId);
-    return pm?.userName || `PM #${this.project.pmId}`;
+    if (this.project.pmName) return this.project.pmName;
+    const pm = this.members.find(m => Number(m.userId) === Number(this.project.pmId));
+    return pm?.userName || pm?.name || `PM #${this.project.pmId}`;
+  }
+
+  getPmInitial(): string {
+    const name = this.getPmName();
+    if (name.startsWith('PM #')) return 'P';
+    return name[0]?.toUpperCase() || 'P';
+  }
+
+  getStatusColor2(s: string): string {
+    const m: any = {
+      ACTIVE: '#22c55e', PLANNING: '#f59e0b',
+      ON_HOLD: '#6366f1', COMPLETED: '#3b82f6', CANCELLED: '#ef4444',
+    };
+    return m[s] || '#64748b';
+  }
+
+  getStatusBg(s: string): string {
+    const m: any = {
+      ACTIVE: 'rgba(34,197,94,0.12)', PLANNING: 'rgba(245,158,11,0.12)',
+      ON_HOLD: 'rgba(99,102,241,0.12)', COMPLETED: 'rgba(59,130,246,0.12)',
+      CANCELLED: 'rgba(239,68,68,0.12)',
+    };
+    return m[s] || 'rgba(100,116,139,0.12)';
   }
 
   isOverdue(): boolean {
@@ -293,6 +374,14 @@ export class ProjectInlineComponent implements OnInit, OnChanges {
 
   getMemberInitial(m: any): string {
     return (m.userName || m.name || '?')[0].toUpperCase();
+  }
+
+  getPriorityColor2(p: string): string {
+    const m: any = {
+      LOW: '#22c55e', MEDIUM: '#f59e0b',
+      HIGH: '#f97316', CRITICAL: '#ef4444',
+    };
+    return m[p] || '#f59e0b';
   }
 
   getMemberColor(i: number): string {

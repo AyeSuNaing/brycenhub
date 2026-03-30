@@ -607,7 +607,8 @@ export class Kanban implements OnInit {
   canAddTask(): boolean {
     const projectOk = ['PROJECT_MANAGER', 'LEADER']
       .includes(this.currentUserRoleInProject);
-    return projectOk;
+    const isPm = Number(this.project?.pmId) === Number(this.auth.getUser()?.userId);
+    return projectOk || isPm;
   }
 
   goBack() {

@@ -11,16 +11,23 @@ export const routes: Routes = [
     path: 'dashboard',
     canActivate: [authGuard],
     children: [
-      { path: 'boss',   loadComponent: () => import('./dashboard/boss-dashboard').then(m => m.BossDashboard) },
+      { path: 'boss', loadComponent: () => import('./dashboard/boss-dashboard').then(m => m.BossDashboard) },
       { path: 'member', loadComponent: () => import('./dashboard/member-dashboard').then(m => m.MemberDashboard) },
-      { path: 'admin',  loadComponent: () => import('./dashboard/admin-dashboard').then(m => m.AdminDashboard) },
+      { path: 'admin', loadComponent: () => import('./dashboard/admin-dashboard').then(m => m.AdminDashboard) },
     ],
   },
   {
     path: 'projects',
     canActivate: [authGuard],
     loadComponent: () => import('./projects/projects').then(m => m.Projects),
+  }, 
+  {
+    path: 'design/:projectId',
+    canActivate: [authGuard],
+    loadComponent: () => import('./design/design-tool')
+      .then(m => m.DesignToolComponent)
   },
+
   {
     path: 'kanban/:projectId',
     canActivate: [authGuard],

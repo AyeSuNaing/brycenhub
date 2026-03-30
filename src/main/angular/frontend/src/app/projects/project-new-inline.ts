@@ -17,23 +17,23 @@ const BASE = 'http://localhost:8080/api';
 })
 export class ProjectNewInline implements OnInit {
 
-  @Output() close    = new EventEmitter<void>();
-  @Output() created  = new EventEmitter<any>();
+  @Output() close = new EventEmitter<void>();
+  @Output() created = new EventEmitter<any>();
 
   // ── STEP ──────────────────────────────────────────────────────────
   currentStep = 1;  // 1=Basic | 2=Team | 3=Columns | 4=Preview
 
   // ── FORM ──────────────────────────────────────────────────────────
   form = {
-    title:            '',
-    description:      '',
-    branchId:         null as number | null,
-    pmId:             null as number | null,
-    clientId:         null as number | null,
-    startDate:        '',
-    endDate:          '',
-    budget:           null as number | null,
-    priority:         'MEDIUM',
+    title: '',
+    description: '',
+    branchId: null as number | null,
+    pmId: null as number | null,
+    clientId: null as number | null,
+    startDate: '',
+    endDate: '',
+    budget: null as number | null,
+    priority: 'MEDIUM',
     originalLanguage: 'en',
   };
 
@@ -42,9 +42,9 @@ export class ProjectNewInline implements OnInit {
 
   // ── STEP 1 DATA ───────────────────────────────────────────────────
   priorities = [
-    { value: 'LOW',      label: 'Low',      color: '#22c55e' },
-    { value: 'MEDIUM',   label: 'Medium',   color: '#f59e0b' },
-    { value: 'HIGH',     label: 'High',     color: '#f97316' },
+    { value: 'LOW', label: 'Low', color: '#22c55e' },
+    { value: 'MEDIUM', label: 'Medium', color: '#f59e0b' },
+    { value: 'HIGH', label: 'High', color: '#f97316' },
     { value: 'CRITICAL', label: 'Critical', color: '#ef4444' },
   ];
 
@@ -60,49 +60,49 @@ export class ProjectNewInline implements OnInit {
   clients: any[] = [];  // CUSTOMER role users
 
   // ── STEP 2 DATA ───────────────────────────────────────────────────
-  techStack: {name: string, category: string}[] = []; // AI detected + PM edited
-  newTech              = '';       // manual add input
-  newTechCategory       = 'frontend'; // manual add category
-  isDetecting          = false;    // AI detect loading
-  isSuggesting         = false;    // AI suggest loading
+  techStack: { name: string, category: string }[] = []; // AI detected + PM edited
+  newTech = '';       // manual add input
+  newTechCategory = 'frontend'; // manual add category
+  isDetecting = false;    // AI detect loading
+  isSuggesting = false;    // AI suggest loading
   suggestedMembers: any[] = [];    // AI suggested list
   selectedMembers: any[] = [];     // PM selected members
-  branchMembers: any[]   = [];     // all branch members (for manual add)
-  memberSearch           = '';     // search input
-  showMemberSearch       = false;  // toggle manual search
+  branchMembers: any[] = [];     // all branch members (for manual add)
+  memberSearch = '';     // search input
+  showMemberSearch = false;  // toggle manual search
 
   // ── STEP 3 DATA ───────────────────────────────────────────────────
-  boardColumns: {name: string, statusKey: string, color: string, isDone: boolean, isDefault: boolean}[] = [
-    { name: 'Backlog',          statusKey: 'TODO',             color: '#6366f1', isDone: false, isDefault: true  },
-    { name: 'In Progress',      statusKey: 'IN_PROGRESS',      color: '#3b82f6', isDone: false, isDefault: true  },
-    { name: 'In Review',        statusKey: 'IN_REVIEW',        color: '#f59e0b', isDone: false, isDefault: true  },
-    { name: 'Customer Confirm', statusKey: 'PENDING_APPROVAL', color: '#a855f7', isDone: false, isDefault: true  },
-    { name: 'Done',             statusKey: 'DONE',             color: '#22c55e', isDone: true,  isDefault: true  },
+  boardColumns: { name: string, statusKey: string, color: string, isDone: boolean, isDefault: boolean }[] = [
+    { name: 'Backlog', statusKey: 'TODO', color: '#6366f1', isDone: false, isDefault: true },
+    { name: 'In Progress', statusKey: 'IN_PROGRESS', color: '#3b82f6', isDone: false, isDefault: true },
+    { name: 'In Review', statusKey: 'IN_REVIEW', color: '#f59e0b', isDone: false, isDefault: true },
+    { name: 'Customer Confirm', statusKey: 'PENDING_APPROVAL', color: '#a855f7', isDone: false, isDefault: true },
+    { name: 'Done', statusKey: 'DONE', color: '#22c55e', isDone: true, isDefault: true },
   ];
 
   // ── Drag & Drop state ─────────────────────────────────────────
   dragIndex: number | null = null;
 
   // ── New column ────────────────────────────────────────────────
-  newColName  = '';
+  newColName = '';
   newColColor = '#6366f1';
 
   // ── STATE ─────────────────────────────────────────────────────────
   isSubmitting = false;
-  errors: any  = {};
+  errors: any = {};
 
   // ─────────────────────────────────────────────────────────────────
   constructor(
     private http: HttpClient,
     private auth: AuthService,
-    private cdr:  ChangeDetectorRef
-  ) {}
+    private cdr: ChangeDetectorRef
+  ) { }
 
   // ─────────────────────────────────────────────────────────────────
   ngOnInit() {
-    this.currentUser      = this.auth.getUser();
-    this.form.pmId        = this.currentUser?.userId   ?? null;
-    this.form.branchId    = this.currentUser?.branchId ?? null;
+    this.currentUser = this.auth.getUser();
+    this.form.pmId = this.currentUser?.userId ?? null;
+    this.form.branchId = this.currentUser?.branchId ?? null;
 
     this.loadClients();
     this.loadBranchMembers();
@@ -121,7 +121,7 @@ export class ProjectNewInline implements OnInit {
           this.clients = clients;
           this.cdr.detectChanges();
         },
-        error: () => {}
+        error: () => { }
       });
   }
 
@@ -138,7 +138,7 @@ export class ProjectNewInline implements OnInit {
           });
           this.cdr.detectChanges();
         },
-        error: () => {}
+        error: () => { }
       });
   }
 
@@ -182,11 +182,11 @@ export class ProjectNewInline implements OnInit {
 
     const h = { headers: this.auth.getHeaders() };
     this.http.post<any>(`${BASE}/ai/detect-tech-stack`, {
-      title:       this.form.title,
+      title: this.form.title,
       description: this.form.description,
     }, h).subscribe({
       next: res => {
-        this.techStack   = res.techStack || [];
+        this.techStack = res.techStack || [];
         this.isDetecting = false;
         // Auto suggest after detect
         if (this.techStack.length > 0) {
@@ -223,11 +223,11 @@ export class ProjectNewInline implements OnInit {
     const h = { headers: this.auth.getHeaders() };
     this.http.post<any>(`${BASE}/ai/suggest-team`, {
       techStack: this.techStack.map(t => t.name),
-      branchId:  this.form.branchId,
+      branchId: this.form.branchId,
     }, h).subscribe({
       next: res => {
         this.suggestedMembers = res.suggested || [];
-        this.isSuggesting     = false;
+        this.isSuggesting = false;
         this.cdr.detectChanges();
       },
       error: () => {
@@ -242,10 +242,10 @@ export class ProjectNewInline implements OnInit {
     const exists = this.selectedMembers.find(m => m.userId === member.userId);
     if (exists) return;
     this.selectedMembers.push({
-      userId:        member.userId,
-      name:          member.name,
-      role:          member.role,
-      profileImage:  member.profileImage,
+      userId: member.userId,
+      name: member.name,
+      role: member.role,
+      profileImage: member.profileImage,
       roleInProject: this.mapRoleInProject(member.role),
     });
     this.cdr.detectChanges();
@@ -273,10 +273,10 @@ export class ProjectNewInline implements OnInit {
   mapRoleInProject(role: string): string {
     const map: any = {
       'PROJECT_MANAGER': 'PROJECT_MANAGER',
-      'LEADER':          'LEADER',
-      'UI_UX':           'UI_UX',
-      'DEVELOPER':       'DEVELOPER',
-      'QA':              'QA',
+      'LEADER': 'LEADER',
+      'UI_UX': 'UI_UX',
+      'DEVELOPER': 'DEVELOPER',
+      'QA': 'QA',
     };
     return map[role] || 'DEVELOPER';
   }
@@ -295,17 +295,17 @@ export class ProjectNewInline implements OnInit {
     try {
       // ① Project create
       const project = await this.http.post<any>(`${BASE}/projects`, {
-        title:            this.form.title,
-        description:      this.form.description,
-        branchId:         this.form.branchId,
-        pmId:             this.form.pmId,
-        clientId:         this.form.clientId || null,
-        startDate:        this.form.startDate || null,
-        endDate:          this.form.endDate   || null,
-        budget:           this.form.budget    || null,
-        priority:         this.form.priority,
+        title: this.form.title,
+        description: this.form.description,
+        branchId: this.form.branchId,
+        pmId: this.form.pmId,
+        clientId: this.form.clientId || null,
+        startDate: this.form.startDate || null,
+        endDate: this.form.endDate || null,
+        budget: this.form.budget || null,
+        priority: this.form.priority,
         originalLanguage: this.form.originalLanguage,
-        status:           'ACTIVE',
+        status: 'ACTIVE',
       }, h).toPromise();
 
       // ② Tech stack save
@@ -313,10 +313,10 @@ export class ProjectNewInline implements OnInit {
         const tech = this.techStack[i];
         await this.http.post<any>(`${BASE}/project-tech-stacks`, {
           projectId: project.id,
-          name:      tech.name,
-          category:  tech.category,
-          position:  i,
-        }, h).toPromise().catch(() => {});
+          name: tech.name,
+          category: tech.category,
+          position: i,
+        }, h).toPromise().catch(() => { });
       }
 
       // ③ Board columns save
@@ -324,28 +324,43 @@ export class ProjectNewInline implements OnInit {
         const col = this.boardColumns[i];
         await this.http.post<any>(`${BASE}/project-board-columns`, {
           projectId: project.id,
-          name:      col.name,
+          name: col.name,
           statusKey: col.statusKey,
-          color:     col.color,
-          position:  i,
-          isDone:    col.isDone,
-        }, h).toPromise().catch(() => {});
+          color: col.color,
+          position: i,
+          isDone: col.isDone,
+        }, h).toPromise().catch(() => { });
       }
 
       // ④ Team members add
+      // PM ကိုအရင် member အဖြစ် ထည့်
+      await this.http.post<any>(
+        `${BASE}/projects/${project.id}/members`,
+        { userId: this.form.pmId, roleInProject: 'PROJECT_MANAGER' }, h
+      ).toPromise().catch(() => { });
+
+      // Selected members ထည့်
       for (const m of this.selectedMembers) {
         await this.http.post<any>(
           `${BASE}/projects/${project.id}/members`,
           { userId: m.userId, roleInProject: m.roleInProject }, h
-        ).toPromise().catch(() => {});
+        ).toPromise().catch(() => { });
       }
 
-      // ⑤ Client add (CUSTOMER role)
+      // ⑤ Client users add
       if (this.form.clientId) {
-        await this.http.post<any>(
-          `${BASE}/projects/${project.id}/members`,
-          { userId: this.form.clientId, roleInProject: 'CUSTOMER' }, h
-        ).toPromise().catch(() => {});
+        try {
+          const clientUsers: any[] = await this.http.get<any[]>(
+            `${BASE}/clients/${this.form.clientId}/users`, h
+          ).toPromise() ?? [];
+
+          for (const cu of clientUsers) {
+            await this.http.post<any>(
+              `${BASE}/projects/${project.id}/members`,
+              { userId: cu.id, roleInProject: 'CUSTOMER' }, h
+            ).toPromise().catch(() => { });
+          }
+        } catch { }
       }
 
       this.isSubmitting = false;
@@ -401,14 +416,14 @@ export class ProjectNewInline implements OnInit {
     const insertAt = doneIdx >= 0 ? doneIdx : this.boardColumns.length;
 
     this.boardColumns.splice(insertAt, 0, {
-      name:      name,
+      name: name,
       statusKey: statusKey,
-      color:     this.newColColor,
-      isDone:    false,
+      color: this.newColColor,
+      isDone: false,
       isDefault: false,
     });
 
-    this.newColName  = '';
+    this.newColName = '';
     this.newColColor = '#6366f1';
     this.cdr.detectChanges();
   }
@@ -446,33 +461,33 @@ export class ProjectNewInline implements OnInit {
   getRoleColor(role: string): string {
     const map: any = {
       'PROJECT_MANAGER': '#16a34a',
-      'LEADER':          '#0891b2',
-      'DEVELOPER':       '#4f46e5',
-      'UI_UX':           '#7c3aed',
-      'QA':              '#ea580c',
+      'LEADER': '#0891b2',
+      'DEVELOPER': '#4f46e5',
+      'UI_UX': '#7c3aed',
+      'QA': '#ea580c',
     };
     return map[role] || '#475569';
   }
 
   getFormProgress(): number {
     let score = 0;
-    if (this.form.title.trim())       score += 30;
+    if (this.form.title.trim()) score += 30;
     if (this.form.description.trim()) score += 15;
-    if (this.form.startDate)          score += 10;
-    if (this.form.endDate)            score += 10;
-    if (this.form.budget)             score += 10;
-    if (this.techStack.length > 0)    score += 15;
+    if (this.form.startDate) score += 10;
+    if (this.form.endDate) score += 10;
+    if (this.form.budget) score += 10;
+    if (this.techStack.length > 0) score += 15;
     if (this.selectedMembers.length > 0) score += 10;
     return Math.min(score, 100);
   }
 
   // Tech stack grouped by category
-  get groupedTechStack(): {category: string, items: {name: string, category: string, index: number}[]}[] {
+  get groupedTechStack(): { category: string, items: { name: string, category: string, index: number }[] }[] {
     const groups: any = {};
     this.techStack.forEach((t, i) => {
       const cat = t.category || 'other';
       if (!groups[cat]) groups[cat] = [];
-      groups[cat].push({...t, index: i});
+      groups[cat].push({ ...t, index: i });
     });
     return Object.keys(groups).map(cat => ({ category: cat, items: groups[cat] }));
   }
@@ -480,13 +495,13 @@ export class ProjectNewInline implements OnInit {
   getCategoryColor(cat: string): string {
     const map: any = {
       frontend: '#3b82f6',
-      backend:  '#16a34a',
+      backend: '#16a34a',
       database: '#f59e0b',
-      mobile:   '#a855f7',
-      payment:  '#06b6d4',
+      mobile: '#a855f7',
+      payment: '#06b6d4',
       realtime: '#f97316',
-      devops:   '#64748b',
-      other:    '#475569',
+      devops: '#64748b',
+      other: '#475569',
     };
     return map[cat] || '#475569';
   }
@@ -494,13 +509,13 @@ export class ProjectNewInline implements OnInit {
   getCategoryIcon(cat: string): string {
     const map: any = {
       frontend: '🖥',
-      backend:  '⚙️',
+      backend: '⚙️',
       database: '🗄',
-      mobile:   '📱',
-      payment:  '💳',
+      mobile: '📱',
+      payment: '💳',
       realtime: '⚡',
-      devops:   '🐳',
-      other:    '🔧',
+      devops: '🐳',
+      other: '🔧',
     };
     return map[cat] || '🔧';
   }

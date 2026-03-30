@@ -3,6 +3,8 @@ package jp.co.brycen.asn.controller;
 import jp.co.brycen.asn.model.Client;
 import jp.co.brycen.asn.model.User;
 import jp.co.brycen.asn.repository.ClientRepository;
+import jp.co.brycen.asn.repository.UserRepository;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -13,10 +15,17 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/clients")
 public class ClientController {
-
     @Autowired
     private ClientRepository clientRepository;
-
+    @Autowired
+    private UserRepository userRepository;
+    
+    
+    @GetMapping("/{clientId}/users")
+    public ResponseEntity<List<User>> getClientUsers(@PathVariable Long clientId) {
+        return ResponseEntity.ok(userRepository.findByClientId(clientId));
+    }
+    
     // ================================================================
     // GET /api/clients
     // PM + ADMIN + BOSS + DIRECTOR → ကိုယ့် branch ရဲ့ clients
