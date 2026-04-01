@@ -242,7 +242,7 @@
             <span style="font-size:9px;padding:2px 7px;border-radius:5px;
               background:#1e78c822;color:#60a5fa;font-weight:700;
               border:1px solid #3b82f633;">Figma</span>
-            <button (click)="showDesign=true" style="font-size:10px;cursor:pointer;background:#3b82f622;border:none;
+            <button (click)="openDesign()" style="font-size:10px;cursor:pointer;background:#3b82f622;border:none;
                      color:#60a5fa;padding:4px 10px;border-radius:7px;font-weight:600;">
               Open Design →
             </button>
@@ -424,7 +424,7 @@
 <!-- ════════ MODALS ════════ -->
 
 <!-- Design Modal -->
-<div *ngIf="showDesign" style="position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:1000;
+<!-- <div *ngIf="showDesign" style="position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:1000;
          display:flex;align-items:center;justify-content:center;animation:fadeIn 0.2s ease;"
   (click)="showDesign=false">
   <div style="width:80vw;max-width:900px;max-height:85vh;border-radius:16px;
@@ -444,7 +444,7 @@
       </div>
     </div>
   </div>
-</div>
+</div> -->
 
 <!-- API Modal -->
 <div *ngIf="showApi" style="position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:1000;

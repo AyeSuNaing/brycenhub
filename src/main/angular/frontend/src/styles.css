@@ -1,6 +1,20 @@
 /* ① Google Fonts — MUST be first */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
-
+:root {
+  --bg0: #0c0c0e;
+  --bg1: #131315;
+  --bg2: #1a1a1d;
+  --bg3: #222226;
+  --bg4: #2a2a2f;
+  --brd: #2e2e33;
+  --brdL: #3a3a40;
+  --acc: #6c63ff;
+  --acc2: #00d4a8;
+  --acc3: #ff6b6b;
+  --t0: #f0f0f2;
+  --t1: #9a9aa8;
+  --t2: #5a5a65;
+}
 /* ② Tailwind */
 @tailwind base;
 @tailwind components;

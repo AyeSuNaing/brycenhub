@@ -156,70 +156,6 @@ export class ProjectInlineComponent implements OnInit, OnChanges {
   }
 
 
-  // loadAll(id: number) {
-  //   const h = { headers: this.auth.getHeaders() };
-
-  //   this.http.get<any[]>(`${BASE}/clients`, { headers: this.auth.getHeaders() })
-  //     .subscribe({ next: c => { this.clients = c; this.cdr.detectChanges(); }, error: () => { } });
-
-  //   this.http.get<any>(`${BASE}/projects/${id}`, h).subscribe({
-  //     next: p => {
-  //       this.project = p;
-  //       this.isLoading = false;
-  //       this.cdr.detectChanges();
-
-  //       // saved language ရှိရင် translate
-  //       if (this.pendingLang && this.pendingLang !== 'en') {
-  //         this.switchLang(this.pendingLang);
-  //         this.pendingLang = '';
-  //       }
-  //     },
-  //     error: () => { this.isLoading = false; this.cdr.detectChanges(); }
-  //   });
-
-  //   this.http.get<any>(`${BASE}/projects/${id}/stats`, h).subscribe({
-  //     next: s => { this.stats = s; this.cdr.detectChanges(); },
-  //     error: () => { }
-  //   });
-
-  //   this.http.get<any[]>(`${BASE}/projects/${id}/members`, h).subscribe({
-  //     next: m => { this.members = m; this.cdr.detectChanges(); },
-  //     error: () => { }
-  //   });
-
-  //   // Tasks load
-  //   this.http.get<any[]>(`${BASE}/tasks/by-project/${id}`, h).subscribe({
-  //     next: t => {
-  //       this.tasks = t;
-  //       this.cdr.detectChanges();
-
-  //       // saved lang ရှိရင် tasks တွေကို translate
-  //       const savedLang = this.auth.getUser()?.preferredLanguage || 'en';
-  //       if (savedLang !== 'en' && savedLang !== 'km') {
-  //         this.translateTasks(savedLang);
-  //       }
-  //     },
-  //     error: () => { }
-  //   });
-
-
-  //   this.http.get<any[]>(`${BASE}/activity-logs/by-project/${id}`, h).subscribe({
-  //     next: a => { this.activities = a; this.cdr.detectChanges(); },
-  //     error: () => { }
-  //   });
-
-  //   this.http.get<any>(`${BASE}/api-docs/by-project/${id}`, h).subscribe({
-  //     next: doc => {
-  //       if (doc?.id) {
-  //         this.http.get<any[]>(`${BASE}/api-docs/${doc.id}/endpoints`, h).subscribe({
-  //           next: ep => { this.apiEndpoints = ep; this.cdr.detectChanges(); },
-  //           error: () => { }
-  //         });
-  //       }
-  //     },
-  //     error: () => { }
-  //   });
-  // }
 
   loadAll(id: number) {
     const h = { headers: this.auth.getHeaders() };
@@ -331,6 +267,10 @@ export class ProjectInlineComponent implements OnInit, OnChanges {
     if (this.project.pmName) return this.project.pmName;
     const pm = this.members.find(m => Number(m.userId) === Number(this.project.pmId));
     return pm?.userName || pm?.name || `PM #${this.project.pmId}`;
+  }
+
+  openDesign(): void {
+    this.router.navigate(['/design', this.project?.id]);
   }
 
   getPmInitial(): string {

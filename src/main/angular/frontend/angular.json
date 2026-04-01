@@ -27,7 +27,8 @@
             "styles": [
               "node_modules/@angular/cdk/overlay-prebuilt.css",
               "src/styles.css"
-            ]
+            ],
+            "scripts": []
           },
           "configurations": {
             "production": {
