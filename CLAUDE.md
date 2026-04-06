@@ -544,3 +544,1931 @@ cv.upload.path=uploads/cv/
 ---
 
 *Last updated: 2026-03-22 | Brycen Cambodia Team*
+
+# BRYCEN HUB PMS — CLAUDE.md
+# Brycen AI Development Contest 2026
+# ⚠️ READ THIS FIRST IN EVERY NEW CHAT
+
+---
+
+## 🚨 HOW TO START A NEW CHAT
+
+### Step 1 — GitHub Latest Code Sync (အရေးကြီး!)
+Claude.ai Project sidebar မှာ:
+> **Files section** → **AyeSuNaing/brycenhub** card → **🔄 (Refresh) button နှိပ်ပါ**
+
+### Step 2 — CLAUDE.md Upload
+ဒီ file ကို chat ထဲ upload လုပ်ပါ။
+
+### Step 3 — Resume Command
+> "CLAUDE.md ဖတ်ပြီး project resume လုပ်ပါ"
+
+Transcripts: `/mnt/transcripts/` (bash tool နဲ့ ဖတ်ရမယ်)
+
+---
+
+## 📋 Project Info
+
+| Item | Detail |
+|------|--------|
+| Name | Brycen Hub PMS |
+| Company | Brycen Group — JP + MM + KH + VN + KR + US |
+| Contest | Brycen AI Driven Development Contest 2026 |
+| Prize | 1st = 1,000,000 yen |
+| Deadline | May 18, 2026 |
+| Developer | Brycen Cambodia Team |
+
+---
+
+## 🏗️ Tech Stack
+
+| Layer | Tech |
+|-------|------|
+| Backend | Spring Boot 2.7.18 / Java 17 |
+| Security | JWT — jjwt 0.11.5 |
+| Database | MySQL — `asn_db` |
+| Frontend | Angular 21 (Standalone Components) |
+| AI Model | `claude-sonnet-4-20250514` |
+| Backend Port | 8080 |
+| Frontend Port | 4200 |
+
+---
+
+## 📁 Project Path
+
+```
+/Users/brycen_cambodia_2/Documents/1ASNworkspace/welcome/
+└── src/main/angular/frontend/
+    ├── angular.json
+    └── src/
+        ├── styles.css
+        └── app/
+            ├── design/         ← BrycenDesign Tool
+            ├── dashboard/
+            ├── projects/
+            ├── kanban/
+            └── chat/
+```
+
+---
+
+## 🎨 BrycenDesign Tool — CURRENT STATUS (2026-04-01)
+
+### Architecture — 3 File Approach
+
+Role ပေါ်မူတည်ပြီး iframe src ပြောင်းမယ်:
+
+```typescript
+// design-tool.ts မှာ
+const iframePath =
+  designMode === 'edit'    ? '/design-edit.html'    :
+  designMode === 'present' ? '/design-present.html' :
+                              '/design-dev.html';
+```
+
+| File | Location | Role |
+|------|----------|------|
+| `design-edit.html` | `public/` | UI_UX, PROJECT_MANAGER, LEADER |
+| `design-dev.html` | `public/` | Developer (view/inspect only) |
+| `design-present.html` | `public/` | CLIENT |
+
+### Angular Files (src/app/design/)
+
+| File | Purpose |
+|------|---------|
+| `design-tool.ts` | iframe wrapper, postMessage bridge, role detect |
+| `design-tool.html` | Angular topbar + iframe body |
+| `design-tool.scss` | Angular wrapper styles |
+
+### design-tool.ts Key Logic
+
+```typescript
+// Role → mode
+EDIT_ROLES = ['UI_UX', 'PROJECT_MANAGER', 'LEADER']
+// role in EDIT_ROLES → 'edit' → design-edit.html
+// role === 'CLIENT'  → 'present' → design-present.html
+// others             → 'view'   → design-dev.html
+
+// postMessage bridge
+window.addEventListener('message', (e) => {
+  DESIGN_READY      → hide loading, send DESIGN_SET_MODE
+  DESIGN_SAVE       → POST /api/designs/save
+  DESIGN_REQUEST_SAVE → trigger save
+})
+sendToIframe({ type: 'DESIGN_LOAD', canvasData })
+sendToIframe({ type: 'DESIGN_CMD', cmd: 'undo'|'redo' })
+```
+
+### Backend API
+
+```
+GET  /api/designs/by-project/{projectId}
+POST /api/designs/save
+Body: { projectId, canvasData, updatedBy, thumbnailUrl }
+Table: design_boards (MySQL asn_db)
+```
+
+---
+
+## 🖌️ design-edit.html — Edit Mode
+
+**Features:**
+- Left Panel: Components library + Layers tree
+- Canvas: drag/drop, resize, pan/zoom
+- Right Panel: Properties (Attributes/Size tabs) + Color picker + Spacing
+
+**Components supported:**
+Rectangle, Circle, Text, Label, Button, Input, Dropdown, Checkbox,
+Toggle, DatePicker, Image, Icon, Navbar, Sidebar, Tabs, Badge,
+Alert, Progress, Spinner, Table, Divider
+
+**Key functions:**
+```javascript
+addC(type, x, y, frameId)   // add component
+selComp(id)                  // select component
+fillProps(c)                 // fill right panel
+save()                       // → postMessage DESIGN_SAVE
+restoreSnap(framesData)      // load canvas from JSON
+```
+
+---
+
+## 🔍 design-dev.html — Developer Mode
+
+### Layout
+```
+[LP 248px — Layers only] [Canvas] [RP 272px — Dev Inspector]
+```
+
+### Right Panel Tabs
+```
+DEV INSPECTOR (default) | PROPERTIES
+```
+
+### Dev Inspector Tab
+- CSS output (position, size, colors, typography)
+- Angular Template
+- JSON data
+- **✦ Generate Code button** → opens AI Code Generator popup
+
+### Properties Tab
+- Attributes: Fill color + Copy, Stroke + Copy, Appearance, Typography + Copy
+- Size: X, Y, W, H, Rotation, Margin, Padding
+
+### Frame Select Behavior
+- Frame click → unselect all components
+- Frame info ပြ (name, size, bg, components list)
+- Dev Inspector tab မှာ frame CSS/Angular/JSON ပြ
+
+---
+
+## ✦ AI Code Generator Popup
+
+### Trigger
+Dev Inspector → **✦ Generate Code** button click
+
+### Frame Size Auto-detect
+```javascript
+frame.w <= 520  → 📱 Mobile categories
+frame.w > 520   → 🖥 Desktop categories
+```
+
+### Flow
+```
+1. Popup open → Claude API call #1
+   → "latest stable frameworks for mobile/desktop" → JSON
+   → Dynamic list render (NOT hardcoded)
+
+2. User selects framework + types extra instructions
+
+3. ✦ Generate button → Claude API call #2
+   → frame data (components, colors, sizes) + selected lang + prompt
+   → Returns: { files: [{name, content}], summary }
+
+4. File tabs ပြ → code preview → Copy / Download
+```
+
+### Popup UI
+- Size: 95vw × 90vh (ကြီးကြီး)
+- Left: Dynamic framework list + Extra instructions textarea + Generate button
+- Right: File tabs (filename.ext) + Code preview + Copy + Download
+
+### Mobile Categories (AI generated, dynamic)
+```
+Native:         SwiftUI, Android Java, Android Kotlin
+Cross-platform: Flutter, React Native, Ionic, Xamarin, ...
+```
+
+### Desktop Categories (AI generated, dynamic)
+```
+Frontend:  Angular, React, Vue, HTML+CSS, ...
+Backend:   Java Spring Boot, Node.js, Python, PHP, ...
+Database:  MySQL, PostgreSQL, MongoDB, ...
+Full Stack: Frontend + Backend + DB တစ်ခါတည်း
+```
+
+### ⚠️ CORS Issue (PENDING FIX)
+iframe ထဲကနေ Anthropic API direct call → "Network error: Failed to fetch"
+
+**Fix plan:** Angular design-tool.ts ကနေ postMessage proxy:
+```
+iframe → postMessage(AI_REQUEST) → Angular
+Angular → HttpClient → Spring Boot /api/ai/generate
+Spring Boot → Anthropic API → response
+Spring Boot → Angular → postMessage(AI_RESPONSE) → iframe
+```
+
+---
+
+## 🖥️ design-present.html — Present Mode
+
+- Frame render only (no panels, no interaction)
+- Client view — read only
+- Components render with exact design
+
+---
+
+## 📌 Scroll Fix (design-dev.html)
+
+```javascript
+// dscroll direct wheel handler — canvas onWheel を bypass
+dscroll.addEventListener('wheel', function(e) {
+  e.stopPropagation();
+  e.stopImmediatePropagation();
+  this.scrollTop += e.deltaY;
+  e.preventDefault();
+}, { passive: false, capture: true });
+```
+
+---
+
+## 🎯 Current Status (2026-04-01)
+
+### ✅ DONE
+- design-edit.html — full edit mode working
+- design-dev.html — dev inspector + properties + scroll
+- design-present.html — present mode
+- design-tool.ts — role-based iframe routing
+- Frame select → unselect components
+- Tab order: DEV INSPECTOR | PROPERTIES
+- AI Code Generator popup UI (CORS fix pending)
+- Properties: Attributes/Size tabs with copy buttons
+
+### ⏳ PENDING
+1. **CORS fix** — AI API call via Spring Boot proxy
+2. **Boss Dashboard** — Angular UI
+3. **Kanban Board** — pending
+4. **WebSocket Real-time** — pending
+
+---
+
+## ⚙️ application.properties
+
+```properties
+spring.datasource.url=jdbc:mysql://localhost:3306/asn_db
+spring.datasource.username=root
+spring.datasource.password=
+spring.jpa.hibernate.ddl-auto=none
+server.port=8080
+jwt.secret=brycen-secret-key-2026
+anthropic.api.key=YOUR_KEY_HERE
+```
+
+---
+
+## 🌐 Angular Routes
+
+```
+/login
+/dashboard/boss
+/dashboard/admin
+/dashboard/member
+/projects
+/design/:projectId    ← BrycenDesign Tool
+/kanban/:projectId
+/chat
+```
+
+---
+
+## 🖥️ Phase Status
+
+```
+✅ Phase 1   — Auth + JWT
+✅ Phase 2   — Country + Branch + User Management
+✅ Phase 3   — Project + Sprint + Task
+✅ Phase 4   — Comment + Attachment + Notification + ActivityLog
+✅ Phase 5   — Translation API
+✅ Phase 6   — Chat API
+✅ Phase 10  — PM Dashboard Angular UI
+✅ Phase 11  — Admin Dashboard (HR)
+✅ Phase 12  — BrycenDesign Tool (Edit + Dev + Present modes)
+⏳ Phase 7   — WebSocket Real-time
+⏳ Phase 8   — API Docs + ERD
+⏳ Phase 9   — Boss Dashboard
+⏳ Phase 13  — Cloud Deploy + Presentation
+⏳ Phase 14  — Video Call + Meeting Summary
+```
+
+# CV UPLOAD + ADMIN MODULE — DB Decisions
+# Date: 2026-03-19
+# ⚠️ နောက် session မှာ project knowledge ထဲ upload ထည့်ပါ
+
+---
+
+## 🗄️ CV Upload Tables (4 ခု)
+
+### 1. `member_profiles` — users 1:1
+```sql
+id
+user_id              UNIQUE FK users
+experience_years     INT
+experience_detail    TEXT          -- original language
+experience_detail_en TEXT          -- EN standard (AI search)
+education            TEXT          -- original language
+education_en         TEXT          -- EN standard (AI search)
+cv_file_url          VARCHAR(500)
+cv_analyzed          TINYINT(1) DEFAULT 0
+cv_original_language VARCHAR(5)    -- Claude detect: en/ja/my/km/vi/ko
+input_type           ENUM(CV/MANUAL/BOTH)
+analyzed_at          DATETIME
+FULLTEXT INDEX (education_en, experience_detail_en)
+```
+
+### 2. `member_profile_translations` — cache (task_translations pattern)
+```sql
+id
+user_id           FK users CASCADE
+language_code     VARCHAR(5)    -- en/ja/my/km/vi/ko
+education         TEXT          -- translated
+experience_detail TEXT          -- translated
+UNIQUE(user_id, language_code)
+```
+
+### 3. `member_skills` — users 1:N
+```sql
+id
+user_id         FK users CASCADE
+skill_name      VARCHAR(100)  -- original language (ja: iOSエンジニア)
+skill_name_en   VARCHAR(100)  -- EN standard (AI query: iOS (Swift))
+skill_level     ENUM(BEGINNER/MID/SENIOR) NULL  -- blank OK
+input_type      ENUM(CV/MANUAL)
+INDEX (skill_name_en)  -- AI query index
+```
+
+### 4. `member_skill_translations` — cache (task_translations pattern)
+```sql
+id
+skill_id      FK member_skills CASCADE
+language_code VARCHAR(5)     -- en/ja/my/km/vi/ko
+skill_name    VARCHAR(200)   -- translated skill name
+UNIQUE(skill_id, language_code)
+```
+
+---
+
+## 📋 Key Design Decisions
+
+### Skills
+| Column | Purpose |
+|---|---|
+| `skill_name` | Original language (CV ထဲ detect လုပ်တာ) |
+| `skill_name_en` | EN standard — AI suggest query |
+| `member_skill_translations` | Display cache per language |
+
+### Education / Experience
+| Column | Purpose |
+|---|---|
+| `education` | Original language |
+| `education_en` | EN standard — AI search |
+| `experience_detail` | Original language |
+| `experience_detail_en` | EN standard — AI search |
+| `member_profile_translations` | Display cache per language |
+
+### Translation Strategy
+- **On-demand + Cache (Option B)**
+- User ကြည့်မှ translate လုပ်
+- Translate ပြီးရင် DB cache သိမ်း
+- နောက်တစ်ကြိမ် cache hit → fast
+
+### CV Upload Flow
+```
+Admin → CV Upload (PDF, any language)
+         ↓
+    Spring Boot → save file → /uploads/cv/
+         ↓
+    Claude API analyze:
+      - detect language → cv_original_language
+      - extract skills  → skill_name (original) + skill_name_en (EN)
+      - extract edu     → education (original) + education_en (EN)
+      - extract exp     → experience_detail (orig) + experience_detail_en (EN)
+         ↓
+    Preview show (Admin စစ်ကြည့်):
+      - Skills list (editable)
+      - Education (editable)
+      - Experience (editable)
+      - skill_level blank ဆိုရင် Admin manually ဖြည့်
+         ↓
+    Admin confirm / edit
+         ↓
+    DB save:
+      - member_profiles
+      - member_skills (per skill row)
+      - member_profile_translations မသိမ်းသေးဘူး (on-demand)
+      - member_skill_translations မသိမ်းသေးဘူး (on-demand)
+```
+
+### Translation On-demand Flow
+```
+User ကြည့် (preferredLanguage='my')
+         ↓
+member_skill_translations WHERE skill_id=X AND language_code='my'
+         ↓
+Cache hit?  → return cached ✅
+Cache miss? → Claude translate (skill_name_en → my)
+           → save to member_skill_translations
+           → return translated
+```
+
+### AI Suggest Flow (New Project)
+```
+PM → project description type
+   → "Suggest Team" button
+   → Spring Boot → Claude API
+   → Claude reads:
+       member_skills.skill_name_en    (language-agnostic)
+       member_profiles.education_en   (language-agnostic)
+       member_profiles.experience_detail_en
+   → Returns best match members
+   → PM confirm / adjust
+```
+
+---
+
+## 🗄️ Admin Module Tables (8 ခု) — admin-migration.sql
+
+| Table | Purpose |
+|---|---|
+| `member_profiles` | CV, exp, edu |
+| `member_skills` | Skills per row |
+| `salary_structures` | Base salary history (append-only) |
+| `attendance_logs` | Fingerprint in/out |
+| `ot_requests` | OT request + approve |
+| `salary_history` | Monthly payroll |
+| `public_holidays` | Holiday calendar |
+| `tax_brackets` | Country tax tiers |
+
+### Salary Key Decisions
+- Working days: Mon~Fri only (Sat/Sun ပိတ်)
+- OT Rate: Mon~Fri/Sat = ×1.5 | Sun/Holiday = ×2.0
+- Salary cycle: 25th ~ 24th next month
+- Pay date: 25th
+- Formula: `net = (base/working_days × actual_days) + OT - deductions - tax`
+- Tax: Progressive (tax_brackets table) — Country Director + Admin manage
+- `salary_structures` currency မသိမ်း → users→branches→countries.currency join
+- `salary_history` currency သိမ်း (historical record မပျက်အောင်)
+- Status flow: DRAFT → HR_REVIEWED → CONFIRMED → PAID
+
+### Countries Table Update
+```sql
+ALTER TABLE countries ADD COLUMN currency VARCHAR(10);
+-- JP=JPY, MM=MMK, KH=KHR, VN=VND, KR=KRW, US=USD
+```
+
+---
+
+## 📋 Admin Dashboard Layout (Confirmed)
+
+```
+ROW 1 — Stats (Total Staff | OT/hrs | Leave/Today | Payroll)
+ROW 2 — March Holidays | Quick Actions | Today on Leave (equal width)
+ROW 3 — OT Requests (full width, table view)
+ROW 4 — Leave Requests (full width, table view)
+ROW 5 — Staff List (full width, table view)
+```
+
+### Leave Request Fields
+- leave_type: ANNUAL / SICK / UNPAID
+- start_date, end_date, total_days
+- reason (required)
+- status: PENDING → APPROVED / REJECTED
+
+### OT Request Fields
+- work_date, ot_hours, day_type, ot_rate
+- project_id (ဘယ် project မှာ OT လဲ ပြမယ်)
+- reason
+- status: PENDING → APPROVED / REJECTED
+
+---
+
+## 📁 Migration Files
+```
+/mnt/user-data/outputs/admin-migration.sql     ← admin module (8 tables)
+/mnt/user-data/outputs/cv_upload_tables.sql    ← CV upload (4 tables)
+```
+
+---
+
+## ⏳ TODO (Next Sessions)
+
+- [ ] Spring Boot — OT Request Model/Service/Controller
+- [ ] Spring Boot — Leave Request Model/Service/Controller
+- [ ] Spring Boot — Public Holiday Controller
+- [ ] Spring Boot — MemberProfile + CV Upload + Claude analyze
+- [ ] Spring Boot — MemberSkill + Translation on-demand
+- [ ] Angular — Add Staff page (Basic Info + CV Upload + Skills)
+- [ ] Angular — CV Preview + Confirm flow
+- [ ] Angular — OT/Leave management pages
+
+---
+*Last updated: 2026-03-19 | Brycen Cambodia Team*
+
+# ADMIN MODULE — DB Decisions (2026-03-18)
+# ⚠️ နောက် session မှာ ဒီဖိုင်ကို CLAUDE.md ထဲ ထည့်ပါ
+
+---
+
+## 🗄️ New Tables (8 ခု) — admin-migration.sql
+
+| Table | Purpose |
+|---|---|
+| `member_profiles` | CV, exp, edu — users 1:1 |
+| `member_skills` | Skills per row — users 1:N |
+| `salary_structures` | Base salary history (append-only) |
+| `attendance_logs` | Fingerprint Excel in/out |
+| `ot_requests` | OT request + approve flow |
+| `salary_history` | Monthly payroll record |
+| `public_holidays` | Country holiday calendar |
+| `tax_brackets` | Country progressive tax tiers |
+
+---
+
+## 📋 Key Design Decisions
+
+### member_profiles
+- `users` table နဲ့ 1:1 (UNIQUE user_id)
+- `input_type` ENUM('CV','MANUAL','BOTH')
+- `cv_analyzed` TINYINT(1) — Claude analyze ပြီးပြီ flag
+
+### member_skills
+- `skill_level` ENUM('BEGINNER','MID','SENIOR') **NULL allowed** ✅
+- CV ကနေ level မပါရင် blank ထားမယ် — Admin manually ဖြည့်
+- `input_type` ENUM('CV','MANUAL')
+- AI suggest query: `WHERE skill_name = 'iOS'`
+
+### salary_structures
+- **append-only** — update မလုပ်ဘူး
+- `effective_date` နဲ့ latest salary ရှာ
+- `active` flag မလို — `effective_date DESC LIMIT 1` သုံး
+- **currency မသိမ်း** — `users → branches → countries.currency` join
+- `note` VARCHAR(500) — "Promotion", "Annual raise" မှတ်
+
+### attendance_logs
+- `UNIQUE(user_id, work_date)` ✅
+- `time_out NULL` = Not check out
+- `is_dayoff = true` = Full day off / Weekend
+- `source` ENUM('FINGERPRINT','MANUAL')
+
+### ot_requests
+- Staff က OT လုပ်ပြီး **နောက်နေ့** တင်မယ်
+- Admin approve မှ `ot_amount` calculate
+- `day_type` ENUM('WEEKDAY','SATURDAY','SUNDAY','HOLIDAY')
+- OT Rate: WEEKDAY/SAT = 1.5, SUNDAY/HOLIDAY = 2.0
+
+### salary_history
+- `pay_period` VARCHAR(7) — "2026-03"
+- `period_start` DATE — 2026-02-25 (25th prev month)
+- `period_end` DATE — 2026-03-24 (24th this month)
+- `currency` VARCHAR(10) သိမ်း ✅ (historical record မပျက်အောင်)
+- Status: `DRAFT → HR_REVIEWED → CONFIRMED → PAID`
+- `UNIQUE(user_id, pay_period)`
+
+### public_holidays
+- `UNIQUE(country_id, holiday_date)`
+- Country Director + Admin manage
+
+### tax_brackets
+- Progressive tax (tier ခွဲ)
+- `max_salary NULL` = highest bracket (unlimited)
+- Country Director + Admin manage
+
+---
+
+## 💰 Salary Cycle
+```
+25th (this month) ~ 24th (next month) = 1 pay period
+24th evening = Admin finalize
+25th = Salary paid
+```
+
+## 💰 OT Rates
+```
+Mon ~ Fri  = × 1.5
+Saturday   = × 1.5
+Sunday     = × 2.0
+Holiday    = × 2.0
+```
+
+## 💰 Salary Formula
+```
+working_days   = Mon~Fri count in period - public holidays
+daily_rate     = base_salary ÷ working_days
+actual_salary  = daily_rate × actual_days_worked
+net_before_tax = actual_salary + ot_amount - deductions
+tax            = progressive calculate from tax_brackets
+net_salary     = net_before_tax - tax
+```
+
+## 🔄 Countries Table Update
+```sql
+-- currency column ထည့်ပြီး
+ALTER TABLE countries ADD COLUMN currency VARCHAR(10);
+-- JP=JPY, MM=MMK, KH=KHR, VN=VND, KR=KRW, US=USD
+```
+
+---
+
+## 🤖 AI Features (Discussed)
+
+### CV Analysis Flow
+```
+Admin → CV Upload (PDF)
+      → Claude API analyze
+      → Preview (skills, edu, exp)
+      → Admin confirm / edit
+      → DB save (member_profiles + member_skills)
+```
+
+### Smart Team Suggest Flow
+```
+PM → New Project description
+   → "Suggest Team" button
+   → Spring Boot → Claude API
+   → Claude reads member_skills
+   → Returns best match members
+   → PM confirm / adjust
+```
+
+### Claude API
+- Model: `claude-haiku-4-5-20251001` (fast + cheap)
+- Key: stored in `application.properties`
+- Translation: DeepL ဖြုတ်ပြီး Claude တစ်ခုတည်း ✅
+- Supported languages: EN / JP / MY / KH / VN / KO ✅
+
+---
+
+## 📁 Migration File
+```
+/mnt/user-data/outputs/admin-migration.sql
+Run after: asn_final_schema.sql
+```
+
+---
+
+## ⏳ Admin Dashboard — TODO
+- [ ] Staff List + CV Upload UI (Angular)
+- [ ] Monthly Payroll Wizard (4 steps)
+- [ ] AI Team Suggest integration
+- [ ] Tax Brackets management UI
+- [ ] Public Holidays UI
+- [ ] Announcement create
+
+
+# BRYCEN HUB PMS — CLAUDE.md
+# Brycen AI Development Contest 2026
+# ⚠️ READ THIS FIRST IN EVERY NEW CHAT
+
+---
+
+## 🚨 HOW TO START A NEW CHAT
+
+### Step 1 — GitHub Latest Code Sync (အရေးကြီး!)
+Claude.ai Project sidebar မှာ:
+> **Files section** → **AyeSuNaing/brycenhub** card → **🔄 (Refresh) button နှိပ်ပါ**
+
+ဒီ step မလုပ်ရင် Claude က old code ကိုသာ မြင်မယ်။
+
+### Step 2 — CLAUDE.md Upload
+ဒီ file ကို chat ထဲ upload လုပ်ပါ။
+
+### Step 3 — Resume Command
+> "CLAUDE.md ဖတ်ပြီး project resume လုပ်ပါ"
+
+---
+
+Transcripts: `/mnt/transcripts/` (bash tool နဲ့ ဖတ်ရမယ်)
+Latest: `2026-03-10-04-24-15-brycen-hub-pms-angular-dev.txt`
+
+---
+
+## 📋 Project Info
+
+| Item | Detail |
+|------|--------|
+| Name | Brycen Hub PMS |
+| Company | Brycen Group — JP + MM + KH + VN + KR + US |
+| Contest | Brycen AI Driven Development Contest 2026 |
+| Prize | 1st = 1,000,000 yen |
+| Deadline | May 18, 2026 |
+| Developer | Brycen Cambodia Team |
+
+---
+
+## 🏗️ Tech Stack
+
+| Layer | Tech |
+|-------|------|
+| Backend | Spring Boot 2.7.18 / Java 17 |
+| Security | JWT — jjwt 0.11.5 |
+| Database | MySQL — `asn_db` |
+| Frontend | Angular 21 (Standalone Components) |
+| Styling | **Tailwind CSS v3** — `tailwind.config.js` EXISTS ✅ |
+| Backend Port | 8080 |
+| Frontend Port | 4200 |
+
+**CSS Architecture:**
+- `styles.css` = `@import Google Fonts` → `@tailwind base/components/utilities` → CSS vars → global styles
+- Component `.scss` files = **EMPTY** (all styles in global `styles.css`)
+- Theme = `body.dark { --bg: #0a0f1e; ... }` / `body.light { --bg: #f1f5f9; ... }`
+
+---
+
+## 📁 Project Path (CONFIRMED)
+
+```
+/Users/brycen_cambodia_2/Documents/1ASNworkspace/welcome/
+└── src/main/angular/frontend/
+    ├── tailwind.config.js         ✅ EXISTS
+    ├── angular.json
+    └── src/
+        ├── styles.css             ← Global (Tailwind + CSS vars + all styles)
+        └── app/
+            ├── models/            ← dashboard.models.ts
+            ├── services/          ← dashboard-data.service.ts
+            ├── shared/            ← announcement-bar, bell-notification
+            ├── dashboard/         ← pm-dashboard, boss-dashboard, dev-dashboard
+            ├── login/
+            ├── projects/
+            ├── kanban/
+            ├── chat/
+            ├── guards/
+            ├── app.routes.ts
+            └── app.config.ts
+```
+
+---
+
+## 👥 Roles
+
+```
+BOSS → COUNTRY_DIRECTOR → ADMIN (HR) → PROJECT_MANAGER → LEADER → UI_UX/DEVELOPER/QA
+CUSTOMER (separate)
+```
+
+Badge colors: BOSS=yellow | DIRECTOR=purple | ADMIN=pink | PM=green | LEADER=cyan | DEV=indigo | QA=orange
+
+---
+
+## 🗄️ DATABASE — Full Schema (24 Tables)
+
+### 1. countries
+```sql
+id, name, code(JP/MM/KH/VN/KR/US), flag_emoji, created_at
+-- Data: JP(1), MM(2), KH(3), VN(4), KR(5), US(6)
+```
+
+### 2. branches
+```sql
+id, country_id FK, name, address, created_at
+-- Data: Japan HQ(1), Myanmar(2), Cambodia(3), Vietnam(4), Korea(5), USA(6)
+```
+
+### 3. users
+```sql
+id, name, email UNIQUE, password(BCrypt), role, branch_id FK,
+preferred_language(en/ja/my/vi/ko/km), is_active(0/1),
+profile_image, phone, created_at, updated_at
+-- Roles: BOSS|COUNTRY_DIRECTOR|ADMIN|PROJECT_MANAGER|LEADER|UI_UX|DEVELOPER|QA|CUSTOMER
+-- Default: admin@asn.com / password → BOSS
+```
+
+### 4. director_countries (many-to-many)
+```sql
+id, director_id FK users, country_id FK countries,
+assigned_at, assigned_by FK users
+UNIQUE(director_id, country_id)
+```
+
+### 5. projects
+```sql
+id, title, description, status(PLANNING/ACTIVE/ON_HOLD/COMPLETED/CANCELLED),
+pm_id FK users, branch_id FK branches,
+start_date DATE, end_date DATE, budget DECIMAL(15,2),
+progress INT(0-100), created_by FK users, created_at, updated_at
+```
+
+### 6. project_members
+```sql
+id, project_id FK CASCADE, user_id FK,
+role_in_project(PROJECT_MANAGER/LEADER/UI_UX/DEVELOPER/QA/CUSTOMER),
+status(ACTIVE/INACTIVE/REMOVED), joined_at, removed_at
+```
+
+### 7. sprints
+```sql
+id, project_id FK CASCADE, name, start_date DATE, end_date DATE,
+status(PLANNED/ACTIVE/COMPLETED), created_at
+```
+
+### 8. tasks
+```sql
+id, project_id FK CASCADE, sprint_id FK, parent_task_id FK(subtask),
+title, description, original_language(en),
+status(TODO/IN_PROGRESS/IN_REVIEW/DONE/DELAYED/PENDING_APPROVAL),
+priority(LOW/MEDIUM/HIGH/CRITICAL),
+label VARCHAR(200) -- comma separated "bug,feature,urgent"
+assignee_id FK users, reporter_id FK users,
+due_date DATE, estimated_hours DECIMAL(6,2), actual_hours DECIMAL(6,2),
+position INT, created_at, updated_at
+-- ⚠️ Java field: assigneeId → assignee_id, reporterId → reporter_id
+```
+
+### 9. task_translations
+```sql
+id, task_id FK CASCADE, language_code(en/ja/my/vi/ko/km),
+translated_title, translated_description, created_at
+UNIQUE(task_id, language_code)
+```
+
+### 10. task_confirmations
+```sql
+id, task_id FK CASCADE, customer_id FK users,
+status(PENDING/APPROVED/REJECTED), feedback TEXT, confirmed_at, created_at
+```
+
+### 11. comments
+```sql
+id, task_id FK CASCADE, user_id FK, content TEXT,
+original_language(en), created_at, updated_at
+```
+
+### 12. comment_translations
+```sql
+id, comment_id FK CASCADE, language_code,
+translated_content TEXT, created_at
+UNIQUE(comment_id, language_code)
+```
+
+### 13. attachments
+```sql
+id, task_id FK, comment_id FK, uploaded_by FK users,
+file_name, file_url, file_type(image/video/document),
+file_size BIGINT(bytes), created_at
+```
+
+### 14. design_boards
+```sql
+id, project_id FK UNIQUE, canvas_data LONGTEXT(Fabric.js JSON),
+thumbnail_url, version INT, updated_by FK users, updated_at
+```
+
+### 15. design_board_history
+```sql
+id, design_board_id FK CASCADE, version INT, canvas_data LONGTEXT,
+thumbnail_url, save_note, saved_by FK users, saved_at
+```
+
+### 16. db_designs
+```sql
+id, project_id FK CASCADE, title, file_url, uploaded_by FK users, created_at
+```
+
+### 17. api_docs
+```sql
+id, project_id FK UNIQUE, title, description, version(1.0),
+base_url, created_by FK users, created_at, updated_at
+```
+
+### 18. api_endpoints
+```sql
+id, api_doc_id FK CASCADE, group_name, title, method(GET/POST/PUT/DELETE/PATCH),
+url, description, headers JSON, request_body JSON, request_example TEXT,
+response_body JSON, response_example TEXT, status_codes JSON,
+auth_required TINYINT(1), position INT, created_by FK users, created_at, updated_at
+```
+
+### 19. notifications
+```sql
+id, user_id FK CASCADE, type, title, content TEXT,
+is_read TINYINT(1) DEFAULT 0,
+reference_type(TASK/PROJECT/COMMENT), reference_id BIGINT, created_at
+-- Types: TASK_ASSIGNED|TASK_MOVED|COMMENT_ADDED|MENTIONED|
+--        CUSTOMER_CONFIRMED|CUSTOMER_REJECTED|ANNOUNCEMENT
+```
+
+### 20. announcements
+```sql
+id, author_id FK users, title, content TEXT, original_language(en),
+target_scope(ALL/COUNTRY/BRANCH), target_id BIGINT(country_id or branch_id),
+created_at
+```
+
+### 21. announcement_reads
+```sql
+id, announcement_id FK CASCADE, user_id FK CASCADE, read_at
+UNIQUE(announcement_id, user_id)
+```
+
+### 22. chat_messages
+```sql
+id, channel_type(GLOBAL/COUNTRY/PROJECT/DIRECT), channel_id BIGINT,
+sender_id FK users, content TEXT, original_language(en),
+has_attachment TINYINT(1), created_at
+-- channel_id = country_id / project_id / user_id(DM) depending on channel_type
+```
+
+### 23. chat_read_status
+```sql
+id, message_id FK CASCADE, user_id FK CASCADE, read_at
+UNIQUE(message_id, user_id)
+```
+
+### 24. activity_logs
+```sql
+id, project_id FK SET NULL, user_id FK, action VARCHAR(100),
+target_type(TASK/PROJECT/COMMENT/MEMBER), target_id BIGINT,
+old_value VARCHAR(200), new_value VARCHAR(200), created_at
+-- ⚠️ Java fields: targetType, targetId, oldValue, newValue (NOT entityType/detail)
+-- Actions: TASK_CREATED|TASK_MOVED|TASK_ASSIGNED|COMMENT_ADDED|
+--          FILE_UPLOADED|MEMBER_ADDED|PROJECT_CREATED|STATUS_CHANGED
+```
+
+---
+
+## 🔗 API — Full Reference
+
+All protected endpoints: `Authorization: Bearer {token}`
+Base URL: `http://localhost:8080/api`
+
+### Auth `/api/auth`
+```
+POST /login
+  Body: { email, password }
+  Response: { token, userId, name, email, role, branchId, preferredLanguage, profileImage }
+
+GET  /me
+  Response: current user info
+
+PUT  /language
+  Body: { language }   -- en|ja|my|vi|ko|km
+```
+
+### Users `/api/users`
+```
+GET    /                    -- all users (BOSS/DIRECTOR/ADMIN only)
+GET    /by-branch/{branchId}
+GET    /{id}
+POST   /                    -- create user
+  Body: { name, email, password, role, branchId, preferredLanguage?, phone?, profileImage? }
+
+PUT    /{id}                -- update user
+  Body: { name?, phone?, profileImage?, preferredLanguage?, branchId?, role? }
+
+PUT    /{id}/activate
+PUT    /{id}/deactivate
+PUT    /{id}/change-password
+  Body: { newPassword }
+
+DELETE /{id}
+```
+
+### Countries `/api/countries`
+```
+GET    /
+GET    /{id}
+POST   /    Body: { name, code, flagEmoji? }
+PUT    /{id}
+DELETE /{id}
+```
+
+### Branches `/api/branches`
+```
+GET    /
+GET    /by-country/{countryId}
+GET    /{id}
+POST   /    Body: { countryId, name, address? }
+PUT    /{id}
+DELETE /{id}
+```
+
+### Projects `/api/projects`
+```
+GET    /                    -- all (filtered by role)
+GET    /by-branch/{branchId}
+GET    /my                  -- my projects
+GET    /{id}
+POST   /
+  Body: { title, description?, branchId, pmId?, startDate?, endDate?, budget? }
+
+PUT    /{id}
+  Body: { title?, description?, status?, pmId?, startDate?, endDate?, budget?, progress? }
+  status: PLANNING|IN_PROGRESS|ON_HOLD|COMPLETED|CANCELLED
+
+DELETE /{id}
+
+GET    /{id}/members
+POST   /{id}/members
+  Body: { userId, roleInProject }
+  roleInProject: PROJECT_MANAGER|LEADER|UI_UX|DEVELOPER|QA|CUSTOMER
+
+DELETE /{id}/members/{userId}
+```
+
+### Sprints `/api/sprints`
+```
+GET    /by-project/{projectId}
+GET    /{id}
+POST   /    Body: { projectId, name, startDate?, endDate? }
+PATCH  /{id}/status    Body: { status }   -- PLANNED|ACTIVE|COMPLETED
+DELETE /{id}
+```
+
+### Tasks `/api/tasks`
+```
+GET    /by-project/{projectId}
+GET    /by-project/{projectId}/status/{status}
+GET    /by-project/{projectId}/sprint/{sprintId}
+GET    /{id}/subtasks
+GET    /my
+GET    /{id}
+POST   /
+  Body: { title, projectId, description?, sprintId?, parentTaskId?,
+          priority?, label?, assigneeId?, dueDate?, estimatedHours? }
+  priority: LOW|MEDIUM|HIGH|CRITICAL
+
+PUT    /{id}
+  Body: { title?, description?, status?, priority?, label?, assigneeId?,
+          sprintId?, dueDate?, estimatedHours?, actualHours?, position? }
+
+PATCH  /{id}/status
+  Body: { status, position? }
+  status: TODO|IN_PROGRESS|IN_REVIEW|DONE|DELAYED|PENDING_APPROVAL
+
+DELETE /{id}
+```
+
+### Comments `/api/comments`
+```
+GET    /by-task/{taskId}
+GET    /{id}/replies
+POST   /    Body: { taskId, content, originalLanguage? }
+PUT    /{id}    Body: { content }
+DELETE /{id}
+```
+
+### Notifications `/api/notifications`
+```
+GET    /my
+GET    /unread-count    Response: { count: number }
+PUT    /{id}/read
+PUT    /read-all
+```
+
+### Attachments `/api/attachments`
+```
+POST   /upload    Body: multipart/form-data { file, taskId?, commentId? }
+GET    /by-task/{taskId}
+GET    /by-comment/{commentId}
+DELETE /{id}
+```
+
+### Activity Logs `/api/activity-logs`
+```
+GET    /by-project/{projectId}
+GET    /my
+GET    /task/{taskId}
+```
+
+### Translations `/api/translations`
+```
+GET    /languages
+  Response: [{ code: "en", name: "English" }, ...]
+
+GET    /task/{taskId}?lang={langCode}
+  Response: { taskId, language, title, description }
+
+GET    /comment/{commentId}?lang={langCode}
+  Response: { commentId, language, content }
+```
+
+### Chat `/api/chat`
+```
+POST   /send
+  Body: { channelType, channelId?, content, originalLanguage? }
+  channelType: GLOBAL|COUNTRY|PROJECT|DIRECT
+
+GET    /global
+GET    /country/{countryId}
+GET    /project/{projectId}
+GET    /direct/{otherUserId}
+
+PUT    /read/{messageId}
+PUT    /read-channel    Body: { channelType, channelId? }
+GET    /unread    Response: { count: number }
+```
+
+---
+
+## 🖥️ Phase Status
+
+```
+✅ Phase 1   — Auth + JWT
+✅ Phase 2   — Country + Branch + User Management
+✅ Phase 3   — Project + Sprint + Task
+✅ Phase 4   — Comment + Attachment + Notification + ActivityLog
+✅ Phase 5   — Translation API (Mock/DeepL/Google interface pattern)
+✅ Phase 6   — Chat API
+✅ Phase 10  — PM Dashboard Angular UI (ng serve OK ✅)
+⏳ Phase 7   — WebSocket Real-time
+⏳ Phase 8   — API Docs + ERD
+⏳ Phase 9   — Dashboard APIs
+⏳ Phase 11  — HR & Finance
+⏳ Phase 12  — AI Staff Assignment
+⏳ Phase 13  — Cloud Deploy + Presentation
+⏳ Phase 14  — Video Call + Meeting Summary
+```
+
+---
+
+## 🖥️ PM Dashboard (v26) — Angular Files
+
+**Status:** `ng serve` → success ✅ | CSS styles being fixed 🔧
+
+### Files location: `/mnt/user-data/outputs/angular-v26/`
+
+| File | Place in project | Action |
+|------|-----------------|--------|
+| `pm-dashboard.ts` | `app/dashboard/` | REPLACE |
+| `pm-dashboard.html` | `app/dashboard/` | NEW |
+| `pm-dashboard.scss` | `app/dashboard/` | NEW (empty) |
+| `dashboard.models.ts` | `app/models/` NEW folder | NEW |
+| `dashboard-data.service.ts` | `app/services/` | NEW |
+| `announcement-bar.component.*` (3 files) | `app/shared/` | NEW |
+| `bell-notification.component.*` (3 files) | `app/shared/` | NEW |
+| `styles.css` | `src/styles.css` | REPLACE |
+
+### Layout (LOCKED v26)
+```
+[Topbar 56px]
+[Announcement Bar 32px — click→modal]
+[Left 210px FIXED] [Main SCROLLABLE] [Right 200px FIXED]
+```
+
+### Design Decisions (LOCKED)
+- Theme: Brycen Green `#14532d → #16a34a`
+- Slogan: "One Group. One Platform. Full Visibility." — purple→green italic
+- Sign out: inside Settings submenu
+- Dark/Light: `body.dark` / `body.light` class toggle
+- Bell: Activity only (tabs: All / Activity / Mentions)
+- Announcement pinned=🔒 no dismiss | normal=✕ dismissible
+
+### pm-dashboard.ts REQUIRED properties
+```typescript
+searchQuery: string
+settingsOpen: boolean
+myTasksMaxH: number
+chartData: { month, done, inProgress, todo }[]  // ← "inProgress" NOT "active"
+donutData: { label, count, color }[]
+portfolioProjects: PortfolioProject[]
+// Methods:
+signOut(), getUnreadCount(), getProgressColor(pct),
+getStatusClass(status), getHealthDots(health), getHealthDotColor(i, health),
+getBarMaxVal(), getBarHeight(val, max), getRoleBadgeStyle(role)
+```
+
+### DashboardDataService method names
+```typescript
+getAnnouncements()
+getNotifications()        // Notification has .unread NOT .read
+getActiveProjects()
+getPortfolioProjects()    // ← NOT getPortfolio()
+getTeamMembers()
+getMyTasks()
+getOverdueTasks()
+getActivities()
+getDeadlines()
+```
+
+---
+
+## ⚙️ application.properties
+
+```properties
+spring.datasource.url=jdbc:mysql://localhost:3306/asn_db
+spring.datasource.username=root
+spring.datasource.password=
+spring.jpa.hibernate.ddl-auto=none
+server.port=8080
+translation.provider=mock
+jwt.secret=brycen-secret-key-2026
+```
+
+---
+
+## 📐 Java Coding Standards
+
+```java
+// Always Lombok
+@Data @NoArgsConstructor @AllArgsConstructor @Builder
+
+// ⚠️ Task model field names (NOT typo):
+assigneeId    → assignee_id
+reporterId    → reporter_id
+originalLanguage → original_language
+
+// ⚠️ ActivityLog field names:
+targetType, targetId, oldValue, newValue
+// NOT: entityType, entityId, detail
+
+// Service pattern
+@Service @Transactional
+// Always log to activity_logs after mutations
+
+// Security: Eclipse IDE (not IntelliJ), Lombok v1.18.42 installed
+```
+
+---
+
+## 🌐 Angular Routes
+
+```
+/login
+/dashboard/boss
+/dashboard/pm      ← DONE ✅
+/dashboard/dev
+/projects
+/kanban/:projectId
+/chat
+```
+
+---
+
+## 🎯 Current Status (2026-03-17)
+
+**DONE:**
+- `ng serve` builds successfully ✅
+- PM Dashboard → renamed to `member-dashboard` ✅
+- `dashboard.models.ts` — all models ✅
+- `dashboard-data.service.ts` — `getTaskStats()`, `getChartData()` ✅
+- `api-endpoints.ts` — all Dashboard endpoints ✅
+- `boss-dashboard.ts` — basic version (Sidebar + simple template) ✅
+- `dev-dashboard.ts` — basic version ✅
+- GitHub repo: `AyeSuNaing/brycenhub` (public, main branch) ✅
+
+**IN PROGRESS:**
+- PM Dashboard CSS fix (styles.css Tailwind fix)
+- Boss Dashboard — full design မရှိသေးဘူး
+
+**NEXT STEPS:**
+1. PM Dashboard CSS fix → styles.css correct Tailwind config
+2. Boss Dashboard full Angular UI (Company Overview — all branches)
+3. Dev Dashboard full Angular UI
+4. Kanban Board
+5. Connect to real Spring Boot API
+
+---
+
+## 📂 Key Files
+
+```
+/mnt/user-data/outputs/
+├── CLAUDE.md                        ← THIS FILE
+├── angular-v26/                     ← All Angular PM Dashboard files
+├── asn_final_schema.sql             ← Full DB schema (24 tables)
+├── application.properties           ← Spring Boot config
+├── phase1/ phase2/ phase3/ ...      ← Java backend files by phase
+└── pm-dashboard-files.zip           ← Latest zip
+
+/mnt/transcripts/
+├── journal.txt                      ← Session index
+└── 2026-03-10-04-24-15-brycen-hub-pms-angular-dev.txt  ← Latest
+```
+
+---
+
+*Last updated: 2026-03-10 | Brycen Cambodia Team*
+
+# BRYCEN HUB PMS — CLAUDE.md
+# Brycen AI Development Contest 2026
+# ⚠️ READ THIS FIRST IN EVERY NEW CHAT
+
+---
+
+## 🚨 HOW TO START A NEW CHAT
+
+Upload this file then say:
+> "CLAUDE.md ဖတ်ပြီး project resume လုပ်ပါ"
+
+Transcripts: `/mnt/transcripts/` (bash tool နဲ့ ဖတ်ရမယ်)
+Latest: `2026-03-10-04-24-15-brycen-hub-pms-angular-dev.txt`
+
+---
+
+## 📋 Project Info
+
+| Item | Detail |
+|------|--------|
+| Name | Brycen Hub PMS |
+| Company | Brycen Group — JP + MM + KH + VN + KR + US |
+| Contest | Brycen AI Driven Development Contest 2026 |
+| Prize | 1st = 1,000,000 yen |
+| Deadline | May 18, 2026 |
+| Developer | Brycen Cambodia Team |
+
+---
+
+## 🏗️ Tech Stack
+
+| Layer | Tech |
+|-------|------|
+| Backend | Spring Boot 2.7.18 / Java 17 |
+| Security | JWT — jjwt 0.11.5 |
+| Database | MySQL — `asn_db` |
+| Frontend | Angular 21 (Standalone Components) |
+| Styling | **Tailwind CSS v3** — `tailwind.config.js` EXISTS ✅ |
+| Backend Port | 8080 |
+| Frontend Port | 4200 |
+
+**CSS Architecture:**
+- `styles.css` = `@import Google Fonts` → `@tailwind base/components/utilities` → CSS vars → global styles
+- Component `.scss` files = **EMPTY** (all styles in global `styles.css`)
+- Theme = `body.dark { --bg: #0a0f1e; ... }` / `body.light { --bg: #f1f5f9; ... }`
+
+---
+
+## 📁 Project Path (CONFIRMED)
+
+```
+/Users/brycen_cambodia_2/Documents/1ASNworkspace/welcome/
+└── src/main/angular/frontend/
+    ├── tailwind.config.js         ✅ EXISTS
+    ├── angular.json
+    └── src/
+        ├── styles.css             ← Global (Tailwind + CSS vars + all styles)
+        └── app/
+            ├── models/            ← dashboard.models.ts
+            ├── services/          ← dashboard-data.service.ts
+            ├── shared/            ← announcement-bar, bell-notification
+            ├── dashboard/         ← pm-dashboard, boss-dashboard, dev-dashboard
+            ├── login/
+            ├── projects/
+            ├── kanban/
+            ├── chat/
+            ├── guards/
+            ├── app.routes.ts
+            └── app.config.ts
+```
+
+---
+
+## 👥 Roles
+
+```
+BOSS → COUNTRY_DIRECTOR → ADMIN (HR) → PROJECT_MANAGER → LEADER → UI_UX/DEVELOPER/QA
+CUSTOMER (separate)
+```
+
+Badge colors: BOSS=yellow | DIRECTOR=purple | ADMIN=pink | PM=green | LEADER=cyan | DEV=indigo | QA=orange
+
+---
+
+## 🗄️ DATABASE — Full Schema (24 Tables)
+
+### 1. countries
+```sql
+id, name, code(JP/MM/KH/VN/KR/US), flag_emoji, created_at
+-- Data: JP(1), MM(2), KH(3), VN(4), KR(5), US(6)
+```
+
+### 2. branches
+```sql
+id, country_id FK, name, address, created_at
+-- Data: Japan HQ(1), Myanmar(2), Cambodia(3), Vietnam(4), Korea(5), USA(6)
+```
+
+### 3. users
+```sql
+id, name, email UNIQUE, password(BCrypt), role, branch_id FK,
+preferred_language(en/ja/my/vi/ko/km), is_active(0/1),
+profile_image, phone, created_at, updated_at
+-- Roles: BOSS|COUNTRY_DIRECTOR|ADMIN|PROJECT_MANAGER|LEADER|UI_UX|DEVELOPER|QA|CUSTOMER
+-- Default: admin@asn.com / password → BOSS
+```
+
+### 4. director_countries (many-to-many)
+```sql
+id, director_id FK users, country_id FK countries,
+assigned_at, assigned_by FK users
+UNIQUE(director_id, country_id)
+```
+
+### 5. projects
+```sql
+id, title, description, status(PLANNING/ACTIVE/ON_HOLD/COMPLETED/CANCELLED),
+pm_id FK users, branch_id FK branches,
+start_date DATE, end_date DATE, budget DECIMAL(15,2),
+progress INT(0-100), created_by FK users, created_at, updated_at
+```
+
+### 6. project_members
+```sql
+id, project_id FK CASCADE, user_id FK,
+role_in_project(PROJECT_MANAGER/LEADER/UI_UX/DEVELOPER/QA/CUSTOMER),
+status(ACTIVE/INACTIVE/REMOVED), joined_at, removed_at
+```
+
+### 7. sprints
+```sql
+id, project_id FK CASCADE, name, start_date DATE, end_date DATE,
+status(PLANNED/ACTIVE/COMPLETED), created_at
+```
+
+### 8. tasks
+```sql
+id, project_id FK CASCADE, sprint_id FK, parent_task_id FK(subtask),
+title, description, original_language(en),
+status(TODO/IN_PROGRESS/IN_REVIEW/DONE/DELAYED/PENDING_APPROVAL),
+priority(LOW/MEDIUM/HIGH/CRITICAL),
+label VARCHAR(200) -- comma separated "bug,feature,urgent"
+assignee_id FK users, reporter_id FK users,
+due_date DATE, estimated_hours DECIMAL(6,2), actual_hours DECIMAL(6,2),
+position INT, created_at, updated_at
+-- ⚠️ Java field: assigneeId → assignee_id, reporterId → reporter_id
+```
+
+### 9. task_translations
+```sql
+id, task_id FK CASCADE, language_code(en/ja/my/vi/ko/km),
+translated_title, translated_description, created_at
+UNIQUE(task_id, language_code)
+```
+
+### 10. task_confirmations
+```sql
+id, task_id FK CASCADE, customer_id FK users,
+status(PENDING/APPROVED/REJECTED), feedback TEXT, confirmed_at, created_at
+```
+
+### 11. comments
+```sql
+id, task_id FK CASCADE, user_id FK, content TEXT,
+original_language(en), created_at, updated_at
+```
+
+### 12. comment_translations
+```sql
+id, comment_id FK CASCADE, language_code,
+translated_content TEXT, created_at
+UNIQUE(comment_id, language_code)
+```
+
+### 13. attachments
+```sql
+id, task_id FK, comment_id FK, uploaded_by FK users,
+file_name, file_url, file_type(image/video/document),
+file_size BIGINT(bytes), created_at
+```
+
+### 14. design_boards
+```sql
+id, project_id FK UNIQUE, canvas_data LONGTEXT(Fabric.js JSON),
+thumbnail_url, version INT, updated_by FK users, updated_at
+```
+
+### 15. design_board_history
+```sql
+id, design_board_id FK CASCADE, version INT, canvas_data LONGTEXT,
+thumbnail_url, save_note, saved_by FK users, saved_at
+```
+
+### 16. db_designs
+```sql
+id, project_id FK CASCADE, title, file_url, uploaded_by FK users, created_at
+```
+
+### 17. api_docs
+```sql
+id, project_id FK UNIQUE, title, description, version(1.0),
+base_url, created_by FK users, created_at, updated_at
+```
+
+### 18. api_endpoints
+```sql
+id, api_doc_id FK CASCADE, group_name, title, method(GET/POST/PUT/DELETE/PATCH),
+url, description, headers JSON, request_body JSON, request_example TEXT,
+response_body JSON, response_example TEXT, status_codes JSON,
+auth_required TINYINT(1), position INT, created_by FK users, created_at, updated_at
+```
+
+### 19. notifications
+```sql
+id, user_id FK CASCADE, type, title, content TEXT,
+is_read TINYINT(1) DEFAULT 0,
+reference_type(TASK/PROJECT/COMMENT), reference_id BIGINT, created_at
+-- Types: TASK_ASSIGNED|TASK_MOVED|COMMENT_ADDED|MENTIONED|
+--        CUSTOMER_CONFIRMED|CUSTOMER_REJECTED|ANNOUNCEMENT
+```
+
+### 20. announcements
+```sql
+id, author_id FK users, title, content TEXT, original_language(en),
+target_scope(ALL/COUNTRY/BRANCH), target_id BIGINT(country_id or branch_id),
+created_at
+```
+
+### 21. announcement_reads
+```sql
+id, announcement_id FK CASCADE, user_id FK CASCADE, read_at
+UNIQUE(announcement_id, user_id)
+```
+
+### 22. chat_messages
+```sql
+id, channel_type(GLOBAL/COUNTRY/PROJECT/DIRECT), channel_id BIGINT,
+sender_id FK users, content TEXT, original_language(en),
+has_attachment TINYINT(1), created_at
+-- channel_id = country_id / project_id / user_id(DM) depending on channel_type
+```
+
+### 23. chat_read_status
+```sql
+id, message_id FK CASCADE, user_id FK CASCADE, read_at
+UNIQUE(message_id, user_id)
+```
+
+### 24. activity_logs
+```sql
+id, project_id FK SET NULL, user_id FK, action VARCHAR(100),
+target_type(TASK/PROJECT/COMMENT/MEMBER), target_id BIGINT,
+old_value VARCHAR(200), new_value VARCHAR(200), created_at
+-- ⚠️ Java fields: targetType, targetId, oldValue, newValue (NOT entityType/detail)
+-- Actions: TASK_CREATED|TASK_MOVED|TASK_ASSIGNED|COMMENT_ADDED|
+--          FILE_UPLOADED|MEMBER_ADDED|PROJECT_CREATED|STATUS_CHANGED
+```
+
+---
+
+## 🔗 API — Full Reference
+
+All protected endpoints: `Authorization: Bearer {token}`
+Base URL: `http://localhost:8080/api`
+
+### Auth `/api/auth`
+```
+POST /login
+  Body: { email, password }
+  Response: { token, userId, name, email, role, branchId, preferredLanguage, profileImage }
+
+GET  /me
+  Response: current user info
+
+PUT  /language
+  Body: { language }   -- en|ja|my|vi|ko|km
+```
+
+### Users `/api/users`
+```
+GET    /                    -- all users (BOSS/DIRECTOR/ADMIN only)
+GET    /by-branch/{branchId}
+GET    /{id}
+POST   /                    -- create user
+  Body: { name, email, password, role, branchId, preferredLanguage?, phone?, profileImage? }
+
+PUT    /{id}                -- update user
+  Body: { name?, phone?, profileImage?, preferredLanguage?, branchId?, role? }
+
+PUT    /{id}/activate
+PUT    /{id}/deactivate
+PUT    /{id}/change-password
+  Body: { newPassword }
+
+DELETE /{id}
+```
+
+### Countries `/api/countries`
+```
+GET    /
+GET    /{id}
+POST   /    Body: { name, code, flagEmoji? }
+PUT    /{id}
+DELETE /{id}
+```
+
+### Branches `/api/branches`
+```
+GET    /
+GET    /by-country/{countryId}
+GET    /{id}
+POST   /    Body: { countryId, name, address? }
+PUT    /{id}
+DELETE /{id}
+```
+
+### Projects `/api/projects`
+```
+GET    /                    -- all (filtered by role)
+GET    /by-branch/{branchId}
+GET    /my                  -- my projects
+GET    /{id}
+POST   /
+  Body: { title, description?, branchId, pmId?, startDate?, endDate?, budget? }
+
+PUT    /{id}
+  Body: { title?, description?, status?, pmId?, startDate?, endDate?, budget?, progress? }
+  status: PLANNING|IN_PROGRESS|ON_HOLD|COMPLETED|CANCELLED
+
+DELETE /{id}
+
+GET    /{id}/members
+POST   /{id}/members
+  Body: { userId, roleInProject }
+  roleInProject: PROJECT_MANAGER|LEADER|UI_UX|DEVELOPER|QA|CUSTOMER
+
+DELETE /{id}/members/{userId}
+```
+
+### Sprints `/api/sprints`
+```
+GET    /by-project/{projectId}
+GET    /{id}
+POST   /    Body: { projectId, name, startDate?, endDate? }
+PATCH  /{id}/status    Body: { status }   -- PLANNED|ACTIVE|COMPLETED
+DELETE /{id}
+```
+
+### Tasks `/api/tasks`
+```
+GET    /by-project/{projectId}
+GET    /by-project/{projectId}/status/{status}
+GET    /by-project/{projectId}/sprint/{sprintId}
+GET    /{id}/subtasks
+GET    /my
+GET    /{id}
+POST   /
+  Body: { title, projectId, description?, sprintId?, parentTaskId?,
+          priority?, label?, assigneeId?, dueDate?, estimatedHours? }
+  priority: LOW|MEDIUM|HIGH|CRITICAL
+
+PUT    /{id}
+  Body: { title?, description?, status?, priority?, label?, assigneeId?,
+          sprintId?, dueDate?, estimatedHours?, actualHours?, position? }
+
+PATCH  /{id}/status
+  Body: { status, position? }
+  status: TODO|IN_PROGRESS|IN_REVIEW|DONE|DELAYED|PENDING_APPROVAL
+
+DELETE /{id}
+```
+
+### Comments `/api/comments`
+```
+GET    /by-task/{taskId}
+GET    /{id}/replies
+POST   /    Body: { taskId, content, originalLanguage? }
+PUT    /{id}    Body: { content }
+DELETE /{id}
+```
+
+### Notifications `/api/notifications`
+```
+GET    /my
+GET    /unread-count    Response: { count: number }
+PUT    /{id}/read
+PUT    /read-all
+```
+
+### Attachments `/api/attachments`
+```
+POST   /upload    Body: multipart/form-data { file, taskId?, commentId? }
+GET    /by-task/{taskId}
+GET    /by-comment/{commentId}
+DELETE /{id}
+```
+
+### Activity Logs `/api/activity-logs`
+```
+GET    /by-project/{projectId}
+GET    /my
+GET    /task/{taskId}
+```
+
+### Translations `/api/translations`
+```
+GET    /languages
+  Response: [{ code: "en", name: "English" }, ...]
+
+GET    /task/{taskId}?lang={langCode}
+  Response: { taskId, language, title, description }
+
+GET    /comment/{commentId}?lang={langCode}
+  Response: { commentId, language, content }
+```
+
+### Chat `/api/chat`
+```
+POST   /send
+  Body: { channelType, channelId?, content, originalLanguage? }
+  channelType: GLOBAL|COUNTRY|PROJECT|DIRECT
+
+GET    /global
+GET    /country/{countryId}
+GET    /project/{projectId}
+GET    /direct/{otherUserId}
+
+PUT    /read/{messageId}
+PUT    /read-channel    Body: { channelType, channelId? }
+GET    /unread    Response: { count: number }
+```
+
+---
+
+## 🖥️ Phase Status
+
+```
+✅ Phase 1   — Auth + JWT
+✅ Phase 2   — Country + Branch + User Management
+✅ Phase 3   — Project + Sprint + Task
+✅ Phase 4   — Comment + Attachment + Notification + ActivityLog
+✅ Phase 5   — Translation API (Mock/DeepL/Google interface pattern)
+✅ Phase 6   — Chat API
+✅ Phase 10  — PM Dashboard Angular UI (ng serve OK ✅)
+⏳ Phase 7   — WebSocket Real-time
+⏳ Phase 8   — API Docs + ERD
+⏳ Phase 9   — Dashboard APIs
+⏳ Phase 11  — HR & Finance
+⏳ Phase 12  — AI Staff Assignment
+⏳ Phase 13  — Cloud Deploy + Presentation
+⏳ Phase 14  — Video Call + Meeting Summary
+```
+
+---
+
+## 🖥️ PM Dashboard (v26) — Angular Files
+
+**Status:** `ng serve` → success ✅ | CSS styles being fixed 🔧
+
+### Files location: `/mnt/user-data/outputs/angular-v26/`
+
+| File | Place in project | Action |
+|------|-----------------|--------|
+| `pm-dashboard.ts` | `app/dashboard/` | REPLACE |
+| `pm-dashboard.html` | `app/dashboard/` | NEW |
+| `pm-dashboard.scss` | `app/dashboard/` | NEW (empty) |
+| `dashboard.models.ts` | `app/models/` NEW folder | NEW |
+| `dashboard-data.service.ts` | `app/services/` | NEW |
+| `announcement-bar.component.*` (3 files) | `app/shared/` | NEW |
+| `bell-notification.component.*` (3 files) | `app/shared/` | NEW |
+| `styles.css` | `src/styles.css` | REPLACE |
+
+### Layout (LOCKED v26)
+```
+[Topbar 56px]
+[Announcement Bar 32px — click→modal]
+[Left 210px FIXED] [Main SCROLLABLE] [Right 200px FIXED]
+```
+
+### Design Decisions (LOCKED)
+- Theme: Brycen Green `#14532d → #16a34a`
+- Slogan: "One Group. One Platform. Full Visibility." — purple→green italic
+- Sign out: inside Settings submenu
+- Dark/Light: `body.dark` / `body.light` class toggle
+- Bell: Activity only (tabs: All / Activity / Mentions)
+- Announcement pinned=🔒 no dismiss | normal=✕ dismissible
+
+### pm-dashboard.ts REQUIRED properties
+```typescript
+searchQuery: string
+settingsOpen: boolean
+myTasksMaxH: number
+chartData: { month, done, inProgress, todo }[]  // ← "inProgress" NOT "active"
+donutData: { label, count, color }[]
+portfolioProjects: PortfolioProject[]
+// Methods:
+signOut(), getUnreadCount(), getProgressColor(pct),
+getStatusClass(status), getHealthDots(health), getHealthDotColor(i, health),
+getBarMaxVal(), getBarHeight(val, max), getRoleBadgeStyle(role)
+```
+
+### DashboardDataService method names
+```typescript
+getAnnouncements()
+getNotifications()        // Notification has .unread NOT .read
+getActiveProjects()
+getPortfolioProjects()    // ← NOT getPortfolio()
+getTeamMembers()
+getMyTasks()
+getOverdueTasks()
+getActivities()
+getDeadlines()
+```
+
+---
+
+## ⚙️ application.properties
+
+```properties
+spring.datasource.url=jdbc:mysql://localhost:3306/asn_db
+spring.datasource.username=root
+spring.datasource.password=
+spring.jpa.hibernate.ddl-auto=none
+server.port=8080
+translation.provider=mock
+jwt.secret=brycen-secret-key-2026
+```
+
+---
+
+## 📐 Java Coding Standards
+
+```java
+// Always Lombok
+@Data @NoArgsConstructor @AllArgsConstructor @Builder
+
+// ⚠️ Task model field names (NOT typo):
+assigneeId    → assignee_id
+reporterId    → reporter_id
+originalLanguage → original_language
+
+// ⚠️ ActivityLog field names:
+targetType, targetId, oldValue, newValue
+// NOT: entityType, entityId, detail
+
+// Service pattern
+@Service @Transactional
+// Always log to activity_logs after mutations
+
+// Security: Eclipse IDE (not IntelliJ), Lombok v1.18.42 installed
+```
+
+---
+
+## 🌐 Angular Routes
+
+```
+/login
+/dashboard/boss
+/dashboard/pm      ← DONE ✅
+/dashboard/dev
+/projects
+/kanban/:projectId
+/chat
+```
+
+---
+
+## 🎯 Current Status (2026-03-10)
+
+**DONE:**
+- `ng serve` builds successfully ✅
+- PM Dashboard renders at `localhost:4200/dashboard/pm`
+- All 12 Angular files in place
+
+**IN PROGRESS:**
+- styles.css CSS fix (Tailwind confirmed → need to check tailwind.config.js content)
+- UI should look like v26 design preview
+
+**NEXT STEPS:**
+1. Fix styles.css with correct Tailwind config
+2. Boss Dashboard Angular files
+3. Dev Dashboard Angular files
+4. Kanban Board
+5. Connect to real Spring Boot API
+
+---
+
+## 📂 Key Files
+
+```
+/mnt/user-data/outputs/
+├── CLAUDE.md                        ← THIS FILE
+├── angular-v26/                     ← All Angular PM Dashboard files
+├── asn_final_schema.sql             ← Full DB schema (24 tables)
+├── application.properties           ← Spring Boot config
+├── phase1/ phase2/ phase3/ ...      ← Java backend files by phase
+└── pm-dashboard-files.zip           ← Latest zip
+
+/mnt/transcripts/
+├── journal.txt                      ← Session index
+└── 2026-03-10-04-24-15-brycen-hub-pms-angular-dev.txt  ← Latest
+```
+
+---
+
+*Last updated: 2026-03-10 | Brycen Cambodia Team*
+
+
+
+
+
+
+

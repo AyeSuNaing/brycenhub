@@ -1,4 +1,4 @@
-package jp.co.brycen.welcome_project;
+package jp.co.brycen.asn;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
