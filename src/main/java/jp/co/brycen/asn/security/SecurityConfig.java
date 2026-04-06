@@ -33,10 +33,15 @@ public class SecurityConfig {
             .sessionManagement()
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
             .and()
+//            
+//            .authorizeRequests()
+//                .antMatchers("/api/auth/login").permitAll()
+//                .antMatchers("/uploads/**").permitAll() 
+//                .anyRequest().authenticated()
             .authorizeRequests()
-                .antMatchers("/api/auth/login").permitAll()
-                .antMatchers("/uploads/**").permitAll() 
-                .anyRequest().authenticated()
+            .antMatchers("/", "/api/auth/login", "/uploads/**").permitAll()
+            .anyRequest().authenticated()
+                
             .and()
             .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
