@@ -140,10 +140,11 @@ export class DesignToolComponent implements OnInit, AfterViewInit, OnDestroy {
 
       case 'AI_REQUEST':
         // iframe → Angular → Spring Boot proxy (avoid CORS)
+        // ✅ FIX: { headers: this.auth.getHeaders() } ထည့်ရမယ် — 401 မဖြစ်အောင်
         this.http.post<any>(`${environment.apiBaseUrl}/ai-ui-design/generate`, {
           prompt: msg.prompt,
           maxTokens: msg.maxTokens || 4000
-        }).subscribe({
+        }, { headers: this.auth.getHeaders() }).subscribe({
           next: (res) => {
             this.sendToIframe({
               type: 'AI_RESPONSE',
@@ -176,7 +177,6 @@ export class DesignToolComponent implements OnInit, AfterViewInit, OnDestroy {
   // ── Send command (called from template buttons) ──────────────────
   sendCmd(cmd: string): void {
     if (cmd === 'SAVE') {
-      // Request iframe to send canvas data
       this.sendToIframe({ type: 'DESIGN_REQUEST_SAVE' });
     } else if (cmd === 'UNDO') {
       this.sendToIframe({ type: 'DESIGN_CMD', cmd: 'UNDO' });

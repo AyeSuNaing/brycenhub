@@ -1891,6 +1891,12 @@
             <span>✦</span><span>Generate Code</span>
           </button>
         </div>
+
+        <!-- Tech Stacks section -->
+        <div id="dp-tech-stacks" style="border-bottom:1px solid var(--brd);flex-shrink:0;display:none;">
+          <div style="padding:8px 12px 4px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;color:var(--t2);">Tech Stacks</div>
+          <div id="dp-stacks-list" style="padding:0 12px 8px;display:flex;flex-direction:column;gap:10px;"></div>
+        </div>
         <div class="dscroll">
           <div class="cblk">
             <div class="cbtop">CSS <button class="cpbtn" onclick="cpDev('dcss')">Copy</button></div>
@@ -3937,6 +3943,7 @@
       // Receive project tech stacks
       if (msg && msg.type === 'TECH_STACKS_LOADED') {
         _projectTechStacks = msg.techStacks || [];
+        renderTechStacksPanel();
         return;
       }
 
@@ -4243,6 +4250,47 @@
     }
 
     // ── Close popup ───────────────────────────────
+    // ── Render tech stacks in Dev Inspector ──────
+    function renderTechStacksPanel() {
+      var panel = document.getElementById('dp-tech-stacks');
+      var list  = document.getElementById('dp-stacks-list');
+      if (!panel || !list) return;
+      if (!_projectTechStacks.length) { panel.style.display = 'none'; return; }
+
+      var catOrder = ['frontend','backend','database','mobile','devops','cloud','realtime','payment','mapping','orchestration','other'];
+      var catIcons = { frontend:'🖥', backend:'⚙️', database:'🗄', mobile:'📱', payment:'💳', realtime:'⚡', devops:'🐳', cloud:'☁️', mapping:'🗺', orchestration:'🔧', other:'🔧' };
+
+      // Group by category
+      var groups = {};
+      _projectTechStacks.forEach(function(t) {
+        var cat = (t.category || 'other').toLowerCase();
+        if (!groups[cat]) groups[cat] = [];
+        groups[cat].push(t);
+      });
+
+      // Sort by catOrder
+      var sortedCats = Object.keys(groups).sort(function(a, b) {
+        var ai = catOrder.indexOf(a), bi = catOrder.indexOf(b);
+        if (ai === -1) ai = 999; if (bi === -1) bi = 999;
+        return ai - bi;
+      });
+
+      var html = '';
+      sortedCats.forEach(function(cat) {
+        html += '<div>';
+        html += '<div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--t2);margin-bottom:4px;">' +
+                (catIcons[cat]||'🔧') + ' ' + cat + '</div>';
+        html += '<div style="display:flex;flex-wrap:wrap;gap:4px;">';
+        groups[cat].forEach(function(t) {
+          html += '<span style="display:inline-flex;align-items:center;height:20px;padding:0 8px;background:var(--bg3);border:1px solid var(--brd);border-radius:10px;font-size:10px;color:var(--t1);font-family:Inter,sans-serif;white-space:nowrap;">' + t.name + '</span>';
+        });
+        html += '</div></div>';
+      });
+
+      list.innerHTML = html;
+      panel.style.display = 'block';
+    }
+
     function closeCGPopup() {
       document.getElementById('CG-POPUP').style.display = 'none';
     }
@@ -4251,74 +4299,404 @@
   </script>
 
   <!-- ── AI CODE GENERATOR POPUP ── -->
+  <!-- ── AI ASSISTANT POPUP (replaces CG popup) ── -->
   <div id="CG-POPUP" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:9000;align-items:center;justify-content:center;pointer-events:all;">
-    <div style="background:var(--bg1);border:1px solid var(--brdL);border-radius:14px;width:95vw;max-width:1200px;height:90vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 24px 80px rgba(0,0,0,.8);pointer-events:all;">
+    <div style="background:var(--bg1);border:1px solid var(--brdL);border-radius:14px;width:88vw;max-width:88vw;height:90vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 24px 80px rgba(0,0,0,.8);pointer-events:all;">
 
       <!-- Header -->
-      <div style="padding:14px 18px;border-bottom:1px solid var(--brd);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;">
+      <div style="padding:12px 18px;border-bottom:1px solid var(--brd);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;">
         <div style="display:flex;align-items:center;gap:10px;">
-          <div style="width:30px;height:30px;border-radius:7px;background:rgba(108,99,255,.2);border:1px solid rgba(108,99,255,.4);display:flex;align-items:center;justify-content:center;font-size:15px;">✦</div>
+          <div style="width:28px;height:28px;border-radius:7px;background:rgba(108,99,255,.2);border:1px solid rgba(108,99,255,.4);display:flex;align-items:center;justify-content:center;font-size:14px;">✦</div>
           <div>
-            <div style="font-family:'Syne',sans-serif;font-size:14px;font-weight:700;color:var(--t0);">AI Code Generator</div>
+            <div style="font-family:'Syne',sans-serif;font-size:14px;font-weight:700;color:var(--t0);">AI Assistant</div>
             <div id="cg-frame-info" style="font-size:10px;color:var(--t2);font-family:'DM Mono',monospace;"></div>
           </div>
         </div>
-        <button onclick="closeCGPopup()" style="background:var(--bg3);border:1px solid var(--brd);border-radius:6px;color:var(--t1);padding:5px 12px;cursor:pointer;font-size:11px;font-family:Inter,sans-serif;">✕ Close</button>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <div style="display:flex;gap:3px;">
+            <button onclick="aiSetLang('en',this)" class="ai-lang-btn" style="height:22px;padding:0 8px;border-radius:4px;font-size:10px;font-weight:600;cursor:pointer;border:1px solid rgba(108,99,255,.4);background:rgba(108,99,255,.15);color:var(--acc);font-family:Inter,sans-serif;">EN</button>
+            <button onclick="aiSetLang('my',this)" class="ai-lang-btn" style="height:22px;padding:0 8px;border-radius:4px;font-size:10px;font-weight:600;cursor:pointer;border:1px solid var(--brd);background:var(--bg3);color:var(--t1);font-family:Inter,sans-serif;">MM</button>
+            <button onclick="aiSetLang('ja',this)" class="ai-lang-btn" style="height:22px;padding:0 8px;border-radius:4px;font-size:10px;font-weight:600;cursor:pointer;border:1px solid var(--brd);background:var(--bg3);color:var(--t1);font-family:Inter,sans-serif;">JP</button>
+          </div>
+          <button onclick="closeCGPopup()" style="background:var(--bg3);border:1px solid var(--brd);border-radius:6px;color:var(--t1);padding:5px 12px;cursor:pointer;font-size:11px;font-family:Inter,sans-serif;">✕ Close</button>
+        </div>
       </div>
 
-      <!-- Body -->
+      <!-- Body: LEFT chat + RIGHT code -->
       <div style="display:flex;flex:1;overflow:hidden;min-height:0;">
 
-        <!-- Left: Framework list + prompt -->
-        <div style="width:220px;border-right:1px solid var(--brd);display:flex;flex-direction:column;flex-shrink:0;overflow:hidden;">
-
-          <!-- Framework list (dynamic) -->
-          <div id="cg-lang-list" style="flex:1;overflow-y:auto;min-height:0;"></div>
-
-          <!-- Prompt + button -->
-          <div style="padding:10px 14px;border-top:1px solid var(--brd);flex-shrink:0;">
-            <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--t2);margin-bottom:5px;">Extra instructions</div>
-            <textarea id="cg-prompt" placeholder="e.g. dark mode, JWT auth, MVVM..." style="width:100%;height:60px;background:var(--bg3);border:1px solid var(--brd);border-radius:6px;padding:7px 8px;font-size:11px;color:var(--t0);font-family:Inter,sans-serif;resize:none;outline:none;box-sizing:border-box;"></textarea>
-            <button id="cg-gen-btn" onclick="cgGenerate()" style="width:100%;height:34px;background:linear-gradient(135deg,rgba(108,99,255,.25),rgba(0,212,168,.15));border:1px solid rgba(108,99,255,.5);border-radius:7px;color:var(--acc);font-size:12px;font-weight:700;cursor:pointer;font-family:Inter,sans-serif;margin-top:7px;">✦ Generate</button>
+        <!-- LEFT: Chat -->
+        <div id="ai-chat-side" style="display:flex;flex-direction:column;flex:1;overflow:hidden;border-right:1px solid var(--brd);">
+          <div id="ai-messages" style="flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px;min-height:0;"></div>
+          <div style="padding:10px 12px;border-top:1px solid var(--brd);display:flex;gap:8px;align-items:flex-end;flex-shrink:0;background:var(--bg1);">
+            <textarea id="ai-input" placeholder="Ask about this design or code..." rows="1"
+              style="flex:1;background:var(--bg3);border:1px solid var(--brd);border-radius:8px;padding:8px 10px;font-size:12px;color:var(--t0);font-family:Inter,sans-serif;outline:none;resize:none;line-height:1.5;max-height:90px;overflow-y:auto;"
+              onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();aiSend();}"
+              oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,90)+'px'"></textarea>
+            <button onclick="aiSend()" style="height:34px;width:34px;background:linear-gradient(135deg,var(--acc),rgba(0,212,168,.8));border:none;border-radius:8px;color:#fff;font-size:15px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;">↑</button>
           </div>
         </div>
 
-        <!-- Right: File tabs + Code -->
-        <div style="flex:1;display:flex;flex-direction:column;min-width:0;overflow:hidden;">
-
+        <!-- RIGHT: Code panel (hidden until files generated) -->
+        <div id="ai-code-side" style="display:none;flex-direction:column;flex:1;overflow:hidden;">
           <!-- File tabs -->
-          <div id="cg-file-tabs" style="display:flex;overflow-x:auto;border-bottom:1px solid var(--brd);flex-shrink:0;background:var(--bg2);min-height:36px;align-items:flex-end;"></div>
-
-          <!-- Loading progress -->
-          <div id="cg-loading" style="display:none;flex-direction:column;align-items:center;justify-content:center;flex:1;gap:16px;background:var(--bg2);">
-            <div style="text-align:center;">
-              <div style="font-size:24px;margin-bottom:8px;animation:spin .8s linear infinite;display:inline-block;">⟳</div>
-              <div id="cg-loading-msg" style="font-size:12px;color:var(--t1);font-family:Inter,sans-serif;">Analyzing design...</div>
-            </div>
-            <div style="width:260px;background:var(--bg3);border-radius:99px;height:4px;overflow:hidden;">
-              <div id="cg-progress-bar" style="height:100%;width:0%;background:linear-gradient(90deg,var(--acc),var(--acc2));border-radius:99px;transition:width .4s ease;"></div>
-            </div>
-            <div id="cg-progress-pct" style="font-size:11px;color:var(--t2);font-family:'DM Mono',monospace;">0%</div>
-          </div>
-
+          <div id="ai-file-tabs" style="display:flex;overflow-x:auto;border-bottom:1px solid var(--brd);flex-shrink:0;background:var(--bg2);min-height:36px;align-items:flex-end;"></div>
           <!-- Code view -->
-          <div id="cg-code-wrap" style="flex:1;overflow-y:auto;overflow-x:auto;background:var(--bg2);min-height:0;display:none;">
-            <pre id="cg-code-view" style="margin:0;padding:14px 16px;font-family:'DM Mono',monospace;font-size:11.5px;line-height:1.75;color:#9aafcc;white-space:pre;min-height:100%;"></pre>
+          <div style="flex:1;overflow:hidden;display:flex;min-height:0;">
+            <div id="ai-line-nums" style="min-width:42px;padding:14px 8px 14px 10px;background:var(--bg1);border-right:1px solid var(--brd);font-family:'DM Mono',monospace;font-size:11px;line-height:1.6;color:var(--t2);text-align:right;overflow:hidden;user-select:none;flex-shrink:0;white-space:pre;">1</div>
+            <div id="ai-code-scroll" style="flex:1;overflow:auto;">
+              <pre id="ai-code-view" style="margin:0;padding:14px 16px;font-family:'DM Mono',monospace;font-size:11px;line-height:1.6;color:var(--t1);white-space:pre;min-width:max-content;tab-size:2;"></pre>
+            </div>
           </div>
-
-          <!-- Bottom bar -->
+          <!-- Footer -->
           <div style="padding:8px 14px;border-top:1px solid var(--brd);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;background:var(--bg1);">
-            <span id="cg-status" style="font-size:11px;color:var(--t2);font-family:'DM Mono',monospace;"></span>
-            <div style="display:flex;gap:6px;">
-              <button id="cg-copy-btn" style="background:var(--bg3);border:1px solid var(--brd);border-radius:5px;color:var(--acc);font-size:11px;cursor:pointer;padding:4px 12px;font-family:Inter,sans-serif;">Copy</button>
-              <button id="cg-dl-btn" onclick="cgDownloadZip()" style="background:rgba(0,212,168,.12);border:1px solid rgba(0,212,168,.3);border-radius:5px;color:var(--acc2);font-size:11px;cursor:pointer;padding:4px 12px;font-family:Inter,sans-serif;">⬇ Download</button>
+            <span id="ai-code-status" style="font-size:10px;color:var(--t2);font-family:'DM Mono',monospace;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></span>
+            <div style="display:flex;gap:6px;flex-shrink:0;">
+              <button id="ai-copy-btn" style="height:28px;padding:0 12px;background:var(--bg3);border:1px solid var(--brd);border-radius:6px;color:var(--t1);font-size:11px;cursor:pointer;font-family:Inter,sans-serif;" onmouseover="this.style.borderColor='var(--acc)';this.style.color='var(--acc)'" onmouseout="this.style.borderColor='var(--brd)';this.style.color='var(--t1)'">📋 Copy</button>
+              <button id="ai-dl-single" style="height:28px;padding:0 12px;background:var(--bg3);border:1px solid var(--brd);border-radius:6px;color:var(--t1);font-size:11px;cursor:pointer;font-family:Inter,sans-serif;" onmouseover="this.style.borderColor='var(--acc2)';this.style.color='var(--acc2)'" onmouseout="this.style.borderColor='var(--brd)';this.style.color='var(--t1)'">⬇ File</button>
+              <button onclick="aiDownloadZip()" style="height:28px;padding:0 14px;background:linear-gradient(135deg,rgba(0,212,168,.2),rgba(108,99,255,.15));border:1px solid rgba(0,212,168,.4);border-radius:6px;color:var(--acc2);font-size:11px;font-weight:700;cursor:pointer;font-family:Inter,sans-serif;">⬇ Download All (.zip)</button>
             </div>
           </div>
         </div>
+
       </div>
     </div>
   </div>
 
+  <script>
+  // ═══════════════════════════════════════════════════════
+  // AI ASSISTANT — popup logic
+  // ═══════════════════════════════════════════════════════
+  var _aiLang2    = 'en';
+  var _aiHistory2 = [];
+  var _aiFiles2   = {};
+  var _aiFrame2   = null;
+  var _aiGenFiles = [];
+
+  // EXT META for syntax highlight tabs
+  var EXT_META2 = {
+    'ts':{color:'#3178c6',icon:'TS'},'js':{color:'#f7df1e',icon:'JS'},
+    'html':{color:'#e34f26',icon:'HT'},'scss':{color:'#cc6699',icon:'SC'},
+    'css':{color:'#264de4',icon:'CS'},'dart':{color:'#00b4ab',icon:'DA'},
+    'swift':{color:'#f05138',icon:'SW'},'kt':{color:'#7f52ff',icon:'KT'},
+    'java':{color:'#f89820',icon:'JV'},'py':{color:'#3776ab',icon:'PY'},
+    'json':{color:'#73c990',icon:'JN'},'xml':{color:'#e37933',icon:'XM'},
+    'vue':{color:'#42b883',icon:'VU'},'jsx':{color:'#61dafb',icon:'RX'},
+    'tsx':{color:'#61dafb',icon:'TX'},'sql':{color:'#00758f',icon:'SQ'},
+    'md':{color:'#aaa',icon:'MD'},'go':{color:'#00add8',icon:'GO'}
+  };
+  function getExtMeta2(fname) {
+    var ext = (fname.split('.').pop()||'').toLowerCase();
+    return EXT_META2[ext] || {color:'#888',icon:(ext.slice(0,2).toUpperCase()||'F')};
+  }
+
+  // Override openCodeGenPopup to open AI Assistant instead
+  function openCodeGenPopup(frameId) {
+    var frame = G.frames.find(function(f){ return f.id === frameId; });
+    if (!frame) frame = G.frames.find(function(f){ return f.id === G.activeFrameId; });
+    if (!frame) { toast('⚠ Select a frame first'); return; }
+
+    _aiFrame2   = frame;
+    _aiHistory2 = [];
+    _aiFiles2   = {};
+    _aiGenFiles = [];
+
+    // Reset UI
+    document.getElementById('ai-messages').innerHTML = '';
+    document.getElementById('ai-input').value = '';
+    document.getElementById('ai-file-tabs').innerHTML = '';
+    document.getElementById('ai-code-view').textContent = '';
+    document.getElementById('ai-code-status').textContent = '';
+    document.getElementById('ai-code-side').style.display = 'none';
+    document.getElementById('ai-chat-side').style.width = '100%';
+    document.getElementById('ai-chat-side').style.flex = '1';
+
+    // Frame info
+    document.getElementById('cg-frame-info').textContent =
+      frame.name + ' · ' + frame.w + '×' + frame.h + ' · ' + frame.comps.length + ' components';
+
+    document.getElementById('CG-POPUP').style.display = 'flex';
+    aiGreet2();
+  }
+
+  function closeCGPopup() {
+    document.getElementById('CG-POPUP').style.display = 'none';
+  }
+
+  function aiSetLang(lang, btn) {
+    _aiLang2 = lang;
+    document.querySelectorAll('.ai-lang-btn').forEach(function(b) {
+      b.style.background = 'var(--bg3)'; b.style.borderColor = 'var(--brd)'; b.style.color = 'var(--t1)';
+    });
+    btn.style.background = 'rgba(108,99,255,.15)'; btn.style.borderColor = 'rgba(108,99,255,.4)'; btn.style.color = 'var(--acc)';
+  }
+
+  function aiGreet2() {
+    var f = _aiFrame2;
+    if (!f) { aiAddMsg2('assistant', 'Hello! How can I help?'); return; }
+
+    // Show loading
+    var loadId = aiAddMsg2('assistant', '● ● ●', true);
+
+    // Build frame context
+    var frameCtx = {
+      frameName: f.name, frameWidth: f.w, frameHeight: f.h,
+      components: JSON.stringify(f.comps.map(function(c){
+        return {type:c.type, name:c.name, x:Math.round(c.x), y:Math.round(c.y),
+                w:Math.round(c.w), h:Math.round(c.h),
+                style:{backgroundColor:c.style.backgroundColor, color:c.style.color}};
+      }))
+    };
+
+    // Auto greeting message — ask AI to describe the frame
+    var greetMsg = {
+      en: 'Analyze this frame and briefly describe what UI components are present and what this screen is for.',
+      my: 'ဒီ frame ကို analyze လုပ်ပြီး ဘာ UI components တွေပါသလဲ၊ ဘာ screen ဖြစ်သလဲ မြန်မြန်ရှင်းပြပေး။',
+      ja: 'このフレームを分析して、どんなUIコンポーネントがあるか、何の画面かを簡潔に説明してください。'
+    };
+
+    fetch('/api/ai-ui-design/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        message: greetMsg[_aiLang2] || greetMsg.en,
+        language: _aiLang2,
+        history: [],
+        frameContext: frameCtx,
+        generatedFiles: null
+      })
+    })
+    .then(function(r){ return r.json(); })
+    .then(function(res) {
+      var el = document.getElementById(loadId); if (el) el.remove();
+      if (res.success) {
+        _aiHistory2.push({ role: 'user',      content: greetMsg[_aiLang2] || greetMsg.en });
+        _aiHistory2.push({ role: 'assistant', content: res.message });
+        if (res.offerGenerate) {
+          aiAddMsgWithBtns2(res.message, res.offerMessage);
+        } else {
+          aiAddMsg2('assistant', res.message);
+        }
+      } else {
+        // Fallback local greeting
+        var el2 = document.getElementById(loadId); if (el2) el2.remove();
+        var msgs = {
+          en: 'I can see the **' + f.name + '** frame (' + f.w + '×' + f.h + 'px) with ' + f.comps.length + ' components. What would you like to know?',
+          my: '**' + f.name + '** frame (' + f.w + '×' + f.h + 'px) မှာ component ' + f.comps.length + ' ခု မြင်ပြီ။ ဘာမေးချင်သလဲ?',
+          ja: '**' + f.name + '**フレーム（' + f.w + '×' + f.h + 'px）に' + f.comps.length + 'コンポーネントがあります。'
+        };
+        aiAddMsg2('assistant', msgs[_aiLang2] || msgs.en);
+      }
+    })
+    .catch(function() {
+      var el = document.getElementById(loadId); if (el) el.remove();
+      var msgs = {
+        en: 'I can see the **' + f.name + '** frame (' + f.w + '×' + f.h + 'px) with ' + f.comps.length + ' components. What would you like to know?',
+        my: '**' + f.name + '** frame (' + f.w + '×' + f.h + 'px) မှာ component ' + f.comps.length + ' ခု မြင်ပြီ။ ဘာမေးချင်သလဲ?',
+        ja: '**' + f.name + '**フレームに' + f.comps.length + 'コンポーネントがあります。'
+      };
+      aiAddMsg2('assistant', msgs[_aiLang2] || msgs.en);
+    });
+  }
+
+  function aiSend() {
+    var input = document.getElementById('ai-input');
+    var text = input.value.trim(); if (!text) return;
+    input.value = ''; input.style.height = 'auto';
+    aiAddMsg2('user', text);
+    _aiHistory2.push({ role: 'user', content: text });
+    var loadId = aiAddMsg2('assistant', '● ● ●', true);
+
+    var frameCtx = null;
+    if (_aiFrame2) {
+      frameCtx = {
+        frameName: _aiFrame2.name, frameWidth: _aiFrame2.w, frameHeight: _aiFrame2.h,
+        components: JSON.stringify(_aiFrame2.comps.map(function(c){
+          return {type:c.type,name:c.name,x:Math.round(c.x),y:Math.round(c.y),w:Math.round(c.w),h:Math.round(c.h),
+                  style:{backgroundColor:c.style.backgroundColor,color:c.style.color}};
+        }))
+      };
+    }
+
+    fetch('/api/ai-ui-design/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        message: text, language: _aiLang2,
+        history: _aiHistory2.slice(-10),
+        frameContext: frameCtx,
+        generatedFiles: _aiGenFiles.length ? _aiGenFiles : null
+      })
+    })
+    .then(function(r){ return r.json(); })
+    .then(function(res) {
+      var el = document.getElementById(loadId); if (el) el.remove();
+      if (res.success) {
+        _aiHistory2.push({ role: 'assistant', content: res.message });
+        if (res.files && res.files.length) {
+          aiAddMsg2('assistant', res.message);
+          aiShowFiles2(res.files, res.summary);
+        } else if (res.offerGenerate) {
+          aiAddMsgWithBtns2(res.message, res.offerMessage);
+        } else {
+          aiAddMsg2('assistant', res.message);
+        }
+      } else {
+        aiAddMsg2('assistant', '❌ ' + (res.error || 'Error occurred'));
+      }
+    })
+    .catch(function() {
+      var el = document.getElementById(loadId); if (el) el.remove();
+      aiAddMsg2('assistant', '❌ Connection error. Check if backend is running.');
+    });
+  }
+
+  function aiAddMsg2(role, text, isLoading) {
+    var msgs = document.getElementById('ai-messages');
+    var id = 'aim-' + Date.now() + '-' + Math.random().toString(36).slice(2);
+    var isUser = role === 'user';
+    var div = document.createElement('div');
+    div.id = id;
+    div.style.cssText = 'display:flex;gap:7px;align-items:flex-start;' + (isUser ? 'flex-direction:row-reverse;' : '');
+    var av = document.createElement('div');
+    av.style.cssText = 'width:24px;height:24px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:11px;margin-top:2px;' +
+      (isUser ? 'background:rgba(108,99,255,.2);' : 'background:linear-gradient(135deg,rgba(108,99,255,.3),rgba(0,212,168,.2));');
+    av.textContent = isUser ? '👤' : '✦';
+    var bubble = document.createElement('div');
+    bubble.style.cssText = 'max-width:82%;padding:8px 12px;border-radius:' +
+      (isUser ? '12px 4px 12px 12px' : '4px 12px 12px 12px') +
+      ';font-size:12px;line-height:1.6;font-family:Inter,sans-serif;' +
+      (isUser ? 'background:rgba(108,99,255,.15);border:1px solid rgba(108,99,255,.2);color:var(--t0);'
+              : 'background:var(--bg3);border:1px solid var(--brd);color:var(--t0);');
+    if (isLoading) {
+      bubble.style.animation = 'pulse 1.2s infinite';
+      bubble.textContent = '● ● ●';
+    } else {
+      bubble.innerHTML = text.replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/\n/g,'<br>');
+    }
+    div.appendChild(av); div.appendChild(bubble);
+    msgs.appendChild(div);
+    msgs.scrollTop = msgs.scrollHeight;
+    return id;
+  }
+
+  function aiAddMsgWithBtns2(text, offerText) {
+    var msgs = document.getElementById('ai-messages');
+    var div = document.createElement('div'); div.style.cssText = 'display:flex;gap:7px;align-items:flex-start;';
+    var av = document.createElement('div');
+    av.style.cssText = 'width:24px;height:24px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:11px;margin-top:2px;background:linear-gradient(135deg,rgba(108,99,255,.3),rgba(0,212,168,.2));';
+    av.textContent = '✦';
+    var wrap = document.createElement('div'); wrap.style.cssText = 'max-width:82%;display:flex;flex-direction:column;gap:7px;';
+    var bubble = document.createElement('div');
+    bubble.style.cssText = 'padding:8px 12px;border-radius:4px 12px 12px 12px;font-size:12px;line-height:1.6;font-family:Inter,sans-serif;background:var(--bg3);border:1px solid var(--brd);color:var(--t0);';
+    bubble.innerHTML = text.replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/\n/g,'<br>');
+    var btnRow = document.createElement('div'); btnRow.style.cssText = 'display:flex;gap:7px;';
+    var yes = document.createElement('button');
+    yes.textContent = _aiLang2==='my' ? '✓ ဟုတ်ကဲ့' : _aiLang2==='ja' ? '✓ はい' : '✓ Yes, generate';
+    yes.style.cssText = 'height:28px;padding:0 14px;background:linear-gradient(135deg,rgba(0,212,168,.2),rgba(108,99,255,.15));border:1px solid rgba(0,212,168,.4);border-radius:6px;color:var(--acc2);font-size:11px;font-weight:700;cursor:pointer;font-family:Inter,sans-serif;';
+    yes.onclick = function() {
+      btnRow.remove();
+      document.getElementById('ai-input').value = _aiLang2==='my'?'ဟုတ်ကဲ့':_aiLang2==='ja'?'はい':'Yes please generate the code';
+      aiSend();
+    };
+    var no = document.createElement('button');
+    no.textContent = _aiLang2==='my' ? '✗ မလိုပါ' : _aiLang2==='ja' ? '✗ いいえ' : '✗ Not now';
+    no.style.cssText = 'height:28px;padding:0 12px;background:var(--bg3);border:1px solid var(--brd);border-radius:6px;color:var(--t1);font-size:11px;cursor:pointer;font-family:Inter,sans-serif;';
+    no.onclick = function() { btnRow.remove(); };
+    btnRow.appendChild(yes); btnRow.appendChild(no);
+    wrap.appendChild(bubble); wrap.appendChild(btnRow);
+    div.appendChild(av); div.appendChild(wrap);
+    msgs.appendChild(div); msgs.scrollTop = msgs.scrollHeight;
+  }
+
+  function aiShowFiles2(files, summary) {
+    _aiGenFiles = files; _aiFiles2 = {};
+    files.forEach(function(f){ _aiFiles2[f.name] = f.content; });
+    // Show right panel
+    document.getElementById('ai-code-side').style.display = 'flex';
+    document.getElementById('ai-chat-side').style.width = '42%';
+    document.getElementById('ai-chat-side').style.flex = '0 0 42%';
+    // Build tabs
+    var tabsEl = document.getElementById('ai-file-tabs'); tabsEl.innerHTML = '';
+    files.forEach(function(f, i) {
+      var meta = getExtMeta2(f.name);
+      var tab = document.createElement('div'); tab.setAttribute('data-name', f.name);
+      tab.style.cssText = 'display:flex;align-items:center;gap:5px;padding:6px 12px;cursor:pointer;white-space:nowrap;border-bottom:2px solid '+(i===0?'var(--acc)':'transparent')+';color:'+(i===0?'var(--t0)':'var(--t2)')+';font-size:11px;font-family:Inter,sans-serif;user-select:none;';
+      tab.innerHTML = '<span style="display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:3px;background:'+meta.color+'22;color:'+meta.color+';font-size:8px;font-weight:700;font-family:DM Mono,monospace;flex-shrink:0;">'+meta.icon+'</span><span>'+f.name+'</span>';
+      tab.onclick = function(){ aiShowFile2(f.name); };
+      tab.onmouseover = function(){ if(this.style.borderBottomColor==='transparent'){this.style.color='var(--t1)';this.style.background='rgba(255,255,255,.04)';} };
+      tab.onmouseout  = function(){ if(this.style.borderBottomColor==='transparent'){this.style.color='var(--t2)';this.style.background='transparent';} };
+      tabsEl.appendChild(tab);
+    });
+    var st = document.getElementById('ai-code-status');
+    if (st) st.innerHTML = '<span style="color:var(--acc2);">✓</span> '+files.length+' files'+(summary?' · '+summary:'');
+    aiShowFile2(files[0].name);
+    // Scroll sync
+    var cs = document.getElementById('ai-code-scroll'), ln = document.getElementById('ai-line-nums');
+    if (cs && ln && !cs._syncBound) { cs._syncBound=true; cs.addEventListener('scroll',function(){ ln.scrollTop=cs.scrollTop; }); }
+  }
+
+  function aiShowFile2(name) {
+    var content = _aiFiles2[name] || '';
+    document.querySelectorAll('#ai-file-tabs [data-name]').forEach(function(t) {
+      var a = t.getAttribute('data-name')===name;
+      t.style.borderBottomColor = a?'var(--acc)':'transparent';
+      t.style.color = a?'var(--t0)':'var(--t2)';
+      t.style.background = a?'rgba(108,99,255,.08)':'transparent';
+    });
+    var ln = document.getElementById('ai-line-nums');
+    if (ln) ln.textContent = content.split('\n').map(function(_,i){return i+1;}).join('\n');
+    var ce = document.getElementById('ai-code-view');
+    if (ce) {
+      var ext = name.split('.').pop().toLowerCase();
+      var lm = {ts:'typescript',js:'javascript',html:'html',scss:'scss',css:'css',dart:'dart',
+                swift:'swift',kt:'kotlin',java:'java',py:'python',json:'json',
+                xml:'markup',vue:'markup',jsx:'jsx',sql:'sql',go:'go'};
+      var pl = lm[ext]||'clike';
+      if (typeof Prism !== 'undefined' && Prism.languages[pl]) {
+        ce.innerHTML = Prism.highlight(content, Prism.languages[pl], pl);
+      } else { ce.textContent = content; }
+    }
+    var cs = document.getElementById('ai-code-scroll'); if(cs) cs.scrollTop=0;
+    var cb = document.getElementById('ai-copy-btn');
+    if (cb) cb.onclick = function() { navigator.clipboard.writeText(content).catch(function(){}); var o=cb.textContent; cb.textContent='✓ Copied!'; setTimeout(function(){cb.textContent=o;},1500); };
+    var ds = document.getElementById('ai-dl-single');
+    if (ds) ds.onclick = function() { var a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([content],{type:'text/plain'})); a.download=name; document.body.appendChild(a); a.click(); document.body.removeChild(a); };
+  }
+
+  function aiDownloadZip() {
+    var files = Object.keys(_aiFiles2); if (!files.length) return;
+    if (typeof JSZip !== 'undefined') {
+      var zip = new JSZip();
+      var folder = zip.folder(_aiFrame2?_aiFrame2.name.replace(/[^a-zA-Z0-9_-]/g,'_'):'brycen');
+      files.forEach(function(f){ folder.file(f, _aiFiles2[f]); });
+      zip.generateAsync({type:'blob',compression:'DEFLATE'}).then(function(blob){
+        var a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+        a.download=(_aiFrame2?_aiFrame2.name:'code')+'.zip';
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        toast('Downloaded ' + files.length + ' files');
+      });
+    }
+  }
+
+  // Pulse animation for loading dots
+  var _aiStyle = document.createElement('style');
+  _aiStyle.textContent = '@keyframes pulse{0%,100%{opacity:.3}50%{opacity:1}}' +
+    'pre[class*="language-"],code[class*="language-"]{background:transparent!important;text-shadow:none!important;font-family:\'DM Mono\',monospace!important;font-size:11px!important;line-height:1.6!important;}';
+  document.head.appendChild(_aiStyle);
+
+  // Load Prism + JSZip dynamically
+  (function() {
+    function loadScript(src, cb) { var s=document.createElement('script'); s.src=src; s.onload=cb||function(){}; document.head.appendChild(s); }
+    function loadLink(href) { var l=document.createElement('link'); l.rel='stylesheet'; l.href=href; document.head.appendChild(l); }
+    loadLink('https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css');
+    loadScript('https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js', function() {
+      var langs = ['typescript','javascript','css','scss','java','dart'];
+      langs.forEach(function(l){ loadScript('https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-'+l+'.min.js'); });
+    });
+    loadScript('https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js');
+  })();
+  </script>
 
 </body>
 </html>

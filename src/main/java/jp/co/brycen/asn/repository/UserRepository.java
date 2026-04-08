@@ -14,6 +14,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
     boolean existsByEmail(String email);
 
     List<User> findByBranchId(Long branchId);
+    
+    List<User> findStaffByBranchIdAndRoleIdNot(Long branchId, Long roleId);
 
     List<User> findByRoleId(Long roleId);      // ← NEW (roleId Long)
 
@@ -25,4 +27,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
     long countByIsActive(Boolean isActive);
  
     long countByBranchIdAndIsActive(Long branchId, Boolean isActive);
+    
+    //staff without client 
+    long countByBranchIdAndIsActiveAndRoleIdNot(Long branchId, Boolean isActive, Long roleId);
+    long countByIsActiveAndRoleIdNot(Boolean isActive, Long roleId);
 }

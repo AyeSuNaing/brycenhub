@@ -190,7 +190,7 @@ export class AddStaffInline implements OnInit {
           this.departments = list;
           this.deptOptions = list.map(d => ({
             id:    d.id,
-            label: d.name,
+            label: d.description,
             // Departments use a neutral color
             color: '#64748b',
           }));

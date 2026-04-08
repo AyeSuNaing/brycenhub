@@ -59,7 +59,10 @@ public class UserService {
 	// GET users by branch — with role name + skills (dashboard)
 	// ============================================================
 	public List<UserDto.UserResponse> getUsersByBranchAsResponse(Long branchId) {
-		List<User> users = branchId != null ? userRepository.findByBranchId(branchId) : userRepository.findAll();
+//		List<User> users = branchId != null ? userRepository.findByBranchId(branchId) : userRepository.findAll();
+		List<User> users = branchId != null
+		        ? userRepository.findStaffByBranchIdAndRoleIdNot(branchId, 10L)
+		        : userRepository.findAll();
 
 		return users.stream().map(u -> {
 			UserDto.UserResponse r = new UserDto.UserResponse();
