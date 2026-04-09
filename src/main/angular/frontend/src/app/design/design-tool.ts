@@ -114,7 +114,7 @@ export class DesignToolComponent implements OnInit, AfterViewInit, OnDestroy {
 
     switch (msg.type) {
 
-      case 'DESIGN_READY':
+      case 'DESIGN_READY': {
         this.loading = false;
         this.cdr.detectChanges();
         // Hide iframe topbar
@@ -129,7 +129,42 @@ export class DesignToolComponent implements OnInit, AfterViewInit, OnDestroy {
         this.loadDesign();
         // Load tech stacks
         this.loadTechStacks();
+        // ── User login language → iframe ပို့ ──
+        const userLang = this.auth.getUser()?.preferredLanguage || 'en';
+        this.sendToIframe({ type: 'USER_LANG_LOADED', lang: userLang });
+        // ── JWT token → iframe ပို့ (AI chat API auth) ──
+        const token = localStorage.getItem('token') || '';
+        this.sendToIframe({ type: 'AUTH_TOKEN_LOADED', token });
         break;
+      }
+
+      case 'USER_LANG_CHANGED': {
+        // iframe popup ကနေ language ပြောင်းရင် Angular header ကိုပါ sync လုပ်
+        const newLang = msg.lang as string;
+        const currentUser = this.auth.getUser();
+        if (currentUser && newLang) {
+          // Update local user object
+          currentUser.preferredLanguage = newLang;
+          // Update localStorage directly
+          try {
+            const stored = localStorage.getItem('user');
+            if (stored) {
+              const u = JSON.parse(stored);
+              u.preferredLanguage = newLang;
+              localStorage.setItem('user', JSON.stringify(u));
+            }
+          } catch(e) {
+            console.warn('[DesignTool] localStorage update failed', e);
+          }
+          // Update UI language (navbar flag)
+          this.http.put(`${environment.apiBaseUrl}/users/me/language`, { language: newLang },
+            { headers: this.auth.getHeaders() }).subscribe({
+            next: () => console.log('[DesignTool] Language updated to', newLang),
+            error: (e) => console.warn('[DesignTool] Language update failed', e)
+          });
+        }
+        break;
+      }
 
       case 'DESIGN_SAVE':
         // iframe sends canvas data → save to backend

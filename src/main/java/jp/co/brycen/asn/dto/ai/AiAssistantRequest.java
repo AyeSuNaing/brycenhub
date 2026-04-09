@@ -6,24 +6,20 @@ import java.util.List;
 @Data
 public class AiAssistantRequest {
 
-    // Current message from user
     private String message;
-
-    // Language: en | my | ja
     private String language;
-
-    // Conversation history (for context)
     private List<Message> history;
-
-    // Frame context (from design-dev)
     private FrameContext frameContext;
-
-    // Generated files context (optional)
     private List<GeneratedFile> generatedFiles;
+    private List<String> techStacks;
+    private List<String> confirmedFiles;
+    private Integer fileIndex;
+    private Boolean runBackend;
+    private String githubContext;   // ← GitHub repo context
 
     @Data
     public static class Message {
-        private String role;    // "user" | "assistant"
+        private String role;
         private String content;
     }
 
@@ -32,7 +28,7 @@ public class AiAssistantRequest {
         private String frameName;
         private Integer frameWidth;
         private Integer frameHeight;
-        private String components;  // JSON string of components
+        private String components;
     }
 
     @Data

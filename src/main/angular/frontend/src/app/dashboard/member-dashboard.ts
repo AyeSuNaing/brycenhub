@@ -12,7 +12,7 @@ import { ActivatedRoute } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { API } from '../constants/api-endpoints';
 import { ProjectNewInline } from '../projects/project-new-inline';
-
+import { ChatPopupComponent, ChatMember } from '../shared/chat-popup/chat-popup.component';
 
 import {
   Announcement, Notification, ActiveProject, PortfolioProject,
@@ -25,18 +25,19 @@ const LOGO_SVG = `data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIiIGhlaWdodD0iMzIi
   selector: 'app-member-dashboard',
   standalone: true,
   imports: [CommonModule, RouterModule, FormsModule,
-    AnnouncementBarComponent, BellNotificationComponent, ProjectInlineComponent, ProjectNewInline],
+    AnnouncementBarComponent, BellNotificationComponent, ProjectInlineComponent, ProjectNewInline,
+    ChatPopupComponent],
   templateUrl: './member-dashboard.html',
   styleUrl: './member-dashboard.scss'
 })
 
-
 export class MemberDashboard implements OnInit, AfterViewInit, OnDestroy {
 
+  @ViewChild(ProjectInlineComponent) projectInline?: ProjectInlineComponent;
 
-
-  @ViewChild(ProjectInlineComponent) projectInline?: ProjectInlineComponent; // ← ဒီမှာ
-
+  // ── Chat Popup ──────────────────────────────────
+  selectedChatMember: ChatMember | null = null;
+  isGroupChat = false;
 
   // Properties
   selectedProjectId: number | null = null;
@@ -54,7 +55,7 @@ export class MemberDashboard implements OnInit, AfterViewInit, OnDestroy {
     { code: 'ko', display: 'KR', name: 'Korean', flag: '🇰🇷' },
   ];
 
-  currentLangObj = this.langs[0]; // default EN
+  currentLangObj = this.langs[0];
 
   showLangMenu = false;
   settingsOpen = false;
@@ -116,15 +117,12 @@ export class MemberDashboard implements OnInit, AfterViewInit, OnDestroy {
     const saved = localStorage.getItem('brycen-theme');
     this.setTheme(saved !== 'light');
 
-    // localStorage ကနေ အရင်ယူ
     this.currentUser = this.authService.getUser();
     this.cdr.detectChanges();
 
-    // ✅ saved language restore — အပေါ်ဆုံးမှာ ထားပါ
     const savedLang = this.authService.getUser()?.preferredLanguage || 'en';
     this.currentLangObj = this.langs.find(l => l.code === savedLang) || this.langs[0];
 
-    // API ကနေ fresh ယူ
     this.authService.loadCurrentUser().subscribe({
       next: () => {
         this.currentUser = this.authService.getUser();
@@ -132,7 +130,6 @@ export class MemberDashboard implements OnInit, AfterViewInit, OnDestroy {
       }
     });
 
-    // kanban back button ကနေ လာရင် auto open
     this.route.queryParams.subscribe(params => {
       if (params['projectId']) {
         const id = Number(params['projectId']);
@@ -286,7 +283,6 @@ export class MemberDashboard implements OnInit, AfterViewInit, OnDestroy {
     this.currentLangObj = lang;
     this.showLangMenu = false;
 
-    // API save
     this.http.put(
       API.AUTH.LANGUAGE,
       { language: lang.code },
@@ -298,14 +294,12 @@ export class MemberDashboard implements OnInit, AfterViewInit, OnDestroy {
           user.preferredLanguage = lang.code;
           localStorage.setItem('user', JSON.stringify(user));
         }
-        // project-inline ကို lang ပြောင်းဆိုပြ
         if (this.projectInline) {
           this.projectInline.switchLang(lang.code);
         }
       }
     });
   }
-
 
   getTotalTasks(): number {
     return this.donutData.reduce((sum, d) => sum + d.count, 0);
@@ -352,7 +346,6 @@ export class MemberDashboard implements OnInit, AfterViewInit, OnDestroy {
     return Math.max(...this.chartData.map(d => d.done + d.inProgress + d.todo));
   }
 
-  // Methods
   openProject(id: number) {
     this.selectedProjectId = id;
     this.showProjectDetail = true;
@@ -369,23 +362,18 @@ export class MemberDashboard implements OnInit, AfterViewInit, OnDestroy {
     this.openProject(project.id);
     this.loadAll();
     this.cdr.detectChanges();
-    // setTimeout(() => this.openProject(project.id), 500);
   }
-
 
   canCreateProject(): boolean {
     const role = this.currentUser?.role || '';
-    return ['PROJECT_MANAGER', 'VICE_PRESIDENT', 'BOSS',
-      'COUNTRY_DIRECTOR'].includes(role);
+    return ['PROJECT_MANAGER', 'VICE_PRESIDENT', 'BOSS', 'COUNTRY_DIRECTOR'].includes(role);
   }
 
-
-
-  // ✅ သစ်
   getBarHeight(val: number, max: number): number {
     if (max === 0) return 4;
     return Math.max(4, Math.round((val / max) * 110));
   }
+
   getRoleBadgeStyle(role: string): string {
     const m: Record<string, string> = {
       'BOSS': 'background:#78350f;color:#fbbf24',
@@ -397,6 +385,35 @@ export class MemberDashboard implements OnInit, AfterViewInit, OnDestroy {
       'QA': 'background:#431407;color:#fdba74'
     };
     return m[role] || 'background:#1e293b;color:#94a3b8';
+  }
+
+  // ── Chat Popup Methods ───────────────────────────
+  openMemberChat(m: any) {
+    this.selectedChatMember = {
+      id: m.id,
+      name: m.name,
+      role: m.role,
+      color: m.color,
+      initial: m.initial,
+      online: m.online,
+    };
+    this.isGroupChat = false;
+  }
+
+  openProjectChat(p: any) {
+    this.selectedChatMember = {
+      id: p.id,
+      name: p.name || p.title || 'Group Chat',
+      projectId: p.id,
+      projectName: p.name || p.title || 'Group Chat',
+      color: p.color || '#16a34a',
+    };
+    this.isGroupChat = true;
+  }
+
+  closeChatPopup() {
+    this.selectedChatMember = null;
+    this.isGroupChat = false;
   }
 
   @HostListener('document:click', ['$event'])
