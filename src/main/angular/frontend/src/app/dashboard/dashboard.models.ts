@@ -40,6 +40,7 @@ export interface PortfolioProject {
 }
 
 export interface TeamMember {
+  id: number;        // ✅ ထည့်ပြီ
   initial: string;
   name: string;
   role: string;
@@ -53,6 +54,9 @@ export interface MyTask {
   project: string;
   priority: 'red' | 'yellow' | 'blue' | 'green' | 'purple' | 'cyan' | 'orange';
   due: string;
+  status: string;
+  statusColor: string;
+  done?: boolean;
 }
 
 export interface OverdueTask {

@@ -4,7 +4,6 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ZegoUIKitPrebuilt } from '@zegocloud/zego-uikit-prebuilt';
 import { ZegoService } from '../../services/zego.service';
 import { AuthService } from '../../services/auth.service';
 import { HttpClient } from '@angular/common/http';
@@ -17,8 +16,8 @@ export interface ChatMember {
   color?: string;
   initial?: string;
   online?: boolean;
-  projectId?: number;   // group chat အတွက်
-  projectName?: string; // group chat အတွက်
+  projectId?: number;
+  projectName?: string;
 }
 
 interface ChatMessage {
@@ -44,18 +43,11 @@ export class ChatPopupComponent implements OnInit, OnDestroy {
   @Output() close = new EventEmitter<void>();
 
   @ViewChild('messagesContainer') messagesContainer!: ElementRef;
-  @ViewChild('callContainer') callContainer!: ElementRef;
 
-  // UI State
-  activeTab: 'chat' | 'call' = 'chat';
   isMinimized = false;
   newMessage = '';
   messages: ChatMessage[] = [];
-  isInCall = false;
-  callMode: 'voice' | 'video' = 'voice';
 
-  // Zego
-  private zpInstance: any = null;
   private currentUser: any = null;
   private roomID = '';
 
@@ -69,7 +61,6 @@ export class ChatPopupComponent implements OnInit, OnDestroy {
   ngOnInit() {
     this.currentUser = this.authService.getUser();
 
-    // Room ID set
     if (this.isGroup && this.member.projectId) {
       this.roomID = this.zegoService.getProjectRoomId(this.member.projectId);
     } else {
@@ -81,11 +72,8 @@ export class ChatPopupComponent implements OnInit, OnDestroy {
     this.loadChatHistory();
   }
 
-  ngOnDestroy() {
-    this.endCall();
-  }
+  ngOnDestroy() {}
 
-  // ── Chat ─────────────────────────────────────────
   loadChatHistory() {
     const url = this.isGroup
       ? `${environment.apiBaseUrl}/chat/project/${this.member.projectId}`
@@ -106,15 +94,12 @@ export class ChatPopupComponent implements OnInit, OnDestroy {
         this.cdr.detectChanges();
         this.scrollToBottom();
       },
-      error: () => {
-        this.messages = [];
-      }
+      error: () => { this.messages = []; }
     });
   }
 
   sendMessage() {
     if (!this.newMessage.trim()) return;
-
     const content = this.newMessage.trim();
     this.newMessage = '';
 
@@ -141,7 +126,6 @@ export class ChatPopupComponent implements OnInit, OnDestroy {
         this.scrollToBottom();
       },
       error: () => {
-        // Optimistic update
         this.messages.push({
           id: String(Date.now()),
           senderId: String(this.currentUser.id),
@@ -163,63 +147,25 @@ export class ChatPopupComponent implements OnInit, OnDestroy {
     }
   }
 
-  // ── Call ─────────────────────────────────────────
+  // ✅ NEW TAB approach — black screen ပြဿနာ မရှိတော့ဘူး
   startCall(mode: 'voice' | 'video') {
-    this.callMode = mode;
-    this.activeTab = 'call';
-    this.isInCall = true;
-    this.cdr.detectChanges();
+    const params = new URLSearchParams({
+      roomId:   this.roomID,
+      mode:     mode,
+      name:     this.member.projectName || this.member.name,
+      isGroup:  String(this.isGroup),
+      userName: this.currentUser.name,
+      userId:   String(this.currentUser.id),
+    });
 
-    setTimeout(() => {
-      if (!this.callContainer?.nativeElement) return;
-
-      const user = {
-        userId: String(this.currentUser.id),
-        userName: this.currentUser.name
-      };
-
-      const token = this.zegoService.generateToken(this.roomID, user);
-      this.zpInstance = ZegoUIKitPrebuilt.create(token);
-
-      this.zpInstance.joinRoom({
-        container: this.callContainer.nativeElement,
-        scenario: {
-          mode: this.isGroup
-            ? ZegoUIKitPrebuilt.GroupCall
-            : ZegoUIKitPrebuilt.OneONoneCall,
-        },
-        turnOnMicrophoneWhenJoining: true,
-        turnOnCameraWhenJoining: mode === 'video',
-        showMyCameraToggleButton: mode === 'video',
-        showAudioVideoSettingsButton: true,
-        showScreenSharingButton: mode === 'video',
-        showTextChat: false,
-        showUserList: this.isGroup,
-        maxUsers: this.isGroup ? 20 : 2,
-        onLeaveRoom: () => {
-          this.endCall();
-        }
-      });
-    }, 300);
+    window.open(`/call?${params.toString()}`, '_blank');
   }
 
-  endCall() {
-    if (this.zpInstance) {
-      try { this.zpInstance.destroy(); } catch {}
-      this.zpInstance = null;
-    }
-    this.isInCall = false;
-    this.activeTab = 'chat';
-    this.cdr.detectChanges();
-  }
-
-  // ── UI Helpers ───────────────────────────────────
   toggleMinimize() {
     this.isMinimized = !this.isMinimized;
   }
 
   closePopup() {
-    this.endCall();
     this.close.emit();
   }
 
@@ -247,4 +193,7 @@ export class ChatPopupComponent implements OnInit, OnDestroy {
       ? (this.member.projectName || 'Group Chat')
       : this.member.name;
   }
+
+  // call မရှိတော့တာကြောင့် isInCall မလို — HTML compatibility အတွက်
+  get isInCall(): boolean { return false; }
 }

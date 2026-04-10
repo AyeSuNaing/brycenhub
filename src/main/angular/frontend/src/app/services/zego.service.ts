@@ -17,10 +17,12 @@ export class ZegoService {
 
   // ── Token Generate ──────────────────────────────
   generateToken(roomID: string, user: ZegoUser): string {
+    // ✅ unique roomID — same room rejoin error fix
+    const uniqueRoomID = `${roomID}_${Date.now()}`;
     return ZegoUIKitPrebuilt.generateKitTokenForTest(
       this.appID,
       this.serverSecret,
-      roomID,
+      uniqueRoomID,
       user.userId,
       user.userName
     );

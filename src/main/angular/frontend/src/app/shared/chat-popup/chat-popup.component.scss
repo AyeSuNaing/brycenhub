@@ -5,12 +5,22 @@
   right: 20px;
   width: 320px;
   border-radius: 16px;
-  overflow: hidden;
+  overflow: visible;              /* ← hidden → visible (ZegoCloud modal ထွက်လို့ရဖို့) */
   z-index: 9999;
   box-shadow: 0 8px 40px rgba(0, 0, 0, 0.4);
   display: flex;
   flex-direction: column;
   animation: slideUp 0.25s ease;
+  transition: all 0.3s ease;
+
+  /* ✅ Call mode — screen center */
+  &.in-call {
+    bottom: 50%;
+    right: 50%;
+    transform: translate(50%, 50%);
+    width: 480px;
+    box-shadow: 0 20px 80px rgba(0, 0, 0, 0.7);
+  }
 
   &.minimized {
     width: 260px;
@@ -32,6 +42,7 @@
   background: linear-gradient(135deg, #0d1f12, #14532d);
   cursor: pointer;
   flex-shrink: 0;
+  border-radius: 16px 16px 0 0;  /* ← header top corners */
 }
 
 .cp-avatar {
@@ -114,6 +125,8 @@
   flex-direction: column;
   height: 380px;
   background: #0d1424;
+  overflow: visible;              /* ← ZegoCloud Settings modal ထွက်လို့ရဖို့ */
+  border-radius: 0 0 16px 16px;
 }
 
 /* ── CALL CONTAINER ─────────────────────────────── */
@@ -122,6 +135,10 @@
   width: 100%;
   height: 100%;
   background: #000;
+  border-radius: 0 0 16px 16px;
+  overflow: visible;              /* ← ZegoCloud modal ထွက်လို့ရဖို့ */
+  position: relative;
+  z-index: 10000;                 /* ← ZegoCloud modal ကို top မှာ ထားမယ် */
 }
 
 /* ── CHAT AREA ──────────────────────────────────── */
@@ -129,6 +146,8 @@
   display: flex;
   flex-direction: column;
   height: 100%;
+  overflow: hidden;
+  border-radius: 0 0 16px 16px;
 }
 
 /* Messages */
@@ -231,6 +250,7 @@
   border-top: 1px solid #1e2d4a;
   background: #0d1424;
   flex-shrink: 0;
+  border-radius: 0 0 16px 16px;
 }
 
 .cp-input {
@@ -264,4 +284,58 @@
 
   &:hover:not(:disabled) { transform: scale(1.1); }
   &:disabled { opacity: 0.4; cursor: not-allowed; }
+}
+
+/* ── CALL OVERLAY — Screen Center ───────────────── */
+.cp-call-overlay {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 560px;
+  height: 420px;
+  border-radius: 16px;
+  overflow: hidden;
+  z-index: 10001;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.7);
+  display: flex;
+  flex-direction: column;
+  background: #000;
+  animation: slideUp 0.25s ease;
+}
+
+.cp-call-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  background: linear-gradient(135deg, #0d1f12, #14532d);
+  flex-shrink: 0;
+}
+
+/* call container fills remaining space */
+.cp-call-container {
+  flex: 1;
+  width: 100%;
+  min-height: 0;
+  background: #000;
+  position: relative;
+  z-index: 10002;
+}
+
+/* ── CALL OVERLAY size fix ── */
+.cp-call-overlay {
+  .cp-call-container {
+    width: 100% !important;
+    height: 360px !important;    /* ← fixed height ထည့် */
+    min-height: 360px !important;
+    display: block !important;
+  }
+}
+
+/* ZegoCloud internal elements override */
+.cp-call-container > div,
+.cp-call-container > div > div {
+  width: 100% !important;
+  height: 100% !important;
 }

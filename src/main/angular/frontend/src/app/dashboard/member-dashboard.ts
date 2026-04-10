@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, HostListener, AfterViewInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, HostListener, AfterViewInit, ChangeDetectorRef, NgZone } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -30,16 +30,13 @@ const LOGO_SVG = `data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIiIGhlaWdodD0iMzIi
   templateUrl: './member-dashboard.html',
   styleUrl: './member-dashboard.scss'
 })
-
 export class MemberDashboard implements OnInit, AfterViewInit, OnDestroy {
 
   @ViewChild(ProjectInlineComponent) projectInline?: ProjectInlineComponent;
 
-  // ── Chat Popup ──────────────────────────────────
   selectedChatMember: ChatMember | null = null;
   isGroupChat = false;
 
-  // Properties
   selectedProjectId: number | null = null;
   showProjectDetail = false;
   showNewProject = false;
@@ -56,24 +53,15 @@ export class MemberDashboard implements OnInit, AfterViewInit, OnDestroy {
   ];
 
   currentLangObj = this.langs[0];
-
   showLangMenu = false;
   settingsOpen = false;
   searchQuery = '';
   myTasksMaxH = 300;
-
   currentUser: any = null;
 
   loading = {
-    stats: true,
-    projects: true,
-    team: true,
-    tasks: true,
-    overdue: true,
-    activity: true,
-    deadline: true,
-    announce: true,
-    notif: true,
+    stats: true, projects: true, team: true, tasks: true,
+    overdue: true, activity: true, deadline: true, announce: true, notif: true,
   };
 
   announcements: Announcement[] = [];
@@ -111,73 +99,58 @@ export class MemberDashboard implements OnInit, AfterViewInit, OnDestroy {
     private cdr: ChangeDetectorRef,
     private route: ActivatedRoute,
     private http: HttpClient,
-  ) { }
+    private ngZone: NgZone,
+  ) {}
 
   ngOnInit() {
     const saved = localStorage.getItem('brycen-theme');
     this.setTheme(saved !== 'light');
-
     this.currentUser = this.authService.getUser();
     this.cdr.detectChanges();
-
     const savedLang = this.authService.getUser()?.preferredLanguage || 'en';
     this.currentLangObj = this.langs.find(l => l.code === savedLang) || this.langs[0];
-
     this.authService.loadCurrentUser().subscribe({
-      next: () => {
-        this.currentUser = this.authService.getUser();
-        this.cdr.detectChanges();
-      }
+      next: () => { this.currentUser = this.authService.getUser(); this.cdr.detectChanges(); }
     });
-
     this.route.queryParams.subscribe(params => {
       if (params['projectId']) {
         const id = Number(params['projectId']);
         const checkAndOpen = () => {
-          if (!this.loading.projects) {
-            this.openProject(id);
-            this.cdr.detectChanges();
-          } else {
-            setTimeout(checkAndOpen, 100);
-          }
+          if (!this.loading.projects) { this.openProject(id); this.cdr.detectChanges(); }
+          else { setTimeout(checkAndOpen, 100); }
         };
         setTimeout(checkAndOpen, 200);
       }
     });
-
     this.loadAll();
   }
 
-  ngAfterViewInit() { this.calcTasksHeight(); }
-  ngOnDestroy() { }
+  ngAfterViewInit() {
+    this.ngZone.runOutsideAngular(() => {
+      setTimeout(() => {
+        this.ngZone.run(() => {
+          this.myTasksMaxH = Math.floor(window.innerHeight * 0.45);
+          this.cdr.detectChanges();
+        });
+      }, 0);
+    });
+  }
+
+  ngOnDestroy() {}
 
   loadAll() {
     this.dataService.getStats().subscribe({
-      next: data => {
-        this.stats = data;
-        this.loading.stats = false;
-        this.cdr.detectChanges();
-      },
+      next: data => { this.stats = data; this.loading.stats = false; this.cdr.detectChanges(); },
       error: () => { this.loading.stats = false; this.cdr.detectChanges(); }
     });
-
     this.dataService.getActiveProjects().subscribe({
-      next: data => {
-        this.activeProjects = data;
-        this.loading.projects = false;
-        this.cdr.detectChanges();
-      },
+      next: data => { this.activeProjects = data; this.loading.projects = false; this.cdr.detectChanges(); },
       error: () => { this.loading.projects = false; this.cdr.detectChanges(); }
     });
-
     this.dataService.getChartData().subscribe({
-      next: data => {
-        this.chartData = data;
-        this.cdr.detectChanges();
-      },
-      error: () => { }
+      next: data => { this.chartData = data; this.cdr.detectChanges(); },
+      error: () => {}
     });
-
     this.dataService.getTaskStats().subscribe({
       next: data => {
         this.donutData = [
@@ -188,86 +161,48 @@ export class MemberDashboard implements OnInit, AfterViewInit, OnDestroy {
         ];
         this.cdr.detectChanges();
       },
-      error: () => { }
+      error: () => {}
     });
-
     this.dataService.getPortfolioProjects().subscribe({
-      next: data => {
-        this.portfolioProjects = data;
-        this.portfolio = data;
-        this.loading.projects = false;
-        this.cdr.detectChanges();
-      },
+      next: data => { this.portfolioProjects = data; this.portfolio = data; this.loading.projects = false; this.cdr.detectChanges(); },
       error: () => { this.loading.projects = false; this.cdr.detectChanges(); }
     });
-
     this.dataService.getTeamMembers().subscribe({
-      next: data => {
-        this.teamMembers = data;
-        this.loading.team = false;
-        this.cdr.detectChanges();
-      },
+      next: data => { this.teamMembers = data; this.loading.team = false; this.cdr.detectChanges(); },
       error: () => { this.loading.team = false; this.cdr.detectChanges(); }
     });
-
     this.dataService.getMyTasks().subscribe({
-      next: data => {
-        this.myTasks = data;
-        this.loading.tasks = false;
-        this.cdr.detectChanges();
-      },
+      next: data => { this.myTasks = data; this.loading.tasks = false; this.cdr.detectChanges(); },
       error: () => { this.loading.tasks = false; this.cdr.detectChanges(); }
     });
-
     this.dataService.getOverdueTasks().subscribe({
-      next: data => {
-        this.overdueTasks = data;
-        this.loading.overdue = false;
-        this.cdr.detectChanges();
-      },
+      next: data => { this.overdueTasks = data; this.loading.overdue = false; this.cdr.detectChanges(); },
       error: () => { this.loading.overdue = false; this.cdr.detectChanges(); }
     });
-
     this.dataService.getActivities().subscribe({
-      next: data => {
-        this.activities = data;
-        this.loading.activity = false;
-        this.cdr.detectChanges();
-      },
+      next: data => { this.activities = data; this.loading.activity = false; this.cdr.detectChanges(); },
       error: () => { this.loading.activity = false; this.cdr.detectChanges(); }
     });
-
     this.dataService.getDeadlines().subscribe({
-      next: data => {
-        this.deadlines = data;
-        this.loading.deadline = false;
-        this.cdr.detectChanges();
-      },
+      next: data => { this.deadlines = data; this.loading.deadline = false; this.cdr.detectChanges(); },
       error: () => { this.loading.deadline = false; this.cdr.detectChanges(); }
     });
-
     this.dataService.getAnnouncements().subscribe({
-      next: data => {
-        this.announcements = data;
-        this.loading.announce = false;
-        this.cdr.detectChanges();
-      },
+      next: data => { this.announcements = data; this.loading.announce = false; this.cdr.detectChanges(); },
       error: () => { this.loading.announce = false; this.cdr.detectChanges(); }
     });
-
     this.dataService.getNotifications().subscribe({
-      next: data => {
-        this.notifications = data;
-        this.loading.notif = false;
-        this.cdr.detectChanges();
-      },
+      next: data => { this.notifications = data; this.loading.notif = false; this.cdr.detectChanges(); },
       error: () => { this.loading.notif = false; this.cdr.detectChanges(); }
     });
   }
 
   @HostListener('window:resize')
   calcTasksHeight() {
-    this.myTasksMaxH = Math.floor(window.innerHeight * 0.45);
+    this.ngZone.run(() => {
+      this.myTasksMaxH = Math.floor(window.innerHeight * 0.45);
+      this.cdr.detectChanges();
+    });
   }
 
   setTheme(dark: boolean) {
@@ -282,86 +217,41 @@ export class MemberDashboard implements OnInit, AfterViewInit, OnDestroy {
   setLang(lang: any) {
     this.currentLangObj = lang;
     this.showLangMenu = false;
-
-    this.http.put(
-      API.AUTH.LANGUAGE,
-      { language: lang.code },
-      { headers: this.authService.getHeaders() }
-    ).subscribe({
-      next: () => {
-        const user = this.authService.getUser();
-        if (user) {
-          user.preferredLanguage = lang.code;
-          localStorage.setItem('user', JSON.stringify(user));
+    this.http.put(API.AUTH.LANGUAGE, { language: lang.code }, { headers: this.authService.getHeaders() })
+      .subscribe({
+        next: () => {
+          const user = this.authService.getUser();
+          if (user) { user.preferredLanguage = lang.code; localStorage.setItem('user', JSON.stringify(user)); }
+          if (this.projectInline) { this.projectInline.switchLang(lang.code); }
         }
-        if (this.projectInline) {
-          this.projectInline.switchLang(lang.code);
-        }
-      }
-    });
+      });
   }
 
-  getTotalTasks(): number {
-    return this.donutData.reduce((sum, d) => sum + d.count, 0);
-  }
-
-  signOut() {
-    this.authService.logout();
-    window.location.href = '/login';
-  }
-
-  getUnreadCount(): number {
-    return this.notifications.filter(n => n.unread).length;
-  }
-
-  getProgressColor(pct: number): string {
-    if (pct >= 75) return '#22c55e';
-    if (pct >= 40) return '#3b82f6';
-    return '#f59e0b';
-  }
+  getTotalTasks(): number { return this.donutData.reduce((sum, d) => sum + d.count, 0); }
+  signOut() { this.authService.logout(); window.location.href = '/login'; }
+  getUnreadCount(): number { return this.notifications.filter(n => n.unread).length; }
+  getProgressColor(pct: number): string { return pct >= 75 ? '#22c55e' : pct >= 40 ? '#3b82f6' : '#f59e0b'; }
 
   getStatusClass(status: string): string {
-    const m: Record<string, string> = {
-      'On Track': 'status-on-track',
-      'At Risk': 'status-at-risk',
-      'Delayed': 'status-delayed'
-    };
+    const m: Record<string, string> = { 'On Track': 'status-on-track', 'At Risk': 'status-at-risk', 'Delayed': 'status-delayed' };
     return m[status] || '';
   }
 
-  getHealthDots(health: number): number[] {
-    return Array.from({ length: 5 }, (_, i) => i);
-  }
+  getHealthDots(health: number): number[] { return Array.from({ length: 5 }, (_, i) => i); }
 
   getHealthDotColor(index: number, health: number): string {
-    if (index < health) {
-      if (health >= 4) return '#22c55e';
-      if (health >= 3) return '#f59e0b';
-      return '#ef4444';
-    }
+    if (index < health) { return health >= 4 ? '#22c55e' : health >= 3 ? '#f59e0b' : '#ef4444'; }
     return this.isDark ? '#1e2d4a' : '#e2e8f0';
   }
 
-  getBarMaxVal(): number {
-    return Math.max(...this.chartData.map(d => d.done + d.inProgress + d.todo));
-  }
+  getBarMaxVal(): number { return Math.max(...this.chartData.map(d => d.done + d.inProgress + d.todo)); }
 
-  openProject(id: number) {
-    this.selectedProjectId = id;
-    this.showProjectDetail = true;
-  }
-  closeProject() {
-    this.selectedProjectId = null;
-    this.showProjectDetail = false;
-  }
-
+  openProject(id: number) { this.selectedProjectId = id; this.showProjectDetail = true; }
+  closeProject() { this.selectedProjectId = null; this.showProjectDetail = false; }
   openNewProject() { this.showNewProject = true; this.showProjectDetail = false; }
   closeNewProject() { this.showNewProject = false; }
   onProjectCreated(project: any) {
-    this.showNewProject = false;
-    this.openProject(project.id);
-    this.loadAll();
-    this.cdr.detectChanges();
+    this.showNewProject = false; this.openProject(project.id); this.loadAll(); this.cdr.detectChanges();
   }
 
   canCreateProject(): boolean {
@@ -390,7 +280,7 @@ export class MemberDashboard implements OnInit, AfterViewInit, OnDestroy {
   // ── Chat Popup Methods ───────────────────────────
   openMemberChat(m: any) {
     this.selectedChatMember = {
-      id: m.id,
+      id: m.userId || m.id,    // ✅ FIX: userId fallback
       name: m.name,
       role: m.role,
       color: m.color,

@@ -1,16 +1,14 @@
+<!-- Chat popup — right bottom corner -->
 <div class="chat-popup-wrap" [class.minimized]="isMinimized">
 
   <!-- Header -->
   <div class="cp-header" (click)="isMinimized && toggleMinimize()">
-
-    <!-- Avatar -->
     <div class="cp-avatar" [style.background]="member.color || '#16a34a'">
       <span *ngIf="!isGroup">{{ member.initial || member.name.charAt(0) }}</span>
       <span *ngIf="isGroup">👥</span>
       <div *ngIf="!isGroup && member.online" class="cp-online-dot"></div>
     </div>
 
-    <!-- Name + Status -->
     <div class="cp-header-info">
       <div class="cp-name">{{ popupTitle }}</div>
       <div class="cp-status" *ngIf="!isGroup">
@@ -23,28 +21,18 @@
       </div>
     </div>
 
-    <!-- Header Actions -->
     <div class="cp-header-actions">
-      <!-- Voice Call -->
+      <!-- Voice Call → new tab -->
       <button class="cp-icon-btn cp-voice-btn"
-        *ngIf="!isInCall"
         (click)="startCall('voice'); $event.stopPropagation()"
         title="Voice Call">
         📞
       </button>
-      <!-- Video Call -->
+      <!-- Video Call → new tab -->
       <button class="cp-icon-btn cp-video-btn"
-        *ngIf="!isInCall"
         (click)="startCall('video'); $event.stopPropagation()"
         title="Video Call">
         📹
-      </button>
-      <!-- End Call -->
-      <button class="cp-icon-btn cp-end-btn"
-        *ngIf="isInCall"
-        (click)="endCall(); $event.stopPropagation()"
-        title="End Call">
-        📵
       </button>
       <!-- Minimize -->
       <button class="cp-icon-btn"
@@ -61,14 +49,9 @@
     </div>
   </div>
 
-  <!-- Body (hidden when minimized) -->
+  <!-- Body -->
   <div class="cp-body" *ngIf="!isMinimized">
-
-    <!-- Call Container -->
-    <div class="cp-call-container" *ngIf="isInCall" #callContainer></div>
-
-    <!-- Chat Area -->
-    <div class="cp-chat-area" *ngIf="!isInCall">
+    <div class="cp-chat-area">
 
       <!-- Messages -->
       <div class="cp-messages" #messagesContainer>
@@ -78,13 +61,11 @@
         <div *ngFor="let msg of messages"
           class="cp-msg-wrap"
           [class.mine]="msg.isMine">
-          <!-- Avatar (others only) -->
           <div *ngIf="!msg.isMine" class="cp-msg-avatar"
             [style.background]="member.color || '#16a34a'">
             {{ msg.senderName.charAt(0) }}
           </div>
           <div class="cp-msg-bubble-wrap">
-            <!-- Sender name (group only) -->
             <div *ngIf="isGroup && !msg.isMine" class="cp-msg-sender">
               {{ msg.senderName }}
             </div>

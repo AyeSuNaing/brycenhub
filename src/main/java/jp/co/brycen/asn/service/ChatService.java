@@ -1,11 +1,12 @@
 package jp.co.brycen.asn.service;
 
+import jp.co.brycen.asn.dto.ChatMessageDto;
 import jp.co.brycen.asn.model.ChatMessage;
 import jp.co.brycen.asn.model.ChatReadStatus;
 import jp.co.brycen.asn.repository.ChatMessageRepository;
 import jp.co.brycen.asn.repository.ChatReadStatusRepository;
+import jp.co.brycen.asn.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -20,10 +21,12 @@ public class ChatService {
     @Autowired
     private ChatReadStatusRepository chatReadStatusRepository;
 
+    @Autowired
+    private UserRepository userRepository;
+
     // =============================================
     // SEND MESSAGE
     // =============================================
-
     public ChatMessage sendMessage(String channelType, Long channelId,
                                    Long senderId, String content,
                                    String originalLanguage) {
@@ -38,51 +41,67 @@ public class ChatService {
     }
 
     // =============================================
-    // GET MESSAGES BY CHANNEL
+    // HELPER — senderName Map build (batch lookup)
+    // =============================================
+    private Map<Long, String> buildSenderNameMap(List<ChatMessage> messages) {
+        Set<Long> senderIds = messages.stream()
+                .map(ChatMessage::getSenderId)
+                .collect(Collectors.toSet());
+
+        Map<Long, String> nameMap = new HashMap<>();
+        userRepository.findAllById(senderIds)
+                .forEach(u -> nameMap.put(u.getId(), u.getName()));
+        return nameMap;
+    }
+
+    // =============================================
+    // GET MESSAGES — return DTO with senderName
     // =============================================
 
-    // GLOBAL channel (channelId မလို)
-    public List<ChatMessage> getGlobalMessages() {
-        return chatMessageRepository
+    public List<ChatMessageDto> getGlobalMessages() {
+        List<ChatMessage> msgs = chatMessageRepository
                 .findByChannelTypeOrderByCreatedAtAsc("GLOBAL");
+        Map<Long, String> nameMap = buildSenderNameMap(msgs);
+        return msgs.stream()
+                .map(m -> ChatMessageDto.from(m, nameMap.get(m.getSenderId())))
+                .collect(Collectors.toList());
     }
 
-    // COUNTRY channel
-    public List<ChatMessage> getCountryMessages(Long countryId) {
-        return chatMessageRepository
+    public List<ChatMessageDto> getCountryMessages(Long countryId) {
+        List<ChatMessage> msgs = chatMessageRepository
                 .findByChannelTypeAndChannelIdOrderByCreatedAtAsc("COUNTRY", countryId);
+        Map<Long, String> nameMap = buildSenderNameMap(msgs);
+        return msgs.stream()
+                .map(m -> ChatMessageDto.from(m, nameMap.get(m.getSenderId())))
+                .collect(Collectors.toList());
     }
 
-    // PROJECT channel
-    public List<ChatMessage> getProjectMessages(Long projectId) {
-        return chatMessageRepository
+    public List<ChatMessageDto> getProjectMessages(Long projectId) {
+        List<ChatMessage> msgs = chatMessageRepository
                 .findByChannelTypeAndChannelIdOrderByCreatedAtAsc("PROJECT", projectId);
+        Map<Long, String> nameMap = buildSenderNameMap(msgs);
+        return msgs.stream()
+                .map(m -> ChatMessageDto.from(m, nameMap.get(m.getSenderId())))
+                .collect(Collectors.toList());
     }
 
-    // DIRECT messages between 2 users
-    public List<ChatMessage> getDirectMessages(Long userId1, Long userId2) {
-        return chatMessageRepository.findDirectMessages(userId1, userId2);
-    }
-
-    // Recent 50 messages
-    public List<ChatMessage> getRecentMessages(String channelType, Long channelId) {
-        List<ChatMessage> messages = chatMessageRepository.findRecentByChannel(
-                channelType.toUpperCase(), channelId,
-                PageRequest.of(0, 50));
-        // ASC order ဖြင့် ပြန်ပေး
-        Collections.reverse(messages);
-        return messages;
+    public List<ChatMessageDto> getDirectMessages(Long userId1, Long userId2) {
+        List<ChatMessage> msgs = chatMessageRepository
+                .findDirectMessages(userId1, userId2);
+        Map<Long, String> nameMap = buildSenderNameMap(msgs);
+        return msgs.stream()
+                .map(m -> ChatMessageDto.from(m, nameMap.get(m.getSenderId())))
+                .collect(Collectors.toList());
     }
 
     // =============================================
     // READ STATUS
+    // ✅ FIX: existsByMessageIdAndUserId မရှိ
+    //        → findByMessageIdAndUserId().isEmpty() သုံး
     // =============================================
-
-    // Message ဖတ်ပြီကြောင်း mark
     public void markAsRead(Long messageId, Long userId) {
-        Optional<ChatReadStatus> existing = chatReadStatusRepository
-                .findByMessageIdAndUserId(messageId, userId);
-        if (existing.isEmpty()) {
+        if (chatReadStatusRepository
+                .findByMessageIdAndUserId(messageId, userId).isEmpty()) {
             ChatReadStatus status = new ChatReadStatus();
             status.setMessageId(messageId);
             status.setUserId(userId);
@@ -90,40 +109,38 @@ public class ChatService {
         }
     }
 
-    // Channel ထဲက messages အားလုံး read mark
     public void markChannelAsRead(String channelType, Long channelId, Long userId) {
         List<ChatMessage> messages;
-        if ("GLOBAL".equalsIgnoreCase(channelType)) {
-            messages = getGlobalMessages();
+        if ("GLOBAL".equals(channelType)) {
+            messages = chatMessageRepository
+                    .findByChannelTypeOrderByCreatedAtAsc(channelType);
         } else {
             messages = chatMessageRepository
-                    .findByChannelTypeAndChannelIdOrderByCreatedAtAsc(
-                            channelType.toUpperCase(), channelId);
+                    .findByChannelTypeAndChannelIdOrderByCreatedAtAsc(channelType, channelId);
         }
-        messages.stream()
-                .filter(m -> !m.getSenderId().equals(userId))
-                .forEach(m -> markAsRead(m.getId(), userId));
+        messages.forEach(msg -> {
+            if (chatReadStatusRepository
+                    .findByMessageIdAndUserId(msg.getId(), userId).isEmpty()) {
+                ChatReadStatus status = new ChatReadStatus();
+                status.setMessageId(msg.getId());
+                status.setUserId(userId);
+                chatReadStatusRepository.save(status);
+            }
+        });
     }
 
-    // Unread count
     public long getUnreadCount(String channelType, Long channelId, Long userId) {
-        return chatReadStatusRepository.countUnread(
-                channelType.toUpperCase(), channelId, userId);
-    }
-
-    // =============================================
-    // CHANNEL LIST (user မြင်ရမဲ့ channels)
-    // =============================================
-    public Map<String, Object> getChannelInfo(String channelType,
-                                               Long channelId, Long userId) {
-        long unread = "GLOBAL".equalsIgnoreCase(channelType)
-                ? chatReadStatusRepository.countUnread("GLOBAL", null, userId)
-                : getUnreadCount(channelType, channelId, userId);
-
-        return Map.of(
-                "channelType", channelType,
-                "channelId", channelId != null ? channelId : 0,
-                "unreadCount", unread
-        );
+        List<ChatMessage> messages;
+        if ("GLOBAL".equals(channelType)) {
+            messages = chatMessageRepository
+                    .findByChannelTypeOrderByCreatedAtAsc(channelType);
+        } else {
+            messages = chatMessageRepository
+                    .findByChannelTypeAndChannelIdOrderByCreatedAtAsc(channelType, channelId);
+        }
+        return messages.stream()
+                .filter(m -> chatReadStatusRepository
+                        .findByMessageIdAndUserId(m.getId(), userId).isEmpty())
+                .count();
     }
 }

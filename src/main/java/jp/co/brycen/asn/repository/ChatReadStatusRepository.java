@@ -10,13 +10,18 @@ import java.util.Optional;
 
 @Repository
 public interface ChatReadStatusRepository extends JpaRepository<ChatReadStatus, Long> {
+
     Optional<ChatReadStatus> findByMessageIdAndUserId(Long messageId, Long userId);
+
     List<ChatReadStatus> findByUserId(Long userId);
 
-    // Unread count for a channel
+    // ✅ GLOBAL channel (channelId = NULL) fix
     @Query("SELECT COUNT(m) FROM ChatMessage m WHERE m.channelType = :type " +
-           "AND m.channelId = :channelId AND m.senderId != :userId " +
-           "AND m.id NOT IN (SELECT r.messageId FROM ChatReadStatus r WHERE r.userId = :userId)")
+           "AND (:channelId IS NULL OR m.channelId = :channelId) " +
+           "AND m.senderId != :userId " +
+           "AND m.id NOT IN (" +
+           "  SELECT r.messageId FROM ChatReadStatus r WHERE r.userId = :userId" +
+           ")")
     long countUnread(
             @Param("type") String type,
             @Param("channelId") Long channelId,
