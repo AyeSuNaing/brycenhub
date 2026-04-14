@@ -1,11 +1,6 @@
-// src/environments/environment.ts
 export const environment = {
   production: false,
-  apiBaseUrl: 'http://localhost:8080/api',
-
-
-  // ZegoCloud
-  zegoAppId: 902631881,
-  zegoServerSecret: ''
-
+  apiBaseUrl: import.meta.env['NG_APP_API_BASE_URL'],
+  zegoAppId: Number(import.meta.env['NG_APP_ZEGO_APP_ID']),
+  zegoServerSecret: import.meta.env['NG_APP_ZEGO_SERVER_SECRET']
 };

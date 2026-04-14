@@ -20,10 +20,8 @@ export class ProjectNewInline implements OnInit {
   @Output() close = new EventEmitter<void>();
   @Output() created = new EventEmitter<any>();
 
-  // ── STEP ──────────────────────────────────────────────────────────
-  currentStep = 1;  // 1=Basic | 2=Team | 3=Columns | 4=Preview | 5=Rules
+  currentStep = 1;
 
-  // ── FORM ──────────────────────────────────────────────────────────
   form = {
     title: '',
     description: '',
@@ -37,10 +35,8 @@ export class ProjectNewInline implements OnInit {
     originalLanguage: 'en',
   };
 
-  // ── CURRENT USER ──────────────────────────────────────────────────
   currentUser: any = null;
 
-  // ── STEP 1 DATA ───────────────────────────────────────────────────
   priorities = [
     { value: 'LOW',      label: 'Low',      color: '#22c55e' },
     { value: 'MEDIUM',   label: 'Medium',   color: '#f59e0b' },
@@ -59,7 +55,6 @@ export class ProjectNewInline implements OnInit {
 
   clients: any[] = [];
 
-  // ── STEP 2 DATA ───────────────────────────────────────────────────
   techStack: { name: string, category: string }[] = [];
   newTech          = '';
   newTechCategory  = 'frontend';
@@ -71,7 +66,6 @@ export class ProjectNewInline implements OnInit {
   memberSearch     = '';
   showMemberSearch = false;
 
-  // ── STEP 3 DATA ───────────────────────────────────────────────────
   boardColumns: {
     name: string, statusKey: string, color: string, isDone: boolean, isDefault: boolean
   }[] = [
@@ -86,22 +80,44 @@ export class ProjectNewInline implements OnInit {
   newColName  = '';
   newColColor = '#6366f1';
 
-  // ── STEP 5 DATA — PROJECT RULES ────────────────────────────────────
   pdfFile:      File | null = null;
   isAnalyzing:  boolean     = false;
-  previewRules: any[]       = [];   // AI extracted preview (not saved yet)
-
+  previewRules: any[]       = [];
   manualTitle:    string = '';
   manualContent:  string = '';
   manualCategory: string = 'CODING_STANDARDS';
+  allPendingRules: any[] = [];
 
-  allPendingRules: any[] = [];  // combined: AI_GENERATED + MANUAL
-
-  // ── STATE ─────────────────────────────────────────────────────────
   isSubmitting = false;
   errors: any  = {};
 
-  // ─────────────────────────────────────────────────────────────────
+  // ── NEW: Edit / Delete state ───────────────────────────────────────
+  showEdit           = false;
+  isSaving           = false;
+  editError          = '';
+  showDangerZone     = false;
+  deleteConfirmName  = '';
+  isDeleting         = false;
+  editingProjectId:  number | null = null;   // set after project created
+
+  editForm = {
+    title:       '',
+    description: '',
+    status:      '',
+    startDate:   '',
+    endDate:     '',
+    budget:      null as number | null,
+    priority:    '',
+  };
+
+  statuses = [
+    { value: 'PLANNING',  label: 'Planning',  color: '#64748b' },
+    { value: 'ACTIVE',    label: 'Active',    color: '#22c55e' },
+    { value: 'ON_HOLD',   label: 'On Hold',   color: '#f59e0b' },
+    { value: 'COMPLETED', label: 'Completed', color: '#3b82f6' },
+  ];
+  // ──────────────────────────────────────────────────────────────────
+
   constructor(
     private http: HttpClient,
     private auth: AuthService,
@@ -130,33 +146,53 @@ export class ProjectNewInline implements OnInit {
 
   loadBranchMembers() {
     const h = { headers: this.auth.getHeaders() };
-    this.http.get<any[]>(`${BASE}/users/by-branch/${this.form.branchId}`, h).subscribe({
+    this.http.get<any[]>(`${BASE}/users/staff-list`, h).subscribe({
       next: users => {
         const exclude = ['CUSTOMER', 'BOSS', 'COUNTRY_DIRECTOR', 'ADMIN'];
         this.branchMembers = users.filter(u => {
-          const r = u.role || u.roleName || '';
-          return !exclude.includes(r) && u.isActive !== false;
+          const r = u.roleName || u.role || '';
+          const currentId = this.currentUser?.id || this.currentUser?.userId;
+          return !exclude.includes(r) && u.isActive !== false && u.id !== currentId;
         });
+        console.log('[ProjectNew] branchMembers loaded:', this.branchMembers.length, this.branchMembers);
         this.cdr.detectChanges();
       },
-      error: () => { }
+      error: (err) => {
+        console.error('[ProjectNew] loadBranchMembers error:', err);
+      }
     });
   }
 
   // ══════════════════════════════════════════════════════════════════
-  // STEP 1 — BASIC INFO
+  // STEP 1
   // ══════════════════════════════════════════════════════════════════
 
   validateStep1(): boolean {
     this.errors = {};
     if (!this.form.title.trim()) { this.errors.title = 'Title is required'; return false; }
+    if (!this.form.description.trim()) { this.errors.description = 'Description is required'; return false; }
+    if (!this.form.startDate) { this.errors.startDate = 'Start date is required'; return false; }
+    if (!this.form.endDate) { this.errors.endDate = 'End date is required'; return false; }
+    if (!this.form.budget || this.form.budget <= 0) { this.errors.budget = 'Budget is required'; return false; }
     return true;
+  }
+
+  goToStep1() {
+    this.currentStep = 1;
+    setTimeout(() => {
+      const ta = document.querySelector(".new-proj-wrapper textarea") as HTMLTextAreaElement;
+      if (ta) { ta.style.height = "auto"; ta.style.height = ta.scrollHeight + "px"; }
+    }, 50);
   }
 
   goToStep2() {
     if (!this.validateStep1()) return;
     this.currentStep = 2;
     if (this.techStack.length === 0) this.detectTechStack();
+    setTimeout(() => {
+      const ta = document.querySelector('.new-proj-wrapper textarea') as HTMLTextAreaElement;
+      if (ta) { ta.style.height = 'auto'; ta.style.height = ta.scrollHeight + 'px'; }
+    }, 50);
   }
 
   autoResize(event: Event) {
@@ -180,7 +216,6 @@ export class ProjectNewInline implements OnInit {
       next: res => {
         this.techStack   = res.techStack || [];
         this.isDetecting = false;
-        if (this.techStack.length > 0) this.suggestTeam();
         this.cdr.detectChanges();
       },
       error: () => { this.isDetecting = false; this.cdr.detectChanges(); }
@@ -197,15 +232,45 @@ export class ProjectNewInline implements OnInit {
   removeTech(i: number) { this.techStack.splice(i, 1); }
 
   suggestTeam() {
-    if (this.techStack.length === 0) return;
+    if (this.isDetecting || this.isSuggesting) return;
+
+    if (this.techStack.length === 0) {
+      if (!this.form.title.trim()) return;
+      this.isDetecting = true;
+      this.cdr.detectChanges();
+      const h = { headers: this.auth.getHeaders() };
+      this.http.post<any>(`${BASE}/ai/detect-tech-stack`, {
+        title: this.form.title, description: this.form.description,
+      }, h).subscribe({
+        next: res => {
+          this.techStack   = res.techStack || [];
+          this.isDetecting = false;
+          this.cdr.detectChanges();
+          if (this.techStack.length > 0) this.runSuggestTeam();
+        },
+        error: () => { this.isDetecting = false; this.cdr.detectChanges(); }
+      });
+      return;
+    }
+
+    this.runSuggestTeam();
+  }
+
+  private runSuggestTeam() {
     this.isSuggesting    = true;
     this.suggestedMembers = [];
     this.cdr.detectChanges();
     const h = { headers: this.auth.getHeaders() };
     this.http.post<any>(`${BASE}/ai/suggest-team`, {
-      techStack: this.techStack.map(t => t.name), branchId: this.form.branchId,
+      techStack: this.techStack.map(t => t.name),
+      branchId: this.form.branchId,
     }, h).subscribe({
-      next: res => { this.suggestedMembers = res.suggested || []; this.isSuggesting = false; this.cdr.detectChanges(); },
+      next: res => {
+        const currentId = this.currentUser?.id || this.currentUser?.userId;
+        this.suggestedMembers = (res.suggested || []).filter((m: any) => m.userId !== currentId);
+        this.isSuggesting = false;
+        this.cdr.detectChanges();
+      },
       error: () => { this.isSuggesting = false; this.cdr.detectChanges(); }
     });
   }
@@ -229,11 +294,13 @@ export class ProjectNewInline implements OnInit {
   }
 
   get filteredBranchMembers(): any[] {
-    if (!this.memberSearch.trim()) return this.branchMembers;
-    const q = this.memberSearch.toLowerCase();
-    return this.branchMembers.filter(m =>
-      m.name?.toLowerCase().includes(q) || (m.role || m.roleName || '').toLowerCase().includes(q)
-    );
+    const q = this.memberSearch.trim().toLowerCase();
+    if (!q) return this.branchMembers;
+    return this.branchMembers.filter(m => {
+      const name = (m.name || '').toLowerCase();
+      const role = (m.role || m.roleName || m.roleDto?.name || '').toLowerCase();
+      return name.includes(q) || role.includes(q);
+    });
   }
 
   mapRoleInProject(role: string): string {
@@ -396,18 +463,15 @@ export class ProjectNewInline implements OnInit {
   }
 
   // ══════════════════════════════════════════════════════════════════
-  // SUBMIT (Step 5 → Create Project + Save Rules)
+  // SUBMIT
   // ══════════════════════════════════════════════════════════════════
 
   async submit() {
     if (this.isSubmitting) return;
     this.isSubmitting = true;
     this.cdr.detectChanges();
-
     const h = { headers: this.auth.getHeaders() };
-
     try {
-      // ① Project
       const project = await this.http.post<any>(`${BASE}/projects`, {
         title: this.form.title, description: this.form.description,
         branchId: this.form.branchId, pmId: this.form.pmId,
@@ -420,7 +484,6 @@ export class ProjectNewInline implements OnInit {
         status: 'ACTIVE',
       }, h).toPromise();
 
-      // ② Tech stack
       for (let i = 0; i < this.techStack.length; i++) {
         await this.http.post<any>(`${BASE}/project-tech-stacks`, {
           projectId: project.id, name: this.techStack[i].name,
@@ -428,7 +491,6 @@ export class ProjectNewInline implements OnInit {
         }, h).toPromise().catch(() => { });
       }
 
-      // ③ Board columns
       for (let i = 0; i < this.boardColumns.length; i++) {
         await this.http.post<any>(`${BASE}/project-board-columns`, {
           projectId: project.id, name: this.boardColumns[i].name,
@@ -437,13 +499,11 @@ export class ProjectNewInline implements OnInit {
         }, h).toPromise().catch(() => { });
       }
 
-      // ④ PM member
       await this.http.post<any>(
         `${BASE}/projects/${project.id}/members`,
         { userId: this.form.pmId, roleInProject: 'PROJECT_MANAGER' }, h
       ).toPromise().catch(() => { });
 
-      // ⑤ Selected members
       for (const m of this.selectedMembers) {
         await this.http.post<any>(
           `${BASE}/projects/${project.id}/members`,
@@ -451,7 +511,6 @@ export class ProjectNewInline implements OnInit {
         ).toPromise().catch(() => { });
       }
 
-      // ⑥ Client users
       if (this.form.clientId) {
         try {
           const clientUsers: any[] = await this.http.get<any[]>(
@@ -466,9 +525,10 @@ export class ProjectNewInline implements OnInit {
         } catch { }
       }
 
-      // ⑦ Project Rules (NEW)
       await this.saveRules(project.id);
 
+      // edit/delete အတွက် projectId သိမ်း
+      this.editingProjectId = project.id;
       this.isSubmitting = false;
       this.cdr.detectChanges();
       this.created.emit(project);
@@ -481,11 +541,102 @@ export class ProjectNewInline implements OnInit {
   }
 
   // ══════════════════════════════════════════════════════════════════
+  // EDIT — PUT /api/projects/{id}
+  // ══════════════════════════════════════════════════════════════════
+
+  openEdit(projectId: number, project: any) {
+    this.editingProjectId = projectId;
+    this.editForm = {
+      title:       project.title       || '',
+      description: project.description || '',
+      status:      project.status      || 'ACTIVE',
+      startDate:   project.startDate   || '',
+      endDate:     project.endDate     || '',
+      budget:      project.budget      || null,
+      priority:    project.priority    || 'MEDIUM',
+    };
+    this.editError     = '';
+    this.showEdit      = true;
+    this.showDangerZone = false;
+    this.cdr.detectChanges();
+  }
+
+  closeEdit() {
+    this.showEdit  = false;
+    this.editError = '';
+    this.showDangerZone   = false;
+    this.deleteConfirmName = '';
+    this.cdr.detectChanges();
+  }
+
+  saveEdit() {
+    if (!this.editForm.title.trim()) { this.editError = 'Title is required'; return; }
+    if (!this.editingProjectId) return;
+    this.isSaving  = true;
+    this.editError = '';
+    const h = { headers: this.auth.getHeaders() };
+    const payload = {
+      title:       this.editForm.title.trim(),
+      description: this.editForm.description,
+      status:      this.editForm.status,
+      startDate:   this.editForm.startDate || null,
+      endDate:     this.editForm.endDate   || null,
+      budget:      this.editForm.budget    || null,
+      priority:    this.editForm.priority,
+    };
+    this.http.put<any>(`${BASE}/projects/${this.editingProjectId}`, payload, h).subscribe({
+      next: () => {
+        this.isSaving  = false;
+        this.showEdit  = false;
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.editError = 'Failed to save. Please try again.';
+        this.isSaving  = false;
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  // ══════════════════════════════════════════════════════════════════
+  // DELETE (Soft) — PUT status=CANCELLED
+  // ══════════════════════════════════════════════════════════════════
+
+  get deleteConfirmMatches(): boolean {
+    return this.deleteConfirmName.trim() === this.editForm.title.trim();
+  }
+
+  cancelProject() {
+    if (!this.deleteConfirmMatches || this.isDeleting || !this.editingProjectId) return;
+    this.isDeleting = true;
+    const h = { headers: this.auth.getHeaders() };
+    // Soft delete — status CANCELLED ပြောင်းတာပဲ
+    this.http.put<any>(`${BASE}/projects/${this.editingProjectId}`, { status: 'CANCELLED' }, h).subscribe({
+      next: () => {
+        this.isDeleting        = false;
+        this.showEdit          = false;
+        this.showDangerZone    = false;
+        this.deleteConfirmName = '';
+        this.cdr.detectChanges();
+        this.close.emit(); // dashboard ပြန်သွား
+      },
+      error: () => {
+        this.isDeleting = false;
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  // ══════════════════════════════════════════════════════════════════
   // HELPERS
   // ══════════════════════════════════════════════════════════════════
 
   getPriorityColor(p: string): string {
     return this.priorities.find(x => x.value === p)?.color || '#6b7280';
+  }
+
+  getStatusColor(s: string): string {
+    return this.statuses.find(x => x.value === s)?.color || '#64748b';
   }
 
   getClientName(id: number | null): string {

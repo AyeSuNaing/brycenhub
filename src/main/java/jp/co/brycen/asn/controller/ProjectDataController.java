@@ -77,6 +77,21 @@ public class ProjectDataController {
         return ResponseEntity.ok(
             boardColumnRepository.findByProjectIdOrderByPosition(projectId));
     }
+    
+ // ================================================================
+    // DELETE /api/project-tech-stacks/{id}
+    // ================================================================
+    @DeleteMapping("/api/project-tech-stacks/{id}")
+    public ResponseEntity<?> deleteTechStack(@PathVariable Long id) {
+        try {
+            techStackRepository.deleteById(id);
+            return ResponseEntity.ok(
+                new AuthDto.MessageResponse("Tech stack deleted", true));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest()
+                .body(new AuthDto.MessageResponse(e.getMessage(), false));
+        }
+    }
 
     // ── Request DTOs ─────────────────────────────────────────────────
 

@@ -29,9 +29,12 @@ public class DashboardController {
 	@Autowired private ActivityLogRepository activityLogRepository;
 	@Autowired private AnnouncementRepository announcementRepository;
 	@Autowired private ProjectService projectService;
+	@Autowired private BranchRepository branchRepository;
+	@Autowired private DirectorCountryRepository directorCountryRepository;
 
 	private List<Long> getProjectIds(Long userId) {
-		return projectService.getMyActiveProjects(userId).stream().map(Project::getId).collect(Collectors.toList());
+		return projectService.getMyActiveProjects(userId).stream()
+			.map(Project::getId).collect(Collectors.toList());
 	}
 
 	private static final List<String> AVATAR_COLORS = Arrays.asList(
@@ -69,6 +72,23 @@ public class DashboardController {
 		switch (priority) {
 			case "CRITICAL": case "HIGH": return "red";
 			default: return "amber";
+		}
+	}
+
+	// Sort order — displayName ကိုသုံး
+	private int getRoleOrder(String roleName) {
+		if (roleName == null) return 99;
+		switch (roleName) {
+			case "Country Director": return 1;
+			case "Vice President":   return 2;
+			case "Admin":            return 3;
+			case "Project Manager":  return 4;
+			case "Leader":           return 5;
+			case "UI/UX Designer":   return 6;
+			case "Developer":        return 7;
+			case "QA Engineer":      return 8;
+			case "Client":           return 9;
+			default:                 return 99;
 		}
 	}
 
@@ -135,12 +155,14 @@ public class DashboardController {
 		return ResponseEntity.ok(result);
 	}
 
-	// ④ TEAM — ✅ id ထည့်ပြီ
+	// ④ TEAM — VP / Director / Admin merge
 	@GetMapping("/team")
 	public ResponseEntity<List<TeamMemberResponse>> getTeam(@AuthenticationPrincipal User user) {
 		List<Long> pIds = getProjectIds(user.getId());
 		Set<Long> activeProjectIds = projectService.getMyActiveProjects(user.getId()).stream()
 			.filter(p -> "ACTIVE".equals(p.getStatus())).map(Project::getId).collect(Collectors.toSet());
+
+		// ① project_members ကနေ actual members
 		Set<Long> memberIds = new HashSet<>();
 		for (Long pid : pIds)
 			projectMemberRepository.findByProjectIdAndStatus(pid, "ACTIVE").forEach(m -> memberIds.add(m.getUserId()));
@@ -163,9 +185,8 @@ public class DashboardController {
 				.filter(t -> !"DONE".equals(t.getStatus())).count();
 			boolean online = u.getLastSeen() != null
 				&& ChronoUnit.MINUTES.between(u.getLastSeen(), LocalDateTime.now()) <= 5;
-
 			TeamMemberResponse tm = new TeamMemberResponse();
-			tm.setId(mid);          // ✅ id set လုပ်ပြီ
+			tm.setId(mid);
 			tm.setInitial(u.getName().substring(0, 1).toUpperCase());
 			tm.setName(u.getName());
 			tm.setRole(roleName);
@@ -174,8 +195,70 @@ public class DashboardController {
 			tm.setOnline(online);
 			result.add(tm);
 		}
-		result.sort(Comparator.comparingLong(TeamMemberResponse::getTasks).reversed());
+
+		// ② VP / Admin — same branch merge
+		Long branchId = user.getBranchId();
+		if (branchId != null) {
+			Long countryId = branchRepository.findById(branchId)
+				.map(b -> b.getCountryId()).orElse(null);
+
+			userRepository.findAll().stream()
+				.filter(u -> branchId.equals(u.getBranchId())
+						  && u.getRoleId() != null
+						  && (Long.valueOf(3L).equals(u.getRoleId()) || Long.valueOf(4L).equals(u.getRoleId()))
+						  && !memberIds.contains(u.getId()))
+				.forEach(u -> {
+					result.add(buildMgmtTeamMember(u, roleCache, activeProjectIds));
+					memberIds.add(u.getId());
+				});
+
+			// ③ Director — director_countries merge
+			if (countryId != null) {
+				final Long fc = countryId;
+				userRepository.findAll().stream()
+					.filter(u -> Long.valueOf(2L).equals(u.getRoleId())
+							  && !memberIds.contains(u.getId()))
+					.forEach(u -> {
+						if (directorCountryRepository.existsByDirectorIdAndCountryId(u.getId(), fc)) {
+							result.add(buildMgmtTeamMember(u, roleCache, activeProjectIds));
+							memberIds.add(u.getId());
+						}
+					});
+			}
+		}
+
+		// ④ Sort: DR → VP → Admin → PM → Leader → Dev → QA
+		result.sort((a, b) -> {
+			int ra = getRoleOrder(a.getRole());
+			int rb = getRoleOrder(b.getRole());
+			return ra != rb ? Integer.compare(ra, rb) : Long.compare(b.getTasks(), a.getTasks());
+		});
+
 		return ResponseEntity.ok(result);
+	}
+
+	private TeamMemberResponse buildMgmtTeamMember(User u, Map<Long, UserRole> roleCache,
+													 Set<Long> activeProjectIds) {
+		String roleName = "Manager";
+		if (u.getRoleId() != null) {
+			UserRole ur = roleCache.computeIfAbsent(u.getRoleId(),
+				id -> userRoleRepository.findById(id).orElse(null));
+			if (ur != null) roleName = ur.getDisplayName();
+		}
+		long taskCount = taskRepository.findByAssigneeId(u.getId()).stream()
+			.filter(t -> activeProjectIds.contains(t.getProjectId()))
+			.filter(t -> !"DONE".equals(t.getStatus())).count();
+		boolean online = u.getLastSeen() != null
+			&& ChronoUnit.MINUTES.between(u.getLastSeen(), LocalDateTime.now()) <= 5;
+		TeamMemberResponse tm = new TeamMemberResponse();
+		tm.setId(u.getId());
+		tm.setInitial(u.getName().substring(0, 1).toUpperCase());
+		tm.setName(u.getName());
+		tm.setRole(roleName);
+		tm.setTasks(taskCount);
+		tm.setColor(getAvatarColor(u.getId()));
+		tm.setOnline(online);
+		return tm;
 	}
 
 	// ⑤ MY TASKS
@@ -318,9 +401,16 @@ public class DashboardController {
 					case "ROLE":    tag = "⚡ LEADER";   tagColor = "#06b6d4"; break;
 				}
 			}
+			if (a.getPriority() != null) {
+				switch (a.getPriority()) {
+					case "URGENT":    tagColor = "#ef4444"; break;
+					case "IMPORTANT": tagColor = "#f97316"; break;
+				}
+			}
 			AnnouncementResponse r = new AnnouncementResponse();
 			r.setId(a.getId());
-			r.setPinned(false);
+			r.setPinned(a.getIsPinned() != null && a.getIsPinned() == 1);
+			r.setPriority(a.getPriority() != null ? a.getPriority() : "NORMAL");
 			r.setTag(tag);
 			r.setTagColor(tagColor);
 			r.setTitle(a.getTitle());
@@ -344,14 +434,12 @@ public class DashboardController {
 		}
 		List<Task> allTasks = new ArrayList<>();
 		for (Long pid : pIds) allTasks.addAll(taskRepository.findByProjectId(pid));
-		long todo       = allTasks.stream().filter(t -> "TODO".equals(t.getStatus())).count();
-		long inProgress = allTasks.stream().filter(t -> "IN_PROGRESS".equals(t.getStatus())).count();
-		long inReview   = allTasks.stream().filter(t -> "IN_REVIEW".equals(t.getStatus())).count();
-		long done       = allTasks.stream().filter(t -> "DONE".equals(t.getStatus())).count();
 		TaskStatsResponse res = new TaskStatsResponse();
-		res.setTodo(todo); res.setInProgress(inProgress);
-		res.setInReview(inReview); res.setDone(done);
-		res.setTotal(todo + inProgress + inReview + done);
+		res.setTodo(allTasks.stream().filter(t -> "TODO".equals(t.getStatus())).count());
+		res.setInProgress(allTasks.stream().filter(t -> "IN_PROGRESS".equals(t.getStatus())).count());
+		res.setInReview(allTasks.stream().filter(t -> "IN_REVIEW".equals(t.getStatus())).count());
+		res.setDone(allTasks.stream().filter(t -> "DONE".equals(t.getStatus())).count());
+		res.setTotal(res.getTodo() + res.getInProgress() + res.getInReview() + res.getDone());
 		return ResponseEntity.ok(res);
 	}
 
@@ -382,59 +470,50 @@ public class DashboardController {
 		return ResponseEntity.ok(result);
 	}
 
-	// ── DTO classes ──────────────────────────────────────────────────
+	// ── DTOs ─────────────────────────────────────────────────────────
 
 	@Data public static class StatsResponse {
 		private Long total, active, overdue, members;
 	}
-
 	@Data public static class ActiveProjectResponse {
 		private Long id;
 		private String name;
 		private Integer progress;
 		private String color;
 	}
-
 	@Data public static class PortfolioProjectResponse {
 		private String name, status, owner, ownerInitial, ownerColor, dueDate;
 		private Integer progress, health;
 	}
-
 	@Data public static class TeamMemberResponse {
-		private Long id;        // ✅ ထည့်ပြီ
+		private Long id;
 		private String initial, name, role, color;
 		private Long tasks;
 		private Boolean online;
 	}
-
 	@Data public static class MyTaskResponse {
 		private String title, project, priority, due, status, statusColor;
 		private Boolean done;
 	}
-
 	@Data public static class OverdueTaskResponse {
 		private String title, project, priority;
 		private Long daysOverdue;
 	}
-
 	@Data public static class ActivityResponse {
 		private String user, initial, color, action, time;
 	}
-
 	@Data public static class DeadlineResponse {
 		private String project, task, date, status;
 	}
-
 	@Data public static class AnnouncementResponse {
 		private Long id;
 		private Boolean pinned;
+		private String priority;
 		private String tag, tagColor, title, text, meta, time;
 	}
-
 	@Data public static class TaskStatsResponse {
 		private Long todo, inProgress, inReview, done, total;
 	}
-
 	@Data public static class ChartDataResponse {
 		private String month;
 		private Long done, inProgress, todo;

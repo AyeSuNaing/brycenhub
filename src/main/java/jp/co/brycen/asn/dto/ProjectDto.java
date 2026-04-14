@@ -9,26 +9,23 @@ public class ProjectDto {
 
     @Data
     public static class CreateProjectRequest {
-
         @NotBlank(message = "Title is required")
         private String title;
-
-        private String projectKey;      // e.g. KH-001
+        private String projectKey;
         private String description;
-        private String category;        // Web, Mobile, Desktop, API, Internal
-        private String tags;            // comma separated
-        private String color;           // hex e.g. #0891b2
-        private String priority;        // LOW, MEDIUM, HIGH, CRITICAL
-        private String visibility;      // PRIVATE, BRANCH, GROUP
-
+        private String category;
+        private String tags;
+        private String color;
+        private String priority;
+        private String visibility;
         @NotNull(message = "Branch ID is required")
         private Long branchId;
-
         private Long pmId;
-        private Long clientId;          // FK → clients.id
+        private Long clientId;
         private LocalDate startDate;
         private LocalDate endDate;
         private Long budget;
+        private String originalLanguage;   // ← ထည့်
     }
 
     @Data
@@ -38,39 +35,37 @@ public class ProjectDto {
         private String category;
         private String tags;
         private String color;
-        private String status;          // PLANNING, ACTIVE, ON_HOLD, COMPLETED, CANCELLED
-        private String priority;        // LOW, MEDIUM, HIGH, CRITICAL
-        private String healthStatus;    // ON_TRACK, AT_RISK, DELAYED
-        private Integer healthScore;    // 1~5
-        private String visibility;      // PRIVATE, BRANCH, GROUP
+        private String status;
+        private String priority;
+        private String healthStatus;
+        private Integer healthScore;
+        private String visibility;
         private Long pmId;
         private Long clientId;
         private LocalDate startDate;
         private LocalDate endDate;
         private Long budget;
-        private Integer progress;       // 0~100
+        private Integer progress;
     }
 
     @Data
     public static class AddMemberRequest {
         @NotNull(message = "User ID is required")
         private Long userId;
-
         @NotBlank(message = "Role is required")
         private String roleInProject;
-        // PROJECT_MANAGER, LEADER, UI_UX, DEVELOPER, QA, CLIENT
     }
-   
+
     @Data
     public static class MemberResponse {
-        private Long   id;
-        private Long   userId;
-        private String userName;
-        private String initial;      // ← ထည့်
-        private String roleInProject;
-        private String status;
-        private String color;        // ← ထည့်
-        private long   tasks;        // ← ထည့်
-        private boolean online;      // ← ထည့်
+        private Long    id;
+        private Long    userId;
+        private String  userName;
+        private String  initial;
+        private String  roleInProject;
+        private String  status;
+        private String  color;
+        private long    tasks;
+        private boolean online;
     }
 }

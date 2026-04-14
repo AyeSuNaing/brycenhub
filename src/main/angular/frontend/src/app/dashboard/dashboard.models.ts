@@ -1,6 +1,7 @@
 export interface Announcement {
   id: number;
   pinned: boolean;
+  priority: string;   // NORMAL | IMPORTANT | URGENT
   tag: string;
   tagColor: string;
   title: string;
@@ -40,7 +41,7 @@ export interface PortfolioProject {
 }
 
 export interface TeamMember {
-  id: number;        // ✅ ထည့်ပြီ
+  id?: number;
   initial: string;
   name: string;
   role: string;

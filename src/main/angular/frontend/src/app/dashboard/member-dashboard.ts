@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy, HostListener, AfterViewInit, ChangeDetectorRef, NgZone } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule } from '@angular/router';
+import { RouterModule, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { DashboardDataService } from '../services/dashboard-data.service';
 import { AuthService } from '../services/auth.service';
@@ -98,6 +98,7 @@ export class MemberDashboard implements OnInit, AfterViewInit, OnDestroy {
     private authService: AuthService,
     private cdr: ChangeDetectorRef,
     private route: ActivatedRoute,
+    private router: Router,
     private http: HttpClient,
     private ngZone: NgZone,
   ) {}
@@ -112,16 +113,29 @@ export class MemberDashboard implements OnInit, AfterViewInit, OnDestroy {
     this.authService.loadCurrentUser().subscribe({
       next: () => { this.currentUser = this.authService.getUser(); this.cdr.detectChanges(); }
     });
+
+    // queryParams watch — URL မှ project ဖွင့်မည်
     this.route.queryParams.subscribe(params => {
       if (params['projectId']) {
         const id = Number(params['projectId']);
         const checkAndOpen = () => {
-          if (!this.loading.projects) { this.openProject(id); this.cdr.detectChanges(); }
-          else { setTimeout(checkAndOpen, 100); }
+          if (!this.loading.projects) {
+            this.selectedProjectId = id;
+            this.showProjectDetail = true;
+            this.cdr.detectChanges();
+          } else {
+            setTimeout(checkAndOpen, 100);
+          }
         };
         setTimeout(checkAndOpen, 200);
+      } else {
+        // URL မှာ projectId မပါ → dashboard ပြ
+        this.selectedProjectId = null;
+        this.showProjectDetail = false;
+        this.cdr.detectChanges();
       }
     });
+
     this.loadAll();
   }
 
@@ -246,12 +260,22 @@ export class MemberDashboard implements OnInit, AfterViewInit, OnDestroy {
 
   getBarMaxVal(): number { return Math.max(...this.chartData.map(d => d.done + d.inProgress + d.todo)); }
 
-  openProject(id: number) { this.selectedProjectId = id; this.showProjectDetail = true; }
-  closeProject() { this.selectedProjectId = null; this.showProjectDetail = false; }
+  // ✅ URL navigate
+  openProject(id: number) {
+    this.router.navigate(['/dashboard/member'], { queryParams: { projectId: id } });
+  }
+
+  closeProject() {
+    this.router.navigate(['/dashboard/member']);
+  }
+
   openNewProject() { this.showNewProject = true; this.showProjectDetail = false; }
   closeNewProject() { this.showNewProject = false; }
   onProjectCreated(project: any) {
-    this.showNewProject = false; this.openProject(project.id); this.loadAll(); this.cdr.detectChanges();
+    this.showNewProject = false;
+    this.openProject(project.id);
+    this.loadAll();
+    this.cdr.detectChanges();
   }
 
   canCreateProject(): boolean {
@@ -277,10 +301,9 @@ export class MemberDashboard implements OnInit, AfterViewInit, OnDestroy {
     return m[role] || 'background:#1e293b;color:#94a3b8';
   }
 
-  // ── Chat Popup Methods ───────────────────────────
   openMemberChat(m: any) {
     this.selectedChatMember = {
-      id: m.userId || m.id,    // ✅ FIX: userId fallback
+      id: m.userId || m.id,
       name: m.name,
       role: m.role,
       color: m.color,

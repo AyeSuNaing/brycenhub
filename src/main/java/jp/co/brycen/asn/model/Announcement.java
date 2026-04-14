@@ -19,7 +19,6 @@ public class Announcement {
 
     @Column(name = "author_id", nullable = false)
     private Long authorId;
-    // FK → users.id
 
     private String title;
 
@@ -35,7 +34,14 @@ public class Announcement {
 
     @Column(name = "target_id")
     private Long targetId;
-    // branch_id or project_id depending on target_scope
+
+    @Column(name = "is_pinned")
+    private Integer isPinned = 0;
+    // 0 = not pinned, 1 = pinned
+
+    @Column(name = "priority")
+    private String priority = "NORMAL";
+    // NORMAL, IMPORTANT, URGENT
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;

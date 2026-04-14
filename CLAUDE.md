@@ -2467,7 +2467,306 @@ targetType, targetId, oldValue, newValue
 *Last updated: 2026-03-10 | Brycen Cambodia Team*
 
 
+# HR & FINANCE APPROVAL FLOW — REFERENCE
+# Brycen Hub PMS — Confirmed Logic
+# Last updated: 2026-04-12
 
+---
+
+## 👥 ROLE HIERARCHY
+
+```
+BOSS (CEO)
+  └── COUNTRY_DIRECTOR
+        └── VICE_PRESIDENT
+              └── ADMIN (HR)
+                    └── PROJECT_MANAGER
+                          └── LEADER → DEVELOPER / UI_UX / QA
+```
+
+---
+
+## 📋 REQUEST TYPES & APPROVERS
+
+### Type 1 — Leave Request
+```
+Who submits : Any staff (LEADER down)
+Who approves: VICE_PRESIDENT | ADMIN | COUNTRY_DIRECTOR  (any one)
+Scope       : Own branch only
+```
+
+### Type 2 — OT Request
+```
+Who submits : Any staff (LEADER down)
+Who approves: VICE_PRESIDENT | ADMIN | COUNTRY_DIRECTOR  (any one)
+Scope       : Own branch only
+```
+
+### Type 3 — Salary (payroll)
+```
+Who submits : ADMIN (HR) on behalf of branch
+Who approves: VICE_PRESIDENT | COUNTRY_DIRECTOR | BOSS  (any one)
+Scope       : Own branch (VP/Admin) | Assigned countries (Director) | All (Boss)
+```
+
+### Type 4 — Other Expense
+```
+Who submits : ADMIN (HR) or VICE_PRESIDENT
+Who approves: VICE_PRESIDENT | COUNTRY_DIRECTOR | BOSS  (any one)
+Scope       : Own branch (VP/Admin) | Assigned countries (Director) | All (Boss)
+```
+
+---
+
+## 🔄 STATUS FLOW
+
+```
+PENDING → APPROVED
+PENDING → REJECTED
+```
+
+- တစ်ယောက်ယောက် approve/reject လုပ်ရင် ပြီး (no chain)
+- `approved_by` = ဘယ် user က action လုပ်တယ်
+- `approved_at` = timestamp
+
+---
+
+## 🔐 PERMISSION CHECK LOGIC
+
+```java
+// ── Leave / OT ──────────────────────────────────
+boolean canApproveLeaveOT(User user) {
+    String role = user.getRole().getName();
+    return role.equals("VICE_PRESIDENT")
+        || role.equals("ADMIN")
+        || role.equals("COUNTRY_DIRECTOR");
+}
+
+// ── Salary / Expense ────────────────────────────
+boolean canApproveSalaryExpense(User user) {
+    String role = user.getRole().getName();
+    return role.equals("VICE_PRESIDENT")
+        || role.equals("COUNTRY_DIRECTOR")
+        || role.equals("BOSS");
+}
+```
+
+---
+
+## 🖥️ DASHBOARD VISIBILITY
+
+### VP Dashboard (`/dashboard/vp`)
+```
+Leave requests     ← branch ရဲ့ pending ပြ + approve/reject
+OT requests        ← branch ရဲ့ pending ပြ + approve/reject
+Salary requests    ← branch ရဲ့ pending ပြ + approve/reject
+Other expenses     ← branch ရဲ့ pending ပြ + approve/reject
+Scope             : users.branch_id = VP's branch_id
+```
+
+### Director Dashboard (`/dashboard/director`)
+```
+Leave requests     ← assigned countries ရဲ့ branches ပြ + approve/reject
+OT requests        ← assigned countries ရဲ့ branches ပြ + approve/reject
+Salary requests    ← assigned countries ရဲ့ branches ပြ + approve/reject
+Other expenses     ← assigned countries ရဲ့ branches ပြ + approve/reject
+Scope             : director_countries table → branch_id list
+```
+
+### Boss/CEO Dashboard (`/dashboard/boss`)
+```
+Salary requests    ← company-wide pending ပြ + approve/reject
+Other expenses     ← company-wide pending ပြ + approve/reject
+Leave/OT           ← view only (approve မလုပ်)
+Scope             : all branches
+```
+
+### Admin (HR) Dashboard (`/dashboard/admin`)
+```
+Leave requests     ← own branch ပြ + approve/reject
+OT requests        ← own branch ပြ + approve/reject
+Salary/Expense     ← create + submit (approve မလုပ်)
+Scope             : users.branch_id = Admin's branch_id
+```
+
+---
+
+## 🗄️ DB TABLES
+
+### ot_requests
+```sql
+id, user_id FK, branch_id FK,
+work_date DATE, ot_hours DECIMAL(4,2),
+day_type VARCHAR(20),     -- WEEKDAY | WEEKEND | HOLIDAY
+ot_rate DECIMAL(4,2),
+project_id FK (nullable),
+reason TEXT,
+status VARCHAR(20) DEFAULT 'PENDING',  -- PENDING | APPROVED | REJECTED
+approved_by FK users (nullable),
+approved_at DATETIME (nullable),
+created_at DATETIME
+```
+
+### leave_requests
+```sql
+id, user_id FK, branch_id FK,
+leave_type VARCHAR(20),   -- ANNUAL | SICK | UNPAID
+start_date DATE, end_date DATE,
+total_days INT,
+reason TEXT,
+status VARCHAR(20) DEFAULT 'PENDING',  -- PENDING | APPROVED | REJECTED
+approved_by FK users (nullable),
+approved_at DATETIME (nullable),
+created_at DATETIME
+```
+
+### branch_expenses (Finance)
+```sql
+id, branch_id FK, category_id FK,
+amount DECIMAL(15,2), currency VARCHAR(10),
+description TEXT,
+expense_type VARCHAR(20),  -- SALARY | EXPENSE
+receipt_url VARCHAR(500),
+date DATE,
+status VARCHAR(20) DEFAULT 'PENDING',  -- PENDING | APPROVED | REJECTED
+approved_by FK users (nullable),
+approved_at DATETIME (nullable),
+created_by FK users,
+created_at DATETIME
+```
+
+### branch_income
+```sql
+id, branch_id FK, category_id FK,
+amount DECIMAL(15,2), currency VARCHAR(10),
+description TEXT,
+reference_no VARCHAR(100),
+date DATE,
+created_by FK users,
+created_at DATETIME
+```
+
+### finance_categories
+```sql
+id, name VARCHAR(100),
+icon VARCHAR(10),          -- emoji
+type VARCHAR(10),          -- EXPENSE | INCOME
+scope VARCHAR(10),         -- GLOBAL | BRANCH
+branch_id FK (NULL = global),
+is_active TINYINT(1) DEFAULT 1,
+created_by FK users,
+created_at DATETIME
+```
+
+---
+
+## 🌐 API ENDPOINTS
+
+### OT Requests
+```
+GET    /api/ot-requests?status=PENDING&branchId=   ← role-based filter
+POST   /api/ot-requests                            ← staff submit
+PUT    /api/ot-requests/{id}/approve               ← VP/HR/Director
+PUT    /api/ot-requests/{id}/reject                ← VP/HR/Director
+```
+
+### Leave Requests
+```
+GET    /api/leave-requests?status=PENDING&branchId=
+POST   /api/leave-requests
+PUT    /api/leave-requests/{id}/approve
+PUT    /api/leave-requests/{id}/reject
+```
+
+### Branch Expenses
+```
+GET    /api/branch-expenses?status=PENDING&branchId=
+POST   /api/branch-expenses
+PUT    /api/branch-expenses/{id}/approve           ← VP/Director/Boss
+PUT    /api/branch-expenses/{id}/reject
+```
+
+### Finance Categories
+```
+GET    /api/finance-categories?type=EXPENSE
+GET    /api/finance-categories?type=INCOME
+POST   /api/finance-categories                     ← HR create
+PUT    /api/finance-categories/{id}
+DELETE /api/finance-categories/{id}
+```
+
+---
+
+## 🔄 ROUTES
+
+```
+/dashboard/vp          ← VICE_PRESIDENT
+/dashboard/director    ← COUNTRY_DIRECTOR
+/dashboard/boss        ← BOSS (CEO)
+/dashboard/admin       ← ADMIN (HR)
+/dashboard/member      ← PROJECT_MANAGER, LEADER, DEVELOPER, UI_UX, QA
+```
+
+---
+
+## 📌 SIDEBAR NAV BY ROLE
+
+### VP (`/dashboard/vp`)
+```
+Overview | Projects | Members | Finance | Announcements
+(Chat မပါ)
+```
+
+### Director (`/dashboard/director`)
+```
+Overview | Projects | Members | Finance | Announcements | Chat
+Branch tabs: KH | MM | VN (assigned)
+```
+
+### Boss/CEO (`/dashboard/boss`)
+```
+Overview | Finance | Operations | People | Reports | Announcements
+Country list: JP | MM | KH | VN | KR | US
+```
+
+### Admin/HR (`/dashboard/admin`)
+```
+Overview | Staff List | Add Staff | Finance | Announcements
+```
+
+---
+
+## ✅ CONFIRMED — 2026-04-12
+# Do NOT re-discuss these decisions in future sessions
+
+## 🔐 Project Edit / Delete Permissions (CONFIRMED 2026-04-13)
+
+| Role | Edit Project | Delete Project |
+|---|---|---|
+| PROJECT_MANAGER | ✅ own projects only | ✅ own projects (tasks မရှိမှ) |
+| VICE_PRESIDENT | ✅ all projects | ✅ all projects |
+| COUNTRY_DIRECTOR | ✅ all projects | ✅ all projects |
+| BOSS | ✅ all projects | ❌ cannot delete |
+| ADMIN (HR) | ❌ | ❌ |
+
+### Delete Rules
+- Tasks ရှိနေပြီဆိုရင် PM delete မလုပ်နိုင် (VP/Director/Boss မူတည်)
+- Boss — read + edit ✅ | delete ❌ (read-only on destructive actions)
+
+### Edit Unlock Rules  
+- Tasks မစရသေးရင် — title အပါအဝင် အကုန် edit လုပ်လို့ရတယ်
+- Tasks ရှိပြီးဆိုရင် — title, description, dates, budget, status, priority edit ရတယ်
+
+## 🔐 HR Approval Flow (CONFIRMED 2026-04-13)
+
+| Request Type | Approvers |
+|---|---|
+| Leave | VP / HR(Admin) / Director (any one) |
+| OT | VP / HR(Admin) / Director (any one) |
+| Salary | VP / Director / Boss (any one) |
+| Other Expenses | VP / Director / Boss (any one) |
+
+Status flow: PENDING → APPROVED / REJECTED (one approval = done)
 
 
 

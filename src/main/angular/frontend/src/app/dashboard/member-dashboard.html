@@ -61,13 +61,9 @@
   <!-- ════════════ MAIN ROW ════════════ -->
   <div class="main-row">
 
-    <!-- ══════════════════════════════════
-         LEFT SIDEBAR
-    ══════════════════════════════════ -->
+    <!-- LEFT SIDEBAR -->
     <aside class="left-sidebar">
       <div class="sidebar-scroll">
-
-        <!-- Profile -->
         <div class="profile-section">
           <div class="avatar-wrap">
             <div class="avatar-circle">
@@ -105,7 +101,6 @@
 
         <div style="height:6px"></div>
 
-        <!-- ✅ Nav Items — Chat ဖြုတ်ထားတယ် -->
         <div class="sidebar-nav-wrap">
           <div class="sidebar-item active" (click)="closeProject()">
             <span class="nav-icon">📊</span>
@@ -127,28 +122,20 @@
             <span class="nav-icon">📹</span>
             <span>Video Call</span>
           </div>
-          <!-- ✅ New Project — prominent button -->
           <div *ngIf="canCreateProject()" (click)="openNewProject()"
-            style="display:flex;align-items:center;gap:8px;
-                   margin:6px 8px 2px;padding:9px 12px;
-                   border-radius:10px;cursor:pointer;
-                   background:linear-gradient(135deg,#14532d,#16a34a);
-                   border:none;transition:all 0.2s;
-                   box-shadow:0 2px 12px rgba(22,163,74,0.3);"
+            style="display:flex;align-items:center;gap:8px;margin:6px 8px 2px;padding:9px 12px;
+                   border-radius:10px;cursor:pointer;background:linear-gradient(135deg,#14532d,#16a34a);
+                   border:none;transition:all 0.2s;box-shadow:0 2px 12px rgba(22,163,74,0.3);"
             onmouseenter="this.style.opacity='0.9';this.style.transform='translateY(-1px)'"
             onmouseleave="this.style.opacity='1';this.style.transform='translateY(0)'">
             <span style="font-size:16px;line-height:1;">✦</span>
             <span style="font-size:12px;font-weight:700;color:white;letter-spacing:0.2px;">New Project</span>
-            <span style="margin-left:auto;font-size:9px;
-                         background:rgba(255,255,255,0.2);
-                         color:white;padding:1px 6px;
-                         border-radius:20px;font-weight:600;">+ NEW</span>
+            <span style="margin-left:auto;font-size:9px;background:rgba(255,255,255,0.2);color:white;padding:1px 6px;border-radius:20px;font-weight:600;">+ NEW</span>
           </div>
         </div>
 
         <div class="section-divider" style="margin: 8px 10px;"></div>
 
-        <!-- MY PROJECTS -->
         <div class="proj-section-label">
           MY PROJECTS <span style="color:#22c55e;">{{ activeProjects.length }}</span>
         </div>
@@ -168,9 +155,8 @@
           </div>
         </div>
 
-      </div><!-- /sidebar-scroll -->
+      </div>
 
-      <!-- Settings -->
       <div class="sidebar-bottom">
         <div class="settings-wrap">
           <div *ngIf="settingsOpen" class="settings-submenu">
@@ -183,30 +169,17 @@
           <div class="sidebar-item" (click)="settingsOpen = !settingsOpen">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <circle cx="12" cy="12" r="3" />
-              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06
-                     a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09
-                     A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83
-                     l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09
-                     A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83
-                     l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09
-                     a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83
-                     l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09
-                     a1.65 1.65 0 0 0-1.51 1z" />
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
             </svg>
             Settings
-            <span style="margin-left:auto;font-size:9px;opacity:0.4">
-              {{ settingsOpen ? '▲' : '▼' }}
-            </span>
+            <span style="margin-left:auto;font-size:9px;opacity:0.4">{{ settingsOpen ? '▲' : '▼' }}</span>
           </div>
         </div>
       </div>
     </aside>
 
-    <!-- ══════════════════════════════════
-         MAIN CONTENT
-    ══════════════════════════════════ -->
+    <!-- MAIN CONTENT -->
     <main *ngIf="!showProjectDetail && !showNewProject" class="main-content">
-      <!-- Stats Row -->
       <div class="stats-grid">
         <div class="stat-card">
           <div class="stat-label">Total Projects</div>
@@ -424,12 +397,8 @@
       <app-project-new-inline (close)="closeNewProject()" (created)="onProjectCreated($event)"></app-project-new-inline>
     </ng-container>
 
-    <!-- ══════════════════════════════════
-         RIGHT SIDEBAR
-    ══════════════════════════════════ -->
+    <!-- RIGHT SIDEBAR -->
     <aside *ngIf="!showProjectDetail && !showNewProject" class="right-sidebar">
-
-      <!-- My Tasks -->
       <div class="my-tasks-section">
         <div class="rs-section-header">
           <span style="font-size:11px;font-weight:700;">My Tasks</span>
@@ -448,21 +417,16 @@
         </div>
       </div>
 
-      <!-- ✅ Project Groups + Team Members — single combined scroll -->
       <div class="members-section">
         <div class="members-list">
 
-          <!-- Project Groups header -->
           <div class="rs-section-header" style="margin-bottom:4px;">
             <span style="font-size:11px;font-weight:700;">👥 Project Groups</span>
             <span style="font-size:9px;opacity:0.4">{{ activeProjects.length }}</span>
           </div>
 
-          <!-- Project Group items — ✅ p.name သုံးတယ် (title မဟုတ်) -->
-          <div *ngFor="let p of activeProjects"
-            class="member-card"
-            (click)="openProjectChat(p)"
-            style="cursor:pointer;justify-content:space-between;">
+          <div *ngFor="let p of activeProjects" class="member-card"
+            (click)="openProjectChat(p)" style="cursor:pointer;justify-content:space-between;">
             <div style="display:flex;align-items:center;gap:6px;min-width:0;flex:1;">
               <div style="width:8px;height:8px;border-radius:2px;flex-shrink:0;"
                 [style.background]="p.color || '#16a34a'"></div>
@@ -471,25 +435,27 @@
             <span style="font-size:12px;flex-shrink:0;opacity:0.6;">💬</span>
           </div>
 
-          <!-- Divider between sections -->
           <div style="border-top:1px solid;opacity:0.12;margin:6px 0;"></div>
 
-          <!-- Team Members header -->
           <div class="rs-section-header" style="margin-bottom:4px;">
             <span style="font-size:11px;font-weight:700;">Team Members</span>
             <span style="font-size:9px;opacity:0.4">{{ teamMembers.length }}</span>
           </div>
 
-          <!-- Team Member items -->
+          <!-- Team Member items — tasks > 0 မှပဲ tasks label ပြ -->
           <div *ngFor="let m of teamMembers" class="member-card"
-               (click)="openMemberChat(m)" style="cursor:pointer">
+            (click)="openMemberChat(m)" style="cursor:pointer;">
             <div class="member-avatar" [style.background]="m.color">
               {{ m.initial }}
               <div *ngIf="m.online" class="member-online"></div>
             </div>
             <div class="member-info-wrap">
               <div class="member-name">{{ m.name }}</div>
-              <div class="member-info">{{ m.role }} · <span class="member-tasks">{{ m.tasks }} tasks</span></div>
+              <div class="member-info" style="display:flex;align-items:center;gap:3px;">
+                <span [style.color]="m.role==='Country Director'?'#a855f7':m.role==='Vice President'?'#ef4444':m.role==='Admin'?'#ec4899':''"
+                      [style.fontWeight]="(m.role==='Country Director'||m.role==='Vice President'||m.role==='Admin')?'700':'400'">{{ m.role }}</span>
+                <span *ngIf="m.tasks && m.tasks > 0" class="member-tasks"> · {{ m.tasks }} tasks</span>
+              </div>
             </div>
             <div class="member-status-dot" [style.background]="m.online ? '#22c55e' : '#475569'"></div>
           </div>
@@ -498,11 +464,8 @@
       </div>
 
     </aside>
-  </div><!-- /main-row -->
+  </div>
 
-  <!-- ══════════════════════════════════
-       CHAT POPUP
-  ══════════════════════════════════ -->
   <app-chat-popup
     *ngIf="selectedChatMember"
     [member]="selectedChatMember"

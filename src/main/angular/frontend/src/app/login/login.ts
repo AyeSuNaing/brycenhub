@@ -19,6 +19,20 @@ export class Login {
 
   constructor(private http: HttpClient, private router: Router) { }
 
+  getDashboardRoute(role: string): string {
+    switch (role) {
+      case 'BOSS':
+      case 'COUNTRY_DIRECTOR': return '/dashboard/boss';
+      case 'ADMIN':            return '/dashboard/admin';
+      case 'PROJECT_MANAGER':  return '/dashboard/pm';
+      case 'LEADER':           return '/dashboard/leader';
+      case 'DEVELOPER':        return '/dashboard/developer';
+      case 'UI_UX':            return '/dashboard/uiux';
+      case 'QA':               return '/dashboard/qa';
+      default:                 return '/dashboard/member';
+    }
+  }
+
   login() {
     this.isLoading = true;
     this.errorMessage = '';
@@ -33,24 +47,7 @@ export class Login {
           this.isLoading = false;
           localStorage.setItem('token', res.token);
           localStorage.setItem('user', JSON.stringify(res));
-          // Role-based redirect
-          const role = res.role;
-          // if (role === 'BOSS' || role === 'COUNTRY_DIRECTOR') {
-          //   this.router.navigate(['/dashboard/boss']);
-          // } else if (role === 'PROJECT_MANAGER' || role === 'LEADER') {
-          //   this.router.navigate(['/dashboard/member']);
-          // } else {
-          //   this.router.navigate(['/dashboard/dev']);
-          // }
-          if (role === 'BOSS' || role === 'COUNTRY_DIRECTOR') {
-            this.router.navigate(['/dashboard/boss']);
-          } else if (role === 'ADMIN') {
-            this.router.navigate(['/dashboard/admin']);
-          } else {
-            this.router.navigate(['/dashboard/member']);
-          }
-
-
+          this.router.navigate([this.getDashboardRoute(res.role)]);
         },
         error: () => {
           this.isLoading = false;

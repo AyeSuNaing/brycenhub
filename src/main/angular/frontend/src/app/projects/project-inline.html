@@ -3,55 +3,22 @@
     height:100%;width:100%;position:absolute;top:0;left:0;z-index:10;">
   <div style="display:flex;flex-direction:column;align-items:center;gap:16px;opacity:0.6;">
     <svg viewBox="0 0 100 90" width="80" height="72" xmlns="http://www.w3.org/2000/svg">
-      <style>
-        .sail {
-          animation: sailFloat 2s ease-in-out infinite;
-          transform-origin: 50px 50px;
-        }
-
-        @keyframes sailFloat {
-
-          0%,
-          100% {
-            transform: translateY(0px);
-          }
-
-          50% {
-            transform: translateY(-6px);
-          }
-        }
-      </style>
+      <style>.sail{animation:sailFloat 2s ease-in-out infinite;transform-origin:50px 50px;}@keyframes sailFloat{0%,100%{transform:translateY(0px);}50%{transform:translateY(-6px);}}</style>
       <g class="sail">
-        <polygon points="50,10 50,60 80,60" fill="#16a34a" opacity="0.9" />
-        <polygon points="50,18 50,60 22,60" fill="#22c55e" opacity="0.7" />
-        <rect x="48" y="8" width="4" height="54" fill="#14532d" rx="2" />
+        <polygon points="50,10 50,60 80,60" fill="#16a34a" opacity="0.9"/>
+        <polygon points="50,18 50,60 22,60" fill="#22c55e" opacity="0.7"/>
+        <rect x="48" y="8" width="4" height="54" fill="#14532d" rx="2"/>
       </g>
-      <path d="M10 65 Q30 58 50 65 Q70 72 90 65 L85 78 Q65 85 50 78 Q30 85 15 78 Z" fill="#0891b2" opacity="0.8" />
-      <path d="M5 72 Q25 68 45 72 Q65 76 90 72" fill="none" stroke="#67e8f9" stroke-width="2" stroke-dasharray="4,3"
-        opacity="0.5" />
+      <path d="M10 65 Q30 58 50 65 Q70 72 90 65 L85 78 Q65 85 50 78 Q30 85 15 78 Z" fill="#0891b2" opacity="0.8"/>
+      <path d="M5 72 Q25 68 45 72 Q65 76 90 72" fill="none" stroke="#67e8f9" stroke-width="2" stroke-dasharray="4,3" opacity="0.5"/>
     </svg>
     <div style="font-size:11px;color:#22c55e;font-weight:600;letter-spacing:0.5px;">Loading project...</div>
   </div>
 </div>
 
 <style>
-  @keyframes spin {
-    to {
-      transform: rotate(360deg);
-    }
-  }
-
-  @keyframes fadeIn {
-    from {
-      opacity: 0;
-      transform: translateY(4px);
-    }
-
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @keyframes fadeIn { from { opacity:0; transform:translateY(4px); } to { opacity:1; transform:translateY(0); } }
 </style>
 
 <!-- ════════ MAIN CONTENT ════════ -->
@@ -60,17 +27,13 @@
 
     <!-- ① Back + Title -->
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px;">
-      <button (click)="close.emit()" style="display:flex;align-items:center;gap:5px;font-size:11px;opacity:0.5;
-               cursor:pointer;background:none;border:none;color:inherit;transition:opacity 0.15s;padding:0;"
+      <button (click)="close.emit()" style="display:flex;align-items:center;gap:5px;font-size:11px;opacity:0.5;cursor:pointer;background:none;border:none;color:inherit;transition:opacity 0.15s;padding:0;"
         onmouseenter="this.style.opacity='1'" onmouseleave="this.style.opacity='0.5'">
         ← Back to Dashboard
       </button>
       <span style="opacity:0.2;">|</span>
       <span style="font-size:13px;font-weight:700;">{{ project.title }}</span>
-      <span [ngClass]="getStatusClass(project.status)"
-        style="font-size:9px;padding:2px 8px;border-radius:20px;font-weight:600;">
-        {{ project.status }}
-      </span>
+      <span [ngClass]="getStatusClass(project.status)" style="font-size:9px;padding:2px 8px;border-radius:20px;font-weight:600;">{{ project.status }}</span>
     </div>
 
     <!-- ② STATS ROW -->
@@ -84,261 +47,704 @@
       </div>
     </div>
 
-    <!-- ③ Project Information -->
-    <div class="card" style="animation:fadeIn 0.3s ease;">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
-        <div class="card-title" style="margin-bottom:0;">📋 Project Information</div>
-        <span style="font-size:10px;padding:3px 10px;border-radius:20px;font-weight:700;letter-spacing:0.3px;"
-          [style.background]="getStatusBg(project.status)" [style.color]="getStatusColor2(project.status)"
-          [style.border]="'1px solid ' + getStatusColor2(project.status) + '44'">
-          ● {{ project.status }}
-        </span>
-      </div>
-      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:14px;">
-        <div>
-          <div style="font-size:9px;opacity:0.4;margin-bottom:4px;letter-spacing:0.5px;font-weight:600;">PROJECT</div>
-          <div style="font-size:14px;font-weight:700;">{{ translatedTitle || project.title }}</div>
-        </div>
-        <div>
-          <div style="font-size:9px;opacity:0.4;margin-bottom:4px;letter-spacing:0.5px;font-weight:600;">PM</div>
-          <div style="font-size:12px;font-weight:700;color:#22c55e;display:flex;align-items:center;gap:5px;">
-            <span
-              style="width:20px;height:20px;border-radius:50%;background:linear-gradient(135deg,#14532d,#16a34a);
-                         display:inline-flex;align-items:center;justify-content:center;font-size:9px;color:white;font-weight:700;flex-shrink:0;">
-              {{ getPmInitial() }}
-            </span>
-            {{ getPmName() }}
-          </div>
-        </div>
-        <div>
-          <div style="font-size:9px;opacity:0.4;margin-bottom:4px;letter-spacing:0.5px;font-weight:600;">START DATE
-          </div>
-          <div style="font-size:12px;font-weight:600;">{{ project.startDate | date:'yyyy-MM-dd' }}</div>
-        </div>
-        <div>
-          <div style="font-size:9px;opacity:0.4;margin-bottom:4px;letter-spacing:0.5px;font-weight:600;">DEADLINE</div>
-          <div style="font-size:12px;font-weight:600;" [style.color]="isOverdue() ? '#ef4444' : ''">
-            {{ project.endDate | date:'yyyy-MM-dd' }}
-            <span *ngIf="isOverdue()" style="font-size:9px;color:#ef4444;margin-left:4px;">⚠</span>
-          </div>
-        </div>
-        <div>
-          <div style="font-size:9px;opacity:0.4;margin-bottom:4px;letter-spacing:0.5px;font-weight:600;">BUDGET</div>
-          <div style="font-size:12px;font-weight:700;color:#22c55e;">{{ getBudget() }}</div>
-        </div>
-        <div>
-          <div style="font-size:9px;opacity:0.4;margin-bottom:4px;letter-spacing:0.5px;font-weight:600;">PRIORITY</div>
-          <span style="font-size:9px;padding:3px 10px;border-radius:20px;font-weight:700;border:1px solid;"
-            [style.color]="getPriorityColor2(project.priority || 'MEDIUM')"
-            [style.background]="getPriorityColor2(project.priority || 'MEDIUM') + '18'"
-            [style.borderColor]="getPriorityColor2(project.priority || 'MEDIUM') + '44'">
-            {{ project.priority || 'MEDIUM' }}
-          </span>
-        </div>
-        <div *ngIf="project.clientId">
-          <div style="font-size:9px;opacity:0.4;margin-bottom:4px;letter-spacing:0.5px;font-weight:600;">CLIENT</div>
-          <div style="font-size:12px;font-weight:600;color:#60a5fa;display:flex;align-items:center;gap:5px;">
-            <span style="font-size:12px;">🏢</span>{{ getClientName() }}
-          </div>
-        </div>
-      </div>
-      <div *ngIf="project.description"
-        style="margin-top:4px;border-top:1px solid rgba(255,255,255,0.05);padding-top:14px;">
-        <div style="font-size:9px;opacity:0.4;margin-bottom:8px;letter-spacing:0.5px;font-weight:600;">📝 DESCRIPTION
-        </div>
-        <div
-          style="font-size:12px;line-height:1.8;opacity:0.7;white-space:pre-wrap;word-break:break-word;overflow:hidden;transition:max-height 0.4s ease;"
-          [style.maxHeight]="showFullDesc ? '2000px' : '66px'">
-          {{ translatedDesc || project.description }}
-        </div>
-        <button (click)="showFullDesc = !showFullDesc"
-          style="margin-top:8px;font-size:10px;font-weight:600;color:#22c55e;background:rgba(34,197,94,0.08);
-                 border:1px solid rgba(34,197,94,0.2);border-radius:6px;padding:3px 10px;cursor:pointer;transition:all 0.15s;"
-          onmouseenter="this.style.background='rgba(34,197,94,0.15)'"
-          onmouseleave="this.style.background='rgba(34,197,94,0.08)'">
-          {{ showFullDesc ? '▲ Show less' : '▼ Show more' }}
-        </button>
+    <!-- ══ TABS ══ -->
+    <div style="display:flex;gap:0;border-bottom:1px solid var(--color-border,#1e2d4a);flex-shrink:0;margin-bottom:14px;overflow-x:auto;">
+      <div *ngFor="let tab of [
+            {id:'overview',    label:'📊 Overview'},
+            {id:'information', label:'📋 Information'},
+            {id:'techstack',   label:'🛠 Tech Stack'},
+            {id:'members',     label:'👥 Members'},
+            {id:'rules',       label:'📐 Rules'}
+          ]"
+        (click)="activeTab = tab.id"
+        style="padding:8px 18px;font-size:11px;font-weight:600;border-bottom:2px solid transparent;
+               margin-bottom:-1px;cursor:pointer;transition:all 0.15s;white-space:nowrap;flex-shrink:0;"
+        [style.borderBottomColor]="activeTab === tab.id ? '#22c55e' : 'transparent'"
+        [style.color]="activeTab === tab.id ? '#22c55e' : '#64748b'">
+        {{ tab.label }}
       </div>
     </div>
 
-    <!-- ④ Board Preview | UI/UX Design -->
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
-      <div class="card">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
-          <div class="card-title" style="margin-bottom:0;">⊞ Board Preview</div>
-          <div style="display:flex;align-items:center;gap:8px;">
-            <span
-              style="font-size:9px;padding:2px 8px;border-radius:20px;background:#16a34a22;color:#22c55e;font-weight:700;">
-              {{ boardPct }}% done
-            </span>
-            <a [routerLink]="['/kanban', project.id]" style="font-size:10px;background:#16a34a22;color:#22c55e;
-                     padding:4px 10px;border-radius:7px;font-weight:600;text-decoration:none;cursor:pointer;">
-              Open Board →
-            </a>
+    <!-- ══ TAB: OVERVIEW (default) ══ -->
+    <ng-container *ngIf="activeTab === 'overview'">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+        <div class="card">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+            <div class="card-title" style="margin-bottom:0;">⊞ Board Preview</div>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span style="font-size:9px;padding:2px 8px;border-radius:20px;background:#16a34a22;color:#22c55e;font-weight:700;">{{ boardPct }}% done</span>
+              <a [routerLink]="['/kanban', project.id]" style="font-size:10px;background:#16a34a22;color:#22c55e;padding:4px 10px;border-radius:7px;font-weight:600;text-decoration:none;cursor:pointer;">Open Board →</a>
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:12px;">
+            <div *ngFor="let col of boardColumns" style="display:flex;flex-direction:column;align-items:center;gap:6px;">
+              <div style="width:100%;height:60px;border-radius:8px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.06);"></div>
+              <div style="width:100%;height:5px;border-radius:3px;" [style.background]="col.color"></div>
+              <div style="font-size:22px;font-weight:800;line-height:1;" [style.color]="col.color">{{ getTasksByStatus(col.status).length }}</div>
+              <div style="font-size:9px;opacity:0.45;text-align:center;line-height:1.3;">{{ col.label }}</div>
+            </div>
+          </div>
+          <div>
+            <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+              <span style="font-size:9px;opacity:0.4;">Overall completion</span>
+              <span style="font-size:9px;font-weight:700;color:#22c55e;">{{ boardPct }}%</span>
+            </div>
+            <div class="progress-bar" style="height:6px;">
+              <div class="progress-fill" [style.width]="boardPct + '%'" style="background:linear-gradient(90deg,#16a34a,#22c55e);"></div>
+            </div>
+            <div style="font-size:9px;opacity:0.3;margin-top:4px;">{{ doneCount }} of {{ tasks.length }} tasks completed · {{ inProgressCount }} in progress</div>
           </div>
         </div>
-        <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:12px;">
-          <div *ngFor="let col of boardColumns" style="display:flex;flex-direction:column;align-items:center;gap:6px;">
-            <div
-              style="width:100%;height:60px;border-radius:8px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.06);">
+
+        <div class="card">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+            <div class="card-title" style="margin-bottom:0;">🎨 UI/UX Design Preview</div>
+            <div style="display:flex;gap:6px;">
+              <span style="font-size:9px;padding:2px 7px;border-radius:5px;background:#1e78c822;color:#60a5fa;font-weight:700;border:1px solid #3b82f633;">Figma</span>
+              <button (click)="openDesign()" style="font-size:10px;cursor:pointer;background:#3b82f622;border:none;color:#60a5fa;padding:4px 10px;border-radius:7px;font-weight:600;">Open Design →</button>
             </div>
-            <div style="width:100%;height:5px;border-radius:3px;" [style.background]="col.color"></div>
-            <div style="font-size:22px;font-weight:800;line-height:1;" [style.color]="col.color">
-              {{ getTasksByStatus(col.status).length }}
+          </div>
+          <div style="height:110px;border-radius:8px;border:1px dashed rgba(30,45,74,0.5);display:flex;align-items:center;justify-content:center;margin-bottom:10px;background:rgba(15,22,40,0.5);">
+            <div style="width:88%;display:flex;flex-direction:column;gap:5px;">
+              <div style="display:flex;gap:5px;align-items:center;">
+                <div style="width:10px;height:10px;border-radius:50%;background:#ef4444;opacity:0.7;"></div>
+                <div style="width:10px;height:10px;border-radius:50%;background:#f59e0b;opacity:0.7;"></div>
+                <div style="width:10px;height:10px;border-radius:50%;background:#22c55e;opacity:0.7;"></div>
+                <div style="flex:1;height:7px;border-radius:3px;background:#1e2d4a;"></div>
+              </div>
+              <div style="display:flex;gap:5px;">
+                <div style="flex:2;height:35px;border-radius:4px;background:#1e2d4a;"></div>
+                <div style="flex:3;height:35px;border-radius:4px;background:rgba(30,45,74,0.4);"></div>
+                <div style="flex:2;height:35px;border-radius:4px;background:rgba(34,197,94,0.15);"></div>
+              </div>
+              <div style="height:7px;border-radius:3px;background:rgba(30,45,74,0.6);width:55%;"></div>
             </div>
-            <div style="font-size:9px;opacity:0.45;text-align:center;line-height:1.3;">{{ col.label }}</div>
           </div>
-        </div>
-        <div>
-          <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
-            <span style="font-size:9px;opacity:0.4;">Overall completion</span>
-            <span style="font-size:9px;font-weight:700;color:#22c55e;">{{ boardPct }}%</span>
-          </div>
-          <div class="progress-bar" style="height:6px;">
-            <div class="progress-fill" [style.width]="boardPct + '%'"
-              style="background:linear-gradient(90deg,#16a34a,#22c55e);"></div>
-          </div>
-          <div style="font-size:9px;opacity:0.3;margin-top:4px;">
-            {{ doneCount }} of {{ tasks.length }} tasks completed · {{ inProgressCount }} in progress
+          <div style="font-size:9px;opacity:0.4;margin-bottom:6px;letter-spacing:0.5px;">VERSION HISTORY</div>
+          <div style="display:flex;gap:5px;">
+            <div *ngFor="let v of ['v2.4.1','v2.3.8','v2.2.5','v2.1.0']; let i=index"
+              style="flex:1;padding:5px 8px;border-radius:7px;border:1px solid;text-align:center;cursor:pointer;"
+              [style.borderColor]="i===0 ? '#22c55e' : '#1e2d4a'" [style.background]="i===0 ? 'rgba(22,163,74,0.1)' : 'transparent'">
+              <div style="font-size:10px;font-weight:700;" [style.color]="i===0 ? '#22c55e' : ''">{{ v }}</div>
+              <div style="font-size:8px;opacity:0.4;">{{ i===0 ? 'Current' : i + 'w ago' }}</div>
+            </div>
           </div>
         </div>
       </div>
 
       <div class="card">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
-          <div class="card-title" style="margin-bottom:0;">🎨 UI/UX Design Preview</div>
+          <div class="card-title" style="margin-bottom:0;">⚡ API Documentation</div>
           <div style="display:flex;gap:6px;">
-            <span
-              style="font-size:9px;padding:2px 7px;border-radius:5px;background:#1e78c822;color:#60a5fa;font-weight:700;border:1px solid #3b82f633;">Figma</span>
-            <button (click)="openDesign()"
-              style="font-size:10px;cursor:pointer;background:#3b82f622;border:none;color:#60a5fa;padding:4px 10px;border-radius:7px;font-weight:600;">
-              Open Design →
+            <span style="font-size:9px;padding:2px 7px;border-radius:5px;background:#22c55e22;color:#22c55e;font-weight:700;border:1px solid #22c55e33;">REST v1</span>
+            <button (click)="showApi=true" style="font-size:10px;cursor:pointer;background:#6366f122;border:none;color:#818cf8;padding:4px 10px;border-radius:7px;font-weight:600;">Open API →</button>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:3px;">
+          <div *ngFor="let ep of (apiEndpoints.length ? apiEndpoints : mockEndpoints).slice(0,6)"
+            style="display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:8px;border:1px solid rgba(30,45,74,0.3);margin-bottom:4px;">
+            <span [ngClass]="getMethodClass(ep.method)" style="font-size:9px;font-weight:700;padding:3px 8px;border-radius:4px;min-width:52px;text-align:center;flex-shrink:0;">{{ ep.method }}</span>
+            <span style="font-size:11px;font-family:monospace;flex:1;">{{ ep.url }}</span>
+            <span style="font-size:10px;opacity:0.45;">{{ ep.title || ep.desc }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+          <div class="card-title" style="margin-bottom:0;">🗄️ Database Design</div>
+          <button (click)="showDb=true" style="font-size:10px;cursor:pointer;background:#1e3a5f22;border:none;color:#60a5fa;padding:4px 10px;border-radius:7px;font-weight:600;">Open Schema →</button>
+        </div>
+        <div style="display:flex;gap:10px;overflow-x:auto;padding-bottom:6px;">
+          <div *ngFor="let tbl of mockTables"
+            style="flex-shrink:0;border-radius:10px;border:1px solid #1e2d4a;min-width:130px;overflow:hidden;cursor:pointer;transition:border-color 0.15s;"
+            onmouseenter="this.style.borderColor='#3b82f6'" onmouseleave="this.style.borderColor='#1e2d4a'">
+            <div style="background:#1e3a5f;padding:6px 10px;font-size:10px;font-weight:700;color:#60a5fa;">{{ tbl.name }}</div>
+            <div style="padding:6px 10px;display:flex;flex-direction:column;gap:3px;">
+              <div *ngFor="let col of tbl.cols" style="font-size:9px;opacity:0.6;">{{ col }}</div>
+              <div style="font-size:8px;opacity:0.25;margin-top:2px;">···</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">🕐 Activity Log</div>
+        <div *ngIf="!activities.length" style="text-align:center;padding:20px;font-size:11px;opacity:0.35;">No activity yet</div>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <div *ngFor="let act of activities.slice(0,6)" style="display:flex;align-items:flex-start;gap:8px;">
+            <div style="width:24px;height:24px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:white;background:linear-gradient(135deg,#14532d,#16a34a);">{{ (act.userName || 'U')[0].toUpperCase() }}</div>
+            <div style="flex:1;">
+              <div class="act-text"><strong>{{ act.userName || 'User' }}</strong> {{ getActionText(act.action) }}<span *ngIf="act.newValue" style="opacity:0.5;"> → {{ act.newValue }}</span></div>
+              <div class="act-time">{{ act.createdAt | date:'MMM d, h:mm a' }}</div>
+            </div>
+            <span style="font-size:13px;">{{ getActionIcon(act.action) }}</span>
+          </div>
+        </div>
+      </div>
+    </ng-container>
+
+    <!-- ══ TAB: INFORMATION ══ -->
+    <ng-container *ngIf="activeTab === 'information'">
+      <div class="card" style="animation:fadeIn 0.3s ease;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+          <div class="card-title" style="margin-bottom:0;">📋 Project Information</div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span style="font-size:10px;padding:3px 10px;border-radius:20px;font-weight:700;letter-spacing:0.3px;"
+              [style.background]="getStatusBg(project.status)" [style.color]="getStatusColor2(project.status)"
+              [style.border]="'1px solid ' + getStatusColor2(project.status) + '44'">
+              ● {{ project.status }}
+            </span>
+            <!-- tasks = 0 မှ Edit ရ -->
+            <button *ngIf="canEdit() && tasks.length === 0"
+              (click)="showEdit = !showEdit; showEdit && initEditForm()"
+              style="display:flex;align-items:center;gap:5px;padding:5px 14px;border-radius:8px;
+                     border:1px solid;font-size:11px;font-weight:600;cursor:pointer;transition:all 0.15s;"
+              [style.borderColor]="showEdit ? '#22c55e' : 'var(--color-border,#1e2d4a)'"
+              [style.background]="showEdit ? '#22c55e22' : 'transparent'"
+              [style.color]="showEdit ? '#22c55e' : '#64748b'">
+              ✏️ {{ showEdit ? 'Cancel' : 'Edit' }}
+            </button>
+            <!-- tasks > 0 → locked -->
+            <span *ngIf="canEdit() && tasks.length > 0"
+              style="font-size:10px;padding:4px 10px;border-radius:8px;border:1px solid var(--color-border,#1e2d4a);color:#64748b;opacity:0.45;cursor:not-allowed;"
+              title="Edit disabled — tasks exist">
+              🔒 Locked
+            </span>
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:14px;">
+          <div>
+            <div style="font-size:9px;opacity:0.4;margin-bottom:4px;letter-spacing:0.5px;font-weight:600;">PROJECT</div>
+            <div style="font-size:14px;font-weight:700;">{{ translatedTitle || project.title }}</div>
+          </div>
+          <div>
+            <div style="font-size:9px;opacity:0.4;margin-bottom:4px;letter-spacing:0.5px;font-weight:600;">PM</div>
+            <div style="font-size:12px;font-weight:700;color:#22c55e;display:flex;align-items:center;gap:5px;">
+              <span style="width:20px;height:20px;border-radius:50%;background:linear-gradient(135deg,#14532d,#16a34a);display:inline-flex;align-items:center;justify-content:center;font-size:9px;color:white;font-weight:700;flex-shrink:0;">{{ getPmInitial() }}</span>
+              {{ getPmName() }}
+            </div>
+          </div>
+          <div>
+            <div style="font-size:9px;opacity:0.4;margin-bottom:4px;letter-spacing:0.5px;font-weight:600;">START DATE</div>
+            <div style="font-size:12px;font-weight:600;">{{ project.startDate | date:'yyyy-MM-dd' }}</div>
+          </div>
+          <div>
+            <div style="font-size:9px;opacity:0.4;margin-bottom:4px;letter-spacing:0.5px;font-weight:600;">DEADLINE</div>
+            <div style="font-size:12px;font-weight:600;" [style.color]="isOverdue() ? '#ef4444' : ''">
+              {{ project.endDate | date:'yyyy-MM-dd' }}
+              <span *ngIf="isOverdue()" style="font-size:9px;color:#ef4444;margin-left:4px;">⚠</span>
+            </div>
+          </div>
+          <div>
+            <div style="font-size:9px;opacity:0.4;margin-bottom:4px;letter-spacing:0.5px;font-weight:600;">BUDGET</div>
+            <div style="font-size:12px;font-weight:700;color:#22c55e;">{{ getBudget() }}</div>
+          </div>
+          <div>
+            <div style="font-size:9px;opacity:0.4;margin-bottom:4px;letter-spacing:0.5px;font-weight:600;">PRIORITY</div>
+            <span style="font-size:9px;padding:3px 10px;border-radius:20px;font-weight:700;border:1px solid;"
+              [style.color]="getPriorityColor2(project.priority || 'MEDIUM')"
+              [style.background]="getPriorityColor2(project.priority || 'MEDIUM') + '18'"
+              [style.borderColor]="getPriorityColor2(project.priority || 'MEDIUM') + '44'">
+              {{ project.priority || 'MEDIUM' }}
+            </span>
+          </div>
+          <div *ngIf="project.clientId">
+            <div style="font-size:9px;opacity:0.4;margin-bottom:4px;letter-spacing:0.5px;font-weight:600;">CLIENT</div>
+            <div style="font-size:12px;font-weight:600;color:#60a5fa;display:flex;align-items:center;gap:5px;">
+              <span style="font-size:12px;">🏢</span>{{ getClientName() }}
+            </div>
+          </div>
+          <div>
+            <div style="font-size:9px;opacity:0.4;margin-bottom:4px;letter-spacing:0.5px;font-weight:600;">PROGRESS</div>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <div style="flex:1;height:6px;background:#1e2d4a;border-radius:3px;overflow:hidden;">
+                <div [style.width]="(project.progress || 0) + '%'" style="height:100%;background:linear-gradient(90deg,#14532d,#22c55e);border-radius:3px;transition:width 0.4s;"></div>
+              </div>
+              <span style="font-size:11px;font-weight:700;color:#22c55e;flex-shrink:0;">{{ project.progress || 0 }}%</span>
+            </div>
+          </div>
+          <div *ngIf="project.originalLanguage">
+            <div style="font-size:9px;opacity:0.4;margin-bottom:4px;letter-spacing:0.5px;font-weight:600;">LANGUAGE</div>
+            <div style="font-size:12px;font-weight:600;">{{ project.originalLanguage | uppercase }}</div>
+          </div>
+        </div>
+
+        <div *ngIf="project.description" style="margin-top:4px;border-top:1px solid rgba(255,255,255,0.05);padding-top:14px;">
+          <div style="font-size:9px;opacity:0.4;margin-bottom:8px;letter-spacing:0.5px;font-weight:600;">📝 DESCRIPTION</div>
+          <div style="font-size:12px;line-height:1.8;opacity:0.75;white-space:pre-wrap;word-break:break-word;">
+            {{ translatedDesc || project.description }}
+          </div>
+        </div>
+      </div>
+
+      <!-- EDIT SECTION -->
+      <div *ngIf="showEdit && tasks.length === 0" style="border-radius:12px;border:1px solid #22c55e44;background:linear-gradient(135deg,#14532d08,#0d1424);padding:16px;animation:fadeIn 0.2s ease;">
+        <div style="font-size:11px;font-weight:700;color:#22c55e;letter-spacing:0.5px;margin-bottom:14px;">✏️ EDIT PROJECT</div>
+        <div style="display:flex;flex-direction:column;gap:12px;">
+          <div>
+            <label style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:#64748b;display:block;margin-bottom:4px;">PROJECT TITLE *</label>
+            <input [(ngModel)]="editForm.title" placeholder="Project title"
+              style="width:100%;border-radius:9px;border:1px solid var(--color-border,#1e2d4a);padding:9px 12px;font-size:12px;outline:none;background:var(--input-bg,#0d1424);color:var(--input-text,#e2e8f0);box-sizing:border-box;font-family:inherit;">
+          </div>
+          <div>
+            <label style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:#64748b;display:block;margin-bottom:4px;">DESCRIPTION</label>
+            <textarea [(ngModel)]="editForm.description" placeholder="Project description..." #descTA
+              (ngModelChange)="descTA.style.height='auto'; descTA.style.height=descTA.scrollHeight+'px'"
+              style="width:100%;border-radius:9px;border:1px solid var(--color-border,#1e2d4a);padding:9px 12px;font-size:12px;outline:none;background:var(--input-bg,#0d1424);color:var(--input-text,#e2e8f0);box-sizing:border-box;font-family:inherit;resize:none;line-height:1.6;min-height:120px;overflow:hidden;"></textarea>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+            <div>
+              <label style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:#64748b;display:block;margin-bottom:6px;">STATUS</label>
+              <div style="display:flex;gap:5px;flex-wrap:wrap;">
+                <div *ngFor="let s of statuses" (click)="editForm.status = s.value"
+                  style="padding:4px 10px;border-radius:20px;border:1px solid;font-size:10px;font-weight:600;cursor:pointer;transition:all 0.15s;"
+                  [style.borderColor]="editForm.status === s.value ? s.color : 'var(--color-border,#1e2d4a)'"
+                  [style.background]="editForm.status === s.value ? s.color + '22' : 'transparent'"
+                  [style.color]="editForm.status === s.value ? s.color : '#64748b'">{{ s.label }}</div>
+              </div>
+            </div>
+            <div>
+              <label style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:#64748b;display:block;margin-bottom:6px;">PRIORITY</label>
+              <div style="display:flex;gap:5px;flex-wrap:wrap;">
+                <div *ngFor="let p of priorities" (click)="editForm.priority = p.value"
+                  style="padding:4px 10px;border-radius:20px;border:1px solid;font-size:10px;font-weight:600;cursor:pointer;transition:all 0.15s;"
+                  [style.borderColor]="editForm.priority === p.value ? p.color : 'var(--color-border,#1e2d4a)'"
+                  [style.background]="editForm.priority === p.value ? p.color + '22' : 'transparent'"
+                  [style.color]="editForm.priority === p.value ? p.color : '#64748b'">{{ p.label }}</div>
+              </div>
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;">
+            <div>
+              <label style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:#64748b;display:block;margin-bottom:4px;">START DATE</label>
+              <input type="date" [(ngModel)]="editForm.startDate"
+                style="width:100%;border-radius:9px;border:1px solid var(--color-border,#1e2d4a);padding:9px 12px;font-size:12px;outline:none;background:var(--input-bg,#0d1424);color:var(--input-text,#e2e8f0);box-sizing:border-box;color-scheme:dark;cursor:pointer;"
+                (click)="$any($event.target).showPicker()">
+            </div>
+            <div>
+              <label style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:#64748b;display:block;margin-bottom:4px;">END DATE</label>
+              <input type="date" [(ngModel)]="editForm.endDate"
+                style="width:100%;border-radius:9px;border:1px solid var(--color-border,#1e2d4a);padding:9px 12px;font-size:12px;outline:none;background:var(--input-bg,#0d1424);color:var(--input-text,#e2e8f0);box-sizing:border-box;color-scheme:dark;cursor:pointer;"
+                (click)="$any($event.target).showPicker()">
+            </div>
+            <div>
+              <label style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:#64748b;display:block;margin-bottom:4px;">BUDGET (USD)</label>
+              <div style="position:relative;">
+                <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);opacity:0.4;font-size:12px;">$</span>
+                <input type="number" [(ngModel)]="editForm.budget" placeholder="0"
+                  style="width:100%;border-radius:9px;border:1px solid var(--color-border,#1e2d4a);padding:9px 12px 9px 24px;font-size:12px;outline:none;background:var(--input-bg,#0d1424);color:var(--input-text,#e2e8f0);box-sizing:border-box;font-family:inherit;">
+              </div>
+            </div>
+          </div>
+          <div *ngIf="editError" style="font-size:11px;color:#ef4444;padding:8px 12px;border-radius:8px;background:#ef444411;border:1px solid #ef444433;">{{ editError }}</div>
+          <div style="display:flex;justify-content:flex-end;gap:8px;">
+            <button (click)="showEdit=false;editError=''"
+              style="padding:8px 18px;border-radius:8px;border:1px solid var(--color-border,#1e2d4a);font-size:11px;font-weight:600;cursor:pointer;background:transparent;color:#64748b;">Cancel</button>
+            <button (click)="saveEdit()" [disabled]="isSaving"
+              style="padding:8px 22px;border-radius:8px;border:none;background:linear-gradient(135deg,#14532d,#16a34a);color:white;font-size:11px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px;"
+              [style.opacity]="isSaving ? '0.6' : '1'">
+              <div *ngIf="isSaving" style="width:11px;height:11px;border:2px solid white;border-top-color:transparent;border-radius:50%;animation:spin 0.8s linear infinite;"></div>
+              {{ isSaving ? 'Saving...' : '💾 Save Changes' }}
+            </button>
+          </div>
+          <!-- DANGER ZONE -->
+          <div *ngIf="canDelete()" style="margin-top:4px;border-top:1px solid var(--color-border,#1e2d4a);padding-top:14px;">
+            <div (click)="showDangerZone = !showDangerZone" style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;">
+              <span style="font-size:11px;font-weight:700;color:#ef4444;letter-spacing:0.5px;">⚠️ DANGER ZONE</span>
+              <span style="font-size:10px;color:#ef4444;opacity:0.6;">{{ showDangerZone ? '▲' : '▼' }}</span>
+            </div>
+            <div *ngIf="showDangerZone" style="margin-top:12px;padding:14px;border-radius:10px;border:1px solid #ef444433;background:#ef444408;animation:fadeIn 0.2s ease;">
+              <div style="font-size:11px;color:#ef4444;font-weight:600;margin-bottom:4px;">🚫 Cancel this project</div>
+              <div style="font-size:10px;opacity:0.6;margin-bottom:12px;line-height:1.5;">Project status ကို <strong style="color:#ef4444;">CANCELLED</strong> ပြောင်းမည်။ Tasks နဲ့ members ဒေတာများ ဆက်ရှိနေမည်။</div>
+              <label style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#ef4444;opacity:0.7;display:block;margin-bottom:6px;">
+                Type <strong style="font-family:monospace;background:#ef444422;padding:1px 6px;border-radius:4px;">{{ project.title }}</strong> to confirm
+              </label>
+              <input [(ngModel)]="deleteConfirmName" [placeholder]="project.title"
+                style="width:100%;border-radius:9px;border:1px solid #ef444433;padding:8px 12px;font-size:12px;outline:none;background:var(--input-bg,#0d1424);color:var(--input-text,#e2e8f0);box-sizing:border-box;font-family:inherit;margin-bottom:10px;">
+              <button (click)="cancelProject()" [disabled]="!deleteConfirmMatches || isDeleting"
+                style="padding:8px 18px;border-radius:8px;border:1px solid #ef4444;font-size:11px;font-weight:700;transition:all 0.15s;display:flex;align-items:center;gap:6px;"
+                [style.background]="deleteConfirmMatches ? '#ef4444' : 'transparent'"
+                [style.color]="deleteConfirmMatches ? 'white' : '#ef444488'"
+                [style.cursor]="deleteConfirmMatches && !isDeleting ? 'pointer' : 'not-allowed'">
+                <div *ngIf="isDeleting" style="width:11px;height:11px;border:2px solid white;border-top-color:transparent;border-radius:50%;animation:spin 0.8s linear infinite;"></div>
+                {{ isDeleting ? 'Cancelling...' : '🚫 Cancel Project' }}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </ng-container>
+
+    <!-- ══ TAB: TECH STACK ══ -->
+    <ng-container *ngIf="activeTab === 'techstack'">
+      <div class="card">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+          <div class="card-title" style="margin-bottom:0;">🛠 Tech Stack</div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span style="font-size:9px;padding:2px 8px;border-radius:20px;background:#3b82f622;color:#60a5fa;font-weight:700;border:1px solid #3b82f633;">{{ techStacks.length }} techs</span>
+            <!-- Edit button — tasks မရှိမှပဲ ပြမယ် -->
+            <button *ngIf="canEdit() && tasks.length === 0" (click)="showTechEdit = !showTechEdit"
+              style="display:flex;align-items:center;gap:5px;padding:4px 12px;border-radius:8px;border:1px solid;font-size:11px;font-weight:600;cursor:pointer;transition:all 0.15s;"
+              [style.borderColor]="showTechEdit ? '#22c55e' : 'var(--color-border,#1e2d4a)'"
+              [style.background]="showTechEdit ? '#22c55e22' : 'transparent'"
+              [style.color]="showTechEdit ? '#22c55e' : '#64748b'">
+              ✏️ {{ showTechEdit ? 'Done' : 'Edit' }}
+            </button>
+            <!-- Tasks ရှိနေရင် lock icon ပြ -->
+            <span *ngIf="canEdit() && tasks.length > 0"
+              style="font-size:10px;opacity:0.4;padding:4px 10px;border-radius:8px;border:1px solid var(--color-border,#1e2d4a);"
+              title="Tasks exist — tech stack locked">
+              🔒 Locked
+            </span>
+          </div>
+        </div>
+
+        <div *ngIf="techStackLoading" style="display:flex;align-items:center;gap:8px;padding:8px 0;opacity:0.5;">
+          <div style="width:12px;height:12px;border:2px solid #22c55e;border-top-color:transparent;border-radius:50%;animation:spin 0.8s linear infinite;"></div>
+          <span style="font-size:11px;">Loading...</span>
+        </div>
+
+        <!-- VIEW MODE -->
+        <div *ngIf="!techStackLoading && !showTechEdit">
+          <div *ngFor="let group of groupedTechStacks" style="margin-bottom:14px;">
+            <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;">
+              <span style="font-size:11px;">{{ getCategoryIcon(group.category) }}</span>
+              <span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;" [style.color]="getCategoryColor(group.category)">{{ group.category }}</span>
+              <div style="flex:1;height:1px;background:rgba(255,255,255,0.06);"></div>
+            </div>
+            <div style="display:flex;flex-wrap:wrap;gap:6px;padding-left:4px;">
+              <span *ngFor="let t of group.items"
+                style="padding:4px 14px;border-radius:20px;font-size:11px;font-weight:600;border:1px solid;"
+                [style.color]="getCategoryColor(t.category)"
+                [style.background]="getCategoryColor(t.category) + '15'"
+                [style.borderColor]="getCategoryColor(t.category) + '44'">
+                {{ t.name }}
+              </span>
+            </div>
+          </div>
+          <div *ngIf="techStacks.length === 0" style="text-align:center;padding:24px;font-size:11px;opacity:0.35;">No tech stack defined yet</div>
+        </div>
+
+        <!-- EDIT MODE -->
+        <div *ngIf="!techStackLoading && showTechEdit" style="display:flex;flex-direction:column;gap:10px;">
+
+          <!-- Existing techs — with delete -->
+          <div *ngFor="let group of groupedTechStacks" style="margin-bottom:8px;">
+            <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;">
+              <span style="font-size:11px;">{{ getCategoryIcon(group.category) }}</span>
+              <span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;" [style.color]="getCategoryColor(group.category)">{{ group.category }}</span>
+              <div style="flex:1;height:1px;background:rgba(255,255,255,0.06);"></div>
+            </div>
+            <div style="display:flex;flex-wrap:wrap;gap:6px;padding-left:4px;">
+              <div *ngFor="let t of group.items"
+                style="display:flex;align-items:center;gap:5px;padding:4px 10px;border-radius:20px;border:1px solid;"
+                [style.color]="getCategoryColor(t.category)"
+                [style.background]="getCategoryColor(t.category) + '15'"
+                [style.borderColor]="getCategoryColor(t.category) + '44'">
+                <span style="font-size:11px;font-weight:600;">{{ t.name }}</span>
+                <span (click)="deleteTechStack(t.id)"
+                  style="cursor:pointer;font-size:13px;opacity:0.6;line-height:1;"
+                  onmouseenter="this.style.opacity='1'" onmouseleave="this.style.opacity='0.6'">✕</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Add new tech -->
+          <div style="border-top:1px solid var(--color-border,#1e2d4a);padding-top:12px;">
+            <div style="font-size:10px;font-weight:600;opacity:0.5;margin-bottom:8px;letter-spacing:0.5px;">+ ADD NEW TECH</div>
+            <div style="display:flex;gap:6px;align-items:center;">
+              <input [(ngModel)]="newTechName" placeholder="e.g. Angular, Flutter..."
+                (keyup.enter)="addTechStack()"
+                style="flex:1;border-radius:8px;border:1px solid var(--color-border,#1e2d4a);padding:7px 10px;font-size:11px;outline:none;background:var(--input-bg,#0d1424);color:var(--input-text,#e2e8f0);">
+              <select [(ngModel)]="newTechCategory"
+                style="border-radius:8px;border:1px solid var(--color-border,#1e2d4a);padding:7px 8px;font-size:10px;outline:none;cursor:pointer;background:var(--input-bg,#0d1424);color:#94a3b8;">
+                <option value="frontend">Frontend</option>
+                <option value="backend">Backend</option>
+                <option value="database">Database</option>
+                <option value="mobile">Mobile</option>
+                <option value="payment">Payment</option>
+                <option value="realtime">Realtime</option>
+                <option value="devops">DevOps</option>
+                <option value="other">Other</option>
+              </select>
+              <button (click)="addTechStack()" [disabled]="!newTechName.trim()"
+                style="padding:7px 14px;border-radius:8px;border:none;background:#22c55e;color:white;font-size:11px;font-weight:700;cursor:pointer;"
+                [style.opacity]="newTechName.trim() ? '1' : '0.4'">
+                + Add
+              </button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </ng-container>
+
+    <!-- ══ TAB: MEMBERS ══ -->
+    <ng-container *ngIf="activeTab === 'members'">
+      <div class="card">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+          <div class="card-title" style="margin-bottom:0;">👥 Team Members</div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span style="font-size:9px;padding:2px 8px;border-radius:20px;background:#22c55e22;color:#22c55e;font-weight:700;">{{ members.length }} members</span>
+            <button *ngIf="canEdit()" (click)="showMemberEdit = !showMemberEdit; showMemberEdit && loadStaffList()"
+              style="display:flex;align-items:center;gap:5px;padding:4px 12px;border-radius:8px;border:1px solid;font-size:11px;font-weight:600;cursor:pointer;transition:all 0.15s;"
+              [style.borderColor]="showMemberEdit ? '#22c55e' : 'var(--color-border,#1e2d4a)'"
+              [style.background]="showMemberEdit ? '#22c55e22' : 'transparent'"
+              [style.color]="showMemberEdit ? '#22c55e' : '#64748b'">
+              ✏️ {{ showMemberEdit ? 'Done' : 'Edit' }}
             </button>
           </div>
         </div>
-        <div
-          style="height:110px;border-radius:8px;border:1px dashed rgba(30,45,74,0.5);display:flex;align-items:center;justify-content:center;margin-bottom:10px;background:rgba(15,22,40,0.5);">
-          <div style="width:88%;display:flex;flex-direction:column;gap:5px;">
-            <div style="display:flex;gap:5px;align-items:center;">
-              <div style="width:10px;height:10px;border-radius:50%;background:#ef4444;opacity:0.7;"></div>
-              <div style="width:10px;height:10px;border-radius:50%;background:#f59e0b;opacity:0.7;"></div>
-              <div style="width:10px;height:10px;border-radius:50%;background:#22c55e;opacity:0.7;"></div>
-              <div style="flex:1;height:7px;border-radius:3px;background:#1e2d4a;"></div>
-            </div>
-            <div style="display:flex;gap:5px;">
-              <div style="flex:2;height:35px;border-radius:4px;background:#1e2d4a;"></div>
-              <div style="flex:3;height:35px;border-radius:4px;background:rgba(30,45,74,0.4);"></div>
-              <div style="flex:2;height:35px;border-radius:4px;background:rgba(34,197,94,0.15);"></div>
-            </div>
-            <div style="height:7px;border-radius:3px;background:rgba(30,45,74,0.6);width:55%;"></div>
-          </div>
-        </div>
-        <div style="font-size:9px;opacity:0.4;margin-bottom:6px;letter-spacing:0.5px;">VERSION HISTORY</div>
-        <div style="display:flex;gap:5px;">
-          <div *ngFor="let v of ['v2.4.1','v2.3.8','v2.2.5','v2.1.0']; let i=index"
-            style="flex:1;padding:5px 8px;border-radius:7px;border:1px solid;text-align:center;cursor:pointer;"
-            [style.borderColor]="i===0 ? '#22c55e' : '#1e2d4a'"
-            [style.background]="i===0 ? 'rgba(22,163,74,0.1)' : 'transparent'">
-            <div style="font-size:10px;font-weight:700;" [style.color]="i===0 ? '#22c55e' : ''">{{ v }}</div>
-            <div style="font-size:8px;opacity:0.4;">{{ i===0 ? 'Current' : i + 'w ago' }}</div>
-          </div>
-        </div>
-      </div>
-    </div>
 
-    <!-- ⑤ API Documentation -->
-    <div class="card">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
-        <div class="card-title" style="margin-bottom:0;">⚡ API Documentation</div>
-        <div style="display:flex;gap:6px;">
-          <span
-            style="font-size:9px;padding:2px 7px;border-radius:5px;background:#22c55e22;color:#22c55e;font-weight:700;border:1px solid #22c55e33;">REST
-            v1</span>
-          <button (click)="showApi=true"
-            style="font-size:10px;cursor:pointer;background:#6366f122;border:none;color:#818cf8;padding:4px 10px;border-radius:7px;font-weight:600;">Open
-            API →</button>
-        </div>
-      </div>
-      <div style="display:flex;flex-direction:column;gap:3px;">
-        <div *ngFor="let ep of (apiEndpoints.length ? apiEndpoints : mockEndpoints).slice(0,6)"
-          style="display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:8px;border:1px solid rgba(30,45,74,0.3);margin-bottom:4px;">
-          <span [ngClass]="getMethodClass(ep.method)"
-            style="font-size:9px;font-weight:700;padding:3px 8px;border-radius:4px;min-width:52px;text-align:center;flex-shrink:0;">{{
-            ep.method }}</span>
-          <span style="font-size:11px;font-family:monospace;flex:1;">{{ ep.url }}</span>
-          <span style="font-size:10px;opacity:0.45;">{{ ep.title || ep.desc }}</span>
-        </div>
-      </div>
-    </div>
-
-    <!-- ⑥ DB Design -->
-    <div class="card">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
-        <div class="card-title" style="margin-bottom:0;">🗄️ Database Design</div>
-        <button (click)="showDb=true"
-          style="font-size:10px;cursor:pointer;background:#1e3a5f22;border:none;color:#60a5fa;padding:4px 10px;border-radius:7px;font-weight:600;">Open
-          Schema →</button>
-      </div>
-      <div style="display:flex;gap:10px;overflow-x:auto;padding-bottom:6px;">
-        <div *ngFor="let tbl of mockTables"
-          style="flex-shrink:0;border-radius:10px;border:1px solid #1e2d4a;min-width:130px;overflow:hidden;cursor:pointer;transition:border-color 0.15s;"
-          onmouseenter="this.style.borderColor='#3b82f6'" onmouseleave="this.style.borderColor='#1e2d4a'">
-          <div style="background:#1e3a5f;padding:6px 10px;font-size:10px;font-weight:700;color:#60a5fa;">{{ tbl.name }}
-          </div>
-          <div style="padding:6px 10px;display:flex;flex-direction:column;gap:3px;">
-            <div *ngFor="let col of tbl.cols" style="font-size:9px;opacity:0.6;">{{ col }}</div>
-            <div style="font-size:8px;opacity:0.25;margin-top:2px;">···</div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ⑦ Activity Log -->
-    <div class="card">
-      <div class="card-title">🕐 Activity Log</div>
-      <div *ngIf="!activities.length" style="text-align:center;padding:20px;font-size:11px;opacity:0.35;">No activity
-        yet</div>
-      <div style="display:flex;flex-direction:column;gap:8px;">
-        <div *ngFor="let act of activities.slice(0,6)" style="display:flex;align-items:flex-start;gap:8px;">
-          <div
-            style="width:24px;height:24px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:white;background:linear-gradient(135deg,#14532d,#16a34a);">
-            {{ (act.userName || 'U')[0].toUpperCase() }}
-          </div>
-          <div style="flex:1;">
-            <div class="act-text">
-              <strong>{{ act.userName || 'User' }}</strong>
-              {{ getActionText(act.action) }}
-              <span *ngIf="act.newValue" style="opacity:0.5;"> → {{ act.newValue }}</span>
+        <!-- Member list -->
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <div *ngFor="let m of sortMembers(members); let i=index"
+            style="display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:10px;
+                   border:1px solid var(--color-border,#1e2d4a);transition:all 0.15s;"
+            [style.opacity]="m.roleInProject === 'PROJECT_MANAGER' ? '1' : '1'"
+            onmouseenter="this.style.borderColor='#22c55e33'" onmouseleave="this.style.borderColor='var(--color-border,#1e2d4a)'">
+            <div style="width:36px;height:36px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:white;"
+              [style.background]="m.color || getMemberColor(i)">{{ m.initial || getMemberInitial(m) }}</div>
+            <div style="flex:1;">
+              <div style="font-size:12px;font-weight:700;color:var(--input-text,#e2e8f0);">{{ m.userName || m.name }}</div>
+              <div style="font-size:10px;margin-top:2px;">
+                <span [style.color]="m.roleInProject==='COUNTRY_DIRECTOR'?'#a855f7':m.roleInProject==='VICE_PRESIDENT'?'#ef4444':m.roleInProject==='ADMIN'?'#ec4899':''"
+                      [style.fontWeight]="(m.roleInProject==='COUNTRY_DIRECTOR'||m.roleInProject==='VICE_PRESIDENT'||m.roleInProject==='ADMIN')?'700':'400'"
+                      [style.opacity]="(m.roleInProject==='COUNTRY_DIRECTOR'||m.roleInProject==='VICE_PRESIDENT'||m.roleInProject==='ADMIN')?'1':'0.5'">
+                  { m.roleInProject || m.role }</span>
+                <span *ngIf="m.tasks && m.tasks > 0" style="color:#22c55e;margin-left:6px;">· {{ m.tasks }} tasks</span>
+              </div>
             </div>
-            <div class="act-time">{{ act.createdAt | date:'MMM d, h:mm a' }}</div>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <div style="display:flex;align-items:center;gap:4px;">
+                <div style="width:6px;height:6px;border-radius:50%;" [style.background]="m.online ? '#22c55e' : '#475569'"></div>
+                <span style="font-size:9px;opacity:0.4;">{{ m.online ? 'Online' : 'Offline' }}</span>
+              </div>
+              <!-- Remove button — PM ကို remove မလုပ်နိုင် -->
+              <button *ngIf="showMemberEdit && m.roleInProject !== 'PROJECT_MANAGER' && !m.isDefault"
+                (click)="removeMember(m.userId)"
+                style="padding:3px 10px;border-radius:6px;border:1px solid #ef444444;background:transparent;
+                       color:#ef4444;font-size:10px;font-weight:600;cursor:pointer;transition:all 0.15s;"
+                onmouseenter="this.style.background='#ef444411'" onmouseleave="this.style.background='transparent'">
+                Remove
+              </button>
+              <span *ngIf="showMemberEdit && (m.roleInProject === 'PROJECT_MANAGER' || m.isDefault)"
+                style="font-size:9px;opacity:0.3;padding:3px 8px;">
+                {{ m.roleInProject === 'PROJECT_MANAGER' ? 'PM' : m.roleInProject === 'VICE_PRESIDENT' ? 'VP' : m.roleInProject === 'COUNTRY_DIRECTOR' ? 'DIR' : 'HR' }}
+              </span>
+            </div>
           </div>
-          <span style="font-size:13px;">{{ getActionIcon(act.action) }}</span>
+          <div *ngIf="!members.length" style="text-align:center;padding:20px;font-size:11px;opacity:0.35;">No members yet</div>
         </div>
+
+        <!-- Removed Members Toggle -->
+        <div *ngIf="removedMembers.length > 0" style="margin-top:12px;">
+          <div (click)="showRemovedMembers = !showRemovedMembers"
+            style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;
+                   border-radius:8px;border:1px solid #ef444433;background:#ef444408;cursor:pointer;">
+            <span style="font-size:11px;font-weight:600;color:#ef4444;">
+              ⛔ Removed Members ({{ removedMembers.length }})
+            </span>
+            <span style="font-size:10px;color:#ef4444;opacity:0.6;">{{ showRemovedMembers ? '▲' : '▼' }}</span>
+          </div>
+
+          <div *ngIf="showRemovedMembers" style="display:flex;flex-direction:column;gap:6px;margin-top:8px;">
+            <div *ngFor="let m of removedMembers; let i=index"
+              style="display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:10px;
+                     border:1px solid #ef444422;background:#ef44440a;opacity:0.75;transition:all 0.15s;">
+              <div style="width:36px;height:36px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:white;filter:grayscale(0.5);"
+                [style.background]="m.color || getMemberColor(i)">{{ m.initial || getMemberInitial(m) }}</div>
+              <div style="flex:1;">
+                <div style="font-size:12px;font-weight:600;color:var(--input-text,#e2e8f0);">{{ m.userName || m.name }}</div>
+                <div style="font-size:10px;margin-top:2px;opacity:0.5;">
+                  <span [style.color]="m.roleInProject==='COUNTRY_DIRECTOR'?'#a855f7':m.roleInProject==='VICE_PRESIDENT'?'#ef4444':m.roleInProject==='ADMIN'?'#ec4899':''" [style.fontWeight]="(m.roleInProject==='COUNTRY_DIRECTOR'||m.roleInProject==='VICE_PRESIDENT'||m.roleInProject==='ADMIN')?'700':'400'">{{ m.roleInProject || m.role }}</span>
+                  <span style="color:#ef4444;margin-left:6px;">· Removed</span>
+                </div>
+              </div>
+              <!-- Re-add button — edit mode မှာပဲ ပြ -->
+              <button *ngIf="canEdit()" (click)="restoreMember(m.userId, m.roleInProject)"
+                style="padding:3px 10px;border-radius:6px;border:1px solid #22c55e44;background:transparent;
+                       color:#22c55e;font-size:10px;font-weight:600;cursor:pointer;transition:all 0.15s;"
+                onmouseenter="this.style.background='#22c55e11'" onmouseleave="this.style.background='transparent'">
+                Re-add
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Add Member section -->
+        <div *ngIf="showMemberEdit" style="margin-top:14px;border-top:1px solid var(--color-border,#1e2d4a);padding-top:14px;">
+          <div style="font-size:10px;font-weight:600;opacity:0.5;margin-bottom:10px;letter-spacing:0.5px;">+ ADD MEMBER</div>
+
+          <!-- Search -->
+          <input [(ngModel)]="memberSearchQuery" (ngModelChange)="filterStaff()"
+            placeholder="Search by name or role..."
+            style="width:100%;border-radius:9px;border:1px solid var(--color-border,#1e2d4a);padding:8px 12px;font-size:12px;outline:none;background:var(--input-bg,#0d1424);color:var(--input-text,#e2e8f0);box-sizing:border-box;margin-bottom:8px;">
+
+          <div *ngIf="staffListLoading" style="text-align:center;padding:12px;font-size:11px;opacity:0.4;">Loading staff...</div>
+
+          <div style="max-height:220px;overflow-y:auto;display:flex;flex-direction:column;gap:4px;">
+            <div *ngFor="let s of filteredStaff"
+              style="display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;
+                     border:1px solid var(--color-border,#1e2d4a);cursor:pointer;transition:all 0.15s;"
+              [style.borderColor]="isAlreadyMember(s.id) ? '#22c55e44' : 'var(--color-border,#1e2d4a)'"
+              [style.background]="isAlreadyMember(s.id) ? '#22c55e08' : 'transparent'"
+              (click)="!isAlreadyMember(s.id) && addMember(s)">
+              <div style="width:28px;height:28px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:white;"
+                [style.background]="getRoleColor(s.roleDto?.name || s.roleName || s.role)">
+                {{ getMemberInitial(s) }}
+              </div>
+              <div style="flex:1;">
+                <div style="font-size:11px;font-weight:600;color:var(--input-text,#e2e8f0);">{{ s.name }}</div>
+                <div style="font-size:9px;opacity:0.5;">{{ s.roleDto?.name || s.roleName || s.role }}</div>
+              </div>
+              <span *ngIf="isAlreadyMember(s.id)" style="font-size:10px;color:#22c55e;">✓ Added</span>
+              <span *ngIf="!isAlreadyMember(s.id)" style="font-size:10px;color:#64748b;">+ Add</span>
+            </div>
+            <div *ngIf="!staffListLoading && filteredStaff.length === 0"
+              style="text-align:center;padding:12px;font-size:11px;opacity:0.35;">No staff found</div>
+          </div>
+        </div>
+
       </div>
-    </div>
+    </ng-container>
+
+    <!-- ══ TAB: RULES ══ -->
+    <ng-container *ngIf="activeTab === 'rules'">
+      <div class="card">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+          <div class="card-title" style="margin-bottom:0;">📐 Project Rules</div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span style="font-size:9px;padding:2px 8px;border-radius:20px;background:#6366f122;color:#818cf8;font-weight:700;border:1px solid #6366f133;">{{ projectRules.length }} rules</span>
+            <button *ngIf="canEdit()" (click)="showRuleEdit = !showRuleEdit"
+              style="display:flex;align-items:center;gap:5px;padding:4px 12px;border-radius:8px;border:1px solid;font-size:11px;font-weight:600;cursor:pointer;transition:all 0.15s;"
+              [style.borderColor]="showRuleEdit ? '#22c55e' : 'var(--color-border,#1e2d4a)'"
+              [style.background]="showRuleEdit ? '#22c55e22' : 'transparent'"
+              [style.color]="showRuleEdit ? '#22c55e' : '#64748b'">
+              ✏️ {{ showRuleEdit ? 'Done' : 'Edit' }}
+            </button>
+          </div>
+        </div>
+
+        <div *ngIf="rulesLoading" style="display:flex;align-items:center;gap:8px;padding:8px 0;opacity:0.5;">
+          <div style="width:12px;height:12px;border:2px solid #22c55e;border-top-color:transparent;border-radius:50%;animation:spin 0.8s linear infinite;"></div>
+          <span style="font-size:11px;">Loading...</span>
+        </div>
+
+        <!-- Rules list -->
+        <div *ngIf="!rulesLoading" style="display:flex;flex-direction:column;gap:8px;">
+          <div *ngFor="let rule of projectRules; let i=index"
+            style="padding:12px 14px;border-radius:10px;border:1px solid var(--color-border,#1e2d4a);border-left:3px solid;background:rgba(255,255,255,0.02);"
+            [style.borderLeftColor]="getRuleCategoryColor(rule.category)">
+
+            <!-- View mode -->
+            <ng-container *ngIf="editingRuleId !== rule.id">
+              <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;">
+                <div style="flex:1;">
+                  <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">
+                    <span style="font-size:9px;font-weight:700;padding:2px 8px;border-radius:20px;"
+                      [style.color]="getRuleCategoryColor(rule.category)"
+                      [style.background]="getRuleCategoryColor(rule.category) + '22'">
+                      {{ getRuleCategoryIcon(rule.category) }} {{ rule.category }}
+                    </span>
+                  </div>
+                  <div style="font-size:12px;font-weight:700;color:var(--input-text,#e2e8f0);margin-bottom:4px;">{{ rule.title }}</div>
+                  <div style="font-size:11px;opacity:0.55;line-height:1.6;">{{ rule.content }}</div>
+                </div>
+                <!-- Edit/Delete buttons -->
+                <div *ngIf="showRuleEdit" style="display:flex;gap:5px;flex-shrink:0;">
+                  <button (click)="startEditRule(rule)"
+                    style="padding:3px 8px;border-radius:6px;border:1px solid var(--color-border,#1e2d4a);background:transparent;color:#64748b;font-size:10px;cursor:pointer;transition:all 0.15s;"
+                    onmouseenter="this.style.borderColor='#22c55e';this.style.color='#22c55e'"
+                    onmouseleave="this.style.borderColor='var(--color-border,#1e2d4a)';this.style.color='#64748b'">
+                    ✏️
+                  </button>
+                  <button (click)="deleteRule(rule.id)"
+                    style="padding:3px 8px;border-radius:6px;border:1px solid #ef444433;background:transparent;color:#ef4444;font-size:10px;cursor:pointer;transition:all 0.15s;"
+                    onmouseenter="this.style.background='#ef444411'" onmouseleave="this.style.background='transparent'">
+                    🗑
+                  </button>
+                </div>
+              </div>
+            </ng-container>
+
+            <!-- Inline Edit mode -->
+            <ng-container *ngIf="editingRuleId === rule.id">
+              <div style="display:flex;flex-direction:column;gap:8px;">
+                <input [(ngModel)]="ruleEditForm.title" placeholder="Rule title *"
+                  style="width:100%;border-radius:8px;border:1px solid #22c55e66;padding:7px 10px;font-size:12px;outline:none;background:var(--input-bg,#0d1424);color:var(--input-text,#e2e8f0);box-sizing:border-box;font-family:inherit;font-weight:600;">
+                <textarea [(ngModel)]="ruleEditForm.content" rows="3" placeholder="Rule description..."
+                  style="width:100%;border-radius:8px;border:1px solid var(--color-border,#1e2d4a);padding:7px 10px;font-size:11px;outline:none;background:var(--input-bg,#0d1424);color:var(--input-text,#e2e8f0);box-sizing:border-box;font-family:inherit;resize:none;line-height:1.6;"></textarea>
+                <div style="display:flex;align-items:center;gap:8px;">
+                  <select [(ngModel)]="ruleEditForm.category"
+                    style="border-radius:7px;border:1px solid var(--color-border,#1e2d4a);padding:5px 8px;font-size:10px;outline:none;cursor:pointer;background:var(--input-bg,#0d1424);color:#94a3b8;">
+                    <option value="CODING_STANDARDS">📦 CODING_STANDARDS</option>
+                    <option value="PROCESS_RULES">⚙️ PROCESS_RULES</option>
+                    <option value="GENERAL">📌 GENERAL</option>
+                  </select>
+                  <div style="flex:1;"></div>
+                  <button (click)="cancelEditRule()"
+                    style="padding:5px 12px;border-radius:7px;border:1px solid var(--color-border,#1e2d4a);background:transparent;color:#64748b;font-size:10px;font-weight:600;cursor:pointer;">
+                    Cancel
+                  </button>
+                  <button (click)="saveRule(rule.id)"
+                    style="padding:5px 12px;border-radius:7px;border:none;background:linear-gradient(135deg,#14532d,#16a34a);color:white;font-size:10px;font-weight:700;cursor:pointer;">
+                    💾 Save
+                  </button>
+                </div>
+              </div>
+            </ng-container>
+          </div>
+
+          <div *ngIf="projectRules.length === 0" style="text-align:center;padding:24px;font-size:11px;opacity:0.35;">No rules defined yet</div>
+        </div>
+
+        <!-- Add New Rule -->
+        <div *ngIf="showRuleEdit" style="margin-top:14px;border-top:1px solid var(--color-border,#1e2d4a);padding-top:14px;">
+          <div style="font-size:10px;font-weight:600;opacity:0.5;margin-bottom:10px;letter-spacing:0.5px;">+ ADD NEW RULE</div>
+          <div style="display:flex;flex-direction:column;gap:8px;">
+            <input [(ngModel)]="newRuleTitle" placeholder="Rule title *"
+              style="width:100%;border-radius:8px;border:1px solid var(--color-border,#1e2d4a);padding:8px 12px;font-size:12px;outline:none;background:var(--input-bg,#0d1424);color:var(--input-text,#e2e8f0);box-sizing:border-box;font-family:inherit;">
+            <textarea [(ngModel)]="newRuleContent" rows="3" placeholder="Rule description..."
+              style="width:100%;border-radius:8px;border:1px solid var(--color-border,#1e2d4a);padding:8px 12px;font-size:11px;outline:none;background:var(--input-bg,#0d1424);color:var(--input-text,#e2e8f0);box-sizing:border-box;font-family:inherit;resize:none;line-height:1.6;"></textarea>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <select [(ngModel)]="newRuleCategory"
+                style="border-radius:7px;border:1px solid var(--color-border,#1e2d4a);padding:6px 8px;font-size:10px;outline:none;cursor:pointer;background:var(--input-bg,#0d1424);color:#94a3b8;">
+                <option value="CODING_STANDARDS">📦 CODING_STANDARDS</option>
+                <option value="PROCESS_RULES">⚙️ PROCESS_RULES</option>
+                <option value="GENERAL">📌 GENERAL</option>
+              </select>
+              <div style="flex:1;"></div>
+              <button (click)="addRule()" [disabled]="!newRuleTitle.trim() || !newRuleContent.trim()"
+                style="padding:7px 18px;border-radius:8px;border:none;background:linear-gradient(135deg,#14532d,#16a34a);color:white;font-size:11px;font-weight:700;cursor:pointer;"
+                [style.opacity]="newRuleTitle.trim() && newRuleContent.trim() ? '1' : '0.4'">
+                + Add Rule
+              </button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </ng-container>
 
   </ng-container>
 </main>
 
 <!-- ════════ RIGHT SIDEBAR ════════ -->
 <aside class="right-sidebar">
-
-  <!-- My Tasks -->
   <div class="my-tasks-section">
     <div class="rs-section-header">
       <span>My Tasks</span>
       <span class="rs-badge-red">{{ myTasks.length }}</span>
     </div>
     <div class="tasks-list" style="max-height:300px;">
-      <div *ngIf="!myTasks.length" style="text-align:center;padding:14px 0;font-size:10px;opacity:0.35;">No tasks
-        assigned</div>
+      <div *ngIf="!myTasks.length" style="text-align:center;padding:14px 0;font-size:10px;opacity:0.35;">No tasks assigned</div>
       <div *ngFor="let t of myTasks" class="task-card" [ngClass]="getPriorityTcClass(t.priority)">
         <div class="tc-top">
           <span class="tc-title">{{ t.translatedTitle || t.title }}</span>
-          <span [ngClass]="getTaskStatusClass(t.status)"
-            style="font-size:7px;padding:1px 5px;border-radius:20px;font-weight:700;flex-shrink:0;">
-            {{ t.status }}
-          </span>
+          <span [ngClass]="getTaskStatusClass(t.status)" style="font-size:7px;padding:1px 5px;border-radius:20px;font-weight:700;flex-shrink:0;">{{ t.status }}</span>
         </div>
         <div class="tc-project">{{ project?.title }}</div>
         <div class="tc-due" [style.color]="isTaskOverdue(t) ? '#ef4444' : '#f59e0b'">
@@ -347,27 +753,12 @@
       </div>
     </div>
   </div>
-
-  <!-- ✅ Project Groups + Team Members — single scroll -->
   <div class="members-section">
     <div class="members-list">
-
-      <!-- Group Chat button -->
-      <div class="rs-section-header" style="margin-bottom:4px;">
-        <span style="font-size:11px;font-weight:700;">👥 Group Chat</span>
-      </div>
-      <div class="member-card" (click)="openGroupChat()" style="cursor:pointer;
-                  background:linear-gradient(135deg,#14532d22,#16a34a22);
-                  border:1px solid #16a34a33;
-                  border-radius:8px;
-                  justify-content:space-between;
-                  margin-bottom:4px;">
+      <div class="rs-section-header" style="margin-bottom:4px;"><span style="font-size:11px;font-weight:700;">👥 Group Chat</span></div>
+      <div class="member-card" (click)="openGroupChat()" style="cursor:pointer;background:linear-gradient(135deg,#14532d22,#16a34a22);border:1px solid #16a34a33;border-radius:8px;justify-content:space-between;margin-bottom:4px;">
         <div style="display:flex;align-items:center;gap:8px;">
-          <div style="width:28px;height:28px;border-radius:50%;
-                      background:linear-gradient(135deg,#14532d,#16a34a);
-                      display:flex;align-items:center;justify-content:center;font-size:13px;">
-            👥
-          </div>
+          <div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#14532d,#16a34a);display:flex;align-items:center;justify-content:center;font-size:13px;">👥</div>
           <div>
             <div style="font-size:11px;font-weight:700;color:#22c55e;">{{ project?.title || 'Project Group' }}</div>
             <div style="font-size:9px;opacity:0.5;">{{ members.length }} members</div>
@@ -375,86 +766,69 @@
         </div>
         <span style="font-size:12px;opacity:0.7;">💬</span>
       </div>
-
-      <!-- Divider -->
       <div style="border-top:1px solid;opacity:0.12;margin:6px 0;"></div>
-
-      <!-- Team Members header -->
       <div class="rs-section-header" style="margin-bottom:4px;">
         <span style="font-size:11px;font-weight:700;">Team Members</span>
         <span style="font-size:9px;opacity:0.4;">{{ members.length }}</span>
       </div>
-
-      <div *ngIf="!members.length" style="text-align:center;padding:14px 0;font-size:10px;opacity:0.35;">No members yet
-      </div>
-
-      <!-- ✅ Member click → 1-to-1 chat -->
-      <div *ngFor="let m of members; let i=index" class="member-card" (click)="openMemberChat(m)"
-        style="cursor:pointer;">
-        <div class="member-avatar" [style.background]="m.color || getMemberColor(i)">
-          {{ m.initial || getMemberInitial(m) }}
-          <div class="member-online" *ngIf="m.online"></div>
-        </div>
-        <div class="member-info-wrap">
-          <div class="member-name">{{ m.userName || m.name }}</div>
-          <div class="member-info">
-            {{ m.roleInProject || m.role }}
-            <span *ngIf="m.tasks" style="color:#22c55e"> · {{ m.tasks }} tasks</span>
+      <div *ngIf="!members.length" style="text-align:center;padding:14px 0;font-size:10px;opacity:0.35;">No members yet</div>
+      <!-- login user ဖြုတ်ပြီး ပြမယ် -->
+      <ng-container *ngFor="let m of sortMembers(members); let i=index">
+        <div *ngIf="m.userId !== (auth.getUser()?.id || auth.getUser()?.userId)"
+          class="member-card" (click)="openMemberChat(m)" style="cursor:pointer;">
+          <div class="member-avatar" [style.background]="m.color || getMemberColor(i)">
+            {{ m.initial || getMemberInitial(m) }}
+            <div class="member-online" *ngIf="m.online"></div>
           </div>
+          <div class="member-info-wrap">
+            <div class="member-name">{{ m.userName || m.name }}</div>
+            <div class="member-info" style="display:flex;align-items:center;gap:3px;flex-wrap:wrap;">
+              <!-- VP / Director badge -->
+              <span *ngIf="m.roleInProject === 'VICE_PRESIDENT' || m.roleInProject === 'COUNTRY_DIRECTOR'"
+                style="font-size:7px;font-weight:700;padding:1px 5px;border-radius:20px;background:#a855f722;color:#a855f7;">
+                {{ m.roleInProject === 'VICE_PRESIDENT' ? 'VP' : 'DIR' }}
+              </span>
+              <span style="font-size:9px;"
+                [style.color]="m.roleInProject==='COUNTRY_DIRECTOR'?'#a855f7':m.roleInProject==='VICE_PRESIDENT'?'#ef4444':m.roleInProject==='ADMIN'?'#ec4899':''"
+                [style.fontWeight]="(m.roleInProject==='COUNTRY_DIRECTOR'||m.roleInProject==='VICE_PRESIDENT'||m.roleInProject==='ADMIN')?'700':'400'"
+                [style.opacity]="(m.roleInProject==='COUNTRY_DIRECTOR'||m.roleInProject==='VICE_PRESIDENT'||m.roleInProject==='ADMIN')?'1':'0.5'">
+                { m.roleInProject || m.role }</span>
+              <span *ngIf="m.tasks && m.tasks > 0" style="color:#22c55e;font-size:9px;"> · {{ m.tasks }} tasks</span>
+            </div>
+          </div>
+          <div class="member-status-dot" [style.background]="m.online ? '#22c55e' : '#475569'"></div>
         </div>
-        <div class="member-status-dot" [style.background]="m.online ? '#22c55e' : '#475569'"></div>
-      </div>
-
+      </ng-container>
     </div>
   </div>
-
 </aside>
 
-<!-- ════════ MODALS ════════ -->
-
-<!-- API Modal -->
-<div *ngIf="showApi" style="position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:1000;
-         display:flex;align-items:center;justify-content:center;animation:fadeIn 0.2s ease;" (click)="showApi=false">
-  <div style="width:75vw;max-width:750px;max-height:85vh;border-radius:16px;border:1px solid #1e2d4a;
-              background:#0d1424;overflow:hidden;display:flex;flex-direction:column;"
-    (click)="$event.stopPropagation()">
-    <div
-      style="padding:14px 18px;border-bottom:1px solid #1e2d4a;display:flex;align-items:center;justify-content:space-between;">
+<!-- MODALS -->
+<div *ngIf="showApi" style="position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:1000;display:flex;align-items:center;justify-content:center;animation:fadeIn 0.2s ease;" (click)="showApi=false">
+  <div style="width:75vw;max-width:750px;max-height:85vh;border-radius:16px;border:1px solid #1e2d4a;background:#0d1424;overflow:hidden;display:flex;flex-direction:column;" (click)="$event.stopPropagation()">
+    <div style="padding:14px 18px;border-bottom:1px solid #1e2d4a;display:flex;align-items:center;justify-content:space-between;">
       <span style="font-weight:700;font-size:13px;">⚡ API Documentation</span>
-      <button (click)="showApi=false"
-        style="background:none;border:none;color:inherit;cursor:pointer;opacity:0.5;font-size:18px;">✕</button>
+      <button (click)="showApi=false" style="background:none;border:none;color:inherit;cursor:pointer;opacity:0.5;font-size:18px;">✕</button>
     </div>
     <div style="flex:1;overflow-y:auto;padding:16px;">
-      <div *ngFor="let ep of (apiEndpoints.length ? apiEndpoints : mockEndpoints)"
-        style="display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:8px;border:1px solid rgba(30,45,74,0.3);margin-bottom:4px;">
-        <span [ngClass]="getMethodClass(ep.method)"
-          style="font-size:9px;font-weight:700;padding:3px 8px;border-radius:4px;min-width:52px;text-align:center;flex-shrink:0;">{{
-          ep.method }}</span>
+      <div *ngFor="let ep of (apiEndpoints.length ? apiEndpoints : mockEndpoints)" style="display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:8px;border:1px solid rgba(30,45,74,0.3);margin-bottom:4px;">
+        <span [ngClass]="getMethodClass(ep.method)" style="font-size:9px;font-weight:700;padding:3px 8px;border-radius:4px;min-width:52px;text-align:center;flex-shrink:0;">{{ ep.method }}</span>
         <span style="font-size:11px;font-family:monospace;flex:1;">{{ ep.url }}</span>
         <span style="font-size:10px;opacity:0.45;">{{ ep.title || ep.desc }}</span>
       </div>
     </div>
   </div>
 </div>
-
-<!-- DB Schema Modal -->
-<div *ngIf="showDb" style="position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:1000;
-         display:flex;align-items:center;justify-content:center;animation:fadeIn 0.2s ease;" (click)="showDb=false">
-  <div style="width:90vw;max-width:1000px;max-height:85vh;border-radius:16px;border:1px solid #1e2d4a;
-              background:#0d1424;overflow:hidden;display:flex;flex-direction:column;"
-    (click)="$event.stopPropagation()">
-    <div
-      style="padding:14px 18px;border-bottom:1px solid #1e2d4a;display:flex;align-items:center;justify-content:space-between;">
+<div *ngIf="showDb" style="position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:1000;display:flex;align-items:center;justify-content:center;animation:fadeIn 0.2s ease;" (click)="showDb=false">
+  <div style="width:90vw;max-width:1000px;max-height:85vh;border-radius:16px;border:1px solid #1e2d4a;background:#0d1424;overflow:hidden;display:flex;flex-direction:column;" (click)="$event.stopPropagation()">
+    <div style="padding:14px 18px;border-bottom:1px solid #1e2d4a;display:flex;align-items:center;justify-content:space-between;">
       <span style="font-weight:700;font-size:13px;">🗄️ Database Schema</span>
-      <button (click)="showDb=false"
-        style="background:none;border:none;color:inherit;cursor:pointer;opacity:0.5;font-size:18px;">✕</button>
+      <button (click)="showDb=false" style="background:none;border:none;color:inherit;cursor:pointer;opacity:0.5;font-size:18px;">✕</button>
     </div>
     <div style="flex:1;overflow:auto;padding:20px;">
       <div style="display:flex;flex-wrap:wrap;gap:14px;">
-        <div *ngFor="let tbl of mockTables"
-          style="border-radius:10px;border:1px solid #1e2d4a;overflow:hidden;min-width:160px;">
-          <div style="background:#1e3a5f;padding:8px 12px;font-size:11px;font-weight:700;color:#60a5fa;">{{ tbl.name }}
-          </div>
+        <div *ngFor="let tbl of mockTables" style="border-radius:10px;border:1px solid #1e2d4a;overflow:hidden;min-width:160px;">
+          <div style="background:#1e3a5f;padding:8px 12px;font-size:11px;font-weight:700;color:#60a5fa;">{{ tbl.name }}</div>
           <div style="padding:8px 12px;display:flex;flex-direction:column;gap:3px;">
             <div *ngFor="let col of tbl.cols" style="font-size:9px;opacity:0.6;">{{ col }}</div>
           </div>
@@ -463,8 +837,4 @@
     </div>
   </div>
 </div>
-
-<!-- ✅ Chat Popup -->
-<app-chat-popup *ngIf="selectedChatMember" [member]="selectedChatMember" [isGroup]="isGroupChat"
-  (close)="closeChatPopup()">
-</app-chat-popup>
+<app-chat-popup *ngIf="selectedChatMember" [member]="selectedChatMember" [isGroup]="isGroupChat" (close)="closeChatPopup()"></app-chat-popup>

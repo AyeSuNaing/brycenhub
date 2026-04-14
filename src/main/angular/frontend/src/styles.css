@@ -2431,3 +2431,40 @@ select.form-input option {
 .staff-input::placeholder {
     color: var(--input-placeholder);
 }
+
+/* ── Date input calendar icon fix ── */
+.date-input { color-scheme: dark; }
+body.light .date-input { color-scheme: light; }
+
+body.dark .date-input::-webkit-calendar-picker-indicator {
+    filter: invert(1) opacity(0.6);
+    cursor: pointer;
+}
+body.dark .date-input::-webkit-calendar-picker-indicator:hover {
+    filter: invert(1) opacity(1);
+}
+body.light .date-input::-webkit-calendar-picker-indicator {
+    filter: invert(0) opacity(0.5);
+    cursor: pointer;
+}
+body.light .date-input::-webkit-calendar-picker-indicator:hover {
+    filter: invert(0) opacity(1);
+}
+
+/* Calendar icon — force white in dark mode */
+body.dark input[type="date"]::-webkit-calendar-picker-indicator,
+body.dark input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+    filter: brightness(0) invert(1) !important;
+    opacity: 0.7 !important;
+    cursor: pointer;
+}
+body.dark input[type="date"]::-webkit-calendar-picker-indicator:hover,
+body.dark input[type="datetime-local"]::-webkit-calendar-picker-indicator:hover {
+    opacity: 1 !important;
+}
+body.light input[type="date"]::-webkit-calendar-picker-indicator,
+body.light input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+    filter: brightness(0) !important;
+    opacity: 0.5 !important;
+    cursor: pointer;
+}

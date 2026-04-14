@@ -51,7 +51,7 @@ public class UserController {
 	// Dashboard staff list — with role name + skills
 	// ============================================================
 	@GetMapping("/staff-list")
-	@PreAuthorize("hasAnyRole('BOSS', 'COUNTRY_DIRECTOR', 'ADMIN')")
+	@PreAuthorize("hasAnyRole('BOSS', 'COUNTRY_DIRECTOR', 'ADMIN', 'PROJECT_MANAGER', 'VICE_PRESIDENT')")
 	public ResponseEntity<List<UserDto.UserResponse>> getStaffList(@AuthenticationPrincipal User admin) {
 
 		System.out.println(">>> admin id: " + admin.getId());

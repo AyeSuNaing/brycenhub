@@ -34,38 +34,32 @@ public class AiProjectService {
     // ================================================================
     public List<Map<String, String>> detectTechStack(String title, String description) {
 
+        int currentYear = java.time.Year.now().getValue();
+
         String prompt =
-            "You are a senior software architect.\n" +
-            "Analyze the project and suggest a technology stack.\n\n" +
+            "You are a senior software architect in " + currentYear + ".\n" +
+            "Analyze this project and suggest the most suitable technology stack based on " + currentYear + " industry trends.\n\n" +
             "Project Title: " + title + "\n" +
             "Project Description: " + description + "\n\n" +
-            "Rules:\n" +
-            "- Suggest 2-3 options per relevant category\n" +
-            "- Only include categories relevant to the project\n" +
-            "- For frontend: 3 options e.g. Angular, React, Vue\n" +
-            "- For backend: 3 options e.g. Spring Boot, Node.js, Django\n" +
-            "- For database: 2-3 options e.g. MySQL, PostgreSQL, MongoDB\n" +
-            "- For mobile - read carefully:\n" +
-            "  * Android mentioned in description: include Android (Kotlin)\n" +
-            "  * iOS mentioned in description: include Swift (iOS)\n" +
-            "  * Both Android and iOS: include Android (Kotlin), Swift (iOS), Flutter\n" +
-            "  * Cross-platform only: include Flutter, React Native\n" +
-            "  * Max 3 mobile options\n" +
-            "- For payment: only if payment mentioned, 3 options e.g. Stripe, PayPal, Braintree\n" +
-            "- For realtime: only if real-time/tracking/chat mentioned, 2-3 options e.g. WebSocket, Firebase, Socket.io\n" +
-            "- Return ONLY JSON array, no explanation, no markdown\n\n" +
-            "Return format:\n" +
-            "[\n" +
-            "  {\"name\":\"Angular\",\"category\":\"frontend\"},\n" +
-            "  {\"name\":\"React\",\"category\":\"frontend\"},\n" +
-            "  {\"name\":\"Spring Boot\",\"category\":\"backend\"},\n" +
-            "  {\"name\":\"MySQL\",\"category\":\"database\"},\n" +
-            "  {\"name\":\"Android (Kotlin)\",\"category\":\"mobile\"},\n" +
-            "  {\"name\":\"Swift (iOS)\",\"category\":\"mobile\"},\n" +
-            "  {\"name\":\"Flutter\",\"category\":\"mobile\"},\n" +
-            "  {\"name\":\"Stripe\",\"category\":\"payment\"}\n" +
-            "]\n\n" +
-            "Now analyze and return JSON array:";
+            "STRICT RULES:\n" +
+            "- Use ONLY these categories: frontend, backend, database, mobile, payment, realtime\n" +
+            "- Do NOT use any other category (no cloud, hosting, caching, devops, containerization, orchestration, search, etc.)\n" +
+            "- Only include a category if it is directly relevant to this project\n" +
+            "- Suggest 2-3 options per included category\n" +
+            "- Use your own knowledge of what is most popular and widely adopted in " + currentYear + "\n" +
+            "- Do NOT hardcode — choose the best tech based on the project context\n" +
+            "- For mobile: only include if project is a mobile app\n" +
+            "  * Android only → Android (Kotlin)\n" +
+            "  * iOS only → Swift (iOS)\n" +
+            "  * Both → Android (Kotlin), Swift (iOS), Flutter\n" +
+            "  * Cross-platform → Flutter, React Native\n" +
+            "  * Max 3 options\n" +
+            "- For payment: only include if payment/billing/subscription is mentioned\n" +
+            "- For realtime: only include if chat/tracking/live-update is mentioned\n" +
+            "- Return ONLY a JSON array, no explanation, no markdown, no extra text\n\n" +
+            "Format:\n" +
+            "[{\"name\":\"...\",\"category\":\"frontend|backend|database|mobile|payment|realtime\"}]\n\n" +
+            "Analyze and return JSON:";
 
         String raw = callClaude(prompt, 800);
         return parseTechStackArray(raw);

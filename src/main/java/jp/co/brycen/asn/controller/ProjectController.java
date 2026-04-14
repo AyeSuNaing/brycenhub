@@ -22,33 +22,21 @@ public class ProjectController {
     @Autowired
     private ProjectService projectService;
 
-    // GET /api/projects
     @GetMapping
     public ResponseEntity<List<Project>> getAllProjects() {
         return ResponseEntity.ok(projectService.getAllProjects());
     }
 
-    // GET /api/projects/by-branch/{branchId}
     @GetMapping("/by-branch/{branchId}")
     public ResponseEntity<List<Project>> getByBranch(@PathVariable Long branchId) {
         return ResponseEntity.ok(projectService.getProjectsByBranch(branchId));
     }
 
-    // GET /api/projects/my (PM's projects)
-//    @GetMapping("/my")
-//    public ResponseEntity<List<Project>> getMyProjects(
-//            @AuthenticationPrincipal User user) {
-//        return ResponseEntity.ok(projectService.getProjectsByPm(user.getId()));
-//    }
-    
     @GetMapping("/my")
-    public ResponseEntity<List<Project>> getMyActiveProjects(
-            @AuthenticationPrincipal User user) {
+    public ResponseEntity<List<Project>> getMyActiveProjects(@AuthenticationPrincipal User user) {
         return ResponseEntity.ok(projectService.getMyActiveProjects(user.getId()));
     }
-       
 
-    // GET /api/projects/{id}
     @GetMapping("/{id}")
     public ResponseEntity<?> getProjectById(@PathVariable Long id) {
         try {
@@ -59,7 +47,6 @@ public class ProjectController {
         }
     }
 
-    // POST /api/projects
     @PostMapping
     @PreAuthorize("hasAnyRole('BOSS', 'COUNTRY_DIRECTOR', 'ADMIN', 'PROJECT_MANAGER')")
     public ResponseEntity<?> createProject(
@@ -74,7 +61,6 @@ public class ProjectController {
         }
     }
 
-    // PUT /api/projects/{id}
     @PutMapping("/{id}")
     @PreAuthorize("hasAnyRole('BOSS', 'COUNTRY_DIRECTOR', 'ADMIN', 'PROJECT_MANAGER')")
     public ResponseEntity<?> updateProject(
@@ -88,29 +74,25 @@ public class ProjectController {
         }
     }
 
-    // DELETE /api/projects/{id}
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAnyRole('BOSS', 'COUNTRY_DIRECTOR')")
     public ResponseEntity<?> deleteProject(@PathVariable Long id) {
         try {
             projectService.deleteProject(id);
-            return ResponseEntity.ok(
-                    new AuthDto.MessageResponse("Project deleted", true));
+            return ResponseEntity.ok(new AuthDto.MessageResponse("Project deleted", true));
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest()
                     .body(new AuthDto.MessageResponse(e.getMessage(), false));
         }
     }
 
-    // ===== MEMBERS =====
+    // ── MEMBERS ──────────────────────────────────────────────────
 
-    // GET /api/projects/{id}/members
     @GetMapping("/{id}/members")
     public ResponseEntity<List<ProjectDto.MemberResponse>> getMembers(@PathVariable Long id) {
         return ResponseEntity.ok(projectService.getProjectMembersWithName(id));
     }
-    
-    // POST /api/projects/{id}/members
+
     @PostMapping("/{id}/members")
     @PreAuthorize("hasAnyRole('BOSS', 'COUNTRY_DIRECTOR', 'ADMIN', 'PROJECT_MANAGER')")
     public ResponseEntity<?> addMember(
@@ -125,19 +107,20 @@ public class ProjectController {
         }
     }
 
-    // DELETE /api/projects/{id}/members/{userId}
     @DeleteMapping("/{id}/members/{userId}")
     @PreAuthorize("hasAnyRole('BOSS', 'COUNTRY_DIRECTOR', 'ADMIN', 'PROJECT_MANAGER')")
-    public ResponseEntity<?> removeMember(
-            @PathVariable Long id,
-            @PathVariable Long userId) {
+    public ResponseEntity<?> removeMember(@PathVariable Long id, @PathVariable Long userId) {
         try {
             projectService.removeMember(id, userId);
-            return ResponseEntity.ok(
-                    new AuthDto.MessageResponse("Member removed", true));
+            return ResponseEntity.ok(new AuthDto.MessageResponse("Member removed", true));
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest()
                     .body(new AuthDto.MessageResponse(e.getMessage(), false));
         }
+    }
+
+    @GetMapping("/{id}/members/removed")
+    public ResponseEntity<List<ProjectDto.MemberResponse>> getRemovedMembers(@PathVariable Long id) {
+        return ResponseEntity.ok(projectService.getRemovedMembers(id));
     }
 }
