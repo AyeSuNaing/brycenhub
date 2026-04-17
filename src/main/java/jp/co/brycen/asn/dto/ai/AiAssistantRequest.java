@@ -15,7 +15,11 @@ public class AiAssistantRequest {
     private List<String> confirmedFiles;
     private Integer fileIndex;
     private Boolean runBackend;
-    private String githubContext;   // ← GitHub repo context
+    private String githubContext;
+
+    // ── NEW: for auto-save after generate ──
+    private Long projectId;    // ← project ကို identify ဖို့
+    private Long generatedBy;  // ← ဘယ် user generate လုပ်တာ
 
     @Data
     public static class Message {

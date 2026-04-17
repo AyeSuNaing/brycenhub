@@ -8,6 +8,7 @@ import jp.co.brycen.asn.repository.ProjectMemberRepository;
 import jp.co.brycen.asn.repository.ProjectRepository;
 import jp.co.brycen.asn.repository.TaskRepository;
 import jp.co.brycen.asn.repository.UserRepository;
+import jp.co.brycen.asn.repository.UserRoleRepository;
 import jp.co.brycen.asn.repository.BranchRepository;
 import jp.co.brycen.asn.repository.DirectorCountryRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,6 +44,9 @@ public class ProjectService {
 
     @Autowired
     private DirectorCountryRepository directorCountryRepository;
+
+    @Autowired
+    private UserRoleRepository userRoleRepository; // ← NEW
 
     // ═══════════════════════════════════════════════
     // GET
@@ -91,8 +95,6 @@ public class ProjectService {
         project.setStatus("ACTIVE");
         project.setProgress(0);
         project.setCreatedBy(createdBy);
-
-        // ✅ save ပြီးမှ auto-add လုပ်မည် (ID လိုအပ်သောကြောင့်)
         return projectRepository.save(project);
     }
 
@@ -183,6 +185,7 @@ public class ProjectService {
                     dto.setId(m.getId());
                     dto.setUserId(m.getUserId());
                     dto.setRoleInProject(m.getRoleInProject());
+                    dto.setDisplayName(getDisplayName(m.getRoleInProject())); // ← NEW
                     dto.setStatus(m.getStatus());
                     userRepository.findById(m.getUserId()).ifPresent(u -> {
                         dto.setUserName(u.getName());
@@ -247,9 +250,11 @@ public class ProjectService {
         ProjectDto.MemberResponse dto = new ProjectDto.MemberResponse();
         dto.setId(null);
         dto.setUserId(u.getId());
-        dto.setRoleInProject(
+        String roleInProject =
             Long.valueOf(2L).equals(u.getRoleId()) ? "COUNTRY_DIRECTOR" :
-            Long.valueOf(3L).equals(u.getRoleId()) ? "VICE_PRESIDENT" : "ADMIN");
+            Long.valueOf(3L).equals(u.getRoleId()) ? "VICE_PRESIDENT" : "ADMIN";
+        dto.setRoleInProject(roleInProject);
+        dto.setDisplayName(getDisplayName(roleInProject)); // ← NEW
         dto.setStatus("ACTIVE");
         dto.setUserName(u.getName());
         dto.setInitial(u.getName().substring(0, 1).toUpperCase());
@@ -268,6 +273,7 @@ public class ProjectService {
                 dto.setId(m.getId());
                 dto.setUserId(m.getUserId());
                 dto.setRoleInProject(m.getRoleInProject());
+                dto.setDisplayName(getDisplayName(m.getRoleInProject())); // ← NEW
                 dto.setStatus(m.getStatus());
                 userRepository.findById(m.getUserId()).ifPresent(u -> {
                     dto.setUserName(u.getName());
@@ -308,6 +314,14 @@ public class ProjectService {
     // ═══════════════════════════════════════════════
     // HELPERS
     // ═══════════════════════════════════════════════
+
+    // user_roles.display_name ကို DB ကနေ တိုက်ရိုက် ယူ
+    private String getDisplayName(String roleInProject) {
+        if (roleInProject == null) return "";
+        return userRoleRepository.findByName(roleInProject)
+            .map(r -> r.getDisplayName())
+            .orElse(roleInProject.replace("_", " "));
+    }
 
     private int getRoleOrder(String role) {
         if (role == null) return 99;

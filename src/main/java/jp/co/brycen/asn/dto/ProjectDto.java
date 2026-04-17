@@ -25,7 +25,7 @@ public class ProjectDto {
         private LocalDate startDate;
         private LocalDate endDate;
         private Long budget;
-        private String originalLanguage;   // ← ထည့်
+        private String originalLanguage;
     }
 
     @Data
@@ -63,6 +63,7 @@ public class ProjectDto {
         private String  userName;
         private String  initial;
         private String  roleInProject;
+        private String  displayName;   // ← user_roles.display_name (DB မှ တိုက်ရိုက်)
         private String  status;
         private String  color;
         private long    tasks;

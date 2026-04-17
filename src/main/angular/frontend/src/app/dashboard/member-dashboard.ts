@@ -101,7 +101,7 @@ export class MemberDashboard implements OnInit, AfterViewInit, OnDestroy {
     private router: Router,
     private http: HttpClient,
     private ngZone: NgZone,
-  ) {}
+  ) { }
 
   ngOnInit() {
     const saved = localStorage.getItem('brycen-theme');
@@ -150,7 +150,7 @@ export class MemberDashboard implements OnInit, AfterViewInit, OnDestroy {
     });
   }
 
-  ngOnDestroy() {}
+  ngOnDestroy() { }
 
   loadAll() {
     this.dataService.getStats().subscribe({
@@ -163,7 +163,7 @@ export class MemberDashboard implements OnInit, AfterViewInit, OnDestroy {
     });
     this.dataService.getChartData().subscribe({
       next: data => { this.chartData = data; this.cdr.detectChanges(); },
-      error: () => {}
+      error: () => { }
     });
     this.dataService.getTaskStats().subscribe({
       next: data => {
@@ -175,7 +175,7 @@ export class MemberDashboard implements OnInit, AfterViewInit, OnDestroy {
         ];
         this.cdr.detectChanges();
       },
-      error: () => {}
+      error: () => { }
     });
     this.dataService.getPortfolioProjects().subscribe({
       next: data => { this.portfolioProjects = data; this.portfolio = data; this.loading.projects = false; this.cdr.detectChanges(); },
@@ -335,4 +335,13 @@ export class MemberDashboard implements OnInit, AfterViewInit, OnDestroy {
     if (!t.closest('.lang-wrap')) this.showLangMenu = false;
     if (!t.closest('.settings-wrap')) this.settingsOpen = false;
   }
+
+  getVisibleTeamCount(): number {
+    return this.teamMembers.filter(m =>
+      m.role !== 'Country Director' &&
+      m.role !== 'Vice President' &&
+      m.role !== 'Admin'
+    ).length;
+  }
+
 }

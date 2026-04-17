@@ -1190,21 +1190,10 @@
         var el = document.getElementById(loadId); if(el) el.remove();
 
         if (res.success && res.files && res.files.length) {
-          // Show success message
-          aiAddMsg2('assistant', res.message);
           // Add file to panel
           aiShowFiles2(res.files, res.summary);
-
-          // Offer next file or done message
-          if (res.offerGenerate && res.offerMessage) {
-            _backendPendingFiles = res.suggestedFiles || [];
-            _nextFileIndex = idx + 1;
-            aiAddMsg2('assistant', res.offerMessage);
-          } else if (res.offerMessage) {
-            aiAddMsg2('assistant', res.offerMessage);
-            _backendPendingFiles = [];
-            _nextFileIndex = -1;
-          }
+          // Auto-continue to next file without waiting for user
+          aiGenerateFileAt(allFiles, idx + 1);
         } else {
           aiAddMsg2('assistant', res.message || '❌ Generation failed');
         }

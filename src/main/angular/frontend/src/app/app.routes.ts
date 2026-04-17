@@ -15,16 +15,12 @@ export const routes: Routes = [
     children: [
       { path: 'boss',    loadComponent: () => import('./dashboard/boss-dashboard').then(m => m.BossDashboard) },
       { path: 'admin',   loadComponent: () => import('./dashboard/admin-dashboard').then(m => m.AdminDashboard) },
-
-      // Role-based — PM / Leader / Developer / UI_UX / QA တွေ အားလုံး member dashboard သုံး
       { path: 'pm',        loadComponent: () => import('./dashboard/member-dashboard').then(m => m.MemberDashboard) },
       { path: 'leader',    loadComponent: () => import('./dashboard/member-dashboard').then(m => m.MemberDashboard) },
       { path: 'developer', loadComponent: () => import('./dashboard/member-dashboard').then(m => m.MemberDashboard) },
       { path: 'uiux',      loadComponent: () => import('./dashboard/member-dashboard').then(m => m.MemberDashboard) },
       { path: 'qa',        loadComponent: () => import('./dashboard/member-dashboard').then(m => m.MemberDashboard) },
-
-      // member ← old path (backward compatible)
-      { path: 'member', loadComponent: () => import('./dashboard/member-dashboard').then(m => m.MemberDashboard) },
+      { path: 'member',    loadComponent: () => import('./dashboard/member-dashboard').then(m => m.MemberDashboard) },
     ],
   },
 
@@ -32,6 +28,20 @@ export const routes: Routes = [
     path: 'projects',
     canActivate: [authGuard],
     loadComponent: () => import('./projects/projects').then(m => m.Projects),
+  },
+
+  // ── API Documentation page ──
+  {
+    path: 'projects/:projectId/api-docs',
+    canActivate: [authGuard],
+    loadComponent: () => import('./projects/api-docs').then(m => m.ApiDocsComponent),
+  },
+
+  // ── DB Schema ERD page ──
+  {
+    path: 'projects/:projectId/db-schema',
+    canActivate: [authGuard],
+    loadComponent: () => import('./projects/db-schema').then(m => m.DbSchemaComponent),
   },
 
   {

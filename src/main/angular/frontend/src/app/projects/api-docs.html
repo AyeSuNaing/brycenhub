@@ -1,0 +1,87 @@
+<div class="api-shell" [class.dark]="true">
+
+  <!-- ════ TOPBAR (Kanban style) ════ -->
+  <header class="api-topbar">
+    <!-- Left: Logo -->
+    <div class="api-top-left">
+      <div class="api-logo-wrap">
+        <span class="api-logo-b">B</span>
+      </div>
+      <div>
+        <div class="api-logo-text">Brycen Hub</div>
+        <div class="api-logo-slogan">One Group. One Platform. Full Visibility.</div>
+      </div>
+    </div>
+
+    <!-- Center: Back button -->
+    <div class="api-top-center">
+      <button class="api-back-btn" (click)="goBack()">
+        ← Back to {{projectName}}
+      </button>
+    </div>
+
+    <!-- Right: title + badge + count -->
+    <div class="api-top-right">
+      <span class="api-title-icon">⚡</span>
+      <span class="api-title-text">API Documentation</span>
+      <span class="api-badge-rest">REST v1</span>
+      <span class="api-endpoint-count">{{filteredEndpoints.length}} endpoints</span>
+    </div>
+  </header>
+
+  <!-- ════ FRAME FILTER ════ -->
+  <div class="api-filter-bar">
+    <button
+      class="api-filter-btn"
+      [class.active]="selectedFrame === 'all'"
+      (click)="filterByFrame('all')">
+      All Frames
+    </button>
+    <button
+      *ngFor="let frame of frames"
+      class="api-filter-btn"
+      [class.active]="selectedFrame === frame"
+      (click)="filterByFrame(frame)">
+      {{frame}}
+    </button>
+  </div>
+
+  <!-- ════ LOADING ════ -->
+  <div *ngIf="loading" class="api-loading">
+    <div class="api-spinner"></div>
+    <span>Loading API documentation...</span>
+  </div>
+
+  <!-- ════ EMPTY ════ -->
+  <div *ngIf="!loading && filteredEndpoints.length === 0" class="api-empty">
+    <div class="api-empty-icon">⚡</div>
+    <div class="api-empty-title">No API endpoints yet</div>
+    <div class="api-empty-sub">Generate code from Design Tool to auto-extract API endpoints</div>
+  </div>
+
+  <!-- ════ ENDPOINT LIST ════ -->
+  <div *ngIf="!loading && filteredEndpoints.length > 0" class="api-list">
+    <ng-container *ngFor="let frame of visibleFrames">
+      <div class="api-frame-group">
+
+        <div class="api-frame-label">
+          <span>🖥</span>
+          <span>{{frame}}</span>
+          <span class="api-frame-count">{{getEndpointsByFrame(frame).length}}</span>
+        </div>
+
+        <div class="api-ep-card" *ngFor="let ep of getEndpointsByFrame(frame)">
+          <div class="api-ep-left">
+            <span class="api-method" [ngClass]="'method-' + ep.method.toLowerCase()">
+              {{ep.method}}
+            </span>
+            <span class="api-url">{{ep.url}}</span>
+          </div>
+          <span class="api-desc">{{ep.description}}</span>
+        </div>
+
+      </div>
+    </ng-container>
+  </div>
+
+</div>

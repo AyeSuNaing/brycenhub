@@ -42,12 +42,10 @@ export class DesignToolComponent implements OnInit, AfterViewInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
-    // Get projectId from route params
     this.route.params.subscribe(params => {
       this.projectId = Number(params['projectId']);
     });
 
-    // Role-based mode
     const role = this.auth.getUser()?.role;
     if (['UI_UX', 'PROJECT_MANAGER', 'LEADER'].includes(role || '')) {
       this.designMode = 'edit';
@@ -60,14 +58,12 @@ export class DesignToolComponent implements OnInit, AfterViewInit, OnDestroy {
       this.canEdit = false;
     }
 
-    // iframe src — mode ပေါ်မူတည်ပြီး file ရွေး
     const iframePath =
       this.designMode === 'edit'    ? '/design-edit.html'    :
       this.designMode === 'present' ? '/design-present.html' :
                                       '/design-dev.html';
     this.iframeSrc = this.sanitizer.bypassSecurityTrustResourceUrl(iframePath);
 
-    // Load project name
     if (this.projectId) {
       this.http.get<any>(
         `${environment.apiBaseUrl}/projects/${this.projectId}`,
@@ -81,7 +77,6 @@ export class DesignToolComponent implements OnInit, AfterViewInit, OnDestroy {
       });
     }
 
-    // Auto-save every 30s
     this.autoSaveTimer = setInterval(() => {
       if (this.designLoaded && this.canEdit) {
         this.sendToIframe({ type: 'DESIGN_REQUEST_SAVE' });
@@ -90,7 +85,6 @@ export class DesignToolComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   ngAfterViewInit(): void {
-    // Listen for messages from iframe
     this.messageHandler = (event: MessageEvent) => {
       this.onIframeMessage(event);
     };
@@ -102,12 +96,8 @@ export class DesignToolComponent implements OnInit, AfterViewInit, OnDestroy {
     if (this.autoSaveTimer) clearInterval(this.autoSaveTimer);
   }
 
-  // ── iframe load event ────────────────────────────────────────────
-  onIframeLoad(): void {
-    // iframe loaded — wait for DESIGN_READY message
-  }
+  onIframeLoad(): void {}
 
-  // ── Receive messages from iframe ─────────────────────────────────
   private onIframeMessage(event: MessageEvent): void {
     const msg = event.data;
     if (!msg || !msg.type) return;
@@ -117,35 +107,29 @@ export class DesignToolComponent implements OnInit, AfterViewInit, OnDestroy {
       case 'DESIGN_READY': {
         this.loading = false;
         this.cdr.detectChanges();
-        // Hide iframe topbar
         this.sendToIframe({ type: 'DESIGN_HIDE_TOPBAR' });
-        // Set mode
         if (this.designMode === 'present') {
           this.sendToIframe({ type: 'DESIGN_SET_MODE', mode: 'present' });
         } else if (this.designMode === 'view') {
           this.sendToIframe({ type: 'DESIGN_SET_MODE', mode: 'dev' });
         }
-        // Load saved design
         this.loadDesign();
-        // Load tech stacks
         this.loadTechStacks();
-        // ── User login language → iframe ပို့ ──
         const userLang = this.auth.getUser()?.preferredLanguage || 'en';
         this.sendToIframe({ type: 'USER_LANG_LOADED', lang: userLang });
-        // ── JWT token → iframe ပို့ (AI chat API auth) ──
         const token = localStorage.getItem('token') || '';
         this.sendToIframe({ type: 'AUTH_TOKEN_LOADED', token });
+        // ── Project ID + User ID → iframe ပို့ (AI generate save ဖို့) ──
+        const userId = this.auth.getUser()?.id || this.auth.getUser()?.userId;
+        this.sendToIframe({ type: 'PROJECT_INFO', projectId: this.projectId, userId });
         break;
       }
 
       case 'USER_LANG_CHANGED': {
-        // iframe popup ကနေ language ပြောင်းရင် Angular header ကိုပါ sync လုပ်
         const newLang = msg.lang as string;
         const currentUser = this.auth.getUser();
         if (currentUser && newLang) {
-          // Update local user object
           currentUser.preferredLanguage = newLang;
-          // Update localStorage directly
           try {
             const stored = localStorage.getItem('user');
             if (stored) {
@@ -156,7 +140,6 @@ export class DesignToolComponent implements OnInit, AfterViewInit, OnDestroy {
           } catch(e) {
             console.warn('[DesignTool] localStorage update failed', e);
           }
-          // Update UI language (navbar flag)
           this.http.put(`${environment.apiBaseUrl}/users/me/language`, { language: newLang },
             { headers: this.auth.getHeaders() }).subscribe({
             next: () => console.log('[DesignTool] Language updated to', newLang),
@@ -167,15 +150,12 @@ export class DesignToolComponent implements OnInit, AfterViewInit, OnDestroy {
       }
 
       case 'DESIGN_SAVE':
-        // iframe sends canvas data → save to backend
         if (msg.canvasData) {
           this.saveToBackend(msg.canvasData);
         }
         break;
 
       case 'AI_REQUEST':
-        // iframe → Angular → Spring Boot proxy (avoid CORS)
-        // ✅ FIX: { headers: this.auth.getHeaders() } ထည့်ရမယ် — 401 မဖြစ်အောင်
         this.http.post<any>(`${environment.apiBaseUrl}/ai-ui-design/generate`, {
           prompt: msg.prompt,
           maxTokens: msg.maxTokens || 4000
@@ -202,14 +182,12 @@ export class DesignToolComponent implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
-  // ── Send command to iframe ───────────────────────────────────────
   sendToIframe(data: any): void {
     const iframe = this.iframeRef?.nativeElement;
     if (!iframe?.contentWindow) return;
     iframe.contentWindow.postMessage(data, '*');
   }
 
-  // ── Send command (called from template buttons) ──────────────────
   sendCmd(cmd: string): void {
     if (cmd === 'SAVE') {
       this.sendToIframe({ type: 'DESIGN_REQUEST_SAVE' });
@@ -220,7 +198,6 @@ export class DesignToolComponent implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
-  // ── Load design from backend → send to iframe ────────────────────
   private loadDesign(): void {
     if (!this.projectId) {
       this.designLoaded = true;
@@ -241,14 +218,12 @@ export class DesignToolComponent implements OnInit, AfterViewInit, OnDestroy {
         this.cdr.detectChanges();
       },
       error: () => {
-        // 404 = no design yet → fresh canvas
         this.designLoaded = true;
         this.cdr.detectChanges();
       }
     });
   }
 
-  // ── Load project tech stacks → send to iframe ────────────────────
   private loadTechStacks(): void {
     if (!this.projectId) return;
     this.http.get<any[]>(
@@ -267,7 +242,6 @@ export class DesignToolComponent implements OnInit, AfterViewInit, OnDestroy {
     });
   }
 
-  // ── Save canvas data to backend ──────────────────────────────────
   private saveToBackend(canvasData: string): void {
     if (!this.projectId || !this.canEdit) return;
 
@@ -302,7 +276,6 @@ export class DesignToolComponent implements OnInit, AfterViewInit, OnDestroy {
     });
   }
 
-  // ── Navigate back ────────────────────────────────────────────────
   goBack(): void {
     history.back();
   }

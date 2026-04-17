@@ -1,0 +1,169 @@
+// ── Base ──
+.erd-shell {
+  min-height: 100vh;
+  background: #0d1424;
+  color: #e2e8f0;
+  font-family: 'Inter', sans-serif;
+  display: flex;
+  flex-direction: column;
+}
+
+// ── Topbar (Kanban/Design style) ──
+.erd-topbar {
+  height: 52px;
+  background: #0d1424;
+  border-bottom: 1px solid #1e2d4a;
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.erd-top-left {
+  display: flex; align-items: center; gap: 10px;
+  min-width: 220px;
+}
+.erd-logo-wrap {
+  width: 32px; height: 32px;
+  background: linear-gradient(135deg, #14532d, #16a34a);
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+}
+.erd-logo-b      { color: #86efac; font-weight: 900; font-size: 16px; }
+.erd-logo-text   { font-size: 13px; font-weight: 700; color: #e2e8f0; line-height: 1.2; }
+.erd-logo-slogan { font-size: 9px; color: #22c55e; font-weight: 500; }
+
+.erd-top-center {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+}
+
+.erd-back-btn {
+  background: none; border: 1px solid #1e2d4a;
+  color: #e2e8f0; cursor: pointer;
+  opacity: 0.7; font-size: 11px;
+  font-family: Inter, sans-serif;
+  padding: 6px 14px; border-radius: 8px;
+  transition: all .15s;
+  &:hover { opacity: 1; border-color: #22c55e; color: #22c55e; background: rgba(34,197,94,.06); }
+}
+
+.erd-top-right {
+  display: flex; align-items: center; gap: 8px;
+  min-width: 220px; justify-content: flex-end;
+}
+.erd-title-text { font-size: 13px; font-weight: 700; }
+.erd-badge {
+  background: #1e40af; color: #fff;
+  font-size: 10px; font-weight: 700;
+  padding: 2px 8px; border-radius: 5px;
+}
+
+.erd-zoom-ctrl {
+  display: flex; align-items: center; gap: 2px;
+  background: #131929; border: 1px solid #1e2d4a;
+  border-radius: 7px; padding: 2px 4px;
+}
+.erd-zoom-btn {
+  width: 22px; height: 22px;
+  background: none; border: none;
+  color: #64748b; cursor: pointer; font-size: 14px;
+  border-radius: 4px; display: flex; align-items: center; justify-content: center;
+  &:hover { background: #1e2d4a; color: #e2e8f0; }
+}
+.erd-zoom-val {
+  font-size: 11px; color: #64748b;
+  font-family: 'DM Mono', monospace;
+  min-width: 38px; text-align: center;
+}
+.erd-reset-btn {
+  background: #131929; border: 1px solid #1e2d4a;
+  border-radius: 6px; color: #64748b;
+  font-size: 11px; padding: 4px 10px;
+  cursor: pointer; font-family: Inter, sans-serif;
+  &:hover { color: #e2e8f0; border-color: #263351; }
+}
+
+// ── Loading ──
+.erd-loading {
+  display: flex; align-items: center; justify-content: center;
+  gap: 12px; padding: 80px; color: #475569; font-size: 13px;
+}
+.erd-spinner {
+  width: 20px; height: 20px;
+  border: 2px solid #1e2d4a; border-top-color: #3b82f6;
+  border-radius: 50%; animation: spin .8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+// ── Empty ──
+.erd-empty {
+  display: flex; flex-direction: column; align-items: center;
+  justify-content: center; padding: 100px 24px; text-align: center;
+}
+.erd-empty-icon  { font-size: 48px; opacity: .3; margin-bottom: 16px; }
+.erd-empty-title { font-size: 16px; font-weight: 600; color: #64748b; margin-bottom: 8px; }
+.erd-empty-sub   { font-size: 13px; color: #475569; }
+
+// ── ERD Canvas ──
+.erd-canvas {
+  flex: 1; overflow: hidden;
+  background-color: #0a0f1e;
+  background-image: radial-gradient(circle, #1e2d4a 1px, transparent 1px);
+  background-size: 24px 24px;
+  cursor: grab; position: relative;
+  &:active { cursor: grabbing; }
+}
+.erd-ct {
+  position: absolute; top: 0; left: 0;
+  transform-origin: 0 0; will-change: transform;
+}
+
+// ── SVG Lines ──
+.erd-lines {
+  position: absolute; top: 0; left: 0;
+  pointer-events: none; overflow: visible;
+}
+
+// ── Table Card ──
+.erd-card {
+  position: absolute;
+  background: #131929;
+  border: 1px solid #1e2d4a;
+  border-radius: 10px;
+  box-shadow: 0 4px 20px rgba(0,0,0,.4);
+  cursor: move; user-select: none; overflow: hidden;
+  transition: border-color .15s, box-shadow .15s;
+  &:hover { border-color: #3b82f6; box-shadow: 0 6px 28px rgba(59,130,246,.15); }
+}
+
+.erd-card-header {
+  background: #1e3a8a;
+  padding: 10px 14px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.erd-table-name {
+  color: #fff; font-size: 12px; font-weight: 700;
+  font-family: 'DM Mono', monospace;
+}
+.erd-frame-tag {
+  font-size: 8px; color: rgba(255,255,255,.4);
+  text-transform: uppercase; letter-spacing: .5px;
+}
+
+.erd-card-body  { padding: 6px 0; }
+
+.erd-col-row {
+  display: flex; align-items: center; gap: 8px;
+  padding: 5px 14px; font-size: 11px;
+  border-bottom: 1px solid #1a2438;
+  &:last-child { border-bottom: none; }
+  &.erd-col-pk { background: rgba(234,179,8,.04); }
+  &.erd-col-fk { background: rgba(59,130,246,.04); }
+}
+.erd-col-icon  { font-size: 9px; width: 14px; flex-shrink: 0; }
+.erd-col-name  { flex: 1; color: #e2e8f0; font-family: 'DM Mono', monospace; }
+.erd-col-type  { color: #475569; font-size: 10px; font-family: 'DM Mono', monospace; }
+.erd-col-empty { padding: 8px 14px; font-size: 11px; color: #475569; font-style: italic; }
