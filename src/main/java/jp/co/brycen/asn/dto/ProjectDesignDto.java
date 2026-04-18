@@ -6,12 +6,11 @@ import java.util.List;
 
 public class ProjectDesignDto {
 
-    // ── Save Request (from Design Tool after generate) ──
     @Data
     public static class SaveRequest {
         private Long projectId;
-        private String frameName;
         private Long generatedBy;
+        private String frameName;
         private List<FileItem> files;
         private List<ApiEndpoint> apiEndpoints;
         private List<DbTable> dbTables;
@@ -28,16 +27,20 @@ public class ProjectDesignDto {
         private String method;
         private String url;
         private String description;
+        private String requestBody;
+        private String responseBody;
+        private String pathParams;
+        private String queryParams;
+        private String statusCodes;
     }
 
     @Data
     public static class DbTable {
         private String tableName;
-        private String columns; // JSON string
+        private String columns;
         private String description;
     }
 
-    // ── Response ──
     @Data
     public static class GeneratedFileResponse {
         private Long id;
@@ -47,5 +50,13 @@ public class ProjectDesignDto {
         private List<FileItem> files;
         private List<ApiEndpoint> apiEndpoints;
         private List<DbTable> dbTables;
+    }
+
+    @Data
+    public static class ExtractAndSaveRequest {
+        private Long projectId;
+        private Long generatedBy;
+        private String frameName;
+        private List<FileItem> generatedFiles;
     }
 }

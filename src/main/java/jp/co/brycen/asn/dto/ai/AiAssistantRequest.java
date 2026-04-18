@@ -17,9 +17,15 @@ public class AiAssistantRequest {
     private Boolean runBackend;
     private String githubContext;
 
-    // ── NEW: for auto-save after generate ──
-    private Long projectId;    // ← project ကို identify ဖို့
-    private Long generatedBy;  // ← ဘယ် user generate လုပ်တာ
+    // ── For auto-save after generate ──
+    private Long projectId;
+    private Long generatedBy;
+
+    // ── Saved suggested files from greeting (passed back when user says yes) ──
+    private List<String> suggestedFiles;
+
+    // ── Frame screenshot (base64 JPEG) for visual analysis ──
+    private String frameImage;
 
     @Data
     public static class Message {

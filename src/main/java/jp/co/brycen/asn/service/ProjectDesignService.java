@@ -28,22 +28,21 @@ public class ProjectDesignService {
 
         log.info("[ProjectDesign] Saving frame={} project={}", frameName, projectId);
 
-        // ── 1. Generated Files — overwrite ──
-        ProjectGeneratedFile session = generatedFileRepo
-            .findByProjectIdAndFrameName(projectId, frameName)
-            .orElseGet(() -> {
-                ProjectGeneratedFile f = new ProjectGeneratedFile();
-                f.setProjectId(projectId);
-                f.setFrameName(frameName);
-                return f;
-            });
+        // ── 1. Generated Files — delete old, insert new ──
+        // Delete existing session entirely to avoid duplicate constraint
+        generatedFileRepo.findByProjectIdAndFrameName(projectId, frameName)
+            .ifPresent(existing -> generatedFileRepo.delete(existing));
+
+        // Flush to ensure delete is committed before insert
+        generatedFileRepo.flush();
+
+        // Create fresh session
+        ProjectGeneratedFile session = new ProjectGeneratedFile();
+        session.setProjectId(projectId);
+        session.setFrameName(frameName);
         session.setGeneratedBy(req.getGeneratedBy());
+        session.setItems(new java.util.ArrayList<>());
 
-        // Clear old items
-        if (session.getItems() != null) session.getItems().clear();
-        else session.setItems(new java.util.ArrayList<>());
-
-        // Add new items
         if (req.getFiles() != null) {
             req.getFiles().forEach(f -> {
                 ProjectGeneratedFileItem item = new ProjectGeneratedFileItem();
@@ -65,6 +64,12 @@ public class ProjectDesignService {
                 ep.setMethod(e.getMethod());
                 ep.setUrl(e.getUrl());
                 ep.setDescription(e.getDescription());
+                // ── New fields ──
+                ep.setRequestBody(e.getRequestBody());
+                ep.setResponseBody(e.getResponseBody());
+                ep.setPathParams(e.getPathParams());
+                ep.setQueryParams(e.getQueryParams());
+                ep.setStatusCodes(e.getStatusCodes());
                 return ep;
             }).collect(Collectors.toList());
             apiEndpointRepo.saveAll(endpoints);
@@ -116,6 +121,11 @@ public class ProjectDesignService {
             ae.setMethod(e.getMethod());
             ae.setUrl(e.getUrl());
             ae.setDescription(e.getDescription());
+            ae.setRequestBody(e.getRequestBody());
+            ae.setResponseBody(e.getResponseBody());
+            ae.setPathParams(e.getPathParams());
+            ae.setQueryParams(e.getQueryParams());
+            ae.setStatusCodes(e.getStatusCodes());
             return ae;
         }).collect(Collectors.toList()));
 

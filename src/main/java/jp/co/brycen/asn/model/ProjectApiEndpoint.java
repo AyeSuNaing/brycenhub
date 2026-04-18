@@ -25,4 +25,20 @@ public class ProjectApiEndpoint {
 
     @Column(name = "description", length = 500)
     private String description;
+
+    // ── Request / Response schema ──
+    @Column(name = "request_body", columnDefinition = "TEXT")
+    private String requestBody;
+
+    @Column(name = "response_body", columnDefinition = "TEXT")
+    private String responseBody;
+
+    @Column(name = "path_params", length = 500)
+    private String pathParams;
+
+    @Column(name = "query_params", length = 500)
+    private String queryParams;
+
+    @Column(name = "status_codes", length = 200)
+    private String statusCodes;
 }

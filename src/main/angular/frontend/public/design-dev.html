@@ -153,6 +153,7 @@
     #devTabs .ptab{pointer-events:all!important;cursor:pointer!important;z-index:100;position:relative;}
   </style>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </head>
 <body>
   <div id="TB" style="display:none"></div>
@@ -354,6 +355,12 @@
         return;
       }
       if(msg&&msg.type==='AUTH_TOKEN_LOADED'){_authToken=msg.token||'';return;}
+      if(msg&&msg.type==='PROJECT_INFO'){
+        _projectId=msg.projectId||null;
+        _userId=msg.userId||null;
+        console.log('[design-dev] PROJECT_INFO received: projectId='+_projectId+' userId='+_userId);
+        return;
+      }
       if(!msg||msg.type!=='AI_RESPONSE')return;
       var cb=_cgPendingRequests[msg.requestId];if(!cb)return;delete _cgPendingRequests[msg.requestId];
       if(msg.success){cb(msg.content);}else{var statusEl=document.getElementById('cg-status');if(statusEl)statusEl.textContent='Error: '+(msg.error||'Unknown error');}
@@ -447,6 +454,7 @@
         return;
       }
       _aiFrame2=frame;_aiHistory2=[];_aiFiles2={};_aiGenFiles=[];_pendingFiles=[];_backendPendingFiles=[];_nextFileIndex=-1;
+      setTimeout(function(){aiUpdateGenBtn();},100);
       document.getElementById('ai-input').value='';document.getElementById('ai-code-view').textContent='';document.getElementById('ai-code-status').textContent='';
       document.getElementById('cg-frame-info').textContent=frame.name+' · '+frame.w+'×'+frame.h+' · '+frame.comps.length+' components';
       document.getElementById('CG-POPUP').style.display='flex';
@@ -502,9 +510,10 @@
       <div style="display:flex;flex:1;overflow:hidden;min-height:0;">
         <div id="ai-chat-side" style="display:flex;flex-direction:column;flex:1;overflow:hidden;border-right:1px solid var(--brd);">
           <div id="ai-messages" style="flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px;min-height:0;"></div>
-          <div style="padding:10px 12px;border-top:1px solid var(--brd);display:flex;gap:8px;align-items:flex-end;flex-shrink:0;background:var(--bg1);">
-            <textarea id="ai-input" placeholder="Ask about this design... or type 'yes' to generate code" rows="1" style="flex:1;background:var(--bg3);border:1px solid var(--brd);border-radius:8px;padding:8px 10px;font-size:12px;color:var(--t0);font-family:Inter,sans-serif;outline:none;resize:none;line-height:1.5;max-height:90px;overflow-y:auto;" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();aiSend();}" oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,90)+'px'"></textarea>
-            <button onclick="aiSend()" style="height:34px;width:34px;background:linear-gradient(135deg,var(--acc),rgba(0,212,168,.8));border:none;border-radius:8px;color:#fff;font-size:15px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;">↑</button>
+          <div style="padding:8px 10px;border-top:1px solid var(--brd);display:flex;gap:6px;align-items:flex-end;flex-shrink:0;background:var(--bg1);">
+            <textarea id="ai-input" placeholder="Ask about this design..." rows="1" style="flex:1;background:var(--bg3);border:1px solid var(--brd);border-radius:8px;padding:7px 10px;font-size:12px;color:var(--t0);font-family:Inter,sans-serif;outline:none;resize:none;line-height:1.5;max-height:80px;overflow-y:auto;" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();aiSend();}" oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,80)+'px'"></textarea>
+            <button onclick="aiSend()" title="Send" style="height:34px;width:34px;background:var(--bg3);border:1px solid var(--brd);border-radius:8px;color:var(--t1);font-size:15px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;margin-bottom:0;" onmouseover="this.style.borderColor='var(--acc)';this.style.color='var(--acc)'" onmouseout="this.style.borderColor='var(--brd)';this.style.color='var(--t1)'">↑</button>
+            <button id="ai-gen-btn" onclick="aiClickGenerate()" style="height:34px;padding:0 14px;background:linear-gradient(135deg,rgba(0,212,168,.15),rgba(108,99,255,.1));border:1px solid rgba(0,212,168,.3);border-radius:8px;color:var(--acc2);font-size:11px;font-weight:700;cursor:pointer;font-family:Inter,sans-serif;display:flex;align-items:center;gap:5px;flex-shrink:0;opacity:0.4;pointer-events:none;white-space:nowrap;margin-bottom:0;" disabled><span>✦</span><span id="ai-gen-btn-label">Generate</span></button>
           </div>
         </div>
         <div id="ai-code-side" style="display:none;flex-direction:column;flex:1;overflow:hidden;">
@@ -554,6 +563,8 @@
     var _aiFrame2 = null;
     var _aiGenFiles = [];
     var _pendingFiles = [];   // pending files from AI greeting
+    var _projectId = null;    // set via PROJECT_INFO postMessage
+    var _userId = null;       // set via PROJECT_INFO postMessage
     var _checkedFiles = [];
     var _backendPendingFiles = [];  // backend files waiting after frontend done
     var _nextFileIndex = -1;            // next file index to generate
@@ -564,12 +575,44 @@
     // ── PATCH 4: isGenerateTrigger ──
     function isGenerateTrigger(text) {
       var t = text.toLowerCase().trim();
+      // Exact matches only — avoid false triggers like "ထုတ်မှာလဲ" or "လုပ်ပေးမလား"
       return t === 'yes' || t === 'y' || t === 'ဟုတ်ကဲ့' || t === 'ဟုတ်' ||
-             t.includes('generate') || t.includes('ထုတ်') || t.includes('လုပ်ပေး') ||
-             t === 'はい' || t.includes('生成') || t === 'ok' || t === 'sure';
+             t === 'generate' || t === 'generate code' ||
+             t === 'ထုတ်ပေး' || t === 'generate လုပ်ပေး' || t === 'generate လုပ်' ||
+             t === 'はい' || t === '生成' || t === 'ok' || t === 'sure' ||
+             t === 'ကုဒ်ထုတ်ပေး' || t === 'ကုဒ်ထုတ်' || t === 'code ထုတ်ပေး';
     }
 
     // aiSetLang removed — login language only
+
+    // ── Update Generate button state ──
+    function aiUpdateGenBtn() {
+      var btn = document.getElementById('ai-gen-btn');
+      var lbl = document.getElementById('ai-gen-btn-label');
+      if (!btn) return;
+      var hasFiles = _pendingFiles && _pendingFiles.length > 0;
+      if (hasFiles) {
+        btn.disabled = false;
+        btn.style.opacity = '1';
+        btn.style.pointerEvents = 'auto';
+        btn.style.borderColor = 'rgba(0,212,168,.5)';
+        btn.style.background = 'linear-gradient(135deg,rgba(0,212,168,.25),rgba(108,99,255,.2))';
+        if (lbl) lbl.textContent = 'Generate ' + _pendingFiles.length + ' Files';
+      } else {
+        btn.disabled = true;
+        btn.style.opacity = '0.4';
+        btn.style.pointerEvents = 'none';
+        btn.style.borderColor = 'rgba(0,212,168,.3)';
+        btn.style.background = 'linear-gradient(135deg,rgba(0,212,168,.1),rgba(108,99,255,.08))';
+        if (lbl) lbl.textContent = 'Generate Files';
+      }
+    }
+
+    // ── Generate button click ──
+    function aiClickGenerate() {
+      if (!_pendingFiles || !_pendingFiles.length) return;
+      aiGenerateConfirmed();
+    }
 
     var _githubRepo = null;  // { owner, repo, files: [], readme: '' }
 
@@ -646,182 +689,78 @@
       return ctx;
     }
 
-        function aiGreet2() {
+        // ── Capture frame as base64 image ──────────────────────────────
+    function captureFrameImage(frameId, callback) {
+      var el = document.getElementById('df-' + frameId);
+      if (!el || typeof html2canvas === 'undefined') { callback(null); return; }
+      html2canvas(el, {
+        useCORS: true, allowTaint: true,
+        scale: 0.5,          // 50% scale — smaller token count
+        backgroundColor: '#ffffff',
+        logging: false
+      }).then(function(canvas) {
+        // Resize to max 800px wide
+        var maxW = 800;
+        var ratio = Math.min(1, maxW / canvas.width);
+        var outW = Math.round(canvas.width * ratio);
+        var outH = Math.round(canvas.height * ratio);
+        var out = document.createElement('canvas');
+        out.width = outW; out.height = outH;
+        var ctx = out.getContext('2d');
+        ctx.drawImage(canvas, 0, 0, outW, outH);
+        var b64 = out.toDataURL('image/jpeg', 0.7).split(',')[1];
+        callback(b64);
+      }).catch(function() { callback(null); });
+    }
+
+    function aiGreet2() {
       var f = _aiFrame2;
       if (!f) { aiAddMsg2('assistant', 'Hello! How can I help?'); return; }
       var loadId = aiAddMsg2('assistant', '● ● ●', true);
-      var frameCtx = {frameName:f.name,frameWidth:f.w,frameHeight:f.h,components:JSON.stringify(f.comps.map(function(c){return{type:c.type,name:c.name,x:Math.round(c.x),y:Math.round(c.y),w:Math.round(c.w),h:Math.round(c.h),style:{backgroundColor:c.style.backgroundColor,color:c.style.color}};}))};
-      fetch('/api/ai-ui-design/chat', {
-        method: 'POST',
-        headers: {'Content-Type':'application/json','Authorization':'Bearer '+_authToken},
-        body: JSON.stringify({message:'',language:_userLang,history:[],frameContext:frameCtx,techStacks:_projectTechStacks.map(function(t){return t.name;}),generatedFiles:null,githubContext:aiGetGitHubContext()})
-      })
-      .then(function(r){return r.json();})
-      .then(function(res){
-        var el=document.getElementById(loadId);if(el)el.remove();
-        if(res.success){
-          _aiHistory2.push({role:'assistant',content:res.message});
-          if(res.readyToGenerate&&res.suggestedFiles&&res.suggestedFiles.length){
-            _pendingFiles=res.suggestedFiles;
-            aiAddMsg2('assistant',res.message);
-            aiShowFileList(res.suggestedFiles);
-          }else{aiAddMsg2('assistant',res.message);}
-        }else{
-          var msgs={en:'I can see the **'+f.name+'** frame ('+f.w+'×'+f.h+'px) with '+f.comps.length+' components. What would you like to know?',my:'**'+f.name+'** frame ('+f.w+'×'+f.h+'px) မှာ component '+f.comps.length+' ခု မြင်ပြီ။ ဘာမေးချင်သလဲ?',ja:'**'+f.name+'**フレームに'+f.comps.length+'コンポーネントがあります。'};
+      var frameCtx = {frameName:f.name,frameWidth:f.w,frameHeight:f.h,components:JSON.stringify(f.comps.map(function(c,i){
+        var isCenter=Math.abs((c.x+c.w/2)-f.w/2)<f.w*0.25;
+        return{index:i,type:c.type,name:c.name,content:c.props&&c.props.content?c.props.content:'',x:Math.round(c.x),y:Math.round(c.y),w:Math.round(c.w),h:Math.round(c.h),centered:isCenter,style:{backgroundColor:c.style.backgroundColor,color:c.style.color}};}))};
+
+      function doGreetFetch(b64) {
+        fetch('/api/ai-ui-design/chat', {
+          method:'POST',
+          headers:{'Content-Type':'application/json','Authorization':'Bearer '+_authToken},
+          body:JSON.stringify({message:'',language:_userLang,history:[],frameContext:frameCtx,
+            techStacks:_projectTechStacks.map(function(t){return t.name;}),
+            generatedFiles:null,githubContext:aiGetGitHubContext(),
+            frameImage:b64||null})
+        })
+        .then(function(r){return r.json();})
+        .then(function(res){
+          var el=document.getElementById(loadId);if(el)el.remove();
+          if(res.success){
+            _aiHistory2.push({role:'assistant',content:res.message});
+            if(res.suggestedFiles&&res.suggestedFiles.length){
+              _pendingFiles=res.suggestedFiles;
+              aiUpdateGenBtn();
+            }
+            if(res.readyToGenerate&&res.suggestedFiles&&res.suggestedFiles.length){
+              aiAddMsg2('assistant',res.message);
+              aiShowFileList(res.suggestedFiles);
+            }else{aiAddMsg2('assistant',res.message);}
+          }else{
+            var msgs={en:'I can see the **'+f.name+'** frame. What would you like to know?',my:'**'+f.name+'** frame မြင်ပြီ။ ဘာမေးချင်သလဲ?'};
+            aiAddMsg2('assistant',msgs[_userLang]||msgs.en);
+          }
+        })
+        .catch(function(){
+          var el=document.getElementById(loadId);if(el)el.remove();
+          var msgs={en:'I can see the **'+f.name+'** frame. What would you like to know?',my:'**'+f.name+'** frame မြင်ပြီ။ ဘာမေးချင်သလဲ?'};
           aiAddMsg2('assistant',msgs[_userLang]||msgs.en);
-        }
-      })
-      .catch(function(){
-        var el=document.getElementById(loadId);if(el)el.remove();
-        var msgs={en:'I can see the **'+f.name+'** frame ('+f.w+'×'+f.h+'px) with '+f.comps.length+' components. What would you like to know?',my:'**'+f.name+'** frame ('+f.w+'×'+f.h+'px) မှာ component '+f.comps.length+' ခု မြင်ပြီ။ ဘာမေးချင်သလဲ?',ja:'**'+f.name+'**フレームに'+f.comps.length+'コンポーネントがあります。'};
-        aiAddMsg2('assistant',msgs[_userLang]||msgs.en);
+        });
+      }
+
+      // Capture frame screenshot first, then send
+      captureFrameImage(f.id, function(b64) {
+        doGreetFetch(b64);
       });
     }
 
-    function aiSend() {
-      var input = document.getElementById('ai-input');
-      var text = input.value.trim(); if (!text) return;
-      input.value = ''; input.style.height = 'auto';
-      aiAddMsg2('user', text);
-      _aiHistory2.push({role:'user',content:text});
-      var loadId = aiAddMsg2('assistant', '● ● ●', true);
-
-      // Generate trigger
-      if (_pendingFiles && _pendingFiles.length && isGenerateTrigger(text)) {
-        var elR = document.getElementById(loadId); if (elR) elR.remove();
-        aiGenerateConfirmed();
-        return;
-      }
-      // Next file trigger
-      if (_nextFileIndex >= 0 && _backendPendingFiles && _backendPendingFiles.length && isGenerateTrigger(text)) {
-        var elR2 = document.getElementById(loadId); if (elR2) elR2.remove();
-        aiGenerateBackend();
-        return;
-      }
-
-      var frameCtx = null;
-      if (_aiFrame2) {frameCtx={frameName:_aiFrame2.name,frameWidth:_aiFrame2.w,frameHeight:_aiFrame2.h,components:JSON.stringify(_aiFrame2.comps.map(function(c){return{type:c.type,name:c.name,x:Math.round(c.x),y:Math.round(c.y),w:Math.round(c.w),h:Math.round(c.h),style:{backgroundColor:c.style.backgroundColor,color:c.style.color}};}))};}
-
-      fetch('/api/ai-ui-design/chat', {
-        method: 'POST',
-        headers: {'Content-Type':'application/json','Authorization':'Bearer '+_authToken},
-        body: JSON.stringify({message:text,language:_aiLang2,history:_aiHistory2.slice(-10),frameContext:frameCtx,generatedFiles:_aiGenFiles.length?_aiGenFiles:null})
-      })
-      .then(function(r){return r.json();})
-      .then(function(res){
-        var el=document.getElementById(loadId);if(el)el.remove();
-        if(res.success){
-          _aiHistory2.push({role:'assistant',content:res.message});
-          if(res.files&&res.files.length){
-            aiAddMsg2('assistant',res.message);
-            aiShowFiles2(res.files,res.summary);
-            // Backend offer
-            if(res.offerGenerate && res.offerMessage && res.suggestedFiles && res.suggestedFiles.length){
-              _backendPendingFiles = res.suggestedFiles;
-              aiAddMsg2('assistant', res.offerMessage);
-            }
-          }
-          else if(res.readyToGenerate&&res.suggestedFiles&&res.suggestedFiles.length){_pendingFiles=res.suggestedFiles;aiAddMsg2('assistant',res.message);aiShowFileList(res.suggestedFiles);}
-          else{aiAddMsg2('assistant',res.message);}
-        }else{aiAddMsg2('assistant','❌ '+(res.error||'Error occurred'));}
-      })
-      .catch(function(){var el=document.getElementById(loadId);if(el)el.remove();aiAddMsg2('assistant','❌ Connection error. Check if backend is running.');});
-    }
-
-    function aiSaveHistory() {}
-    function aiLoadHistory() { return false; }
-    function aiClearHistory() {}
-    function aiStartFresh() {
-      document.getElementById('ai-messages').innerHTML = '';
-      _aiFiles2={}; _aiGenFiles=[]; _pendingFiles=[]; _backendPendingFiles=[]; _nextFileIndex=-1;
-      document.getElementById('ai-file-tabs').innerHTML='';
-      document.getElementById('ai-code-side').style.display='none';
-      document.getElementById('ai-chat-side').style.width='100%';
-      document.getElementById('ai-chat-side').style.flex='1';
-      aiGreet2();
-    }
-
-        function aiGreet2() {
-      var f = _aiFrame2;
-      if (!f) { aiAddMsg2('assistant', 'Hello! How can I help?'); return; }
-      var loadId = aiAddMsg2('assistant', '● ● ●', true);
-      var frameCtx = {frameName:f.name,frameWidth:f.w,frameHeight:f.h,components:JSON.stringify(f.comps.map(function(c){return{type:c.type,name:c.name,x:Math.round(c.x),y:Math.round(c.y),w:Math.round(c.w),h:Math.round(c.h),style:{backgroundColor:c.style.backgroundColor,color:c.style.color}};}))};
-      fetch('/api/ai-ui-design/chat', {
-        method: 'POST',
-        headers: {'Content-Type':'application/json','Authorization':'Bearer '+_authToken},
-        body: JSON.stringify({message:'',language:_userLang,history:[],frameContext:frameCtx,techStacks:_projectTechStacks.map(function(t){return t.name;}),generatedFiles:null,githubContext:aiGetGitHubContext()})
-      })
-      .then(function(r){return r.json();})
-      .then(function(res){
-        var el=document.getElementById(loadId);if(el)el.remove();
-        if(res.success){
-          _aiHistory2.push({role:'assistant',content:res.message});
-          if(res.readyToGenerate&&res.suggestedFiles&&res.suggestedFiles.length){
-            _pendingFiles=res.suggestedFiles;
-            aiAddMsg2('assistant',res.message);
-            aiShowFileList(res.suggestedFiles);
-          }else{aiAddMsg2('assistant',res.message);}
-        }else{
-          var msgs={en:'I can see the **'+f.name+'** frame ('+f.w+'×'+f.h+'px) with '+f.comps.length+' components. What would you like to know?',my:'**'+f.name+'** frame ('+f.w+'×'+f.h+'px) မှာ component '+f.comps.length+' ခု မြင်ပြီ။ ဘာမေးချင်သလဲ?',ja:'**'+f.name+'**フレームに'+f.comps.length+'コンポーネントがあります。'};
-          aiAddMsg2('assistant',msgs[_userLang]||msgs.en);
-        }
-      })
-      .catch(function(){
-        var el=document.getElementById(loadId);if(el)el.remove();
-        var msgs={en:'I can see the **'+f.name+'** frame ('+f.w+'×'+f.h+'px) with '+f.comps.length+' components. What would you like to know?',my:'**'+f.name+'** frame ('+f.w+'×'+f.h+'px) မှာ component '+f.comps.length+' ခု မြင်ပြီ။ ဘာမေးချင်သလဲ?',ja:'**'+f.name+'**フレームに'+f.comps.length+'コンポーネントがあります。'};
-        aiAddMsg2('assistant',msgs[_userLang]||msgs.en);
-      });
-    }
-
-    function aiSend() {
-      var input = document.getElementById('ai-input');
-      var text = input.value.trim(); if (!text) return;
-      input.value = ''; input.style.height = 'auto';
-      aiAddMsg2('user', text);
-      _aiHistory2.push({role:'user',content:text});
-      var loadId = aiAddMsg2('assistant', '● ● ●', true);
-
-      // Generate trigger
-      if (_pendingFiles && _pendingFiles.length && isGenerateTrigger(text)) {
-        var elR = document.getElementById(loadId); if (elR) elR.remove();
-        aiGenerateConfirmed();
-        return;
-      }
-      // Next file trigger
-      if (_nextFileIndex >= 0 && _backendPendingFiles && _backendPendingFiles.length && isGenerateTrigger(text)) {
-        var elR2 = document.getElementById(loadId); if (elR2) elR2.remove();
-        aiGenerateBackend();
-        return;
-      }
-
-      var frameCtx = null;
-      if (_aiFrame2) {frameCtx={frameName:_aiFrame2.name,frameWidth:_aiFrame2.w,frameHeight:_aiFrame2.h,components:JSON.stringify(_aiFrame2.comps.map(function(c){return{type:c.type,name:c.name,x:Math.round(c.x),y:Math.round(c.y),w:Math.round(c.w),h:Math.round(c.h),style:{backgroundColor:c.style.backgroundColor,color:c.style.color}};}))};}
-
-      fetch('/api/ai-ui-design/chat', {
-        method: 'POST',
-        headers: {'Content-Type':'application/json','Authorization':'Bearer '+_authToken},
-        body: JSON.stringify({message:text,language:_aiLang2,history:_aiHistory2.slice(-10),frameContext:frameCtx,generatedFiles:_aiGenFiles.length?_aiGenFiles:null})
-      })
-      .then(function(r){return r.json();})
-      .then(function(res){
-        var el=document.getElementById(loadId);if(el)el.remove();
-        if(res.success){
-          _aiHistory2.push({role:'assistant',content:res.message});
-          if(res.files&&res.files.length){
-            aiAddMsg2('assistant',res.message);
-            aiShowFiles2(res.files,res.summary);
-            // Backend offer
-            if(res.offerGenerate && res.offerMessage && res.suggestedFiles && res.suggestedFiles.length){
-              _backendPendingFiles = res.suggestedFiles;
-              aiAddMsg2('assistant', res.offerMessage);
-            }
-          }
-          else if(res.readyToGenerate&&res.suggestedFiles&&res.suggestedFiles.length){_pendingFiles=res.suggestedFiles;aiAddMsg2('assistant',res.message);aiShowFileList(res.suggestedFiles);}
-          else{aiAddMsg2('assistant',res.message);}
-        }else{aiAddMsg2('assistant','❌ '+(res.error||'Error occurred'));}
-      })
-      .catch(function(){var el=document.getElementById(loadId);if(el)el.remove();aiAddMsg2('assistant','❌ Connection error. Check if backend is running.');});
-    }
 
     function aiSaveHistory() {
       try {
@@ -871,6 +810,69 @@
       document.getElementById('ai-chat-side').style.width = '100%';
       document.getElementById('ai-chat-side').style.flex = '1';
       aiGreet2();
+    }
+
+    function aiSend() {
+      var input = document.getElementById('ai-input');
+      var text = input.value.trim(); if (!text) return;
+      input.value = ''; input.style.height = 'auto';
+      aiAddMsg2('user', text);
+      _aiHistory2.push({role:'user',content:text});
+      var loadId = aiAddMsg2('assistant', '● ● ●', true);
+
+      // Generate trigger — exact match only
+      if (_pendingFiles && _pendingFiles.length && isGenerateTrigger(text)) {
+        var elR = document.getElementById(loadId); if (elR) elR.remove();
+        aiGenerateConfirmed();
+        return;
+      }
+
+      var frameCtx = null;
+      if (_aiFrame2) {
+        frameCtx = {frameName:_aiFrame2.name,frameWidth:_aiFrame2.w,frameHeight:_aiFrame2.h,
+          components:JSON.stringify(_aiFrame2.comps.map(function(c,i){
+            var isCenter=Math.abs((c.x+c.w/2)-_aiFrame2.w/2)<_aiFrame2.w*0.25;
+            return{index:i,type:c.type,name:c.name,content:c.props&&c.props.content?c.props.content:'',
+              x:Math.round(c.x),y:Math.round(c.y),w:Math.round(c.w),h:Math.round(c.h),
+              centered:isCenter,style:{backgroundColor:c.style.backgroundColor,color:c.style.color}};
+          }))};
+      }
+
+      fetch('/api/ai-ui-design/chat', {
+        method:'POST',
+        headers:{'Content-Type':'application/json','Authorization':'Bearer '+_authToken},
+        body:JSON.stringify({
+          message:text, language:_aiLang2, history:_aiHistory2.slice(-10),
+          frameContext:frameCtx,
+          generatedFiles:_aiGenFiles.length?_aiGenFiles:null,
+          suggestedFiles:_pendingFiles&&_pendingFiles.length?_pendingFiles:null,
+          techStacks:_projectTechStacks.map(function(t){return t.name;})
+        })
+      })
+      .then(function(r){return r.json();})
+      .then(function(res){
+        var el=document.getElementById(loadId);if(el)el.remove();
+        if(res.success){
+          _aiHistory2.push({role:'assistant',content:res.message});
+          if(res.files&&res.files.length){
+            aiAddMsg2('assistant',res.message);
+            aiShowFiles2(res.files,res.summary);
+          } else if(res.readyToGenerate&&res.suggestedFiles&&res.suggestedFiles.length){
+            _pendingFiles=res.suggestedFiles;
+            aiUpdateGenBtn();
+            aiAddMsg2('assistant',res.message);
+            aiShowFileList(res.suggestedFiles);
+          } else {
+            aiAddMsg2('assistant',res.message);
+          }
+        } else {
+          aiAddMsg2('assistant','❌ '+(res.error||'Error occurred'));
+        }
+      })
+      .catch(function(){
+        var el=document.getElementById(loadId);if(el)el.remove();
+        aiAddMsg2('assistant','❌ Connection error.');
+      });
     }
 
     function aiClearHistory() {
@@ -1192,8 +1194,14 @@
         if (res.success && res.files && res.files.length) {
           // Add file to panel
           aiShowFiles2(res.files, res.summary);
-          // Auto-continue to next file without waiting for user
-          aiGenerateFileAt(allFiles, idx + 1);
+          // Auto-continue to next file
+          var nextIdx = idx + 1;
+          if (nextIdx < allFiles.length) {
+            aiGenerateFileAt(allFiles, nextIdx);
+          } else {
+            // All files done — auto save to DB
+            aiSaveToDb();
+          }
         } else {
           aiAddMsg2('assistant', res.message || '❌ Generation failed');
         }
@@ -1201,6 +1209,52 @@
       .catch(function(){
         var el = document.getElementById(loadId); if(el) el.remove();
         aiAddMsg2('assistant','❌ Connection error.');
+      });
+    }
+
+    function aiSaveToDb() {
+      if (!_aiGenFiles.length) { console.warn('[SaveToDb] No files to save'); return; }
+      if (!_projectId) { console.warn('[SaveToDb] No _projectId — PROJECT_INFO not received'); return; }
+      var frameCtx = _aiFrame2 ? {
+        frameName: _aiFrame2.name,
+        frameWidth: _aiFrame2.w,
+        frameHeight: _aiFrame2.h,
+        components: JSON.stringify(_aiFrame2.comps)
+      } : null;
+
+      var savePayload = {
+        projectId: _projectId,
+        generatedBy: _userId,
+        frameName: _aiFrame2 ? _aiFrame2.name : 'Unknown',
+        generatedFiles: _aiGenFiles.map(function(f){ return {fileName:f.name, fileContent:f.content}; })
+      };
+      console.log('[SaveToDb] Sending:', JSON.stringify(savePayload).substring(0,200));
+
+      fetch('/api/project-design/extract-and-save', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json', 'Authorization':'Bearer '+_authToken},
+        body: JSON.stringify(savePayload)
+      })
+      .then(function(r){
+        console.log('[SaveToDb] Status:', r.status);
+        return r.json();
+      })
+      .then(function(res){
+        console.log('[SaveToDb] Response:', JSON.stringify(res));
+        if (res.success || res.id) {
+          var msgMap = {
+            my: '✅ API နဲ့ DB design တွေ project ထဲ သိမ်းပြီးပါပြီ!',
+            ja: '✅ APIとDBデザインをプロジェクトに保存しました！',
+            en: '✅ API & DB design saved to project!'
+          };
+          aiAddMsg2('assistant', msgMap[_userLang] || msgMap.en);
+        } else {
+          console.warn('[SaveToDb] Unexpected response:', res);
+        }
+      })
+      .catch(function(e){
+        console.error('[SaveToDb] Error:', e);
+        aiAddMsg2('assistant', '⚠️ Save failed: ' + e.message);
       });
     }
 

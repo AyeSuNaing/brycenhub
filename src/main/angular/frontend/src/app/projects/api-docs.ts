@@ -12,6 +12,12 @@ interface ApiEndpoint {
   method: string;
   url: string;
   description: string;
+  requestBody?: string;
+  responseBody?: string;
+  pathParams?: string;
+  queryParams?: string;
+  statusCodes?: string;
+  expanded?: boolean;
 }
 
 @Component({
@@ -29,6 +35,7 @@ export class ApiDocsComponent implements OnInit {
   filteredEndpoints: ApiEndpoint[] = [];
   frames: string[] = [];
   selectedFrame = 'all';
+  searchTerm = '';
 
   constructor(
     private route: ActivatedRoute,
@@ -63,7 +70,7 @@ export class ApiDocsComponent implements OnInit {
       { headers: this.auth.getHeaders() }
     ).subscribe({
       next: data => {
-        this.endpoints = data || [];
+        this.endpoints = (data || []).map(e => ({ ...e, expanded: false }));
         this.filteredEndpoints = this.endpoints;
         this.frames = [...new Set(this.endpoints.map(e => e.frameName).filter(Boolean))];
         this.loading = false;
@@ -75,9 +82,31 @@ export class ApiDocsComponent implements OnInit {
 
   filterByFrame(frame: string): void {
     this.selectedFrame = frame;
-    this.filteredEndpoints = frame === 'all'
+    this.applyFilter();
+  }
+
+  onSearch(term: string): void {
+    this.searchTerm = term;
+    this.applyFilter();
+  }
+
+  private applyFilter(): void {
+    let filtered = this.selectedFrame === 'all'
       ? this.endpoints
-      : this.endpoints.filter(e => e.frameName === frame);
+      : this.endpoints.filter(e => e.frameName === this.selectedFrame);
+    if (this.searchTerm) {
+      const t = this.searchTerm.toLowerCase();
+      filtered = filtered.filter(e =>
+        e.url.toLowerCase().includes(t) ||
+        e.method.toLowerCase().includes(t) ||
+        (e.description || '').toLowerCase().includes(t)
+      );
+    }
+    this.filteredEndpoints = filtered;
+  }
+
+  toggleExpand(ep: ApiEndpoint): void {
+    ep.expanded = !ep.expanded;
   }
 
   get visibleFrames(): string[] {
@@ -86,6 +115,34 @@ export class ApiDocsComponent implements OnInit {
 
   getEndpointsByFrame(frame: string): ApiEndpoint[] {
     return this.filteredEndpoints.filter(e => e.frameName === frame);
+  }
+
+  getMethodColor(method: string): string {
+    const m = (method || '').toUpperCase();
+    const colors: Record<string, string> = {
+      GET: '#61affe', POST: '#49cc90', PUT: '#fca130',
+      DELETE: '#f93e3e', PATCH: '#50e3c2'
+    };
+    return colors[m] || '#888';
+  }
+
+  parseJson(str: string | undefined | null): string {
+    if (!str) return '';
+    try {
+      return JSON.stringify(JSON.parse(str), null, 2);
+    } catch { return str; }
+  }
+
+  getStatusList(codes: string | undefined | null): string[] {
+    return ((codes || '200') as string).split(',').map(s => s.trim()).filter(Boolean);
+  }
+
+  getStatusColor(code: string): string {
+    const n = parseInt(code);
+    if (n >= 500) return '#f93e3e';
+    if (n >= 400) return '#fca130';
+    if (n >= 200) return '#49cc90';
+    return '#888';
   }
 
   goBack(): void { history.back(); }
