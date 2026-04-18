@@ -1,26 +1,17 @@
 <div class="erd-shell">
 
-  <!-- ════ TOPBAR (Kanban style) ════ -->
+  <!-- TOPBAR -->
   <header class="erd-topbar">
-    <!-- Left: Logo -->
     <div class="erd-top-left">
-      <div class="erd-logo-wrap">
-        <span class="erd-logo-b">B</span>
-      </div>
+      <div class="erd-logo-wrap"><span class="erd-logo-b">B</span></div>
       <div>
         <div class="erd-logo-text">Brycen Hub</div>
         <div class="erd-logo-slogan">One Group. One Platform. Full Visibility.</div>
       </div>
     </div>
-
-    <!-- Center: Back button -->
     <div class="erd-top-center">
-      <button class="erd-back-btn" (click)="goBack()">
-        ← Back to {{projectName}}
-      </button>
+      <button class="erd-back-btn" (click)="goBack()">← Back to {{projectName}}</button>
     </div>
-
-    <!-- Right: title + zoom controls -->
     <div class="erd-top-right">
       <span>🗄️</span>
       <span class="erd-title-text">Database Schema</span>
@@ -34,20 +25,19 @@
     </div>
   </header>
 
-  <!-- ════ LOADING ════ -->
+  <!-- LOADING -->
   <div *ngIf="loading" class="erd-loading">
-    <div class="erd-spinner"></div>
-    <span>Loading schema...</span>
+    <div class="erd-spinner"></div><span>Loading schema...</span>
   </div>
 
-  <!-- ════ EMPTY ════ -->
+  <!-- EMPTY -->
   <div *ngIf="!loading && tables.length === 0" class="erd-empty">
     <div class="erd-empty-icon">🗄️</div>
     <div class="erd-empty-title">No tables yet</div>
     <div class="erd-empty-sub">Generate code from Design Tool to auto-extract DB tables</div>
   </div>
 
-  <!-- ════ ERD CANVAS ════ -->
+  <!-- ERD CANVAS -->
   <div
     *ngIf="!loading && tables.length > 0"
     class="erd-canvas"
@@ -57,8 +47,7 @@
     (mousemove)="onMouseMove($event)"
     (mouseup)="onMouseUp()">
 
-    <div
-      class="erd-ct"
+    <div class="erd-ct"
       [style.transform]="'translate(' + panX + 'px,' + panY + 'px) scale(' + zoom + ')'">
 
       <!-- SVG FK Lines -->
@@ -68,8 +57,7 @@
             <path d="M0,0 L0,6 L8,3 z" fill="#3b82f6" opacity=".7"/>
           </marker>
         </defs>
-        <line
-          *ngFor="let line of fkLines"
+        <line *ngFor="let line of fkLines"
           [attr.x1]="line.x1" [attr.y1]="line.y1"
           [attr.x2]="line.x2" [attr.y2]="line.y2"
           stroke="#3b82f6" stroke-width="1.5"
@@ -78,8 +66,7 @@
       </svg>
 
       <!-- Table Cards -->
-      <div
-        *ngFor="let node of tableNodes"
+      <div *ngFor="let node of tableNodes"
         class="erd-card"
         [style.left.px]="node.x"
         [style.top.px]="node.y"
@@ -92,14 +79,13 @@
         </div>
 
         <div class="erd-card-body">
-          <div
-            *ngFor="let col of node.columns"
+          <div *ngFor="let col of node.columns"
             class="erd-col-row"
-            [class.erd-col-pk]="isIdCol(col.name)"
-            [class.erd-col-fk]="isFkCol(col.name)">
+            [class.erd-col-pk]="isIdCol(col)"
+            [class.erd-col-fk]="isFkCol(col)">
             <span class="erd-col-icon">
-              <ng-container *ngIf="isIdCol(col.name)">🔑</ng-container>
-              <ng-container *ngIf="isFkCol(col.name)">🔗</ng-container>
+              <ng-container *ngIf="isIdCol(col)">🔑</ng-container>
+              <ng-container *ngIf="isFkCol(col)">🔗</ng-container>
             </span>
             <span class="erd-col-name">{{col.name}}</span>
             <span class="erd-col-type">{{col.type}}</span>

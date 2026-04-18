@@ -20,6 +20,8 @@ export interface DbTable {
 export interface ParsedColumn {
   name: string;
   type: string;
+  isPk: boolean;
+  isFk: boolean;
 }
 
 export interface TableNode {
@@ -112,17 +114,16 @@ export class DbSchemaComponent implements OnInit, AfterViewInit {
   }
 
   private buildNodes(): void {
-    const CARD_W   = 210;
-    const COL_H    = 32;
-    const HEADER_H = 44;
-    const FOOTER_H = 28;
+    const CARD_W   = 230;
+    const COL_H    = 28;
+    const HEADER_H = 48;
     const GAP_X    = 80;
     const GAP_Y    = 60;
     const COLS     = 3;
 
     this.tableNodes = this.tables.map((table, i) => {
       const cols = this.parseColumns(table.columns);
-      const h = HEADER_H + FOOTER_H + Math.max(cols.length, 1) * COL_H + 16;
+      const h = HEADER_H + Math.max(cols.length, 1) * COL_H + 20;
       const col = i % COLS;
       const row = Math.floor(i / COLS);
       return {
@@ -136,33 +137,62 @@ export class DbSchemaComponent implements OnInit, AfterViewInit {
     });
   }
 
-  parseColumns(columnsJson: string): ParsedColumn[] {
-    if (!columnsJson) return [];
+  // ── Parse columns — supports both JSON array and plain text ──────
+  parseColumns(columnsStr: string): ParsedColumn[] {
+    if (!columnsStr) return [];
+
+    // Try JSON array first: [{name, type}, ...]
     try {
-      const parsed = JSON.parse(columnsJson);
+      const parsed = JSON.parse(columnsStr);
       if (Array.isArray(parsed)) {
-        return parsed.map((c: any) => ({
-          name: c.name || c.column_name || '',
-          type: (c.type || c.data_type || '').toLowerCase()
-        }));
+        return parsed.map((c: any) => {
+          const name = c.name || c.column_name || '';
+          const type = (c.type || c.data_type || '').toLowerCase();
+          return {
+            name,
+            type,
+            isPk: name === 'id' || (c.key || '').toUpperCase().includes('PK'),
+            isFk: name.endsWith('_id') && name !== 'id'
+          };
+        });
       }
     } catch {}
-    return [];
+
+    // Plain text: "id INT PK, user_id INT FK, email VARCHAR(255)"
+    return columnsStr.split(',').map(part => {
+      const trimmed = part.trim();
+      if (!trimmed) return null;
+      // Extract name and type from "name TYPE MODIFIER"
+      const tokens = trimmed.split(/\s+/);
+      const name = tokens[0] || '';
+      const type = (tokens[1] || '').toLowerCase()
+        .replace(/\(.*\)/, '') // remove (255) etc
+        .replace(/not/i, '')
+        .trim();
+      const upper = trimmed.toUpperCase();
+      return {
+        name,
+        type: type || 'varchar',
+        isPk: upper.includes('PK') || upper.includes('PRIMARY') || name === 'id',
+        isFk: upper.includes('FK') || upper.includes('FOREIGN') ||
+              (name.endsWith('_id') && name !== 'id')
+      };
+    }).filter((c): c is ParsedColumn => c !== null && c.name.length > 0);
   }
 
   private buildFkLines(): void {
     this.fkLines = [];
     for (const node of this.tableNodes) {
       for (const col of node.columns) {
-        if (col.name.endsWith('_id') && col.name !== 'id') {
+        if (col.isFk) {
           const refTableName = col.name.replace('_id', '');
           const refNode = this.tableNodes.find(n => n.table.tableName === refTableName);
           if (refNode) {
             this.fkLines.push({
               x1: node.x + node.width,
-              y1: node.y + 44,
+              y1: node.y + 48,
               x2: refNode.x,
-              y2: refNode.y + 44
+              y2: refNode.y + 48
             });
           }
         }
@@ -170,8 +200,8 @@ export class DbSchemaComponent implements OnInit, AfterViewInit {
     }
   }
 
-  isIdCol(name: string): boolean { return name === 'id'; }
-  isFkCol(name: string): boolean { return name.endsWith('_id') && name !== 'id'; }
+  isIdCol(col: ParsedColumn): boolean { return col.isPk; }
+  isFkCol(col: ParsedColumn): boolean { return col.isFk; }
 
   onWheel(e: WheelEvent): void {
     e.preventDefault();
