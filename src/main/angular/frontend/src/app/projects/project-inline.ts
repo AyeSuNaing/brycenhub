@@ -6,6 +6,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { RouterModule } from '@angular/router';
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { AuthService } from '../services/auth.service';
 import { environment } from '../../environments/environment';
 import { Router } from '@angular/router';
@@ -20,6 +21,13 @@ import {
   GitCommit, GitCommitsResponse,
   formatRelativeTime
 } from './i18n/setup.i18n';
+
+import {
+  DesignFrame,
+  DesignBoardResponse,
+  parseCanvasData,
+  renderFrameSvg
+} from './design-preview.helper';
 
 const BASE = environment.apiBaseUrl;
 const MAX_FIX_ATTEMPTS = 5;
@@ -132,7 +140,7 @@ export class ProjectInlineComponent implements OnInit, OnChanges {
   } = {};
 
   // ══════════════════════════════════════════════════════════════════
-  // ✨ GIT COMMITS state
+  // GIT COMMITS state
   // ══════════════════════════════════════════════════════════════════
   gitCommits: GitCommit[] = [];
   gitCommitsLoading = false;
@@ -148,6 +156,14 @@ export class ProjectInlineComponent implements OnInit, OnChanges {
   };
   isSavingRepo = false;
   repoSaveError = '';
+
+  // ══════════════════════════════════════════════════════════════════
+  // DESIGN PREVIEW state
+  // ══════════════════════════════════════════════════════════════════
+  designFrames: DesignFrame[] = [];
+  designFramesCount = 0;
+  designFramesLoading = false;
+  designVersion: number | null = null;
 
   boardColumns = [
     { label: 'Backlog', status: 'TODO', color: '#6366f1' },
@@ -171,6 +187,7 @@ export class ProjectInlineComponent implements OnInit, OnChanges {
     public auth: AuthService,
     private cdr: ChangeDetectorRef,
     private router: Router,
+    private sanitizer: DomSanitizer,
   ) { }
 
   ngOnInit() {
@@ -202,6 +219,9 @@ export class ProjectInlineComponent implements OnInit, OnChanges {
     this.gitCommits = [];
     this.gitCommitsError = '';
     this.gitRepoInfo = {};
+    this.designFrames = [];
+    this.designFramesCount = 0;
+    this.designVersion = null;
     this.isLoading = true;
     this.showEdit = false; this.showDangerZone = false;
     this.activeTab = 'overview';
@@ -272,70 +292,38 @@ export class ProjectInlineComponent implements OnInit, OnChanges {
       clients: this.http.get<any[]>(`${BASE}/clients`, h).pipe(catchError(() => of([]))),
       apis: this.http.get<any[]>(`${BASE}/project-design/${id}/apis/latest?limit=5`, h).pipe(catchError(() => of([]))),
       dbTables: this.http.get<any[]>(`${BASE}/project-design/${id}/db-tables/latest?limit=5`, h).pipe(catchError(() => of([]))),
-    }).subscribe(res => {
-      this.project = res.project;
-      this.tasks = res.tasks;
-      this.activities = res.activities;
-      this.clients = res.clients;
-      this.apiEndpoints = res.apis || [];
-      this.dbTables = res.dbTables || [];
-
-      const tasks = res.tasks || [];
-      this.stats = {
-        totalTasks: tasks.length,
-        completed: tasks.filter((t: any) => t.status === 'DONE').length,
-        inProgress: tasks.filter((t: any) => t.status === 'IN_PROGRESS').length,
-        overdue: tasks.filter((t: any) => this.isTaskOverdue(t)).length,
-        teamSize: (res.members || []).length,
-      };
-
-      const mList: any[] = res.members || [];
-      const pmId: any = res.project?.pmId;
-      if (pmId && !mList.some((m: any) => m.userId === pmId)) {
-        const pmName: string = res.project?.pmName || 'PM';
-        mList.unshift({
-          userId: pmId,
-          userName: pmName,
-          name: pmName,
-          roleInProject: 'PROJECT_MANAGER',
-          displayName: 'Project Manager',
-          initial: pmName.charAt(0).toUpperCase(),
-          color: '#16a34a',
-          online: false,
-          status: 'ACTIVE',
-          tasks: 0,
-        });
-      }
-      this.members = mList;
-
-      this.isLoading = false;
-      this.cdr.detectChanges();
-      this.loadTechStackAndRules(id);
-      this.loadRemovedMembers(id);
-      this.loadSetupGuide(id);
-      this.loadGitCommits(id);
-
-      if (this.pendingLang && this.pendingLang !== 'en') {
-        this.switchLang(this.pendingLang);
-        this.pendingLang = '';
-      }
-      const savedLang = this.auth.getUser()?.preferredLanguage || 'en';
-      if (savedLang !== 'en' && this.tasks.length > 0) this.translateTasks(savedLang);
+    }).subscribe({
+      next: (res: any) => {
+        this.project = res.project; this.members = res.members || [];
+        this.tasks = res.tasks || []; this.activities = res.activities || [];
+        this.clients = res.clients || [];
+        this.apiEndpoints = res.apis || [];
+        this.dbTables = res.dbTables || [];
+        this.isLoading = false;
+        this.cdr.detectChanges();
+        if (this.pendingLang && this.project) {
+          this.switchLang(this.pendingLang);
+          this.pendingLang = '';
+        }
+      },
+      error: () => { this.isLoading = false; this.cdr.detectChanges(); }
     });
+
+    this.loadTechStackAndRules(id);
+    this.loadRemovedMembers(id);
+    this.loadSetupGuide(id);
+    this.loadGitCommits(id);
+    this.loadDesignPreview(id);
   }
 
   async translateTasks(lang: string) {
     const h = { headers: this.auth.getHeaders() };
-    for (const task of this.tasks) {
+    for (const t of this.tasks) {
       try {
-        const res: any = await this.http.get(
-          `${BASE}/translations/task/${task.id}?lang=${lang}`, h
-        ).toPromise();
-        task.translatedTitle = res.title || '';
-        task.translatedDesc = res.description || '';
+        const res: any = await this.http.get(`${BASE}/translations/task/${t.id}?lang=${lang}`, h).toPromise();
+        t.translatedTitle = res.title || ''; t.translatedDesc = res.description || '';
       } catch {
-        task.translatedTitle = '';
-        task.translatedDesc = '';
+        t.translatedTitle = ''; t.translatedDesc = '';
       }
     }
     this.cdr.detectChanges();
@@ -411,7 +399,8 @@ export class ProjectInlineComponent implements OnInit, OnChanges {
   private parseSetupContent(raw: any): any {
     if (!raw) return null;
     try {
-      const parsed = typeof raw.content === 'string' ? JSON.parse(raw.content) : raw.content;
+      const parsed = typeof raw.content === 'string' ?
+        JSON.parse(raw.content) : raw.content;
       return { ...raw, parsed: parsed || { summary: '', steps: [] } };
     } catch {
       return { ...raw, parsed: { summary: '', steps: [] } };
@@ -464,7 +453,7 @@ export class ProjectInlineComponent implements OnInit, OnChanges {
   }
 
   // ══════════════════════════════════════════════════════════════════
-  // ✨ GIT COMMITS — Load from GitHub API
+  // GIT COMMITS
   // ══════════════════════════════════════════════════════════════════
 
   loadGitCommits(projectId: number) {
@@ -495,7 +484,7 @@ export class ProjectInlineComponent implements OnInit, OnChanges {
         this.gitCommitsLoading = false;
         this.cdr.detectChanges();
       },
-      error: err => {
+      error: () => {
         this.gitCommitsError = this.setupLabel('gitErrorFetchFailed');
         this.gitCommitsErrorCode = 'NETWORK_ERROR';
         this.gitCommitsLoading = false;
@@ -506,12 +495,12 @@ export class ProjectInlineComponent implements OnInit, OnChanges {
 
   private mapCommitsErrorMessage(code: string, fallback?: string): string {
     switch (code) {
-      case 'REPO_NOT_CONFIGURED':    return '';  // Show "link repo" UI instead
-      case 'INVALID_REPO_URL':       return this.setupLabel('gitErrorRepoNotFound');
-      case 'REPO_NOT_FOUND':         return this.setupLabel('gitErrorRepoNotFound');
-      case 'RATE_LIMITED_OR_PRIVATE':return this.setupLabel('gitErrorRateLimited');
-      case 'INVALID_TOKEN':          return this.setupLabel('gitErrorInvalidToken');
-      default:                        return fallback || this.setupLabel('gitErrorFetchFailed');
+      case 'NO_REPO':          return this.setupLabel('gitEmptyNoRepo');
+      case 'REPO_NOT_FOUND':   return this.setupLabel('gitErrorRepoNotFound');
+      case 'UNAUTHORIZED':     return this.setupLabel('gitErrorInvalidToken');
+      case 'RATE_LIMITED':     return this.setupLabel('gitErrorRateLimited');
+      case 'NETWORK_ERROR':    return this.setupLabel('gitErrorFetchFailed');
+      default:                 return fallback || this.setupLabel('gitErrorFetchFailed');
     }
   }
 
@@ -521,11 +510,11 @@ export class ProjectInlineComponent implements OnInit, OnChanges {
 
   openRepoEditor() {
     this.repoForm = {
-      repoUrl:     this.project?.repoUrl || '',
+      repoUrl: this.project?.repoUrl || '',
       githubToken: '',
     };
-    this.showRepoEdit = true;
     this.repoSaveError = '';
+    this.showRepoEdit = true;
     this.cdr.detectChanges();
   }
 
@@ -538,51 +527,79 @@ export class ProjectInlineComponent implements OnInit, OnChanges {
   saveRepoSettings() {
     if (!this.repoForm.repoUrl.trim()) {
       this.repoSaveError = 'Repository URL is required';
-      this.cdr.detectChanges();
       return;
     }
-
     this.isSavingRepo = true;
     this.repoSaveError = '';
-    this.cdr.detectChanges();
-
     const h = { headers: this.auth.getHeaders() };
-    const body = {
-      repoUrl:     this.repoForm.repoUrl.trim(),
-      githubToken: this.repoForm.githubToken.trim(),
+    const payload: any = {
+      repoUrl: this.repoForm.repoUrl.trim(),
     };
-
-    this.http.put<any>(
-      `${BASE}/project-commits/${this.projectId}/repo`, body, h
-    ).subscribe({
-      next: result => {
-        if (this.project) {
-          this.project.repoUrl = result.repoUrl;
-        }
-        this.showRepoEdit = false;
+    if (this.repoForm.githubToken.trim()) {
+      payload.githubToken = this.repoForm.githubToken.trim();
+    }
+    this.http.put<any>(`${BASE}/projects/${this.projectId}`, payload, h).subscribe({
+      next: (updated) => {
+        this.project = { ...this.project, ...updated };
         this.isSavingRepo = false;
+        this.showRepoEdit = false;
         this.cdr.detectChanges();
         this.loadGitCommits(this.projectId);
       },
-      error: err => {
-        this.repoSaveError = err?.error?.error || 'Failed to save repository settings';
+      error: () => {
+        this.repoSaveError = 'Failed to save. Please try again.';
         this.isSavingRepo = false;
         this.cdr.detectChanges();
       }
     });
   }
 
-  openRepoInNewTab() {
-    const url = this.project?.repoUrl;
-    if (url) window.open(url, '_blank', 'noopener,noreferrer');
+  openCommitInNewTab(commit: GitCommit) {
+    if (commit.htmlUrl) window.open(commit.htmlUrl, '_blank');
   }
 
-  openCommitInNewTab(commit: GitCommit) {
-    if (commit.htmlUrl) window.open(commit.htmlUrl, '_blank', 'noopener,noreferrer');
+  openRepoInNewTab() {
+    if (this.gitRepoInfo.repoUrl) window.open(this.gitRepoInfo.repoUrl, '_blank');
   }
 
   hasRepoConfigured(): boolean {
     return !!(this.project?.repoUrl && this.project.repoUrl.trim());
+  }
+
+  // ══════════════════════════════════════════════════════════════════
+  // DESIGN PREVIEW
+  // ══════════════════════════════════════════════════════════════════
+
+  loadDesignPreview(projectId: number) {
+    this.designFramesLoading = true;
+    this.designFrames = [];
+    this.cdr.detectChanges();
+
+    const h = { headers: this.auth.getHeaders() };
+    this.http.get<DesignBoardResponse>(
+      `${BASE}/designs/by-project/${projectId}`, h
+    ).subscribe({
+      next: data => {
+        const frames = parseCanvasData(data?.canvasData);
+        this.designFrames = frames;
+        this.designFramesCount = frames.length;
+        this.designVersion = data?.version || null;
+        this.designFramesLoading = false;
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.designFrames = [];
+        this.designFramesCount = 0;
+        this.designVersion = null;
+        this.designFramesLoading = false;
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  getFrameSvg(frame: DesignFrame): SafeHtml {
+    const svg = renderFrameSvg(frame, 240, 150);
+    return this.sanitizer.bypassSecurityTrustHtml(svg);
   }
 
   // ══════════════════════════════════════════════════════════════════
@@ -623,104 +640,67 @@ export class ProjectInlineComponent implements OnInit, OnChanges {
   fixErrorWithAI(step: any, stepIndex: number) {
     const state = this.getErrorFix(stepIndex);
     const errorOutput = state.errorInput.trim();
-
     if (!errorOutput) {
       state.error = 'Please paste the error output first';
       this.cdr.detectChanges();
       return;
     }
-
     this.submitFixRequest(step, stepIndex, errorOutput);
   }
 
   retryWithNewError(step: any, stepIndex: number) {
     const state = this.getErrorFix(stepIndex);
     const newError = state.newErrorInput.trim();
-
     if (!newError) {
-      state.error = 'Please paste the new error output';
+      state.error = 'Please paste the new error output first';
       this.cdr.detectChanges();
       return;
     }
-
-    if (this.hasReachedMaxAttempts(stepIndex)) {
-      state.error = this.setupLabel('fixMaxAttemptsReached');
-      this.cdr.detectChanges();
-      return;
-    }
-
-    if (state.result) {
-      const attempt: FixAttempt = {
-        suggestedSolution: state.result.solution,
-        triedCommands:     state.result.commands.join('\n'),
-        newError:          newError,
-        timestamp:         Date.now(),
-      };
-      state.attempts.push(attempt);
-    }
-
-    state.showNewErrorInput = false;
-    state.newErrorInput = '';
-
     this.submitFixRequest(step, stepIndex, newError);
   }
 
   private submitFixRequest(step: any, stepIndex: number, errorOutput: string) {
     const state = this.getErrorFix(stepIndex);
-
     state.loading = true;
     state.error = '';
-    state.result = null;
     this.cdr.detectChanges();
 
-    const commandsContext = (step.commands || [])
-      .filter((c: string) => !this.isComment(c))
-      .join('\n');
-
     const h = { headers: this.auth.getHeaders() };
-    const url = `${BASE}/project-setup/${this.projectId}/fix-error?os=${this.selectedOS}`;
+    const url = `${BASE}/project-setup/${this.projectId}/fix-error`;
     const body = {
-      stepTitle:        step.title || '',
-      command:          commandsContext,
-      errorOutput:      errorOutput,
-      previousAttempts: state.attempts.map(a => ({
-        suggestedSolution: a.suggestedSolution,
-        triedCommands:     a.triedCommands,
-        newError:          a.newError,
-      })),
+      stepIndex,
+      stepTitle:  step.title,
+      commands:   step.commands,
+      errorOutput,
+      previousAttempts: state.attempts,
     };
 
     this.http.post<SetupErrorFix>(url, body, h).subscribe({
       next: result => {
         state.result = result;
         state.loading = false;
+        state.showNewErrorInput = false;
+        state.newErrorInput = '';
         this.cdr.detectChanges();
       },
       error: err => {
-        state.error = err?.error?.error || this.setupLabel('fixErrorFailed');
+        state.error = err?.error?.error || 'Failed to analyze error.';
         state.loading = false;
         this.cdr.detectChanges();
       }
     });
   }
 
-  copyFixCommands(stepIndex: number) {
-    const state = this.getErrorFix(stepIndex);
-    if (!state.result?.commands?.length) return;
-    const text = state.result.commands.join('\n');
-    if (!navigator.clipboard) return;
-    navigator.clipboard.writeText(text).then(() => {
-      state.copiedCommand = true;
-      this.cdr.detectChanges();
-      setTimeout(() => {
-        state.copiedCommand = false;
-        this.cdr.detectChanges();
-      }, 1500);
-    });
-  }
-
   markAsDidNotWork(stepIndex: number) {
     const state = this.getErrorFix(stepIndex);
+    if (!state.result) return;
+    state.attempts.push({
+      suggestedSolution: state.result.solution,
+      triedCommands:     (state.result.commands || []).join('\n'),
+      newError:          state.errorInput || state.newErrorInput,
+      timestamp:         Date.now(),
+    });
+    state.result = null;
     state.showNewErrorInput = true;
     state.newErrorInput = '';
     state.error = '';
@@ -738,15 +718,31 @@ export class ProjectInlineComponent implements OnInit, OnChanges {
     const state = this.getErrorFix(stepIndex);
     state.expanded = false;
     state.result = null;
-    state.errorInput = '';
     state.error = '';
-    state.attempts = [];
-    state.showNewErrorInput = false;
+    state.errorInput = '';
     state.newErrorInput = '';
+    state.showNewErrorInput = false;
     this.cdr.detectChanges();
   }
 
-  // ══ Rest of the component (unchanged) ═══════════════════════════
+  copyFixCommands(stepIndex: number) {
+    const state = this.getErrorFix(stepIndex);
+    if (!state.result?.commands?.length) return;
+    const text = state.result.commands.join('\n');
+    if (!navigator.clipboard) return;
+    navigator.clipboard.writeText(text).then(() => {
+      state.copiedCommand = true;
+      this.cdr.detectChanges();
+      setTimeout(() => {
+        state.copiedCommand = false;
+        this.cdr.detectChanges();
+      }, 1500);
+    });
+  }
+
+  // ══════════════════════════════════════════════════════════════════
+  // EDIT
+  // ══════════════════════════════════════════════════════════════════
 
   initEditForm() {
     if (!this.project) return;
@@ -760,10 +756,6 @@ export class ProjectInlineComponent implements OnInit, OnChanges {
       priority: this.project.priority || 'MEDIUM',
     };
     this.editError = ''; this.showDangerZone = false; this.deleteConfirmName = '';
-    setTimeout(() => {
-      const ta = document.querySelector('[\\#descTA]') as HTMLTextAreaElement;
-      if (ta) { ta.style.height = 'auto'; ta.style.height = ta.scrollHeight + 'px'; }
-    }, 50);
   }
 
   saveEdit() {
@@ -784,7 +776,11 @@ export class ProjectInlineComponent implements OnInit, OnChanges {
         this.isSaving = false; this.showEdit = false;
         this.cdr.detectChanges();
       },
-      error: () => { this.editError = 'Failed to save.'; this.isSaving = false; this.cdr.detectChanges(); }
+      error: () => {
+        this.editError = 'Failed to save.';
+        this.isSaving = false;
+        this.cdr.detectChanges();
+      }
     });
   }
 
@@ -807,6 +803,10 @@ export class ProjectInlineComponent implements OnInit, OnChanges {
       error: () => { this.isDeleting = false; this.cdr.detectChanges(); }
     });
   }
+
+  // ══════════════════════════════════════════════════════════════════
+  // ROLE / PERMISSIONS
+  // ══════════════════════════════════════════════════════════════════
 
   getRole(): string { return this.auth.getUser()?.role || this.auth.getUser()?.roleName || ''; }
 
@@ -835,6 +835,10 @@ export class ProjectInlineComponent implements OnInit, OnChanges {
     const r = this.getRole();
     return ['BOSS', 'VICE_PRESIDENT', 'COUNTRY_DIRECTOR', 'PROJECT_MANAGER'].includes(r);
   }
+
+  // ══════════════════════════════════════════════════════════════════
+  // STATS / GETTERS
+  // ══════════════════════════════════════════════════════════════════
 
   get statsCards() {
     return [
@@ -974,6 +978,10 @@ export class ProjectInlineComponent implements OnInit, OnChanges {
     });
   }
 
+  // ══════════════════════════════════════════════════════════════════
+  // CHAT
+  // ══════════════════════════════════════════════════════════════════
+
   openMemberChat(m: any) {
     this.selectedChatMember = {
       id: m.userId || m.id,
@@ -999,6 +1007,10 @@ export class ProjectInlineComponent implements OnInit, OnChanges {
 
   closeChatPopup() { this.selectedChatMember = null; this.isGroupChat = false; }
 
+  // ══════════════════════════════════════════════════════════════════
+  // TECH STACK
+  // ══════════════════════════════════════════════════════════════════
+
   addTechStack() {
     const name = this.newTechName.trim();
     if (!name) return;
@@ -1019,6 +1031,10 @@ export class ProjectInlineComponent implements OnInit, OnChanges {
       error: () => { }
     });
   }
+
+  // ══════════════════════════════════════════════════════════════════
+  // MEMBERS
+  // ══════════════════════════════════════════════════════════════════
 
   loadStaffList() {
     if (this.staffList.length > 0) { this.filterStaff(); return; }
@@ -1044,9 +1060,9 @@ export class ProjectInlineComponent implements OnInit, OnChanges {
     const q = this.memberSearchQuery.trim().toLowerCase();
     this.filteredStaff = q
       ? this.staffList.filter(s => {
-        const role = s.roleDto?.name || s.roleName || s.role || '';
-        return (s.name || '').toLowerCase().includes(q) || role.toLowerCase().includes(q);
-      })
+          const role = s.roleDto?.name || s.roleName || s.role || '';
+          return (s.name || '').toLowerCase().includes(q) || role.toLowerCase().includes(q);
+        })
       : this.staffList;
     this.cdr.detectChanges();
   }
@@ -1123,6 +1139,10 @@ export class ProjectInlineComponent implements OnInit, OnChanges {
     });
   }
 
+  // ══════════════════════════════════════════════════════════════════
+  // RULES
+  // ══════════════════════════════════════════════════════════════════
+
   startEditRule(rule: any) {
     this.editingRuleId = Number(rule.id);
     this.ruleEditForm = { title: rule.title || '', content: rule.content || '', category: rule.category || 'GENERAL' };
@@ -1173,6 +1193,10 @@ export class ProjectInlineComponent implements OnInit, OnChanges {
       error: () => { }
     });
   }
+
+  // ══════════════════════════════════════════════════════════════════
+  // SORT / VISIBILITY HELPERS
+  // ══════════════════════════════════════════════════════════════════
 
   getRoleOrder(roleInProject: string): number {
     const order: Record<string, number> = {

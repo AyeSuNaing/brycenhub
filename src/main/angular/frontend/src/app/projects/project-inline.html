@@ -1,4 +1,3 @@
-<!-- ════════ LOADING ANIMATION ════════ -->
 <div *ngIf="isLoading" style="display:flex;align-items:center;justify-content:center;
     height:100%;width:100%;position:absolute;top:0;left:0;z-index:10;">
   <div style="display:flex;flex-direction:column;align-items:center;gap:16px;opacity:0.6;">
@@ -45,7 +44,6 @@
       </div>
     </div>
 
-    <!-- ══ TABS (7 tabs: Overview, Info, Tech Stack, Members, Rules, Setup, Git) ══ -->
     <div style="display:flex;gap:0;border-bottom:1px solid var(--color-border,#1e2d4a);flex-shrink:0;margin-bottom:14px;overflow-x:auto;">
       <ng-container *ngFor="let tab of [
             {id:'overview',    label:'📊 Overview',    show: true},
@@ -66,11 +64,9 @@
       </ng-container>
     </div>
 
-    <!-- ══════ TAB: OVERVIEW ══════ -->
     <ng-container *ngIf="activeTab === 'overview'">
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
 
-        <!-- Board Preview -->
         <div class="card">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
             <div class="card-title" style="margin-bottom:0;">⊞ Board Preview</div>
@@ -99,44 +95,69 @@
           </div>
         </div>
 
-        <!-- UI/UX Design Preview -->
         <div class="card">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
             <div class="card-title" style="margin-bottom:0;">🎨 UI/UX Design Preview</div>
-            <div style="display:flex;gap:6px;">
-              <span style="font-size:9px;padding:2px 7px;border-radius:5px;background:#1e78c822;color:#60a5fa;font-weight:700;border:1px solid #3b82f633;">Figma</span>
-              <button (click)="openDesign()" style="font-size:10px;cursor:pointer;background:#3b82f622;border:none;color:#60a5fa;padding:4px 10px;border-radius:7px;font-weight:600;">Open Design →</button>
+            <div style="display:flex;gap:6px;align-items:center;">
+              <span *ngIf="designFramesCount > 0"
+                style="font-size:12px;padding:3px 10px;border-radius:6px;background:rgba(236,72,153,0.12);color:#f472b6;font-weight:700;border:1px solid rgba(244,114,182,0.3);">
+                {{ designFramesCount }} frame{{ designFramesCount === 1 ? '' : 's' }}
+              </span>
+              <span *ngIf="designVersion"
+                style="font-size:9px;padding:2px 7px;border-radius:5px;background:#1e78c822;color:#60a5fa;font-weight:700;border:1px solid #3b82f633;">
+                v{{ designVersion }}
+              </span>
+              <button (click)="openDesign()"
+                style="font-size:10px;cursor:pointer;background:#3b82f622;border:none;color:#60a5fa;padding:4px 10px;border-radius:7px;font-weight:600;">
+                Open Design →
+              </button>
             </div>
           </div>
-          <div style="height:110px;border-radius:8px;border:1px dashed rgba(30,45,74,0.5);display:flex;align-items:center;justify-content:center;margin-bottom:10px;background:rgba(15,22,40,0.5);">
-            <div style="width:88%;display:flex;flex-direction:column;gap:5px;">
-              <div style="display:flex;gap:5px;align-items:center;">
-                <div style="width:10px;height:10px;border-radius:50%;background:#ef4444;opacity:0.7;"></div>
-                <div style="width:10px;height:10px;border-radius:50%;background:#f59e0b;opacity:0.7;"></div>
-                <div style="width:10px;height:10px;border-radius:50%;background:#22c55e;opacity:0.7;"></div>
-                <div style="flex:1;height:7px;border-radius:3px;background:#1e2d4a;"></div>
+
+          <div *ngIf="designFramesLoading"
+            style="height:140px;display:flex;align-items:center;justify-content:center;gap:8px;opacity:0.5;">
+            <div style="width:12px;height:12px;border:2px solid #60a5fa;border-top-color:transparent;border-radius:50%;animation:spin 0.8s linear infinite;"></div>
+            <span style="font-size:10px;color:#60a5fa;font-weight:600;">Loading frames...</span>
+          </div>
+
+          <div *ngIf="!designFramesLoading && designFrames.length === 0"
+            style="height:140px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;border-radius:8px;border:1px dashed rgba(30,45,74,0.5);background:rgba(15,22,40,0.5);">
+            <div style="font-size:28px;opacity:0.3;">🎨</div>
+            <div style="font-size:10px;opacity:0.4;">No design frames yet</div>
+            <button (click)="openDesign()"
+              style="font-size:9px;padding:4px 10px;border-radius:6px;border:1px solid #3b82f644;background:#3b82f615;color:#60a5fa;font-weight:600;cursor:pointer;">
+              Create design →
+            </button>
+          </div>
+
+          <div *ngIf="!designFramesLoading && designFrames.length > 0"
+            style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:6px;">
+            <div *ngFor="let frame of designFrames.slice(0, 3)"
+              (click)="openDesign()"
+              style="border-radius:8px;border:1px solid rgba(30,45,74,0.5);overflow:hidden;cursor:pointer;background:white;transition:all 0.15s;"
+              onmouseenter="this.style.borderColor='#3b82f666'"
+              onmouseleave="this.style.borderColor='rgba(30,45,74,0.5)'">
+              <div style="aspect-ratio:16/10;background:#f9fafb;display:flex;align-items:center;justify-content:center;overflow:hidden;"
+                [innerHTML]="getFrameSvg(frame)">
               </div>
-              <div style="display:flex;gap:5px;">
-                <div style="flex:2;height:35px;border-radius:4px;background:#1e2d4a;"></div>
-                <div style="flex:3;height:35px;border-radius:4px;background:rgba(30,45,74,0.4);"></div>
-                <div style="flex:2;height:35px;border-radius:4px;background:rgba(34,197,94,0.15);"></div>
+              <div style="padding:4px 6px;border-top:1px solid rgba(30,45,74,0.3);display:flex;align-items:center;justify-content:space-between;background:#0d1424;">
+                <div style="font-size:9px;font-weight:600;color:#e2e8f0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                  {{ frame.name }}
+                </div>
+                <div style="font-size:8px;color:#64748b;font-family:'DM Mono',monospace;flex-shrink:0;margin-left:4px;">
+                  {{ frame.w }}×{{ frame.h }}
+                </div>
               </div>
-              <div style="height:7px;border-radius:3px;background:rgba(30,45,74,0.6);width:55%;"></div>
             </div>
           </div>
-          <div style="font-size:9px;opacity:0.4;margin-bottom:6px;letter-spacing:0.5px;">VERSION HISTORY</div>
-          <div style="display:flex;gap:5px;">
-            <div *ngFor="let v of ['v2.4.1','v2.3.8','v2.2.5','v2.1.0']; let i=index"
-              style="flex:1;padding:5px 8px;border-radius:7px;border:1px solid;text-align:center;cursor:pointer;"
-              [style.borderColor]="i===0 ? '#22c55e' : '#1e2d4a'" [style.background]="i===0 ? 'rgba(22,163,74,0.1)' : 'transparent'">
-              <div style="font-size:10px;font-weight:700;" [style.color]="i===0 ? '#22c55e' : ''">{{ v }}</div>
-              <div style="font-size:8px;opacity:0.4;">{{ i===0 ? 'Current' : i + 'w ago' }}</div>
-            </div>
+
+          <div *ngIf="!designFramesLoading && designFramesCount > 3"
+            style="text-align:center;padding:8px 0 0;font-size:10px;opacity:0.5;">
+            <span style="color:#60a5fa;font-weight:700;">+{{ designFramesCount - 3 }}</span> more frame{{ designFramesCount - 3 === 1 ? '' : 's' }} · <span style="opacity:0.7;cursor:pointer;text-decoration:underline;" (click)="openDesign()">View all</span>
           </div>
         </div>
       </div>
 
-      <!-- ⚡ API Documentation (RESTORED) -->
       <div class="card">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
           <div class="card-title" style="margin-bottom:0;">⚡ API Documentation</div>
@@ -159,7 +180,6 @@
         </div>
       </div>
 
-      <!-- 🗄️ Database Design (RESTORED) -->
       <div class="card">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
           <div class="card-title" style="margin-bottom:0;">🗄️ Database Design</div>
@@ -181,7 +201,6 @@
         </div>
       </div>
 
-      <!-- Activity Log -->
       <div class="card">
         <div class="card-title">🕐 Activity Log</div>
         <div *ngIf="!activities.length" style="text-align:center;padding:20px;font-size:11px;opacity:0.35;">No activity yet</div>
@@ -198,20 +217,19 @@
       </div>
     </ng-container>
 
-    <!-- ══════ TAB: INFORMATION ══════ -->
     <ng-container *ngIf="activeTab === 'information'">
       <div class="card" style="animation:fadeIn 0.3s ease;">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
           <div class="card-title" style="margin-bottom:0;">📋 Project Information</div>
           <div style="display:flex;align-items:center;gap:8px;">
-            <span style="font-size:10px;padding:3px 10px;border-radius:20px;font-weight:700;letter-spacing:0.3px;"
+            <span style="font-size:10px;padding:3px 10px;border-radius:20px;font-weight:700;"
               [style.background]="getStatusBg(project.status)" [style.color]="getStatusColor2(project.status)"
               [style.border]="'1px solid ' + getStatusColor2(project.status) + '44'">
               ● {{ project.status }}
             </span>
             <button *ngIf="canEdit() && tasks.length === 0"
               (click)="showEdit = !showEdit; showEdit && initEditForm()"
-              style="display:flex;align-items:center;gap:5px;padding:5px 14px;border-radius:8px;border:1px solid;font-size:11px;font-weight:600;cursor:pointer;transition:all 0.15s;"
+              style="padding:5px 14px;border-radius:8px;border:1px solid;font-size:11px;font-weight:600;cursor:pointer;"
               [style.borderColor]="showEdit ? '#22c55e' : 'var(--color-border,#1e2d4a)'"
               [style.background]="showEdit ? '#22c55e22' : 'transparent'"
               [style.color]="showEdit ? '#22c55e' : '#64748b'">
@@ -228,7 +246,7 @@
           <div>
             <div style="font-size:9px;opacity:0.4;margin-bottom:4px;letter-spacing:0.5px;font-weight:600;">PM</div>
             <div style="font-size:12px;font-weight:700;color:#22c55e;display:flex;align-items:center;gap:5px;">
-              <span style="width:20px;height:20px;border-radius:50%;background:linear-gradient(135deg,#14532d,#16a34a);display:inline-flex;align-items:center;justify-content:center;font-size:9px;color:white;font-weight:700;flex-shrink:0;">{{ getPmInitial() }}</span>
+              <span style="width:20px;height:20px;border-radius:50%;background:linear-gradient(135deg,#14532d,#16a34a);display:inline-flex;align-items:center;justify-content:center;font-size:9px;color:white;font-weight:700;">{{ getPmInitial() }}</span>
               {{ getPmName() }}
             </div>
           </div>
@@ -240,7 +258,6 @@
             <div style="font-size:9px;opacity:0.4;margin-bottom:4px;letter-spacing:0.5px;font-weight:600;">DEADLINE</div>
             <div style="font-size:12px;font-weight:600;" [style.color]="isOverdue() ? '#ef4444' : ''">
               {{ project.endDate | date:'yyyy-MM-dd' }}
-              <span *ngIf="isOverdue()" style="font-size:9px;color:#ef4444;margin-left:4px;">⚠</span>
             </div>
           </div>
           <div>
@@ -258,95 +275,61 @@
           </div>
           <div *ngIf="project.clientId">
             <div style="font-size:9px;opacity:0.4;margin-bottom:4px;letter-spacing:0.5px;font-weight:600;">CLIENT</div>
-            <div style="font-size:12px;font-weight:600;color:#60a5fa;display:flex;align-items:center;gap:5px;">
-              <span style="font-size:12px;">🏢</span>{{ getClientName() }}
-            </div>
+            <div style="font-size:12px;font-weight:600;color:#60a5fa;">🏢 {{ getClientName() }}</div>
           </div>
           <div>
             <div style="font-size:9px;opacity:0.4;margin-bottom:4px;letter-spacing:0.5px;font-weight:600;">PROGRESS</div>
             <div style="display:flex;align-items:center;gap:8px;">
               <div style="flex:1;height:6px;background:#1e2d4a;border-radius:3px;overflow:hidden;">
-                <div [style.width]="(project.progress || 0) + '%'" style="height:100%;background:linear-gradient(90deg,#14532d,#22c55e);border-radius:3px;transition:width 0.4s;"></div>
+                <div [style.width]="(project.progress || 0) + '%'" style="height:100%;background:linear-gradient(90deg,#14532d,#22c55e);border-radius:3px;"></div>
               </div>
-              <span style="font-size:11px;font-weight:700;color:#22c55e;flex-shrink:0;">{{ project.progress || 0 }}%</span>
+              <span style="font-size:11px;font-weight:700;color:#22c55e;">{{ project.progress || 0 }}%</span>
             </div>
           </div>
         </div>
 
-        <div *ngIf="project.description" style="margin-top:4px;border-top:1px solid rgba(255,255,255,0.05);padding-top:14px;">
+        <div *ngIf="project.description" style="border-top:1px solid rgba(255,255,255,0.05);padding-top:14px;">
           <div style="font-size:9px;opacity:0.4;margin-bottom:8px;letter-spacing:0.5px;font-weight:600;">📝 DESCRIPTION</div>
-          <div style="font-size:12px;line-height:1.8;opacity:0.75;white-space:pre-wrap;word-break:break-word;">
-            {{ translatedDesc || project.description }}
-          </div>
+          <div style="font-size:12px;line-height:1.8;opacity:0.75;white-space:pre-wrap;">{{ translatedDesc || project.description }}</div>
         </div>
       </div>
 
-      <div *ngIf="showEdit && tasks.length === 0" style="border-radius:12px;border:1px solid #22c55e44;background:linear-gradient(135deg,#14532d08,#0d1424);padding:16px;animation:fadeIn 0.2s ease;">
+      <div *ngIf="showEdit && tasks.length === 0" style="border-radius:12px;border:1px solid #22c55e44;background:linear-gradient(135deg,#14532d08,#0d1424);padding:16px;">
         <div style="font-size:11px;font-weight:700;color:#22c55e;letter-spacing:0.5px;margin-bottom:14px;">✏️ EDIT PROJECT</div>
         <div style="display:flex;flex-direction:column;gap:12px;">
           <div>
-            <label style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:#64748b;display:block;margin-bottom:4px;">PROJECT TITLE *</label>
+            <label style="font-size:9px;font-weight:700;text-transform:uppercase;color:#64748b;display:block;margin-bottom:4px;">PROJECT TITLE *</label>
             <input [(ngModel)]="editForm.title" placeholder="Project title"
-              style="width:100%;border-radius:9px;border:1px solid var(--color-border,#1e2d4a);padding:9px 12px;font-size:12px;outline:none;background:var(--input-bg,#0d1424);color:var(--input-text,#e2e8f0);box-sizing:border-box;font-family:inherit;">
+              style="width:100%;border-radius:9px;border:1px solid var(--color-border,#1e2d4a);padding:9px 12px;font-size:12px;outline:none;background:var(--input-bg,#0d1424);color:var(--input-text,#e2e8f0);box-sizing:border-box;">
           </div>
           <div>
-            <label style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:#64748b;display:block;margin-bottom:4px;">DESCRIPTION</label>
-            <textarea [(ngModel)]="editForm.description" placeholder="Project description..." #descTA
-              (ngModelChange)="descTA.style.height='auto'; descTA.style.height=descTA.scrollHeight+'px'"
-              style="width:100%;border-radius:9px;border:1px solid var(--color-border,#1e2d4a);padding:9px 12px;font-size:12px;outline:none;background:var(--input-bg,#0d1424);color:var(--input-text,#e2e8f0);box-sizing:border-box;font-family:inherit;resize:none;line-height:1.6;min-height:120px;overflow:hidden;"></textarea>
-          </div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-            <div>
-              <label style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:#64748b;display:block;margin-bottom:6px;">STATUS</label>
-              <div style="display:flex;gap:5px;flex-wrap:wrap;">
-                <div *ngFor="let s of statuses" (click)="editForm.status = s.value"
-                  style="padding:4px 10px;border-radius:20px;border:1px solid;font-size:10px;font-weight:600;cursor:pointer;transition:all 0.15s;"
-                  [style.borderColor]="editForm.status === s.value ? s.color : 'var(--color-border,#1e2d4a)'"
-                  [style.background]="editForm.status === s.value ? s.color + '22' : 'transparent'"
-                  [style.color]="editForm.status === s.value ? s.color : '#64748b'">{{ s.label }}</div>
-              </div>
-            </div>
-            <div>
-              <label style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:#64748b;display:block;margin-bottom:6px;">PRIORITY</label>
-              <div style="display:flex;gap:5px;flex-wrap:wrap;">
-                <div *ngFor="let p of priorities" (click)="editForm.priority = p.value"
-                  style="padding:4px 10px;border-radius:20px;border:1px solid;font-size:10px;font-weight:600;cursor:pointer;transition:all 0.15s;"
-                  [style.borderColor]="editForm.priority === p.value ? p.color : 'var(--color-border,#1e2d4a)'"
-                  [style.background]="editForm.priority === p.value ? p.color + '22' : 'transparent'"
-                  [style.color]="editForm.priority === p.value ? p.color : '#64748b'">{{ p.label }}</div>
-              </div>
-            </div>
+            <label style="font-size:9px;font-weight:700;text-transform:uppercase;color:#64748b;display:block;margin-bottom:4px;">DESCRIPTION</label>
+            <textarea [(ngModel)]="editForm.description" rows="4"
+              style="width:100%;border-radius:9px;border:1px solid var(--color-border,#1e2d4a);padding:9px 12px;font-size:12px;outline:none;background:var(--input-bg,#0d1424);color:var(--input-text,#e2e8f0);box-sizing:border-box;resize:vertical;"></textarea>
           </div>
           <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;">
             <div>
-              <label style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:#64748b;display:block;margin-bottom:4px;">START DATE</label>
+              <label style="font-size:9px;font-weight:700;text-transform:uppercase;color:#64748b;display:block;margin-bottom:4px;">START DATE</label>
               <input type="date" [(ngModel)]="editForm.startDate"
-                style="width:100%;border-radius:9px;border:1px solid var(--color-border,#1e2d4a);padding:9px 12px;font-size:12px;outline:none;background:var(--input-bg,#0d1424);color:var(--input-text,#e2e8f0);box-sizing:border-box;color-scheme:dark;cursor:pointer;"
-                (click)="$any($event.target).showPicker()">
+                style="width:100%;border-radius:9px;border:1px solid var(--color-border,#1e2d4a);padding:9px 12px;font-size:12px;outline:none;background:var(--input-bg,#0d1424);color:var(--input-text,#e2e8f0);box-sizing:border-box;color-scheme:dark;">
             </div>
             <div>
-              <label style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:#64748b;display:block;margin-bottom:4px;">END DATE</label>
+              <label style="font-size:9px;font-weight:700;text-transform:uppercase;color:#64748b;display:block;margin-bottom:4px;">END DATE</label>
               <input type="date" [(ngModel)]="editForm.endDate"
-                style="width:100%;border-radius:9px;border:1px solid var(--color-border,#1e2d4a);padding:9px 12px;font-size:12px;outline:none;background:var(--input-bg,#0d1424);color:var(--input-text,#e2e8f0);box-sizing:border-box;color-scheme:dark;cursor:pointer;"
-                (click)="$any($event.target).showPicker()">
+                style="width:100%;border-radius:9px;border:1px solid var(--color-border,#1e2d4a);padding:9px 12px;font-size:12px;outline:none;background:var(--input-bg,#0d1424);color:var(--input-text,#e2e8f0);box-sizing:border-box;color-scheme:dark;">
             </div>
             <div>
-              <label style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:#64748b;display:block;margin-bottom:4px;">BUDGET (USD)</label>
-              <div style="position:relative;">
-                <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);opacity:0.4;font-size:12px;">$</span>
-                <input type="number" [(ngModel)]="editForm.budget" placeholder="0"
-                  style="width:100%;border-radius:9px;border:1px solid var(--color-border,#1e2d4a);padding:9px 12px 9px 24px;font-size:12px;outline:none;background:var(--input-bg,#0d1424);color:var(--input-text,#e2e8f0);box-sizing:border-box;font-family:inherit;">
-              </div>
+              <label style="font-size:9px;font-weight:700;text-transform:uppercase;color:#64748b;display:block;margin-bottom:4px;">BUDGET (USD)</label>
+              <input type="number" [(ngModel)]="editForm.budget" placeholder="0"
+                style="width:100%;border-radius:9px;border:1px solid var(--color-border,#1e2d4a);padding:9px 12px;font-size:12px;outline:none;background:var(--input-bg,#0d1424);color:var(--input-text,#e2e8f0);box-sizing:border-box;">
             </div>
           </div>
-          <div *ngIf="editError" style="font-size:11px;color:#ef4444;padding:8px 12px;border-radius:8px;background:#ef444411;border:1px solid #ef444433;">{{ editError }}</div>
+          <div *ngIf="editError" style="font-size:11px;color:#ef4444;padding:8px 12px;border-radius:8px;background:#ef444411;">{{ editError }}</div>
           <div style="display:flex;justify-content:flex-end;gap:8px;">
             <button (click)="showEdit=false;editError=''"
               style="padding:8px 18px;border-radius:8px;border:1px solid var(--color-border,#1e2d4a);font-size:11px;font-weight:600;cursor:pointer;background:transparent;color:#64748b;">Cancel</button>
             <button (click)="saveEdit()" [disabled]="isSaving"
-              style="padding:8px 22px;border-radius:8px;border:none;background:linear-gradient(135deg,#14532d,#16a34a);color:white;font-size:11px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px;"
-              [style.opacity]="isSaving ? '0.6' : '1'">
-              <div *ngIf="isSaving" style="width:11px;height:11px;border:2px solid white;border-top-color:transparent;border-radius:50%;animation:spin 0.8s linear infinite;"></div>
+              style="padding:8px 22px;border-radius:8px;border:none;background:linear-gradient(135deg,#14532d,#16a34a);color:white;font-size:11px;font-weight:700;cursor:pointer;">
               {{ isSaving ? 'Saving...' : '💾 Save Changes' }}
             </button>
           </div>
@@ -354,7 +337,6 @@
       </div>
     </ng-container>
 
-    <!-- ══════ TAB: TECH STACK ══════ -->
     <ng-container *ngIf="activeTab === 'techstack'">
       <div class="card">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
@@ -362,7 +344,7 @@
           <div style="display:flex;align-items:center;gap:8px;">
             <span style="font-size:9px;padding:2px 8px;border-radius:20px;background:#3b82f622;color:#60a5fa;font-weight:700;border:1px solid #3b82f633;">{{ techStacks.length }} techs</span>
             <button *ngIf="canEdit() && tasks.length === 0" (click)="showTechEdit = !showTechEdit"
-              style="display:flex;align-items:center;gap:5px;padding:4px 12px;border-radius:8px;border:1px solid;font-size:11px;font-weight:600;cursor:pointer;"
+              style="padding:4px 12px;border-radius:8px;border:1px solid;font-size:11px;font-weight:600;cursor:pointer;"
               [style.borderColor]="showTechEdit ? '#22c55e' : 'var(--color-border,#1e2d4a)'"
               [style.background]="showTechEdit ? '#22c55e22' : 'transparent'"
               [style.color]="showTechEdit ? '#22c55e' : '#64748b'">
@@ -371,7 +353,7 @@
           </div>
         </div>
 
-        <div *ngIf="!techStackLoading && !showTechEdit">
+        <div *ngIf="!showTechEdit">
           <div *ngFor="let group of groupedTechStacks" style="margin-bottom:14px;">
             <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;">
               <span style="font-size:11px;">{{ getCategoryIcon(group.category) }}</span>
@@ -391,11 +373,11 @@
           <div *ngIf="techStacks.length === 0" style="text-align:center;padding:24px;font-size:11px;opacity:0.35;">No tech stack defined yet</div>
         </div>
 
-        <div *ngIf="!techStackLoading && showTechEdit" style="display:flex;flex-direction:column;gap:10px;">
+        <div *ngIf="showTechEdit" style="display:flex;flex-direction:column;gap:10px;">
           <div *ngFor="let group of groupedTechStacks" style="margin-bottom:8px;">
             <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;">
               <span style="font-size:11px;">{{ getCategoryIcon(group.category) }}</span>
-              <span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;" [style.color]="getCategoryColor(group.category)">{{ group.category }}</span>
+              <span style="font-size:10px;font-weight:700;text-transform:uppercase;" [style.color]="getCategoryColor(group.category)">{{ group.category }}</span>
             </div>
             <div style="display:flex;flex-wrap:wrap;gap:6px;padding-left:4px;">
               <div *ngFor="let t of group.items"
@@ -404,18 +386,18 @@
                 [style.background]="getCategoryColor(t.category) + '15'"
                 [style.borderColor]="getCategoryColor(t.category) + '44'">
                 <span style="font-size:11px;font-weight:600;">{{ t.name }}</span>
-                <span (click)="deleteTechStack(t.id)" style="cursor:pointer;font-size:13px;opacity:0.6;line-height:1;">✕</span>
+                <span (click)="deleteTechStack(t.id)" style="cursor:pointer;font-size:13px;opacity:0.6;">✕</span>
               </div>
             </div>
           </div>
           <div style="border-top:1px solid var(--color-border,#1e2d4a);padding-top:12px;">
-            <div style="font-size:10px;font-weight:600;opacity:0.5;margin-bottom:8px;letter-spacing:0.5px;">+ ADD NEW TECH</div>
+            <div style="font-size:10px;font-weight:600;opacity:0.5;margin-bottom:8px;">+ ADD NEW TECH</div>
             <div style="display:flex;gap:6px;align-items:center;">
               <input [(ngModel)]="newTechName" placeholder="e.g. Angular, Flutter..."
                 (keyup.enter)="addTechStack()"
                 style="flex:1;border-radius:8px;border:1px solid var(--color-border,#1e2d4a);padding:7px 10px;font-size:11px;outline:none;background:var(--input-bg,#0d1424);color:var(--input-text,#e2e8f0);">
               <select [(ngModel)]="newTechCategory"
-                style="border-radius:8px;border:1px solid var(--color-border,#1e2d4a);padding:7px 8px;font-size:10px;outline:none;cursor:pointer;background:var(--input-bg,#0d1424);color:#94a3b8;">
+                style="border-radius:8px;border:1px solid var(--color-border,#1e2d4a);padding:7px 8px;font-size:10px;outline:none;background:var(--input-bg,#0d1424);color:#94a3b8;">
                 <option value="frontend">Frontend</option>
                 <option value="backend">Backend</option>
                 <option value="database">Database</option>
@@ -427,16 +409,13 @@
               </select>
               <button (click)="addTechStack()" [disabled]="!newTechName.trim()"
                 style="padding:7px 14px;border-radius:8px;border:none;background:#22c55e;color:white;font-size:11px;font-weight:700;cursor:pointer;"
-                [style.opacity]="newTechName.trim() ? '1' : '0.4'">
-                + Add
-              </button>
+                [style.opacity]="newTechName.trim() ? '1' : '0.4'">+ Add</button>
             </div>
           </div>
         </div>
       </div>
     </ng-container>
 
-    <!-- ══════ TAB: MEMBERS ══════ -->
     <ng-container *ngIf="activeTab === 'members'">
       <div class="card">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
@@ -444,7 +423,7 @@
           <div style="display:flex;align-items:center;gap:8px;">
             <span style="font-size:9px;padding:2px 8px;border-radius:20px;background:#22c55e22;color:#22c55e;font-weight:700;">{{ getVisibleMemberCount() }} members</span>
             <button *ngIf="canEdit()" (click)="showMemberEdit = !showMemberEdit; showMemberEdit && loadStaffList()"
-              style="display:flex;align-items:center;gap:5px;padding:4px 12px;border-radius:8px;border:1px solid;font-size:11px;font-weight:600;cursor:pointer;"
+              style="padding:4px 12px;border-radius:8px;border:1px solid;font-size:11px;font-weight:600;cursor:pointer;"
               [style.borderColor]="showMemberEdit ? '#22c55e' : 'var(--color-border,#1e2d4a)'"
               [style.background]="showMemberEdit ? '#22c55e22' : 'transparent'"
               [style.color]="showMemberEdit ? '#22c55e' : '#64748b'">
@@ -465,15 +444,12 @@
             </div>
             <button *ngIf="showMemberEdit && m.roleInProject !== 'PROJECT_MANAGER'"
               (click)="removeMember(m.userId)"
-              style="padding:3px 10px;border-radius:6px;border:1px solid #ef444444;background:transparent;color:#ef4444;font-size:10px;font-weight:600;cursor:pointer;">
-              Remove
-            </button>
+              style="padding:3px 10px;border-radius:6px;border:1px solid #ef444444;background:transparent;color:#ef4444;font-size:10px;font-weight:600;cursor:pointer;">Remove</button>
           </div>
         </div>
       </div>
     </ng-container>
 
-    <!-- ══════ TAB: RULES ══════ -->
     <ng-container *ngIf="activeTab === 'rules'">
       <div class="card">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
@@ -492,7 +468,6 @@
       </div>
     </ng-container>
 
-    <!-- ══════ TAB: PROJECT SETUP ══════ -->
     <ng-container *ngIf="activeTab === 'setup'">
       <div class="card" style="animation:fadeIn 0.3s ease;">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
@@ -508,9 +483,8 @@
             </span>
             <button *ngIf="canEdit()" (click)="generateSetupGuide()"
               [disabled]="setupGenerating"
-              style="display:flex;align-items:center;gap:6px;padding:6px 14px;border-radius:8px;border:1px solid #22c55e44;font-size:11px;font-weight:700;cursor:pointer;background:linear-gradient(135deg,#14532d22,#16a34a22);color:#22c55e;"
+              style="padding:6px 14px;border-radius:8px;border:1px solid #22c55e44;font-size:11px;font-weight:700;cursor:pointer;background:linear-gradient(135deg,#14532d22,#16a34a22);color:#22c55e;"
               [style.opacity]="setupGenerating ? '0.6' : '1'">
-              <div *ngIf="setupGenerating" style="width:11px;height:11px;border:2px solid #22c55e;border-top-color:transparent;border-radius:50%;animation:spin 0.8s linear infinite;"></div>
               {{ setupGenerating ? setupLabel('btnGenerating') : (setupGuide ? setupLabel('btnRegenerate') : setupLabel('btnGenerate')) }}
             </button>
           </div>
@@ -539,7 +513,7 @@
             <button *ngFor="let opt of osOptions"
               (click)="selectOS(opt.value)"
               [disabled]="setupGenerating"
-              style="display:flex;align-items:center;gap:6px;padding:7px 14px;border-radius:9px;border:1.5px solid;font-size:12px;font-weight:700;cursor:pointer;"
+              style="padding:7px 14px;border-radius:9px;border:1.5px solid;font-size:12px;font-weight:700;cursor:pointer;"
               [style.borderColor]="selectedOS === opt.value ? '#818cf8' : 'var(--color-border,#1e2d4a)'"
               [style.background]="selectedOS === opt.value ? 'rgba(129,140,248,0.15)' : 'transparent'"
               [style.color]="selectedOS === opt.value ? '#818cf8' : '#94a3b8'">
@@ -566,18 +540,6 @@
             <strong style="color:#22c55e;">{{ setupLabel('emptyDescAction') }}</strong>
             {{ setupLabel('emptyDescAfter') }}
           </div>
-          <div *ngIf="!techStacks.length" style="font-size:10px;color:#f59e0b;margin-top:12px;">
-            {{ setupLabel('emptyNoTech') }}
-          </div>
-        </div>
-
-        <div *ngIf="setupGenerating && !setupGuide" style="text-align:center;padding:40px 20px;">
-          <div style="font-size:42px;opacity:0.5;margin-bottom:12px;animation:pulse 1.5s ease-in-out infinite;">🤖</div>
-          <div style="font-size:13px;font-weight:700;color:#22c55e;margin-bottom:6px;">{{ setupLabel('generatingTitle') }}</div>
-          <div style="font-size:11px;opacity:0.5;">
-            {{ setupLabel('generatingDesc') }}
-            <span style="color:#818cf8;font-weight:600;"> · {{ osDisplayLabel(selectedOS) }}</span>
-          </div>
         </div>
 
         <div *ngIf="setupGuide && setupGuide.parsed" style="display:flex;flex-direction:column;gap:12px;">
@@ -592,14 +554,14 @@
 
             <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:linear-gradient(135deg,#14532d15,#0a101e);border-bottom:1px solid var(--color-border,#1e2d4a);">
               <div style="display:flex;align-items:center;gap:10px;flex:1;">
-                <span style="width:22px;height:22px;border-radius:50%;background:linear-gradient(135deg,#14532d,#16a34a);display:flex;align-items:center;justify-content:center;color:white;font-size:11px;font-weight:800;flex-shrink:0;">{{ i + 1 }}</span>
+                <span style="width:22px;height:22px;border-radius:50%;background:linear-gradient(135deg,#14532d,#16a34a);display:flex;align-items:center;justify-content:center;color:white;font-size:11px;font-weight:800;">{{ i + 1 }}</span>
                 <div style="flex:1;min-width:0;">
                   <div style="font-size:12px;font-weight:700;color:#e2e8f0;">{{ step.title }}</div>
                   <div *ngIf="step.description" style="font-size:10px;opacity:0.55;margin-top:2px;">{{ step.description }}</div>
                 </div>
               </div>
               <button (click)="copyStepCommands(step, i)"
-                style="display:flex;align-items:center;gap:5px;padding:5px 10px;border-radius:7px;border:1px solid;font-size:10px;font-weight:600;cursor:pointer;flex-shrink:0;"
+                style="padding:5px 10px;border-radius:7px;border:1px solid;font-size:10px;font-weight:600;cursor:pointer;"
                 [style.borderColor]="copiedStepIndex === i ? '#22c55e' : 'rgba(255,255,255,0.1)'"
                 [style.background]="copiedStepIndex === i ? '#22c55e22' : 'transparent'"
                 [style.color]="copiedStepIndex === i ? '#22c55e' : '#64748b'">
@@ -628,14 +590,14 @@
                 <span style="font-size:9px;color:#ef4444;opacity:0.6;">{{ getErrorFix(i).expanded ? '▲' : '▼' }}</span>
               </div>
 
-              <div *ngIf="getErrorFix(i).expanded" style="padding:12px 14px;border-top:1px solid rgba(239,68,68,0.1);animation:fadeIn 0.2s ease;">
+              <div *ngIf="getErrorFix(i).expanded" style="padding:12px 14px;border-top:1px solid rgba(239,68,68,0.1);">
 
                 <div *ngIf="getErrorFix(i).attempts.length > 0" style="margin-bottom:12px;">
-                  <div style="font-size:9px;color:#64748b;font-weight:700;letter-spacing:0.5px;margin-bottom:6px;">{{ setupLabel('fixPreviousAttempts') }}</div>
+                  <div style="font-size:9px;color:#64748b;font-weight:700;margin-bottom:6px;">{{ setupLabel('fixPreviousAttempts') }}</div>
                   <div style="display:flex;flex-direction:column;gap:4px;">
                     <div *ngFor="let attempt of getErrorFix(i).attempts; let j = index"
                       style="padding:8px 10px;border-radius:6px;background:rgba(100,116,139,0.08);opacity:0.65;font-size:10px;">
-                      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:3px;">
+                      <div style="display:flex;justify-content:space-between;margin-bottom:3px;">
                         <span style="color:#64748b;font-weight:600;">{{ setupLabel('fixAttemptLabel') }} {{ j + 1 }}</span>
                         <span style="color:#ef4444;font-size:9px;">❌ {{ setupLabel('fixAttemptDidNotWork') }}</span>
                       </div>
@@ -647,11 +609,11 @@
                 </div>
 
                 <div *ngIf="getErrorFix(i).attempts.length === 0 && !getErrorFix(i).loading && !getErrorFix(i).result">
-                  <div style="font-size:10px;color:#f87171;font-weight:700;letter-spacing:0.5px;margin-bottom:6px;">🐛 {{ setupLabel('fixErrorTitle') }}</div>
+                  <div style="font-size:10px;color:#f87171;font-weight:700;margin-bottom:6px;">🐛 {{ setupLabel('fixErrorTitle') }}</div>
                   <textarea [(ngModel)]="getErrorFix(i).errorInput"
                     [placeholder]="setupLabel('fixErrorPlaceholder')"
                     rows="5"
-                    style="width:100%;border-radius:8px;border:1px solid rgba(239,68,68,0.25);padding:8px 12px;font-size:11px;outline:none;background:rgba(0,0,0,0.3);color:#e2e8f0;box-sizing:border-box;resize:vertical;font-family:'DM Mono',monospace;line-height:1.5;"></textarea>
+                    style="width:100%;border-radius:8px;border:1px solid rgba(239,68,68,0.25);padding:8px 12px;font-size:11px;outline:none;background:rgba(0,0,0,0.3);color:#e2e8f0;box-sizing:border-box;resize:vertical;font-family:'DM Mono',monospace;"></textarea>
                   <div *ngIf="getErrorFix(i).error" style="margin-top:6px;font-size:10px;color:#ef4444;padding:6px 10px;border-radius:6px;background:rgba(239,68,68,0.1);">
                     ⚠️ {{ getErrorFix(i).error }}
                   </div>
@@ -676,19 +638,18 @@
                 <div *ngIf="getErrorFix(i).result && !getErrorFix(i).loading && !getErrorFix(i).showNewErrorInput"
                   style="display:flex;flex-direction:column;gap:10px;">
                   <div style="padding:8px 12px;border-radius:8px;background:rgba(239,68,68,0.08);border-left:3px solid #ef4444;">
-                    <div style="font-size:9px;color:#ef4444;font-weight:700;letter-spacing:0.5px;margin-bottom:4px;">❌ {{ setupLabel('fixErrorProblem') }}</div>
+                    <div style="font-size:9px;color:#ef4444;font-weight:700;margin-bottom:4px;">❌ {{ setupLabel('fixErrorProblem') }}</div>
                     <div style="font-size:11px;opacity:0.85;line-height:1.5;">{{ getErrorFix(i).result!.problem }}</div>
                   </div>
-
                   <div style="padding:8px 12px;border-radius:8px;background:rgba(34,197,94,0.08);border-left:3px solid #22c55e;">
-                    <div style="font-size:9px;color:#22c55e;font-weight:700;letter-spacing:0.5px;margin-bottom:4px;">✓ {{ setupLabel('fixErrorSolution') }}</div>
+                    <div style="font-size:9px;color:#22c55e;font-weight:700;margin-bottom:4px;">✓ {{ setupLabel('fixErrorSolution') }}</div>
                     <div style="font-size:11px;opacity:0.85;line-height:1.5;">{{ getErrorFix(i).result!.solution }}</div>
                   </div>
 
                   <div *ngIf="getErrorFix(i).result!.commands.length"
                     style="border-radius:8px;border:1px solid rgba(34,197,94,0.25);overflow:hidden;background:#0a0f1e;">
                     <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 10px;background:rgba(34,197,94,0.08);border-bottom:1px solid rgba(34,197,94,0.15);">
-                      <span style="font-size:9px;color:#22c55e;font-weight:700;letter-spacing:0.5px;">🤖 {{ setupLabel('fixErrorCommandsLabel') }}</span>
+                      <span style="font-size:9px;color:#22c55e;font-weight:700;">🤖 {{ setupLabel('fixErrorCommandsLabel') }}</span>
                       <button (click)="copyFixCommands(i)"
                         style="padding:3px 8px;border-radius:5px;border:1px solid;font-size:9px;font-weight:600;cursor:pointer;"
                         [style.borderColor]="getErrorFix(i).copiedCommand ? '#22c55e' : 'rgba(255,255,255,0.12)'"
@@ -707,11 +668,11 @@
 
                   <div *ngIf="getErrorFix(i).result!.explanation"
                     style="padding:8px 12px;border-radius:8px;background:rgba(129,140,248,0.06);border-left:3px solid #818cf8;">
-                    <div style="font-size:9px;color:#818cf8;font-weight:700;letter-spacing:0.5px;margin-bottom:4px;">💡 {{ setupLabel('fixErrorExplanation') }}</div>
+                    <div style="font-size:9px;color:#818cf8;font-weight:700;margin-bottom:4px;">💡 {{ setupLabel('fixErrorExplanation') }}</div>
                     <div style="font-size:10px;opacity:0.75;line-height:1.6;">{{ getErrorFix(i).result!.explanation }}</div>
                   </div>
 
-                  <div style="display:flex;justify-content:flex-end;gap:6px;margin-top:2px;flex-wrap:wrap;">
+                  <div style="display:flex;justify-content:flex-end;gap:6px;flex-wrap:wrap;">
                     <button *ngIf="!hasReachedMaxAttempts(i)"
                       (click)="markAsDidNotWork(i)"
                       style="padding:6px 12px;border-radius:7px;border:1px solid rgba(239,68,68,0.3);background:rgba(239,68,68,0.08);color:#ef4444;font-size:10px;font-weight:700;cursor:pointer;">
@@ -730,13 +691,13 @@
                 </div>
 
                 <div *ngIf="getErrorFix(i).showNewErrorInput && !getErrorFix(i).loading">
-                  <div style="font-size:10px;color:#f87171;font-weight:700;letter-spacing:0.5px;margin-bottom:6px;">
+                  <div style="font-size:10px;color:#f87171;font-weight:700;margin-bottom:6px;">
                     🔄 {{ setupLabel('fixErrorTitle') }} · {{ setupLabel('fixAttemptLabel') }} {{ getErrorFix(i).attempts.length + 2 }}
                   </div>
                   <textarea [(ngModel)]="getErrorFix(i).newErrorInput"
                     [placeholder]="setupLabel('fixNewErrorPlaceholder')"
                     rows="5"
-                    style="width:100%;border-radius:8px;border:1px solid rgba(239,68,68,0.25);padding:8px 12px;font-size:11px;outline:none;background:rgba(0,0,0,0.3);color:#e2e8f0;box-sizing:border-box;resize:vertical;font-family:'DM Mono',monospace;line-height:1.5;"></textarea>
+                    style="width:100%;border-radius:8px;border:1px solid rgba(239,68,68,0.25);padding:8px 12px;font-size:11px;outline:none;background:rgba(0,0,0,0.3);color:#e2e8f0;box-sizing:border-box;resize:vertical;font-family:'DM Mono',monospace;"></textarea>
                   <div *ngIf="getErrorFix(i).error" style="margin-top:6px;font-size:10px;color:#ef4444;padding:6px 10px;border-radius:6px;background:rgba(239,68,68,0.1);">
                     ⚠️ {{ getErrorFix(i).error }}
                   </div>
@@ -752,7 +713,6 @@
                     </button>
                   </div>
                 </div>
-
               </div>
             </div>
 
@@ -763,7 +723,7 @@
             <br>
             <span style="font-size:9px;">
               {{ setupLabel('footerHintBefore') }}
-              <code style="background:#1e2d4a;padding:1px 5px;border-radius:3px;font-family:monospace;">&lt;REPO_URL&gt;</code>
+              <code style="background:#1e2d4a;padding:1px 5px;border-radius:3px;">&lt;REPO_URL&gt;</code>
               {{ setupLabel('footerHintAfter') }}
             </span>
           </div>
@@ -771,7 +731,6 @@
       </div>
     </ng-container>
 
-    <!-- ══════ TAB: GIT ACTIVITY (NEW) ══════ -->
     <ng-container *ngIf="activeTab === 'git'">
       <div class="card" style="animation:fadeIn 0.3s ease;">
 
@@ -941,7 +900,7 @@
       <div *ngFor="let t of myTasks" class="task-card" [ngClass]="getPriorityTcClass(t.priority)">
         <div class="tc-top">
           <span class="tc-title">{{ t.translatedTitle || t.title }}</span>
-          <span [ngClass]="getTaskStatusClass(t.status)" style="font-size:7px;padding:1px 5px;border-radius:20px;font-weight:700;flex-shrink:0;">{{ t.status }}</span>
+          <span [ngClass]="getTaskStatusClass(t.status)" style="font-size:7px;padding:1px 5px;border-radius:20px;font-weight:700;">{{ t.status }}</span>
         </div>
         <div class="tc-project">{{ project?.title }}</div>
         <div class="tc-due" [style.color]="isTaskOverdue(t) ? '#ef4444' : '#f59e0b'">
