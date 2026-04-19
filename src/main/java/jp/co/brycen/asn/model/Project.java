@@ -3,6 +3,7 @@ package jp.co.brycen.asn.model;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
+
 import javax.persistence.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -21,7 +22,6 @@ public class Project {
     @Column(nullable = false)
     private String title;
 
-    // ── NEW ───────────────────────────────────────────────
     @Column(name = "project_key", unique = true)
     private String projectKey;
     // e.g. KH-001, JP-023
@@ -29,15 +29,12 @@ public class Project {
     @Column(columnDefinition = "TEXT")
     private String description;
 
-    // ── NEW ───────────────────────────────────────────────
     private String category;
     // Web, Mobile, Desktop, API, Internal
 
-    // ── NEW ───────────────────────────────────────────────
     private String tags;
     // comma separated: "healthcare,responsive,bilingual"
 
-    // ── NEW ───────────────────────────────────────────────
     private String color;
     // hex color e.g. #0891b2 — UI card accent color
 
@@ -45,28 +42,23 @@ public class Project {
     private String status = "PLANNING";
     // PLANNING, ACTIVE, ON_HOLD, COMPLETED, CANCELLED
 
-    // ── NEW ───────────────────────────────────────────────
     private String priority = "MEDIUM";
     // LOW, MEDIUM, HIGH, CRITICAL
 
-    // ── NEW ───────────────────────────────────────────────
     @Column(name = "health_status")
     private String healthStatus = "ON_TRACK";
     // ON_TRACK, AT_RISK, DELAYED
 
-    // ── NEW ───────────────────────────────────────────────
     @Column(name = "health_score")
     private Integer healthScore = 5;
     // 1~5 — used for health dots in portfolio view
 
-    // ── NEW ───────────────────────────────────────────────
     private String visibility = "BRANCH";
     // PRIVATE, BRANCH, GROUP
 
     @Column(name = "pm_id")
     private Long pmId;
 
-    // ── NEW ───────────────────────────────────────────────
     @Column(name = "client_id")
     private Long clientId;
     // FK → clients.id
@@ -96,7 +88,16 @@ public class Project {
 
     @Column(name = "original_language")
     private String originalLanguage = "en";
-    
+
+    // ── NEW (2026-04-19): Git integration for Setup tab Git Activity ───
+    @Column(name = "repo_url", length = 500)
+    private String repoUrl;
+    // GitHub repository URL, e.g. https://github.com/owner/repo
+
+    @Column(name = "github_token", length = 500)
+    private String githubToken;
+    // Optional Personal Access Token for private repo access
+
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();

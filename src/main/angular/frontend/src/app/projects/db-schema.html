@@ -17,11 +17,12 @@
       <span class="erd-title-text">Database Schema</span>
       <span class="erd-badge">{{tables.length}} tables</span>
       <div class="erd-zoom-ctrl">
-        <button class="erd-zoom-btn" (click)="zoomOut()">−</button>
+        <button class="erd-zoom-btn" (click)="zoomOut()" title="Zoom out">−</button>
         <span class="erd-zoom-val">{{Math.round(zoom * 100)}}%</span>
-        <button class="erd-zoom-btn" (click)="zoomIn()">＋</button>
+        <button class="erd-zoom-btn" (click)="zoomIn()" title="Zoom in">＋</button>
       </div>
-      <button class="erd-reset-btn" (click)="resetLayout()">⊞ Reset</button>
+      <button class="erd-reset-btn" (click)="zoomToFit()" title="Fit to screen">⛶ Fit</button>
+      <button class="erd-reset-btn" (click)="resetLayout()" title="Reset layout">⊞ Reset</button>
     </div>
   </header>
 
@@ -45,56 +46,114 @@
     (wheel)="onWheel($event)"
     (mousedown)="onCanvasDown($event)"
     (mousemove)="onMouseMove($event)"
-    (mouseup)="onMouseUp()">
+    (mouseup)="onMouseUp()"
+    (mouseleave)="onMouseUp()">
 
     <div class="erd-ct"
       [style.transform]="'translate(' + panX + 'px,' + panY + 'px) scale(' + zoom + ')'">
 
-      <!-- SVG FK Lines -->
+      <!-- ══ SVG FK Lines + Cardinality Badges ═════════════════════ -->
       <svg class="erd-lines" [attr.width]="svgWidth" [attr.height]="svgHeight">
         <defs>
-          <marker id="fk-arrow" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
-            <path d="M0,0 L0,6 L8,3 z" fill="#3b82f6" opacity=".7"/>
+          <marker id="fk-arrow"
+                  viewBox="0 0 10 10"
+                  markerWidth="7" markerHeight="7"
+                  refX="9" refY="5"
+                  orient="auto-start-reverse"
+                  markerUnits="userSpaceOnUse">
+            <path d="M0,0 L10,5 L0,10 L2,5 z" fill="#60a5fa"/>
+          </marker>
+
+          <marker id="fk-arrow-hi"
+                  viewBox="0 0 10 10"
+                  markerWidth="8" markerHeight="8"
+                  refX="9" refY="5"
+                  orient="auto-start-reverse"
+                  markerUnits="userSpaceOnUse">
+            <path d="M0,0 L10,5 L0,10 L2,5 z" fill="#22c55e"/>
+          </marker>
+
+          <marker id="fk-dot"
+                  viewBox="0 0 10 10"
+                  markerWidth="6" markerHeight="6"
+                  refX="5" refY="5"
+                  markerUnits="userSpaceOnUse">
+            <circle cx="5" cy="5" r="3.5"
+                    fill="#0d1424" stroke="#60a5fa" stroke-width="1.5"/>
+          </marker>
+
+          <marker id="fk-dot-hi"
+                  viewBox="0 0 10 10"
+                  markerWidth="7" markerHeight="7"
+                  refX="5" refY="5"
+                  markerUnits="userSpaceOnUse">
+            <circle cx="5" cy="5" r="4"
+                    fill="#0d1424" stroke="#22c55e" stroke-width="2"/>
           </marker>
         </defs>
-        <line *ngFor="let line of fkLines"
-          [attr.x1]="line.x1" [attr.y1]="line.y1"
-          [attr.x2]="line.x2" [attr.y2]="line.y2"
-          stroke="#3b82f6" stroke-width="1.5"
-          stroke-opacity=".4" stroke-dasharray="6,3"
-          marker-end="url(#fk-arrow)"/>
+
+        <!-- Paths -->
+        <g *ngFor="let line of fkLines"
+           class="erd-fk-group"
+           [class.erd-fk-dimmed]="isLineDimmed(line)"
+           [class.erd-fk-highlighted]="hoveredTable && !isLineDimmed(line)">
+
+          <!-- Curved FK path -->
+          <path
+            [attr.d]="line.path"
+            fill="none"
+            class="erd-fk-path"
+            [attr.marker-start]="(hoveredTable && !isLineDimmed(line)) ? 'url(#fk-dot-hi)' : 'url(#fk-dot)'"
+            [attr.marker-end]="(hoveredTable && !isLineDimmed(line)) ? 'url(#fk-arrow-hi)' : 'url(#fk-arrow)'">
+            <title>{{line.fromTable}}.{{line.fromColumn}} → {{line.toTable}}.id ({{line.cardinality}})</title>
+          </path>
+
+          <!-- Cardinality badge at midpoint -->
+          <g class="erd-fk-badge"
+             [attr.transform]="'translate(' + line.midX + ',' + line.midY + ')'">
+            <rect x="-14" y="-9" width="28" height="16" rx="8"
+                  class="erd-fk-badge-bg"/>
+            <text x="0" y="0"
+                  text-anchor="middle"
+                  dominant-baseline="central"
+                  class="erd-fk-badge-text">{{line.cardinality}}</text>
+          </g>
+        </g>
       </svg>
 
-      <!-- Table Cards -->
+      <!-- ══ Table Cards ═══════════════════════════════════════════ -->
       <div *ngFor="let node of tableNodes"
         class="erd-card"
+        [class.erd-card-dimmed]="isTableDimmed(node.table.tableName)"
+        [class.erd-card-hovered]="isTableHovered(node.table.tableName)"
+        [class.erd-card-related]="relatedTables.size > 0 && !isTableDimmed(node.table.tableName) && !isTableHovered(node.table.tableName)"
         [style.left.px]="node.x"
         [style.top.px]="node.y"
         [style.width.px]="node.width"
-        (mousedown)="onCardDown($event, node)">
+        (mousedown)="onCardDown($event, node)"
+        (mouseenter)="onTableHover(node.table.tableName)"
+        (mouseleave)="onTableLeave()">
 
         <div class="erd-card-header">
           <span class="erd-table-name">{{node.table.tableName}}</span>
-          <span class="erd-frame-tag">{{node.table.frameName}}</span>
         </div>
 
         <div class="erd-card-body">
           <div *ngFor="let col of node.columns"
             class="erd-col-row"
-            [class.erd-col-pk]="isIdCol(col)"
-            [class.erd-col-fk]="isFkCol(col)">
+            [class.erd-col-pk]="col.isPk"
+            [class.erd-col-fk]="col.isFk">
             <span class="erd-col-icon">
-              <ng-container *ngIf="isIdCol(col)">🔑</ng-container>
-              <ng-container *ngIf="isFkCol(col)">🔗</ng-container>
+              {{ col.isPk ? '🔑' : col.isFk ? '🔗' : '' }}
             </span>
             <span class="erd-col-name">{{col.name}}</span>
             <span class="erd-col-type">{{col.type}}</span>
           </div>
-          <div *ngIf="node.columns.length === 0" class="erd-col-empty">No columns</div>
+          <div *ngIf="node.columns.length === 0" class="erd-col-empty">
+            No columns
+          </div>
         </div>
-
       </div>
     </div>
   </div>
-
 </div>

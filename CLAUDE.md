@@ -2770,4 +2770,162 @@ Status flow: PENDING → APPROVED / REJECTED (one approval = done)
 
 
 
+# 🛠️ API Documentation & Database Design Fix — Step-by-Step Guide
 
+**Goal:** Project Dashboard ရဲ့ API Documentation + Database Design section
+နှစ်ခုလုံးကို **hardcoded mock data** ဖြုတ်ပြီး
+**real DB data (latest 5 newest)** ပြအောင် fix လုပ်မယ်။
+
+---
+
+## 📂 Files in This Package
+
+| # | File | Type | Action |
+|---|---|---|---|
+| 1 | `01-ProjectApiEndpointRepository.java` | Backend | **REPLACE** full file |
+| 2 | `02-ProjectDbTableRepository.java` | Backend | **REPLACE** full file |
+| 3 | `03-ProjectDesignController.java` | Backend | **REPLACE** full file |
+| 4 | `04-project-inline-ts.PATCH.md` | Angular | **5 exact code edits** (find & replace) |
+| 5 | `05-project-inline-html.PATCH.md` | Angular | **3 exact code edits** (find & replace) |
+
+---
+
+## 🎯 What Will Change
+
+### Before (လက်ရှိ — Screenshot မှာ မြင်တာ)
+```
+⚡ API Documentation
+   GET  /api/v1/tasks        ← HARDCODED
+   POST /api/v1/tasks        ← HARDCODED
+   PUT  /api/v1/tasks/:id    ← HARDCODED
+   ...
+
+🗄️ Database Design
+   [users] [tasks] [projects] [comments] [sprints]  ← ALL HARDCODED
+```
+
+Project ဘယ်ဟာပဲကြည့်ကြည့် — တူတူပဲ မြင်ရတယ်။
+
+### After (Fix ပြီးရင်)
+```
+⚡ API Documentation (latest 5 from DB)
+   POST /api/auth/login               ← Real data from api_endpoints table
+   POST /api/auth/register            ← Real data from api_endpoints table
+   GET  /api/products                 ← Real data from api_endpoints table
+   ...
+   [Open API →]
+
+🗄️ Database Design (latest 5 from DB)
+   [users]  [products]  [orders]  [cart_items]  [payments]
+   ← Real data from project_db_tables table
+   [Open Schema →]
+```
+
+Data မရှိသေးရင် — Empty state ပြမယ်:
+> "No API endpoints yet. Generate code from Design Tool to auto-extract APIs."
+
+---
+
+## 📦 Step-by-Step Installation
+
+### Step 1 — Backend Files (Spring Boot)
+
+**File 1/3 — ProjectApiEndpointRepository.java**
+```
+📁 Path: src/main/java/jp/co/brycen/asn/repository/ProjectApiEndpointRepository.java
+📝 Action: Replace the entire file with 01-ProjectApiEndpointRepository.java
+```
+
+**File 2/3 — ProjectDbTableRepository.java**
+```
+📁 Path: src/main/java/jp/co/brycen/asn/repository/ProjectDbTableRepository.java
+📝 Action: Replace the entire file with 02-ProjectDbTableRepository.java
+⚠️  Note: You MUST confirm your existing file's methods match before replacing.
+         If your file has extra methods, merge manually.
+```
+
+**File 3/3 — ProjectDesignController.java**
+```
+📁 Path: src/main/java/jp/co/brycen/asn/controller/ProjectDesignController.java
+📝 Action: Replace the entire file with 03-ProjectDesignController.java
+         (Adds 2 new endpoints: /apis/latest and /db-tables/latest)
+```
+
+**After backend changes:**
+- Restart Spring Boot (port 8080)
+- Test: `GET http://localhost:8080/api/project-design/1/apis/latest?limit=5`
+
+---
+
+### Step 2 — Angular Files (Frontend)
+
+**File 4/5 — project-inline.ts Changes**
+```
+📁 Path: src/main/angular/frontend/src/app/projects/project-inline.ts
+📝 Action: Follow instructions in 04-project-inline-ts.PATCH.md
+           (5 specific edits — no full file replacement)
+```
+
+**File 5/5 — project-inline.html Changes**
+```
+📁 Path: src/main/angular/frontend/src/app/projects/project-inline.html
+📝 Action: Follow instructions in 05-project-inline-html.PATCH.md
+           (3 specific edits — no full file replacement)
+```
+
+**After Angular changes:**
+- Angular should auto-reload (if `ng serve` running)
+- Open browser → Member Dashboard → Click any project
+- API Documentation section → should show real data or empty state
+- Database Design section → should show real data or empty state
+
+---
+
+## 🧪 Testing Checklist
+
+### Test 1 — Empty state (project with no generated design)
+- [ ] Open a project that has NOT used BrycenDesign Tool yet
+- [ ] API Documentation shows: "No API endpoints yet..."
+- [ ] Database Design shows: "No database tables yet..."
+
+### Test 2 — Real data (project with generated design)
+- [ ] Open BrycenDesign Tool → Generate code
+- [ ] Wait for AI extraction to save
+- [ ] Open project dashboard
+- [ ] API Documentation shows 5 latest endpoints (newest first)
+- [ ] Database Design shows 5 latest tables (newest first)
+
+### Test 3 — Sort order
+- [ ] Endpoint with highest `id` appears first
+- [ ] Table with highest `id` appears first
+
+---
+
+## ⚠️ Important Notes
+
+1. **CLAUDE.md schema mismatch**
+   CLAUDE.md ထဲ table အမည် `api_endpoints` / `db_designs` လို့ရေးထားပေမယ့်
+   actual table names are `project_api_endpoints` / `project_db_tables`
+   (confirmed via ProjectDesignService.java — no backend change needed)
+
+2. **BrycenDesign Tool dependency**
+   API/DB data က BrycenDesign Tool မှာ code generate လုပ်မှ create ဖြစ်တာ။
+   Generate မလုပ်ရသေးရင် — empty state ပြမယ် (by design)။
+
+3. **Existing endpoint `/apis` unchanged**
+   api-docs.ts (full page) က `/apis` ကို သုံးနေတုန်းပဲ — affect မဖြစ်ဘူး။
+   Latest 5 အတွက်သာ new endpoint `/apis/latest` ထည့်တာ။
+
+---
+
+## 📝 Commit Message Suggestion
+
+```
+feat(dashboard): show latest 5 real API endpoints & DB tables in project dashboard
+
+- Remove hardcoded mockEndpoints/mockTables from project-inline.ts
+- Add /apis/latest and /db-tables/latest backend endpoints (limit param)
+- Add dbTables property + parseDbColumns() helper to project-inline.ts
+- Show empty state when no data (guides user to BrycenDesign Tool)
+- Latest-first sort (ORDER BY id DESC) to surface newest extractions
+```

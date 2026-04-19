@@ -1,3 +1,7 @@
+// ══════════════════════════════════════════════════════════════════
+// DB SCHEMA ERD — Stylesheet
+// ══════════════════════════════════════════════════════════════════
+
 // ── Base ──
 .erd-shell {
   min-height: 100vh;
@@ -8,7 +12,7 @@
   flex-direction: column;
 }
 
-// ── Topbar (Kanban/Design style) ──
+// ── Topbar ──
 .erd-topbar {
   height: 52px;
   background: #0d1424;
@@ -83,6 +87,7 @@
   border-radius: 6px; color: #64748b;
   font-size: 11px; padding: 4px 10px;
   cursor: pointer; font-family: Inter, sans-serif;
+  transition: all .15s;
   &:hover { color: #e2e8f0; border-color: #263351; }
 }
 
@@ -109,61 +114,213 @@
 
 // ── ERD Canvas ──
 .erd-canvas {
-  flex: 1; overflow: hidden;
+  flex: 1;
+  overflow: hidden;
   background-color: #0a0f1e;
   background-image: radial-gradient(circle, #1e2d4a 1px, transparent 1px);
   background-size: 24px 24px;
-  cursor: grab; position: relative;
+  cursor: grab;
+  position: relative;
   &:active { cursor: grabbing; }
 }
+
 .erd-ct {
   position: absolute; top: 0; left: 0;
   transform-origin: 0 0; will-change: transform;
 }
 
-// ── SVG Lines ──
+// ══════════════════════════════════════════════════════════════════
+// ✅ SVG FK LINES — Base + Hover states
+// ══════════════════════════════════════════════════════════════════
+
 .erd-lines {
   position: absolute; top: 0; left: 0;
-  pointer-events: none; overflow: visible;
+  pointer-events: none;
+  overflow: visible;
 }
 
-// ── Table Card ──
+// Group wrapper for path + badge (allows simultaneous transitions)
+.erd-fk-group {
+  transition: opacity .2s ease;
+}
+
+// Default path
+.erd-fk-path {
+  stroke: #60a5fa;
+  stroke-width: 1.5;
+  stroke-opacity: 0.75;
+  stroke-linecap: round;
+  transition: stroke .2s, stroke-width .2s, stroke-opacity .2s;
+}
+
+// Dimmed state — fade line when another table is hovered
+.erd-fk-group.erd-fk-dimmed {
+  opacity: 0.15;
+}
+
+// Highlighted — line connects to the hovered table
+.erd-fk-group.erd-fk-highlighted .erd-fk-path {
+  stroke: #22c55e;
+  stroke-width: 2;
+  stroke-opacity: 1;
+}
+
+// ── Cardinality Badge (N:1 pill) ──
+.erd-fk-badge {
+  pointer-events: none;
+  transition: opacity .2s;
+}
+
+.erd-fk-badge-bg {
+  fill: #0f1627;
+  stroke: #60a5fa;
+  stroke-width: 1;
+  stroke-opacity: 0.6;
+}
+
+.erd-fk-badge-text {
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+  font-weight: 700;
+  fill: #93c5fd;
+  letter-spacing: 0.3px;
+}
+
+// Highlighted badge
+.erd-fk-group.erd-fk-highlighted .erd-fk-badge-bg {
+  fill: #0a2015;
+  stroke: #22c55e;
+  stroke-width: 1.5;
+  stroke-opacity: 1;
+}
+.erd-fk-group.erd-fk-highlighted .erd-fk-badge-text {
+  fill: #86efac;
+}
+
+// ══════════════════════════════════════════════════════════════════
+// ✅ TABLE CARDS — Base + Hover / Dim / Related states
+// ══════════════════════════════════════════════════════════════════
+
 .erd-card {
   position: absolute;
   background: #131929;
   border: 1px solid #1e2d4a;
   border-radius: 10px;
   box-shadow: 0 4px 20px rgba(0,0,0,.4);
-  cursor: move; user-select: none; overflow: hidden;
-  transition: border-color .15s, box-shadow .15s;
-  &:hover { border-color: #3b82f6; box-shadow: 0 6px 28px rgba(59,130,246,.15); }
+  cursor: move;
+  user-select: none;
+  overflow: hidden;
+  transition:
+    border-color .2s,
+    box-shadow  .2s,
+    opacity     .2s,
+    transform   .2s;
+
+  &:hover {
+    border-color: #3b82f6;
+    box-shadow: 0 6px 28px rgba(59,130,246,.15);
+  }
 }
 
+// Dimmed — other tables when hovering one (unrelated)
+.erd-card.erd-card-dimmed {
+  opacity: 0.3;
+}
+
+// The table being directly hovered
+.erd-card.erd-card-hovered {
+  border-color: #22c55e;
+  box-shadow:
+    0 0 0 2px rgba(34,197,94,0.25),
+    0 8px 32px rgba(34,197,94,0.25);
+  transform: translateY(-1px);
+  z-index: 5;
+}
+
+// Related (connected via FK to hovered)
+.erd-card.erd-card-related {
+  border-color: #22c55e;
+  box-shadow: 0 4px 20px rgba(34,197,94,0.15);
+}
+
+// ── Card Header ──
 .erd-card-header {
   background: #1e3a8a;
   padding: 10px 14px;
-  display: flex; align-items: center; justify-content: space-between;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  transition: background .2s;
 }
+
+// Hovered header — green accent
+.erd-card.erd-card-hovered .erd-card-header {
+  background: linear-gradient(135deg, #14532d, #16a34a);
+}
+
+// Related header — subtle green tint
+.erd-card.erd-card-related .erd-card-header {
+  background: #165538;
+}
+
 .erd-table-name {
-  color: #fff; font-size: 12px; font-weight: 700;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
   font-family: 'DM Mono', monospace;
 }
-.erd-frame-tag {
-  font-size: 8px; color: rgba(255,255,255,.4);
-  text-transform: uppercase; letter-spacing: .5px;
+
+.erd-card-body {
+  padding: 6px 0;
 }
 
-.erd-card-body  { padding: 6px 0; }
-
+// ── Column Rows ──
 .erd-col-row {
-  display: flex; align-items: center; gap: 8px;
-  padding: 5px 14px; font-size: 11px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 14px;
+  font-size: 11px;
   border-bottom: 1px solid #1a2438;
+  position: relative;
+  transition: background .15s;
+
   &:last-child { border-bottom: none; }
-  &.erd-col-pk { background: rgba(234,179,8,.04); }
-  &.erd-col-fk { background: rgba(59,130,246,.04); }
+
+  // PK row — left accent stripe + subtle yellow tint
+  &.erd-col-pk {
+    background: rgba(234,179,8,.05);
+    box-shadow: inset 3px 0 0 #eab308;
+  }
+
+  // FK row — left accent stripe + subtle blue tint
+  &.erd-col-fk {
+    background: rgba(96,165,250,.05);
+    box-shadow: inset 3px 0 0 #60a5fa;
+  }
 }
-.erd-col-icon  { font-size: 9px; width: 14px; flex-shrink: 0; }
-.erd-col-name  { flex: 1; color: #e2e8f0; font-family: 'DM Mono', monospace; }
-.erd-col-type  { color: #475569; font-size: 10px; font-family: 'DM Mono', monospace; }
-.erd-col-empty { padding: 8px 14px; font-size: 11px; color: #475569; font-style: italic; }
+
+.erd-col-icon {
+  font-size: 9px;
+  width: 14px;
+  flex-shrink: 0;
+}
+
+.erd-col-name {
+  flex: 1;
+  color: #e2e8f0;
+  font-family: 'DM Mono', monospace;
+}
+
+.erd-col-type {
+  color: #475569;
+  font-size: 10px;
+  font-family: 'DM Mono', monospace;
+}
+
+.erd-col-empty {
+  padding: 8px 14px;
+  font-size: 11px;
+  color: #475569;
+  font-style: italic;
+}

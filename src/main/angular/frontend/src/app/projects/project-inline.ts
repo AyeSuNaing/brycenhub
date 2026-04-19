@@ -13,7 +13,16 @@ import { forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { ChatPopupComponent, ChatMember } from '../shared/chat-popup/chat-popup.component';
 
+import {
+  setupLabel, SetupI18nKey,
+  ProjectOS, detectOS, osLabel,
+  SetupErrorFix, FixAttempt,
+  GitCommit, GitCommitsResponse,
+  formatRelativeTime
+} from './i18n/setup.i18n';
+
 const BASE = environment.apiBaseUrl;
+const MAX_FIX_ATTEMPTS = 5;
 
 @Component({
   selector: 'app-project-inline',
@@ -27,16 +36,15 @@ export class ProjectInlineComponent implements OnInit, OnChanges {
   @Input() projectId!: number;
   @Output() close = new EventEmitter<void>();
 
-  // ── DATA ──────────────────────────────────────
   project: any = null;
   stats: any = null;
   members: any[] = [];
   tasks: any[] = [];
   activities: any[] = [];
   apiEndpoints: any[] = [];
+  dbTables: any[] = [];
   clients: any[] = [];
 
-  // ── STATE ─────────────────────────────────────
   isLoading = true;
   showDesign = false;
   showApi = false;
@@ -44,7 +52,6 @@ export class ProjectInlineComponent implements OnInit, OnChanges {
   showFullDesc = false;
   activeTab = 'overview';
 
-  // ── EDIT / DELETE STATE ───────────────────────
   showEdit = false;
   isSaving = false;
   editError = '';
@@ -71,14 +78,12 @@ export class ProjectInlineComponent implements OnInit, OnChanges {
     { value: 'CRITICAL', label: 'Critical', color: '#ef4444' },
   ];
 
-  // ── TECH STACK ────────────────────────────────
   techStacks: any[] = [];
   techStackLoading: boolean = false;
   showTechEdit = false;
   newTechName = '';
   newTechCategory = 'frontend';
 
-  // ── MEMBER EDIT ───────────────────────────────
   showMemberEdit = false;
   showRemovedMembers = false;
   removedMembers: any[] = [];
@@ -87,7 +92,6 @@ export class ProjectInlineComponent implements OnInit, OnChanges {
   staffListLoading = false;
   memberSearchQuery = '';
 
-  // ── RULES ─────────────────────────────────────
   projectRules: any[] = [];
   rulesLoading: boolean = false;
   showRuleEdit = false;
@@ -98,7 +102,53 @@ export class ProjectInlineComponent implements OnInit, OnChanges {
   newRuleContent = '';
   newRuleCategory = 'CODING_STANDARDS';
 
-  // ── BOARD COLUMNS ─────────────────────────────
+  setupGuide: any = null;
+  setupLoading = false;
+  setupGenerating = false;
+  setupError = '';
+  copiedStepIndex: number | null = null;
+
+  selectedOS: ProjectOS = 'macos';
+  detectedOS: ProjectOS = 'macos';
+
+  osOptions: Array<{ value: ProjectOS; labelKey: SetupI18nKey }> = [
+    { value: 'macos',   labelKey: 'osMacos'   },
+    { value: 'windows', labelKey: 'osWindows' },
+    { value: 'linux',   labelKey: 'osLinux'   },
+  ];
+
+  errorFixState: {
+    [stepIndex: number]: {
+      expanded: boolean;
+      errorInput: string;
+      loading: boolean;
+      result: SetupErrorFix | null;
+      error: string;
+      copiedCommand: boolean;
+      attempts: FixAttempt[];
+      showNewErrorInput: boolean;
+      newErrorInput: string;
+    }
+  } = {};
+
+  // ══════════════════════════════════════════════════════════════════
+  // ✨ GIT COMMITS state
+  // ══════════════════════════════════════════════════════════════════
+  gitCommits: GitCommit[] = [];
+  gitCommitsLoading = false;
+  gitCommitsError = '';
+  gitCommitsErrorCode = '';
+  gitRepoInfo: { owner?: string; repo?: string; repoUrl?: string; count?: number } = {};
+
+  // Repo edit form
+  showRepoEdit = false;
+  repoForm = {
+    repoUrl: '',
+    githubToken: '',
+  };
+  isSavingRepo = false;
+  repoSaveError = '';
+
   boardColumns = [
     { label: 'Backlog', status: 'TODO', color: '#6366f1' },
     { label: 'In Progress', status: 'IN_PROGRESS', color: '#3b82f6' },
@@ -107,31 +157,12 @@ export class ProjectInlineComponent implements OnInit, OnChanges {
     { label: 'Done', status: 'DONE', color: '#22c55e' },
   ];
 
-  mockEndpoints = [
-    { method: 'GET', url: '/api/v1/tasks', desc: 'List all tasks' },
-    { method: 'POST', url: '/api/v1/tasks', desc: 'Create task' },
-    { method: 'PUT', url: '/api/v1/tasks/:id', desc: 'Update task' },
-    { method: 'DELETE', url: '/api/v1/tasks/:id', desc: 'Delete task' },
-    { method: 'GET', url: '/api/v1/analytics', desc: 'Analytics' },
-    { method: 'POST', url: '/api/v1/comments', desc: 'Add comment' },
-  ];
-
-  mockTables = [
-    { name: 'users', cols: ['🔑 id', 'name', 'email', 'role'] },
-    { name: 'tasks', cols: ['🔑 id', 'title', 'status', 'assignee_id'] },
-    { name: 'projects', cols: ['🔑 id', 'name', 'deadline', 'status'] },
-    { name: 'comments', cols: ['🔑 id', 'task_id', 'author_id', 'text'] },
-    { name: 'sprints', cols: ['🔑 id', 'project_id', 'name', 'status'] },
-  ];
-
-  // Translation
   currentLang: string = 'en';
   translatedTitle: string = '';
   translatedDesc: string = '';
   isTranslating: boolean = false;
   pendingLang: string = '';
 
-  // Chat Popup
   selectedChatMember: ChatMember | null = null;
   isGroupChat = false;
 
@@ -144,7 +175,12 @@ export class ProjectInlineComponent implements OnInit, OnChanges {
 
   ngOnInit() {
     const savedLang = this.auth.getUser()?.preferredLanguage || 'en';
+    this.currentLang = savedLang;
     if (savedLang !== 'en') this.pendingLang = savedLang;
+
+    this.detectedOS = detectOS();
+    this.selectedOS = this.detectedOS;
+
     if (this.projectId) this.loadAll(this.projectId);
   }
 
@@ -157,7 +193,15 @@ export class ProjectInlineComponent implements OnInit, OnChanges {
 
   resetData() {
     this.project = null; this.stats = null; this.members = [];
-    this.tasks = []; this.activities = []; this.apiEndpoints = [];
+    this.tasks = []; this.activities = [];
+    this.apiEndpoints = [];
+    this.dbTables = [];
+    this.setupGuide = null;
+    this.setupError = '';
+    this.errorFixState = {};
+    this.gitCommits = [];
+    this.gitCommitsError = '';
+    this.gitRepoInfo = {};
     this.isLoading = true;
     this.showEdit = false; this.showDangerZone = false;
     this.activeTab = 'overview';
@@ -165,7 +209,33 @@ export class ProjectInlineComponent implements OnInit, OnChanges {
     this.cdr.detectChanges();
   }
 
-  // ══ TRANSLATION ═══════════════════════════════
+  setupLabel(key: SetupI18nKey): string {
+    return setupLabel(this.currentLang, key);
+  }
+
+  relativeTime(isoDate: string | undefined | null): string {
+    return formatRelativeTime(this.currentLang, isoDate);
+  }
+
+  osDisplayLabel(os: ProjectOS): string {
+    return osLabel(this.currentLang, os);
+  }
+
+  selectOS(os: ProjectOS) {
+    this.selectedOS = os;
+    this.cdr.detectChanges();
+  }
+
+  isGuideForCurrentOS(): boolean {
+    if (!this.setupGuide?.parsed) return false;
+    const guideOs = this.setupGuide.parsed.os as ProjectOS | undefined;
+    return guideOs === this.selectedOS;
+  }
+
+  getGuideOS(): ProjectOS | null {
+    const guideOs = this.setupGuide?.parsed?.os as ProjectOS | undefined;
+    return guideOs || null;
+  }
 
   switchLang(lang: string) {
     this.currentLang = lang;
@@ -191,8 +261,6 @@ export class ProjectInlineComponent implements OnInit, OnChanges {
     if (this.tasks.length > 0) this.translateTasks(lang);
   }
 
-  // ══ DATA LOADING ══════════════════════════════
-
   loadAll(id: number) {
     const h = { headers: this.auth.getHeaders() };
     this.isLoading = true;
@@ -202,11 +270,15 @@ export class ProjectInlineComponent implements OnInit, OnChanges {
       tasks: this.http.get<any[]>(`${BASE}/tasks/by-project/${id}`, h).pipe(catchError(() => of([]))),
       activities: this.http.get<any[]>(`${BASE}/activity-logs/by-project/${id}`, h).pipe(catchError(() => of([]))),
       clients: this.http.get<any[]>(`${BASE}/clients`, h).pipe(catchError(() => of([]))),
+      apis: this.http.get<any[]>(`${BASE}/project-design/${id}/apis/latest?limit=5`, h).pipe(catchError(() => of([]))),
+      dbTables: this.http.get<any[]>(`${BASE}/project-design/${id}/db-tables/latest?limit=5`, h).pipe(catchError(() => of([]))),
     }).subscribe(res => {
       this.project = res.project;
       this.tasks = res.tasks;
       this.activities = res.activities;
       this.clients = res.clients;
+      this.apiEndpoints = res.apis || [];
+      this.dbTables = res.dbTables || [];
 
       const tasks = res.tasks || [];
       this.stats = {
@@ -217,7 +289,6 @@ export class ProjectInlineComponent implements OnInit, OnChanges {
         teamSize: (res.members || []).length,
       };
 
-      // PM ကို members list မှာ မပါရင် top မှာ ထည့်
       const mList: any[] = res.members || [];
       const pmId: any = res.project?.pmId;
       if (pmId && !mList.some((m: any) => m.userId === pmId)) {
@@ -241,6 +312,8 @@ export class ProjectInlineComponent implements OnInit, OnChanges {
       this.cdr.detectChanges();
       this.loadTechStackAndRules(id);
       this.loadRemovedMembers(id);
+      this.loadSetupGuide(id);
+      this.loadGitCommits(id);
 
       if (this.pendingLang && this.pendingLang !== 'en') {
         this.switchLang(this.pendingLang);
@@ -267,8 +340,6 @@ export class ProjectInlineComponent implements OnInit, OnChanges {
     }
     this.cdr.detectChanges();
   }
-
-  // ══ TECH STACK + RULES ════════════════════════
 
   loadTechStackAndRules(id: number) {
     const h = { headers: this.auth.getHeaders() };
@@ -314,7 +385,368 @@ export class ProjectInlineComponent implements OnInit, OnChanges {
     return m[cat] || '📌';
   }
 
-  // ══ PROJECT EDIT ══════════════════════════════
+  loadSetupGuide(projectId: number) {
+    this.setupLoading = true;
+    const h = { headers: this.auth.getHeaders() };
+    this.http.get<any>(`${BASE}/project-setup/${projectId}`, h).subscribe({
+      next: data => {
+        this.setupGuide = data ? this.parseSetupContent(data) : null;
+        if (this.setupGuide?.parsed?.os) {
+          const guideOs = this.setupGuide.parsed.os as ProjectOS;
+          if (['macos', 'windows', 'linux'].includes(guideOs)) {
+            this.selectedOS = guideOs;
+          }
+        }
+        this.setupLoading = false;
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.setupGuide = null;
+        this.setupLoading = false;
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  private parseSetupContent(raw: any): any {
+    if (!raw) return null;
+    try {
+      const parsed = typeof raw.content === 'string' ? JSON.parse(raw.content) : raw.content;
+      return { ...raw, parsed: parsed || { summary: '', steps: [] } };
+    } catch {
+      return { ...raw, parsed: { summary: '', steps: [] } };
+    }
+  }
+
+  generateSetupGuide() {
+    if (!this.projectId) return;
+    if (!this.techStacks || this.techStacks.length === 0) {
+      this.setupError = this.setupLabel('emptyNoTech');
+      this.cdr.detectChanges();
+      return;
+    }
+    this.setupGenerating = true;
+    this.setupError = '';
+    this.errorFixState = {};
+    this.cdr.detectChanges();
+
+    const h = { headers: this.auth.getHeaders() };
+    const url = `${BASE}/project-setup/${this.projectId}/generate?os=${this.selectedOS}`;
+    this.http.post<any>(url, {}, h).subscribe({
+      next: data => {
+        this.setupGuide = this.parseSetupContent(data);
+        this.setupGenerating = false;
+        this.cdr.detectChanges();
+      },
+      error: err => {
+        this.setupError = err?.error?.error || 'Failed to generate setup guide.';
+        this.setupGenerating = false;
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  copyStepCommands(step: any, index: number) {
+    const text = (step.commands || []).join('\n');
+    if (!navigator.clipboard) return;
+    navigator.clipboard.writeText(text).then(() => {
+      this.copiedStepIndex = index;
+      this.cdr.detectChanges();
+      setTimeout(() => {
+        this.copiedStepIndex = null;
+        this.cdr.detectChanges();
+      }, 1500);
+    });
+  }
+
+  isComment(cmd: string): boolean {
+    return cmd.trim().startsWith('#');
+  }
+
+  // ══════════════════════════════════════════════════════════════════
+  // ✨ GIT COMMITS — Load from GitHub API
+  // ══════════════════════════════════════════════════════════════════
+
+  loadGitCommits(projectId: number) {
+    this.gitCommitsLoading = true;
+    this.gitCommitsError = '';
+    this.gitCommitsErrorCode = '';
+    this.gitCommits = [];
+    this.cdr.detectChanges();
+
+    const h = { headers: this.auth.getHeaders() };
+    this.http.get<GitCommitsResponse>(
+      `${BASE}/project-commits/${projectId}?limit=10`, h
+    ).subscribe({
+      next: data => {
+        if (data.error) {
+          this.gitCommitsErrorCode = data.error;
+          this.gitCommitsError = this.mapCommitsErrorMessage(data.error, data.message);
+          this.gitCommits = [];
+        } else {
+          this.gitCommits = data.commits || [];
+          this.gitRepoInfo = {
+            owner:   data.owner,
+            repo:    data.repo,
+            repoUrl: data.repoUrl,
+            count:   data.count,
+          };
+        }
+        this.gitCommitsLoading = false;
+        this.cdr.detectChanges();
+      },
+      error: err => {
+        this.gitCommitsError = this.setupLabel('gitErrorFetchFailed');
+        this.gitCommitsErrorCode = 'NETWORK_ERROR';
+        this.gitCommitsLoading = false;
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  private mapCommitsErrorMessage(code: string, fallback?: string): string {
+    switch (code) {
+      case 'REPO_NOT_CONFIGURED':    return '';  // Show "link repo" UI instead
+      case 'INVALID_REPO_URL':       return this.setupLabel('gitErrorRepoNotFound');
+      case 'REPO_NOT_FOUND':         return this.setupLabel('gitErrorRepoNotFound');
+      case 'RATE_LIMITED_OR_PRIVATE':return this.setupLabel('gitErrorRateLimited');
+      case 'INVALID_TOKEN':          return this.setupLabel('gitErrorInvalidToken');
+      default:                        return fallback || this.setupLabel('gitErrorFetchFailed');
+    }
+  }
+
+  refreshGitCommits() {
+    if (this.projectId) this.loadGitCommits(this.projectId);
+  }
+
+  openRepoEditor() {
+    this.repoForm = {
+      repoUrl:     this.project?.repoUrl || '',
+      githubToken: '',
+    };
+    this.showRepoEdit = true;
+    this.repoSaveError = '';
+    this.cdr.detectChanges();
+  }
+
+  cancelRepoEdit() {
+    this.showRepoEdit = false;
+    this.repoSaveError = '';
+    this.cdr.detectChanges();
+  }
+
+  saveRepoSettings() {
+    if (!this.repoForm.repoUrl.trim()) {
+      this.repoSaveError = 'Repository URL is required';
+      this.cdr.detectChanges();
+      return;
+    }
+
+    this.isSavingRepo = true;
+    this.repoSaveError = '';
+    this.cdr.detectChanges();
+
+    const h = { headers: this.auth.getHeaders() };
+    const body = {
+      repoUrl:     this.repoForm.repoUrl.trim(),
+      githubToken: this.repoForm.githubToken.trim(),
+    };
+
+    this.http.put<any>(
+      `${BASE}/project-commits/${this.projectId}/repo`, body, h
+    ).subscribe({
+      next: result => {
+        if (this.project) {
+          this.project.repoUrl = result.repoUrl;
+        }
+        this.showRepoEdit = false;
+        this.isSavingRepo = false;
+        this.cdr.detectChanges();
+        this.loadGitCommits(this.projectId);
+      },
+      error: err => {
+        this.repoSaveError = err?.error?.error || 'Failed to save repository settings';
+        this.isSavingRepo = false;
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  openRepoInNewTab() {
+    const url = this.project?.repoUrl;
+    if (url) window.open(url, '_blank', 'noopener,noreferrer');
+  }
+
+  openCommitInNewTab(commit: GitCommit) {
+    if (commit.htmlUrl) window.open(commit.htmlUrl, '_blank', 'noopener,noreferrer');
+  }
+
+  hasRepoConfigured(): boolean {
+    return !!(this.project?.repoUrl && this.project.repoUrl.trim());
+  }
+
+  // ══════════════════════════════════════════════════════════════════
+  // ERROR FIX — Iterative
+  // ══════════════════════════════════════════════════════════════════
+
+  getErrorFix(stepIndex: number) {
+    if (!this.errorFixState[stepIndex]) {
+      this.errorFixState[stepIndex] = {
+        expanded: false,
+        errorInput: '',
+        loading: false,
+        result: null,
+        error: '',
+        copiedCommand: false,
+        attempts: [],
+        showNewErrorInput: false,
+        newErrorInput: '',
+      };
+    }
+    return this.errorFixState[stepIndex];
+  }
+
+  toggleErrorFix(stepIndex: number) {
+    const state = this.getErrorFix(stepIndex);
+    state.expanded = !state.expanded;
+    if (!state.expanded) {
+      state.result = null;
+      state.error = '';
+    }
+    this.cdr.detectChanges();
+  }
+
+  hasReachedMaxAttempts(stepIndex: number): boolean {
+    return this.getErrorFix(stepIndex).attempts.length >= MAX_FIX_ATTEMPTS;
+  }
+
+  fixErrorWithAI(step: any, stepIndex: number) {
+    const state = this.getErrorFix(stepIndex);
+    const errorOutput = state.errorInput.trim();
+
+    if (!errorOutput) {
+      state.error = 'Please paste the error output first';
+      this.cdr.detectChanges();
+      return;
+    }
+
+    this.submitFixRequest(step, stepIndex, errorOutput);
+  }
+
+  retryWithNewError(step: any, stepIndex: number) {
+    const state = this.getErrorFix(stepIndex);
+    const newError = state.newErrorInput.trim();
+
+    if (!newError) {
+      state.error = 'Please paste the new error output';
+      this.cdr.detectChanges();
+      return;
+    }
+
+    if (this.hasReachedMaxAttempts(stepIndex)) {
+      state.error = this.setupLabel('fixMaxAttemptsReached');
+      this.cdr.detectChanges();
+      return;
+    }
+
+    if (state.result) {
+      const attempt: FixAttempt = {
+        suggestedSolution: state.result.solution,
+        triedCommands:     state.result.commands.join('\n'),
+        newError:          newError,
+        timestamp:         Date.now(),
+      };
+      state.attempts.push(attempt);
+    }
+
+    state.showNewErrorInput = false;
+    state.newErrorInput = '';
+
+    this.submitFixRequest(step, stepIndex, newError);
+  }
+
+  private submitFixRequest(step: any, stepIndex: number, errorOutput: string) {
+    const state = this.getErrorFix(stepIndex);
+
+    state.loading = true;
+    state.error = '';
+    state.result = null;
+    this.cdr.detectChanges();
+
+    const commandsContext = (step.commands || [])
+      .filter((c: string) => !this.isComment(c))
+      .join('\n');
+
+    const h = { headers: this.auth.getHeaders() };
+    const url = `${BASE}/project-setup/${this.projectId}/fix-error?os=${this.selectedOS}`;
+    const body = {
+      stepTitle:        step.title || '',
+      command:          commandsContext,
+      errorOutput:      errorOutput,
+      previousAttempts: state.attempts.map(a => ({
+        suggestedSolution: a.suggestedSolution,
+        triedCommands:     a.triedCommands,
+        newError:          a.newError,
+      })),
+    };
+
+    this.http.post<SetupErrorFix>(url, body, h).subscribe({
+      next: result => {
+        state.result = result;
+        state.loading = false;
+        this.cdr.detectChanges();
+      },
+      error: err => {
+        state.error = err?.error?.error || this.setupLabel('fixErrorFailed');
+        state.loading = false;
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  copyFixCommands(stepIndex: number) {
+    const state = this.getErrorFix(stepIndex);
+    if (!state.result?.commands?.length) return;
+    const text = state.result.commands.join('\n');
+    if (!navigator.clipboard) return;
+    navigator.clipboard.writeText(text).then(() => {
+      state.copiedCommand = true;
+      this.cdr.detectChanges();
+      setTimeout(() => {
+        state.copiedCommand = false;
+        this.cdr.detectChanges();
+      }, 1500);
+    });
+  }
+
+  markAsDidNotWork(stepIndex: number) {
+    const state = this.getErrorFix(stepIndex);
+    state.showNewErrorInput = true;
+    state.newErrorInput = '';
+    state.error = '';
+    this.cdr.detectChanges();
+  }
+
+  cancelRetry(stepIndex: number) {
+    const state = this.getErrorFix(stepIndex);
+    state.showNewErrorInput = false;
+    state.newErrorInput = '';
+    this.cdr.detectChanges();
+  }
+
+  dismissErrorFix(stepIndex: number) {
+    const state = this.getErrorFix(stepIndex);
+    state.expanded = false;
+    state.result = null;
+    state.errorInput = '';
+    state.error = '';
+    state.attempts = [];
+    state.showNewErrorInput = false;
+    state.newErrorInput = '';
+    this.cdr.detectChanges();
+  }
+
+  // ══ Rest of the component (unchanged) ═══════════════════════════
 
   initEditForm() {
     if (!this.project) return;
@@ -376,8 +808,6 @@ export class ProjectInlineComponent implements OnInit, OnChanges {
     });
   }
 
-  // ══ PERMISSIONS ═══════════════════════════════
-
   getRole(): string { return this.auth.getUser()?.role || this.auth.getUser()?.roleName || ''; }
 
   canEdit(): boolean {
@@ -401,7 +831,10 @@ export class ProjectInlineComponent implements OnInit, OnChanges {
     return false;
   }
 
-  // ══ COMPUTED ══════════════════════════════════
+  canAccessSetup(): boolean {
+    const r = this.getRole();
+    return ['BOSS', 'VICE_PRESIDENT', 'COUNTRY_DIRECTOR', 'PROJECT_MANAGER'].includes(r);
+  }
 
   get statsCards() {
     return [
@@ -426,7 +859,6 @@ export class ProjectInlineComponent implements OnInit, OnChanges {
 
   get doneCount(): number { return this.tasks.filter(t => t.status === 'DONE').length; }
   get inProgressCount(): number { return this.tasks.filter(t => t.status === 'IN_PROGRESS').length; }
-
   getTasksByStatus(status: string): any[] { return this.tasks.filter(t => t.status === status); }
 
   getClientName(): string {
@@ -521,7 +953,26 @@ export class ProjectInlineComponent implements OnInit, OnChanges {
     return m[action] || action;
   }
 
-  // ══ CHAT POPUP ════════════════════════════════
+  parseDbColumns(columnsStr: string): string[] {
+    if (!columnsStr) return [];
+    try {
+      const parsed = JSON.parse(columnsStr);
+      if (Array.isArray(parsed)) {
+        return parsed.slice(0, 4).map((c: any) => {
+          const name = c.name || c.column_name || '';
+          const isPk = name === 'id' || (c.key || '').toUpperCase().includes('PK');
+          return isPk ? `🔑 ${name}` : name;
+        });
+      }
+    } catch {}
+    return columnsStr.split(',').slice(0, 4).map(part => {
+      const trimmed = part.trim();
+      const tokens = trimmed.split(/\s+/);
+      const name = tokens[0] || '';
+      const isPk = name === 'id' || trimmed.toUpperCase().includes('PK');
+      return isPk ? `🔑 ${name}` : name;
+    });
+  }
 
   openMemberChat(m: any) {
     this.selectedChatMember = {
@@ -548,8 +999,6 @@ export class ProjectInlineComponent implements OnInit, OnChanges {
 
   closeChatPopup() { this.selectedChatMember = null; this.isGroupChat = false; }
 
-  // ══ TECH STACK EDIT ═══════════════════════════
-
   addTechStack() {
     const name = this.newTechName.trim();
     if (!name) return;
@@ -570,8 +1019,6 @@ export class ProjectInlineComponent implements OnInit, OnChanges {
       error: () => { }
     });
   }
-
-  // ══ MEMBER EDIT ════════════════════════════════
 
   loadStaffList() {
     if (this.staffList.length > 0) { this.filterStaff(); return; }
@@ -614,7 +1061,6 @@ export class ProjectInlineComponent implements OnInit, OnChanges {
     const role = this.mapRoleInProject(staff.roleDto?.name || staff.roleName || staff.role || 'DEVELOPER');
     this.http.post<any>(`${BASE}/projects/${this.projectId}/members`, { userId: staff.id, roleInProject: role }, h).subscribe({
       next: () => {
-        // Backend ကနေ reload — displayName ပါပြီး return ဖြစ်မည်
         this.http.get<any[]>(`${BASE}/projects/${this.projectId}/members`, h).subscribe({
           next: m => { this.members = m || []; this.cdr.detectChanges(); },
           error: () => { }
@@ -664,7 +1110,6 @@ export class ProjectInlineComponent implements OnInit, OnChanges {
       { userId, roleInProject: roleInProject || 'DEVELOPER' }, h
     ).subscribe({
       next: () => {
-        // Active + Removed lists reload
         this.http.get<any[]>(`${BASE}/projects/${this.projectId}/members`, h).subscribe({
           next: data => { this.members = data || []; this.cdr.detectChanges(); },
           error: () => { }
@@ -677,8 +1122,6 @@ export class ProjectInlineComponent implements OnInit, OnChanges {
       error: () => { }
     });
   }
-
-  // ══ RULE EDIT ══════════════════════════════════
 
   startEditRule(rule: any) {
     this.editingRuleId = Number(rule.id);
@@ -731,19 +1174,11 @@ export class ProjectInlineComponent implements OnInit, OnChanges {
     });
   }
 
-  // ══ MEMBER SORT ════════════════════════════════
-
   getRoleOrder(roleInProject: string): number {
     const order: Record<string, number> = {
-      'COUNTRY_DIRECTOR': 1,
-      'VICE_PRESIDENT': 2,
-      'ADMIN': 3,
-      'PROJECT_MANAGER': 4,
-      'LEADER': 5,
-      'UI_UX': 6,
-      'DEVELOPER': 7,
-      'QA': 8,
-      'CUSTOMER': 9,
+      'COUNTRY_DIRECTOR': 1, 'VICE_PRESIDENT': 2, 'ADMIN': 3,
+      'PROJECT_MANAGER': 4, 'LEADER': 5, 'UI_UX': 6,
+      'DEVELOPER': 7, 'QA': 8, 'CUSTOMER': 9,
     };
     return order[roleInProject] ?? 99;
   }
@@ -764,10 +1199,7 @@ export class ProjectInlineComponent implements OnInit, OnChanges {
     ).length;
   }
 
-  // Group Chat count — DR + VP + Team Members (ADMIN မပါ)
   getGroupChatCount(): number {
-    return this.members.filter(m =>
-      m.roleInProject !== 'ADMIN'
-    ).length;
+    return this.members.filter(m => m.roleInProject !== 'ADMIN').length;
   }
 }
