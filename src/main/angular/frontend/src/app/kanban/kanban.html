@@ -97,11 +97,9 @@
         gap:12px;padding:14px 20px;align-items:flex-start;">
 
       <div *ngFor="let col of columns; let ci = index"
-          style="flex-shrink:0;display:flex;flex-direction:column;border-radius:12px;height:100%;"
-          [style.width]="colWidth"
-          [style.minWidth]="colMinWidth"
-          [style.background]="isDark ? '#0d1424' : '#f8fafc'"
-          [style.border]="isDark ? '1px solid #1e2d4a' : '1px solid #e2e8f0'">
+        style="flex-shrink:0;display:flex;flex-direction:column;border-radius:12px;height:100%;"
+        [style.width]="colWidth" [style.minWidth]="colMinWidth" [style.background]="isDark ? '#0d1424' : '#f8fafc'"
+        [style.border]="isDark ? '1px solid #1e2d4a' : '1px solid #e2e8f0'">
 
         <!-- Column Header -->
         <div style="padding:12px 14px 8px;display:flex;align-items:center;
@@ -133,8 +131,7 @@
 
           <!-- Task Card -->
           <div *ngFor="let task of getTasksByStatus(col.status)" cdkDrag [cdkDragData]="task"
-            cdkDragPreviewContainer="parent"
-            (click)="onTaskClick(task, $event)" style="border-radius:10px;padding:10px 12px;cursor:grab;
+            cdkDragPreviewContainer="parent" (click)="onTaskClick(task, $event)" style="border-radius:10px;padding:10px 12px;cursor:grab;
               transition:all 0.15s;position:relative;border:1px solid;"
             [style.background]="isDark ? '#131929' : 'white'" [style.borderColor]="isDark ? '#1e2d4a' : '#e2e8f0'"
             [style.borderLeftWidth]="'3px'" [style.borderLeftColor]="getPriorityColor(task.priority)"
@@ -145,14 +142,14 @@
                 height:80px;"></div>
 
             <ng-template cdkDragPreview [matchSize]="true">
-              <div style="border-radius:10px;padding:10px 12px;border:1px solid;border-left:3px solid;box-shadow:0 12px 32px rgba(0,0,0,0.5);opacity:0.95;"
-                [style.background]="isDark ? '#131929' : 'white'"
-                [style.borderColor]="isDark ? '#1e2d4a' : '#e2e8f0'"
+              <div
+                style="border-radius:10px;padding:10px 12px;border:1px solid;border-left:3px solid;box-shadow:0 12px 32px rgba(0,0,0,0.5);opacity:0.95;"
+                [style.background]="isDark ? '#131929' : 'white'" [style.borderColor]="isDark ? '#1e2d4a' : '#e2e8f0'"
                 [style.borderLeftColor]="getPriorityColor(task.priority)">
                 <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">
                   <span style="font-size:8px;font-weight:700;padding:2px 6px;border-radius:20px;"
-                    [style.background]="getPriorityBg(task.priority)"
-                    [style.color]="getPriorityColor(task.priority)">{{ task.priority }}</span>
+                    [style.background]="getPriorityBg(task.priority)" [style.color]="getPriorityColor(task.priority)">{{
+                    task.priority }}</span>
                 </div>
                 <p style="font-size:11px;font-weight:600;line-height:1.4;margin:0;"
                   [style.color]="isDark ? '#e2e8f0' : '#1e293b'">{{ task.title }}</p>
@@ -228,16 +225,14 @@
       </div>
       <div style="display:flex;align-items:center;gap:6px;">
         <!-- Edit button -->
-        <button *ngIf="canAddTask()" (click)="openEditTask()"
-          style="padding:4px 10px;border-radius:7px;border:1px solid var(--color-border,#1e2d4a);
+        <button *ngIf="canAddTask()" (click)="openEditTask()" style="padding:4px 10px;border-radius:7px;border:1px solid var(--color-border,#1e2d4a);
           background:transparent;color:#64748b;font-size:10px;font-weight:600;cursor:pointer;transition:all 0.15s;"
           onmouseenter="this.style.borderColor='#22c55e';this.style.color='#22c55e'"
           onmouseleave="this.style.borderColor='var(--color-border,#1e2d4a)';this.style.color='#64748b'">
           ✏️ Edit
         </button>
         <!-- Delete button -->
-        <button *ngIf="canAddTask()" (click)="confirmDeleteTask()"
-          style="padding:4px 10px;border-radius:7px;border:1px solid #ef444433;
+        <button *ngIf="canAddTask()" (click)="confirmDeleteTask()" style="padding:4px 10px;border-radius:7px;border:1px solid #ef444433;
           background:transparent;color:#ef4444;font-size:10px;font-weight:600;cursor:pointer;transition:all 0.15s;"
           onmouseenter="this.style.background='#ef444411'" onmouseleave="this.style.background='transparent'">
           🗑
@@ -258,7 +253,8 @@
             [style.color]="isDark ? 'white' : '#1e293b'">
             {{ selectedTask?.translatedTitle || selectedTask?.title }}
           </h2>
-          <p *ngIf="selectedTask?.description" style="font-size:11px;opacity:0.55;line-height:1.6;">
+          <p *ngIf="selectedTask?.description"
+            style="font-size:11px;opacity:0.55;line-height:1.6;white-space:pre-wrap;word-break:break-word;">
             {{ selectedTask?.translatedDesc || selectedTask?.description }}
           </p>
         </div>
@@ -270,22 +266,26 @@
           <div style="font-size:11px;font-weight:700;opacity:0.6;margin-bottom:2px;">✏️ Edit Task</div>
 
           <div>
-            <label style="font-size:9px;opacity:0.4;display:block;margin-bottom:4px;letter-spacing:0.5px;">TITLE *</label>
+            <label style="font-size:9px;opacity:0.4;display:block;margin-bottom:4px;letter-spacing:0.5px;">TITLE
+              *</label>
             <input [(ngModel)]="taskEditForm.title" placeholder="Task title..."
               style="width:100%;border-radius:8px;border:1px solid #22c55e66;padding:7px 10px;font-size:12px;outline:none;font-family:inherit;font-weight:600;box-sizing:border-box;"
               [style.background]="isDark ? '#131929' : '#f8fafc'" [style.color]="isDark ? '#e2e8f0' : '#1e293b'">
           </div>
 
           <div>
-            <label style="font-size:9px;opacity:0.4;display:block;margin-bottom:4px;letter-spacing:0.5px;">DESCRIPTION</label>
+            <label
+              style="font-size:9px;opacity:0.4;display:block;margin-bottom:4px;letter-spacing:0.5px;">DESCRIPTION</label>
             <textarea [(ngModel)]="taskEditForm.description" rows="3" placeholder="Description..."
               style="width:100%;border-radius:8px;border:1px solid var(--color-border,#1e2d4a);padding:7px 10px;font-size:11px;outline:none;font-family:inherit;resize:none;box-sizing:border-box;line-height:1.6;"
-              [style.background]="isDark ? '#131929' : '#f8fafc'" [style.color]="isDark ? '#e2e8f0' : '#1e293b'"></textarea>
+              [style.background]="isDark ? '#131929' : '#f8fafc'"
+              [style.color]="isDark ? '#e2e8f0' : '#1e293b'"></textarea>
           </div>
 
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
             <div>
-              <label style="font-size:9px;opacity:0.4;display:block;margin-bottom:4px;letter-spacing:0.5px;">PRIORITY</label>
+              <label
+                style="font-size:9px;opacity:0.4;display:block;margin-bottom:4px;letter-spacing:0.5px;">PRIORITY</label>
               <select [(ngModel)]="taskEditForm.priority"
                 style="width:100%;border-radius:8px;border:1px solid var(--color-border,#1e2d4a);padding:6px 8px;font-size:11px;outline:none;cursor:pointer;"
                 [style.background]="isDark ? '#131929' : '#f8fafc'" [style.color]="isDark ? '#e2e8f0' : '#1e293b'">
@@ -296,24 +296,30 @@
               </select>
             </div>
             <div>
-              <label style="font-size:9px;opacity:0.4;display:block;margin-bottom:4px;letter-spacing:0.5px;">ASSIGNEE</label>
+              <label
+                style="font-size:9px;opacity:0.4;display:block;margin-bottom:4px;letter-spacing:0.5px;">ASSIGNEE</label>
               <select [(ngModel)]="taskEditForm.assigneeId"
                 style="width:100%;border-radius:8px;border:1px solid var(--color-border,#1e2d4a);padding:6px 8px;font-size:11px;outline:none;cursor:pointer;"
                 [style.background]="isDark ? '#131929' : '#f8fafc'" [style.color]="isDark ? '#e2e8f0' : '#1e293b'">
                 <option [ngValue]="null">Unassigned</option>
-                <option *ngFor="let m of members" [ngValue]="m.userId">{{ m.userName || m.name }}</option>
+                <option *ngFor="let m of members" [ngValue]="m.userId">
+                  {{ getMemberLabel(m) }}
+                </option>
               </select>
             </div>
             <div>
-              <label style="font-size:9px;opacity:0.4;display:block;margin-bottom:4px;letter-spacing:0.5px;">DUE DATE</label>
-              <div style="position:relative;cursor:pointer;" (click)="$any(dueDateInput).showPicker ? $any(dueDateInput).showPicker() : dueDateInput.click()">
+              <label style="font-size:9px;opacity:0.4;display:block;margin-bottom:4px;letter-spacing:0.5px;">DUE
+                DATE</label>
+              <div style="position:relative;cursor:pointer;"
+                (click)="$any(dueDateInput).showPicker ? $any(dueDateInput).showPicker() : dueDateInput.click()">
                 <input #dueDateInput type="date" [(ngModel)]="taskEditForm.dueDate"
                   style="width:100%;border-radius:8px;border:1px solid var(--color-border,#1e2d4a);padding:6px 8px;font-size:11px;outline:none;cursor:pointer;box-sizing:border-box;"
                   [style.background]="isDark ? '#131929' : '#f8fafc'" [style.color]="isDark ? '#e2e8f0' : '#1e293b'">
               </div>
             </div>
             <div>
-              <label style="font-size:9px;opacity:0.4;display:block;margin-bottom:4px;letter-spacing:0.5px;">LABEL</label>
+              <label
+                style="font-size:9px;opacity:0.4;display:block;margin-bottom:4px;letter-spacing:0.5px;">LABEL</label>
               <input [(ngModel)]="taskEditForm.label" placeholder="bug, feature..."
                 style="width:100%;border-radius:8px;border:1px solid var(--color-border,#1e2d4a);padding:6px 8px;font-size:11px;outline:none;font-family:inherit;"
                 [style.background]="isDark ? '#131929' : '#f8fafc'" [style.color]="isDark ? '#e2e8f0' : '#1e293b'">
@@ -498,7 +504,8 @@
     </div>
   </div>
 
-  <div *ngIf="showPanel" (click)="closePanel()" style="position:fixed;inset:0;background:rgba(0,0,0,0.3);z-index:499;"></div>
+  <div *ngIf="showPanel" (click)="closePanel()" style="position:fixed;inset:0;background:rgba(0,0,0,0.3);z-index:499;">
+  </div>
 
   <!-- Delete Task Confirm Modal -->
   <div *ngIf="showDeleteConfirm" style="position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:600;
@@ -544,9 +551,8 @@
         <div>
           <label style="font-size:10px;opacity:0.5;display:block;margin-bottom:5px;">TITLE *</label>
           <input [(ngModel)]="newTask.title" placeholder="Task title..." style="width:100%;border-radius:9px;border:1px solid;padding:8px 12px;
-              font-size:12px;outline:none;font-family:inherit;"
-            [style.background]="isDark ? '#131929' : '#f8fafc'" [style.borderColor]="isDark ? '#1e2d4a' : '#e2e8f0'"
-            [style.color]="isDark ? '#e2e8f0' : '#1e293b'">
+              font-size:12px;outline:none;font-family:inherit;" [style.background]="isDark ? '#131929' : '#f8fafc'"
+            [style.borderColor]="isDark ? '#1e2d4a' : '#e2e8f0'" [style.color]="isDark ? '#e2e8f0' : '#1e293b'">
         </div>
         <div>
           <label style="font-size:10px;opacity:0.5;display:block;margin-bottom:5px;">DESCRIPTION</label>
@@ -559,9 +565,8 @@
           <div>
             <label style="font-size:10px;opacity:0.5;display:block;margin-bottom:5px;">PRIORITY</label>
             <select [(ngModel)]="newTask.priority" style="width:100%;border-radius:9px;border:1px solid;padding:8px 10px;
-                font-size:11px;outline:none;cursor:pointer;"
-              [style.background]="isDark ? '#131929' : '#f8fafc'" [style.borderColor]="isDark ? '#1e2d4a' : '#e2e8f0'"
-              [style.color]="isDark ? '#e2e8f0' : '#1e293b'">
+                font-size:11px;outline:none;cursor:pointer;" [style.background]="isDark ? '#131929' : '#f8fafc'"
+              [style.borderColor]="isDark ? '#1e2d4a' : '#e2e8f0'" [style.color]="isDark ? '#e2e8f0' : '#1e293b'">
               <option value="LOW">Low</option>
               <option value="MEDIUM">Medium</option>
               <option value="HIGH">High</option>
@@ -571,9 +576,8 @@
           <div>
             <label style="font-size:10px;opacity:0.5;display:block;margin-bottom:5px;">COLUMN</label>
             <select [(ngModel)]="addingToCol" style="width:100%;border-radius:9px;border:1px solid;padding:8px 10px;
-                font-size:11px;outline:none;cursor:pointer;"
-              [style.background]="isDark ? '#131929' : '#f8fafc'" [style.borderColor]="isDark ? '#1e2d4a' : '#e2e8f0'"
-              [style.color]="isDark ? '#e2e8f0' : '#1e293b'">
+                font-size:11px;outline:none;cursor:pointer;" [style.background]="isDark ? '#131929' : '#f8fafc'"
+              [style.borderColor]="isDark ? '#1e2d4a' : '#e2e8f0'" [style.color]="isDark ? '#e2e8f0' : '#1e293b'">
               <option *ngFor="let col of columns" [value]="col.status">{{ col.label }}</option>
             </select>
           </div>
@@ -582,29 +586,24 @@
           <div>
             <label style="font-size:10px;opacity:0.5;display:block;margin-bottom:5px;">ASSIGNEE</label>
             <select [(ngModel)]="newTask.assigneeId" style="width:100%;border-radius:9px;border:1px solid;padding:8px 10px;
-                font-size:11px;outline:none;cursor:pointer;"
-              [style.background]="isDark ? '#131929' : '#f8fafc'" [style.borderColor]="isDark ? '#1e2d4a' : '#e2e8f0'"
-              [style.color]="isDark ? '#e2e8f0' : '#1e293b'">
+                font-size:11px;outline:none;cursor:pointer;" [style.background]="isDark ? '#131929' : '#f8fafc'"
+              [style.borderColor]="isDark ? '#1e2d4a' : '#e2e8f0'" [style.color]="isDark ? '#e2e8f0' : '#1e293b'">
               <option [ngValue]="null">Unassigned</option>
-              <option *ngFor="let m of members" [ngValue]="m.userId">
-                {{ m.userName || m.name || ('User #' + m.userId) }}
-              </option>
+              <option *ngFor="let m of members" [ngValue]="m.userId">{{ getMemberLabel(m) }}</option>
             </select>
           </div>
           <div>
             <label style="font-size:10px;opacity:0.5;display:block;margin-bottom:5px;">DUE DATE</label>
             <input type="date" [(ngModel)]="newTask.dueDate" style="width:100%;border-radius:9px;border:1px solid;padding:8px 10px;
-                font-size:11px;outline:none;cursor:pointer;"
-              [style.background]="isDark ? '#131929' : '#f8fafc'" [style.borderColor]="isDark ? '#1e2d4a' : '#e2e8f0'"
-              [style.color]="isDark ? '#e2e8f0' : '#1e293b'">
+                font-size:11px;outline:none;cursor:pointer;" [style.background]="isDark ? '#131929' : '#f8fafc'"
+              [style.borderColor]="isDark ? '#1e2d4a' : '#e2e8f0'" [style.color]="isDark ? '#e2e8f0' : '#1e293b'">
           </div>
         </div>
         <div>
           <label style="font-size:10px;opacity:0.5;display:block;margin-bottom:5px;">LABEL</label>
           <input [(ngModel)]="newTask.label" placeholder="bug, feature, urgent..." style="width:100%;border-radius:9px;border:1px solid;padding:8px 12px;
-              font-size:12px;outline:none;font-family:inherit;"
-            [style.background]="isDark ? '#131929' : '#f8fafc'" [style.borderColor]="isDark ? '#1e2d4a' : '#e2e8f0'"
-            [style.color]="isDark ? '#e2e8f0' : '#1e293b'">
+              font-size:12px;outline:none;font-family:inherit;" [style.background]="isDark ? '#131929' : '#f8fafc'"
+            [style.borderColor]="isDark ? '#1e2d4a' : '#e2e8f0'" [style.color]="isDark ? '#e2e8f0' : '#1e293b'">
         </div>
         <div style="display:flex;gap:10px;margin-top:4px;">
           <button (click)="showAddTask=false" style="flex:1;padding:9px;border-radius:9px;border:1px solid;
@@ -635,38 +634,92 @@
       <path d="M40 82 C40 82 50 35 62 15 C64 42 58 65 40 82Z" fill="#16a34a" />
       <path d="M60 80 C60 80 70 48 80 32 C82 52 78 68 60 80Z" fill="#22c55e" />
       <path d="M78 76 C78 76 84 58 90 48 C91 62 88 72 78 76Z" fill="#4ade80" />
-      <path d="M5 82 Q30 88 50 86 Q70 84 95 80" stroke="#22c55e" stroke-width="2.5" fill="none" stroke-linecap="round" opacity="0.6" />
+      <path d="M5 82 Q30 88 50 86 Q70 84 95 80" stroke="#22c55e" stroke-width="2.5" fill="none" stroke-linecap="round"
+        opacity="0.6" />
     </svg>
   </div>
-  <div style="margin-top:16px;font-size:13px;font-weight:600;color:#22c55e;letter-spacing:1px;animation:pulse 1.2s ease-in-out infinite;">Translating...</div>
+  <div
+    style="margin-top:16px;font-size:13px;font-weight:600;color:#22c55e;letter-spacing:1px;animation:pulse 1.2s ease-in-out infinite;">
+    Translating...</div>
   <div style="margin-top:6px;font-size:10px;opacity:0.4;">Powered by Claude AI</div>
 </div>
 
 <style>
-  @keyframes sailFloat { 0%,100% { transform:translateY(0px) rotate(-1deg); } 50% { transform:translateY(-10px) rotate(1deg); } }
-  @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.4; } }
-  @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
-  @keyframes spin { to { transform:rotate(360deg); } }
-  @keyframes slideInRight { from { transform:translateX(100%);opacity:0; } to { transform:translateX(0);opacity:1; } }
+  @keyframes sailFloat {
+
+    0%,
+    100% {
+      transform: translateY(0px) rotate(-1deg);
+    }
+
+    50% {
+      transform: translateY(-10px) rotate(1deg);
+    }
+  }
+
+  @keyframes pulse {
+
+    0%,
+    100% {
+      opacity: 1;
+    }
+
+    50% {
+      opacity: 0.4;
+    }
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  @keyframes slideInRight {
+    from {
+      transform: translateX(100%);
+      opacity: 0;
+    }
+
+    to {
+      transform: translateX(0);
+      opacity: 1;
+    }
+  }
+
   .cdk-drag-preview {
-    border-radius:10px;
-    box-shadow:0 12px 32px rgba(0,0,0,0.5);
-    opacity:0.95;
+    border-radius: 10px;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
+    opacity: 0.95;
     /* left corner animation fix */
     transform-origin: 0 0 !important;
     pointer-events: none;
   }
+
   .cdk-drag-animating {
-    transition: transform 250ms cubic-bezier(0,0,0.2,1) !important;
+    transition: transform 250ms cubic-bezier(0, 0, 0.2, 1) !important;
   }
+
   .cdk-drop-list-dragging .cdk-drag:not(.cdk-drag-placeholder) {
-    transition: transform 250ms cubic-bezier(0,0,0.2,1) !important;
+    transition: transform 250ms cubic-bezier(0, 0, 0.2, 1) !important;
   }
+
   .cdk-drag-placeholder {
     opacity: 0.15 !important;
   }
+
   .cdk-drop-list-receiving {
-    background: rgba(34,197,94,0.04) !important;
-    border-color: rgba(34,197,94,0.2) !important;
+    background: rgba(34, 197, 94, 0.04) !important;
+    border-color: rgba(34, 197, 94, 0.2) !important;
   }
 </style>

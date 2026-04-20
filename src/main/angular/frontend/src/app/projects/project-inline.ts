@@ -120,9 +120,9 @@ export class ProjectInlineComponent implements OnInit, OnChanges {
   detectedOS: ProjectOS = 'macos';
 
   osOptions: Array<{ value: ProjectOS; labelKey: SetupI18nKey }> = [
-    { value: 'macos',   labelKey: 'osMacos'   },
+    { value: 'macos', labelKey: 'osMacos' },
     { value: 'windows', labelKey: 'osWindows' },
-    { value: 'linux',   labelKey: 'osLinux'   },
+    { value: 'linux', labelKey: 'osLinux' },
   ];
 
   errorFixState: {
@@ -475,10 +475,10 @@ export class ProjectInlineComponent implements OnInit, OnChanges {
         } else {
           this.gitCommits = data.commits || [];
           this.gitRepoInfo = {
-            owner:   data.owner,
-            repo:    data.repo,
+            owner: data.owner,
+            repo: data.repo,
             repoUrl: data.repoUrl,
-            count:   data.count,
+            count: data.count,
           };
         }
         this.gitCommitsLoading = false;
@@ -495,12 +495,12 @@ export class ProjectInlineComponent implements OnInit, OnChanges {
 
   private mapCommitsErrorMessage(code: string, fallback?: string): string {
     switch (code) {
-      case 'NO_REPO':          return this.setupLabel('gitEmptyNoRepo');
-      case 'REPO_NOT_FOUND':   return this.setupLabel('gitErrorRepoNotFound');
-      case 'UNAUTHORIZED':     return this.setupLabel('gitErrorInvalidToken');
-      case 'RATE_LIMITED':     return this.setupLabel('gitErrorRateLimited');
-      case 'NETWORK_ERROR':    return this.setupLabel('gitErrorFetchFailed');
-      default:                 return fallback || this.setupLabel('gitErrorFetchFailed');
+      case 'NO_REPO': return this.setupLabel('gitEmptyNoRepo');
+      case 'REPO_NOT_FOUND': return this.setupLabel('gitErrorRepoNotFound');
+      case 'UNAUTHORIZED': return this.setupLabel('gitErrorInvalidToken');
+      case 'RATE_LIMITED': return this.setupLabel('gitErrorRateLimited');
+      case 'NETWORK_ERROR': return this.setupLabel('gitErrorFetchFailed');
+      default: return fallback || this.setupLabel('gitErrorFetchFailed');
     }
   }
 
@@ -669,8 +669,8 @@ export class ProjectInlineComponent implements OnInit, OnChanges {
     const url = `${BASE}/project-setup/${this.projectId}/fix-error`;
     const body = {
       stepIndex,
-      stepTitle:  step.title,
-      commands:   step.commands,
+      stepTitle: step.title,
+      commands: step.commands,
       errorOutput,
       previousAttempts: state.attempts,
     };
@@ -696,9 +696,9 @@ export class ProjectInlineComponent implements OnInit, OnChanges {
     if (!state.result) return;
     state.attempts.push({
       suggestedSolution: state.result.solution,
-      triedCommands:     (state.result.commands || []).join('\n'),
-      newError:          state.errorInput || state.newErrorInput,
-      timestamp:         Date.now(),
+      triedCommands: (state.result.commands || []).join('\n'),
+      newError: state.errorInput || state.newErrorInput,
+      timestamp: Date.now(),
     });
     state.result = null;
     state.showNewErrorInput = true;
@@ -832,8 +832,9 @@ export class ProjectInlineComponent implements OnInit, OnChanges {
   }
 
   canAccessSetup(): boolean {
-    const r = this.getRole();
-    return ['BOSS', 'VICE_PRESIDENT', 'COUNTRY_DIRECTOR', 'PROJECT_MANAGER'].includes(r);
+    // const r = this.getRole();
+    // return ['BOSS', 'VICE_PRESIDENT', 'COUNTRY_DIRECTOR', 'PROJECT_MANAGER'].includes(r);
+    return true;
   }
 
   // ══════════════════════════════════════════════════════════════════
@@ -864,6 +865,67 @@ export class ProjectInlineComponent implements OnInit, OnChanges {
   get doneCount(): number { return this.tasks.filter(t => t.status === 'DONE').length; }
   get inProgressCount(): number { return this.tasks.filter(t => t.status === 'IN_PROGRESS').length; }
   getTasksByStatus(status: string): any[] { return this.tasks.filter(t => t.status === status); }
+
+  // ═══════════════════════════════════════════════════
+  // Board Preview — mini task cards helpers
+  // ═══════════════════════════════════════════════════
+  getTopTasksByStatus(status: string, limit: number = 2): any[] {
+    const priorityOrder: any = { CRITICAL: 0, HIGH: 1, MEDIUM: 2, LOW: 3 };
+    return this.tasks
+      .filter(t => t.status === status)
+      .sort((a, b) => {
+        const pa = priorityOrder[a.priority] ?? 99;
+        const pb = priorityOrder[b.priority] ?? 99;
+        if (pa !== pb) return pa - pb;
+        // Same priority — sort by due date (soonest first)
+        if (a.dueDate && b.dueDate) return a.dueDate.localeCompare(b.dueDate);
+        if (a.dueDate) return -1;
+        if (b.dueDate) return 1;
+        return 0;
+      })
+      .slice(0, limit);
+  }
+
+  getMoreCount(status: string, shown: number = 2): number {
+    const total = this.tasks.filter(t => t.status === status).length;
+    return Math.max(0, total - shown);
+  }
+
+  getAssigneeInitial(userId: number): string {
+    if (!userId) return '?';
+    const m = this.members.find(mem => Number(mem.userId) === Number(userId));
+    return (m?.userName || m?.name || '?')[0]?.toUpperCase() || '?';
+  }
+
+  getAssigneeColor(userId: number): string {
+    if (!userId) return '#475569';
+    const colors = ['#6366f1', '#3b82f6', '#22c55e', '#f59e0b', '#a855f7', '#ec4899', '#14b8a6', '#f97316'];
+    return colors[Number(userId) % colors.length];
+  }
+
+  // ⭐ NEW: Get full member name for tooltip (userId → name)
+  getMemberName(userId: number): string {
+    if (!userId) return 'Unassigned';
+    const m = this.members.find(mem => Number(mem.userId) === Number(userId));
+    return m?.userName || m?.name || `User #${userId}`;
+  }
+
+  formatShortDate(date: string): string {
+    if (!date) return '';
+    const d = new Date(date);
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    return `${months[d.getMonth()]} ${d.getDate()}`;
+  }
+
+  getTaskPriorityColor(priority: string): string {
+    const map: any = {
+      CRITICAL: '#dc2626',
+      HIGH: '#ef4444',
+      MEDIUM: '#f59e0b',
+      LOW: '#64748b',
+    };
+    return map[priority] || '#64748b';
+  }
 
   getClientName(): string {
     if (!this.project?.clientId) return '—';
@@ -968,7 +1030,7 @@ export class ProjectInlineComponent implements OnInit, OnChanges {
           return isPk ? `🔑 ${name}` : name;
         });
       }
-    } catch {}
+    } catch { }
     return columnsStr.split(',').slice(0, 4).map(part => {
       const trimmed = part.trim();
       const tokens = trimmed.split(/\s+/);
@@ -1040,31 +1102,72 @@ export class ProjectInlineComponent implements OnInit, OnChanges {
     if (this.staffList.length > 0) { this.filterStaff(); return; }
     this.staffListLoading = true;
     const h = { headers: this.auth.getHeaders() };
-    this.http.get<any[]>(`${BASE}/users/staff-list`, h).subscribe({
+    // Use /all-staff for company-wide list (cross-branch)
+    this.http.get<any[]>(`${BASE}/users/all-staff`, h).subscribe({
       next: users => {
-        const exclude = ['BOSS', 'COUNTRY_DIRECTOR', 'CUSTOMER', 'ADMIN'];
+        // Only exclude CUSTOMER — allow all other roles (BOSS, DIRECTOR, ADMIN can be project members too)
+        const exclude = ['CUSTOMER'];
         const myId = this.auth.getUser()?.id || this.auth.getUser()?.userId;
-        this.staffList = users.filter(u => {
-          const r = u.roleName || u.role || '';
+        this.staffList = (users || []).filter(u => {
+          const r = u.roleDto?.name || u.roleName || u.role || '';
           return !exclude.includes(r) && u.isActive !== false && u.id !== myId;
         });
+        console.log('[project-inline] all-staff loaded:', this.staffList.length);
         this.staffListLoading = false;
         this.filterStaff();
         this.cdr.detectChanges();
       },
-      error: () => { this.staffListLoading = false; this.cdr.detectChanges(); }
+      error: (err) => {
+        console.error('[project-inline] all-staff error:', err);
+        this.staffListLoading = false;
+        this.cdr.detectChanges();
+      }
     });
   }
 
   filterStaff() {
     const q = this.memberSearchQuery.trim().toLowerCase();
-    this.filteredStaff = q
-      ? this.staffList.filter(s => {
-          const role = s.roleDto?.name || s.roleName || s.role || '';
-          return (s.name || '').toLowerCase().includes(q) || role.toLowerCase().includes(q);
-        })
-      : this.staffList;
+    if (!q) {
+      this.filteredStaff = this.staffList;
+      this.cdr.detectChanges();
+      return;
+    }
+
+    // Build multiple searchable role variants for each staff
+    this.filteredStaff = this.staffList.filter(s => {
+      const rawRole = s.roleDto?.name || s.roleName || s.role || '';
+      const displayRole = this.getRoleDisplayName(rawRole);
+
+      // Normalize: "UI_UX" → ["ui_ux", "ui/ux", "ui ux", "uiux", "ui/ux designer"]
+      const variants = [
+        rawRole.toLowerCase(),                    // "ui_ux"
+        rawRole.toLowerCase().replace(/_/g, '/'), // "ui/ux"
+        rawRole.toLowerCase().replace(/_/g, ' '), // "ui ux"
+        rawRole.toLowerCase().replace(/_/g, ''),  // "uiux"
+        displayRole.toLowerCase(),                // "ui/ux designer"
+      ];
+
+      const name = (s.name || '').toLowerCase();
+      return name.includes(q) || variants.some(v => v.includes(q));
+    });
     this.cdr.detectChanges();
+  }
+
+  // Helper — role code ကို display name ပြောင်းပေးတဲ့ method
+  getRoleDisplayName(role: string): string {
+    const map: any = {
+      PROJECT_MANAGER: 'Project Manager',
+      LEADER: 'Leader',
+      UI_UX: 'UI/UX Designer',
+      DEVELOPER: 'Developer',
+      QA: 'QA Engineer',
+      VICE_PRESIDENT: 'Vice President',
+      COUNTRY_DIRECTOR: 'Country Director',
+      ADMIN: 'Admin',
+      BOSS: 'CEO',
+      CUSTOMER: 'Customer',
+    };
+    return map[role] || role || '';
   }
 
   isAlreadyMember(userId: number): boolean {

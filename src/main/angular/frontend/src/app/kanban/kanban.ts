@@ -331,6 +331,35 @@ export class Kanban implements OnInit {
   getMemberName(userId: number): string { const m = this.members.find(m => m.userId === userId); return m?.userName || `#${userId}`; }
   getMemberInitial(userId: number): string { return this.getMemberName(userId)[0]?.toUpperCase() || '?'; }
   getMemberColor(userId: number): string { const c = ['#6366f1','#3b82f6','#22c55e','#f59e0b','#a855f7','#ec4899']; return c[userId % c.length]; }
+
+  // ═══════════════════════════════════════════════════
+  // Member display with role — for dropdown options
+  // "Phyo Naing Htun — Developer"
+  // ═══════════════════════════════════════════════════
+  getMemberLabel(m: any): string {
+    const name = m.userName || m.name || `User #${m.userId}`;
+    const role = m.displayName || this.getRoleDisplayName(m.roleInProject) || '';
+    return role ? `${name} — ${role}` : name;
+  }
+
+  // Role code → display name
+  getRoleDisplayName(role: string): string {
+    if (!role) return '';
+    const map: any = {
+      PROJECT_MANAGER:  'Project Manager',
+      LEADER:           'Leader',
+      UI_UX:            'UI/UX Designer',
+      DEVELOPER:        'Developer',
+      QA:               'QA Engineer',
+      VICE_PRESIDENT:   'Vice President',
+      COUNTRY_DIRECTOR: 'Country Director',
+      ADMIN:            'Admin',
+      BOSS:             'CEO',
+      CUSTOMER:         'Customer',
+    };
+    return map[role] || role;
+  }
+
   isOverdue(task: any): boolean { if (!task?.dueDate) return false; return new Date(task.dueDate) < new Date() && task.status !== 'DONE'; }
   getCommentInitial(c: any): string { return (c.userName || c.userId || 'U').toString()[0].toUpperCase(); }
   getCommentColor(c: any): string { const colors = ['#6366f1','#3b82f6','#22c55e','#f59e0b','#a855f7']; const id = typeof c.userId === 'number' ? c.userId : 0; return colors[id % colors.length]; }

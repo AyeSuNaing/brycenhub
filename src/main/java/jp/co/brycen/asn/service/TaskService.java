@@ -65,7 +65,9 @@ public class TaskService {
         task.setReporterId(createdBy);                     // ← reporterId
         task.setDueDate(request.getDueDate());
         task.setEstimatedHours(request.getEstimatedHours());
-        task.setStatus("TODO");
+        task.setStatus(request.getStatus() != null && !request.getStatus().isBlank()
+        	    ? request.getStatus()
+        	    : "TODO");
         task.setPosition(0);
         return taskRepository.save(task);
     }

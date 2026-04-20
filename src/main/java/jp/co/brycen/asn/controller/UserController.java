@@ -208,5 +208,14 @@ public class UserController {
 		}
 	}
 
+	// ============================================================
+	// GET /api/users/all-staff
+	// Company-wide staff list (cross-branch) — for project member add
+	// ============================================================
+	@GetMapping("/all-staff")
+	@PreAuthorize("hasAnyRole('BOSS', 'COUNTRY_DIRECTOR', 'ADMIN', 'PROJECT_MANAGER', 'VICE_PRESIDENT')")
+	public ResponseEntity<List<UserDto.UserResponse>> getAllStaff() {
+	    return ResponseEntity.ok(userService.getAllStaffAsResponse());
+	}
 
 }

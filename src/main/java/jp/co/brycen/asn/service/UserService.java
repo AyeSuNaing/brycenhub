@@ -64,46 +64,66 @@ public class UserService {
 		        ? userRepository.findStaffByBranchIdAndRoleIdNot(branchId, 10L)
 		        : userRepository.findAll();
 
-		return users.stream().map(u -> {
-			UserDto.UserResponse r = new UserDto.UserResponse();
-			r.setId(u.getId());
-			r.setName(u.getName());
-			r.setEmail(u.getEmail());
-			r.setBranchId(u.getBranchId());
-			r.setIsActive(u.getIsActive());
-			r.setPreferredLanguage(u.getPreferredLanguage());
-			r.setProfileImage(u.getProfileImage());
-			r.setPhone(u.getPhone());
-			r.setLastSeen(u.getLastSeen());
-			r.setRoleId(u.getRoleId());
+		return users.stream().map(this::mapToUserResponse).collect(Collectors.toList());
+	}
 
-			// departments join
-			if (u.getDepartmentId() != null) {
-				departmentRepository.findById(u.getDepartmentId()).ifPresent(dept -> {
-					r.setDepartmentId(dept.getId());
-					r.setDepartmentName(dept.getName());
-				});
-			}
+	// ============================================================
+	// GET ALL STAFF — company-wide (cross-branch)
+	// Used by: Project member add UI
+	// Excludes: CLIENT role (role_id = 10)
+	// ============================================================
+	public List<UserDto.UserResponse> getAllStaffAsResponse() {
+		List<User> users = userRepository.findAll().stream()
+				.filter(u -> u.getRoleId() == null || !Long.valueOf(10L).equals(u.getRoleId()))
+				.filter(u -> Boolean.TRUE.equals(u.getIsActive()))
+				.collect(Collectors.toList());
 
-			// user_roles join
-			if (u.getRoleId() != null) {
-				userRoleRepository.findById(u.getRoleId()).ifPresent(role -> {
-					r.setRoleName(role.getName());
-					r.setRoleDisplayName(role.getDisplayName());
-					r.setRoleColor(role.getColor());
-				});
-			}
+		return users.stream().map(this::mapToUserResponse).collect(Collectors.toList());
+	}
 
-			// member_skills join — top 3 EN standard
-			List<String> skills = memberSkillRepository.findByUserId(u.getId()).stream().limit(3)
-					.map(MemberSkill::getSkillNameEn).collect(Collectors.toList());
-			r.setSkills(skills.isEmpty() ? null : skills);
+	// ============================================================
+	// PRIVATE HELPER — User → UserResponse mapping
+	// (shared by getUsersByBranchAsResponse + getAllStaffAsResponse)
+	// ============================================================
+	private UserDto.UserResponse mapToUserResponse(User u) {
+		UserDto.UserResponse r = new UserDto.UserResponse();
+		r.setId(u.getId());
+		r.setName(u.getName());
+		r.setEmail(u.getEmail());
+		r.setBranchId(u.getBranchId());
+		r.setIsActive(u.getIsActive());
+		r.setPreferredLanguage(u.getPreferredLanguage());
+		r.setProfileImage(u.getProfileImage());
+		r.setPhone(u.getPhone());
+		r.setLastSeen(u.getLastSeen());
+		r.setRoleId(u.getRoleId());
 
-			// cvAnalyzed — skills ရှိရင် true
-			r.setCvAnalyzed(!skills.isEmpty());
+		// departments join
+		if (u.getDepartmentId() != null) {
+			departmentRepository.findById(u.getDepartmentId()).ifPresent(dept -> {
+				r.setDepartmentId(dept.getId());
+				r.setDepartmentName(dept.getName());
+			});
+		}
 
-			return r;
-		}).collect(Collectors.toList());
+		// user_roles join
+		if (u.getRoleId() != null) {
+			userRoleRepository.findById(u.getRoleId()).ifPresent(role -> {
+				r.setRoleName(role.getName());
+				r.setRoleDisplayName(role.getDisplayName());
+				r.setRoleColor(role.getColor());
+			});
+		}
+
+		// member_skills join — top 3 EN standard
+		List<String> skills = memberSkillRepository.findByUserId(u.getId()).stream().limit(3)
+				.map(MemberSkill::getSkillNameEn).collect(Collectors.toList());
+		r.setSkills(skills.isEmpty() ? null : skills);
+
+		// cvAnalyzed — skills ရှိရင် true
+		r.setCvAnalyzed(!skills.isEmpty());
+
+		return r;
 	}
 
 	// ============================================================
@@ -288,4 +308,5 @@ public class UserService {
         return dto;
     }
 
+    
 }

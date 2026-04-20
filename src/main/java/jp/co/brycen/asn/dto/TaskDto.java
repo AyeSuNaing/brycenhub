@@ -7,24 +7,25 @@ import java.time.LocalDate;
 
 public class TaskDto {
 
-    @Data
-    public static class CreateTaskRequest {
-        @NotBlank(message = "Title is required")
-        private String title;
+	@Data
+	public static class CreateTaskRequest {
+	    @NotBlank(message = "Title is required")
+	    private String title;
 
-        private String description;
+	    private String description;
 
-        @NotNull(message = "Project ID is required")
-        private Long projectId;
+	    @NotNull(message = "Project ID is required")
+	    private Long projectId;
 
-        private Long sprintId;
-        private Long parentTaskId;
-        private String priority = "MEDIUM";
-        private String label;
-        private Long assigneeId;       // ← assignee_id
-        private LocalDate dueDate;
-        private Double estimatedHours;
-    }
+	    private Long sprintId;
+	    private Long parentTaskId;
+	    private String priority = "MEDIUM";
+	    private String label;
+	    private Long assigneeId;       // ← assignee_id
+	    private LocalDate dueDate;
+	    private Double estimatedHours;
+	    private String status;         // ← NEW: ADD THIS LINE
+	}
 
     @Data
     public static class UpdateTaskRequest {
