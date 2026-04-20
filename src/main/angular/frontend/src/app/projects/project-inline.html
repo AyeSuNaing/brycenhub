@@ -236,8 +236,14 @@
         <div style="display:flex;flex-direction:column;gap:8px;">
           <div *ngFor="let act of activities.slice(0,6)" style="display:flex;align-items:flex-start;gap:8px;">
             <div style="width:24px;height:24px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:white;background:linear-gradient(135deg,#14532d,#16a34a);">{{ (act.userName || 'U')[0].toUpperCase() }}</div>
-            <div style="flex:1;">
-              <div class="act-text"><strong>{{ act.userName || 'User' }}</strong> {{ getActionText(act.action) }}<span *ngIf="act.newValue" style="opacity:0.5;"> → {{ act.newValue }}</span></div>
+            <div style="flex:1;min-width:0;">
+              <div class="act-text">
+                <strong>{{ act.userName || 'User' }}</strong>
+                {{ getActionText(act.action) }}
+                <span *ngIf="act.targetName" style="color:#22c55e;font-weight:600;"> "{{ act.targetName }}"</span>
+                <span *ngIf="act.newValue && act.action !== 'COMMENTED'" style="opacity:0.5;"> → {{ act.newValue }}</span>
+                <span *ngIf="act.action === 'COMMENTED' && act.newValue" style="opacity:0.5;font-style:italic;"> — "{{ act.newValue | slice:0:40 }}{{ act.newValue.length > 40 ? '…' : '' }}"</span>
+              </div>
               <div class="act-time">{{ act.createdAt | date:'MMM d, h:mm a' }}</div>
             </div>
             <span style="font-size:13px;">{{ getActionIcon(act.action) }}</span>
@@ -258,8 +264,8 @@
               [style.border]="'1px solid ' + getStatusColor2(project.status) + '44'">
               ● {{ project.status }}
             </span>
-            <!-- Edit button — canEdit() role check handles VP/PM/Director/Boss permission -->
-            <button *ngIf="canEdit()"
+            <!-- Edit button — disabled if tasks exist (scope lock) -->
+            <button *ngIf="canEditScope()"
               (click)="showEdit = !showEdit; showEdit && initEditForm()"
               style="display:flex;align-items:center;gap:5px;padding:5px 14px;border-radius:8px;border:1px solid;font-size:11px;font-weight:600;cursor:pointer;transition:all 0.15s;"
               [style.borderColor]="showEdit ? '#22c55e' : 'var(--color-border,#1e2d4a)'"
@@ -267,6 +273,12 @@
               [style.color]="showEdit ? '#22c55e' : '#64748b'">
               ✏️ {{ showEdit ? 'Cancel' : 'Edit' }}
             </button>
+            <!-- Locked state — tasks already exist -->
+            <span *ngIf="isScopeLocked()"
+              [title]="getLockedReason()"
+              style="display:flex;align-items:center;gap:5px;padding:5px 14px;border-radius:8px;border:1px solid rgba(100,116,139,0.3);font-size:11px;font-weight:600;background:rgba(100,116,139,0.08);color:#64748b;cursor:not-allowed;">
+              🔒 Locked
+            </span>
           </div>
         </div>
 
@@ -404,14 +416,20 @@
           <div class="card-title" style="margin-bottom:0;">🛠 Tech Stack</div>
           <div style="display:flex;align-items:center;gap:8px;">
             <span style="font-size:9px;padding:2px 8px;border-radius:20px;background:#3b82f622;color:#60a5fa;font-weight:700;border:1px solid #3b82f633;">{{ techStacks.length }} techs</span>
-            <!-- Edit button — canEdit() role check handles VP/PM/Director/Boss -->
-            <button *ngIf="canEdit()" (click)="showTechEdit = !showTechEdit"
+            <!-- Edit button — disabled if tasks exist (scope lock) -->
+            <button *ngIf="canEditScope()" (click)="showTechEdit = !showTechEdit"
               style="display:flex;align-items:center;gap:5px;padding:4px 12px;border-radius:8px;border:1px solid;font-size:11px;font-weight:600;cursor:pointer;transition:all 0.15s;"
               [style.borderColor]="showTechEdit ? '#22c55e' : 'var(--color-border,#1e2d4a)'"
               [style.background]="showTechEdit ? '#22c55e22' : 'transparent'"
               [style.color]="showTechEdit ? '#22c55e' : '#64748b'">
               ✏️ {{ showTechEdit ? 'Done' : 'Edit' }}
             </button>
+            <!-- Locked state — tasks already exist -->
+            <span *ngIf="isScopeLocked()"
+              [title]="getLockedReason()"
+              style="display:flex;align-items:center;gap:5px;padding:4px 12px;border-radius:8px;border:1px solid rgba(100,116,139,0.3);font-size:11px;font-weight:600;background:rgba(100,116,139,0.08);color:#64748b;cursor:not-allowed;">
+              🔒 Locked
+            </span>
           </div>
         </div>
 
@@ -486,7 +504,7 @@
       </div>
     </ng-container>
 
-    <!-- ══════ TAB: MEMBERS ══════ -->
+    <!-- ══════ TAB: MEMBERS (SPLIT INTO 2 SECTIONS) ══════ -->
     <ng-container *ngIf="activeTab === 'members'">
       <div class="card">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
@@ -503,88 +521,133 @@
           </div>
         </div>
 
-        <!-- ════ MEMBER LIST with role colors ════ -->
-        <div style="display:flex;flex-direction:column;gap:8px;">
-          <div *ngFor="let m of sortMembers(members); let i=index"
-            style="display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:10px;border:1px solid var(--color-border,#1e2d4a);transition:all 0.15s;"
-            onmouseenter="this.style.borderColor='#22c55e33'"
-            onmouseleave="this.style.borderColor='var(--color-border,#1e2d4a)'">
-
-            <!-- Avatar -->
-            <div style="width:36px;height:36px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:white;"
-              [style.background]="m.color || getMemberColor(i)">
-              {{ m.initial || getMemberInitial(m) }}
-            </div>
-
-            <!-- Name + Role (with colors) -->
-            <div style="flex:1;min-width:0;">
-              <div style="font-size:12px;font-weight:700;color:var(--input-text,#e2e8f0);">
-                {{ m.userName || m.name }}
-              </div>
-              <div style="display:flex;align-items:center;gap:4px;margin-top:3px;flex-wrap:wrap;">
-                <span style="font-size:10px;"
-                  [style.color]="m.roleInProject==='COUNTRY_DIRECTOR' ? '#a855f7'
-                               : m.roleInProject==='VICE_PRESIDENT'   ? '#ef4444'
-                               : m.roleInProject==='ADMIN'            ? '#ec4899'
-                               : m.roleInProject==='PROJECT_MANAGER'  ? '#22c55e'
-                               : m.roleInProject==='LEADER'           ? '#0891b2'
-                               : m.roleInProject==='UI_UX'            ? '#7c3aed'
-                               : m.roleInProject==='DEVELOPER'        ? '#4f46e5'
-                               : m.roleInProject==='QA'               ? '#ea580c'
-                               : m.roleInProject==='CUSTOMER'         ? '#64748b'
-                               : '#94a3b8'"
-                  [style.fontWeight]="(m.roleInProject==='COUNTRY_DIRECTOR'
-                                   || m.roleInProject==='VICE_PRESIDENT'
-                                   || m.roleInProject==='ADMIN'
-                                   || m.roleInProject==='PROJECT_MANAGER') ? '700' : '500'">
-                  {{ m.displayName || m.roleInProject || m.role }}
-                </span>
-                <span *ngIf="m.tasks && m.tasks > 0" style="font-size:9px;color:#22c55e;font-weight:600;">
-                  · {{ m.tasks }} tasks
-                </span>
-              </div>
-            </div>
-
-            <!-- Online + Remove -->
-            <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
-              <div style="display:flex;align-items:center;gap:4px;">
-                <div style="width:6px;height:6px;border-radius:50%;" [style.background]="m.online ? '#22c55e' : '#475569'"></div>
-                <span style="font-size:9px;opacity:0.4;">{{ m.online ? 'Online' : 'Offline' }}</span>
-              </div>
-              <button *ngIf="showMemberEdit
-                          && m.roleInProject !== 'PROJECT_MANAGER'
-                          && m.roleInProject !== 'COUNTRY_DIRECTOR'
-                          && m.roleInProject !== 'VICE_PRESIDENT'
-                          && m.roleInProject !== 'ADMIN'
-                          && !m.isDefault"
-                (click)="removeMember(m.userId)"
-                style="padding:3px 10px;border-radius:6px;border:1px solid #ef444444;background:transparent;color:#ef4444;font-size:10px;font-weight:600;cursor:pointer;transition:all 0.15s;"
-                onmouseenter="this.style.background='#ef444411'"
-                onmouseleave="this.style.background='transparent'">
-                Remove
-              </button>
-              <span *ngIf="showMemberEdit && (
-                          m.roleInProject === 'PROJECT_MANAGER'
-                       || m.roleInProject === 'COUNTRY_DIRECTOR'
-                       || m.roleInProject === 'VICE_PRESIDENT'
-                       || m.roleInProject === 'ADMIN'
-                       || m.isDefault)"
-                style="font-size:9px;opacity:0.3;padding:3px 8px;font-weight:700;"
-                [style.color]="m.roleInProject==='COUNTRY_DIRECTOR' ? '#a855f7'
-                             : m.roleInProject==='VICE_PRESIDENT'   ? '#ef4444'
-                             : m.roleInProject==='ADMIN'            ? '#ec4899'
-                             : m.roleInProject==='PROJECT_MANAGER'  ? '#22c55e'
-                             : '#94a3b8'">
-                🔒 {{ m.roleInProject === 'PROJECT_MANAGER' ? 'PM'
-                    : m.roleInProject === 'VICE_PRESIDENT'   ? 'VP'
-                    : m.roleInProject === 'COUNTRY_DIRECTOR' ? 'DIR'
-                    : m.roleInProject === 'ADMIN'            ? 'HR' : 'LOCKED' }}
-              </span>
-            </div>
+        <!-- ════ SECTION 1: MANAGEMENT (Director / VP only — Admin excluded) ════ -->
+        <div *ngIf="hasManagementMembers()" style="margin-bottom:16px;">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;padding:0 2px;">
+            <span style="font-size:11px;font-weight:700;color:#94a3b8;letter-spacing:0.5px;">MANAGEMENT</span>
+            <span style="font-size:9px;opacity:0.5;">({{ getManagementCount() }})</span>
+            <div style="flex:1;height:1px;background:var(--color-border,#1e2d4a);opacity:0.4;"></div>
           </div>
 
-          <div *ngIf="!members.length" style="text-align:center;padding:20px;font-size:11px;opacity:0.35;">
-            No members yet
+          <div style="display:flex;flex-direction:column;gap:8px;">
+            <ng-container *ngFor="let m of sortMembers(members); let i=index">
+              <div *ngIf="m.roleInProject === 'COUNTRY_DIRECTOR' || m.roleInProject === 'VICE_PRESIDENT'"
+                style="display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:10px;border:1px solid var(--color-border,#1e2d4a);transition:all 0.15s;"
+                onmouseenter="this.style.borderColor='#a855f733'"
+                onmouseleave="this.style.borderColor='var(--color-border,#1e2d4a)'">
+
+                <!-- Avatar -->
+                <div style="width:36px;height:36px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:white;"
+                  [style.background]="m.color || getMemberColor(i)">
+                  {{ m.initial || getMemberInitial(m) }}
+                </div>
+
+                <!-- Name + Role -->
+                <div style="flex:1;min-width:0;">
+                  <div style="font-size:12px;font-weight:700;color:var(--input-text,#e2e8f0);">
+                    {{ m.userName || m.name }}
+                  </div>
+                  <div style="margin-top:3px;">
+                    <span style="font-size:10px;font-weight:700;"
+                      [style.color]="m.roleInProject==='COUNTRY_DIRECTOR' ? '#a855f7'
+                                   : m.roleInProject==='VICE_PRESIDENT'   ? '#ef4444'
+                                   : '#ec4899'">
+                      {{ m.displayName || m.roleInProject }}
+                    </span>
+                  </div>
+                </div>
+
+                <!-- Online status + Locked badge -->
+                <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
+                  <div style="display:flex;align-items:center;gap:4px;">
+                    <div style="width:6px;height:6px;border-radius:50%;" [style.background]="m.online ? '#22c55e' : '#475569'"></div>
+                    <span style="font-size:9px;opacity:0.4;">{{ m.online ? 'Online' : 'Offline' }}</span>
+                  </div>
+                  <span *ngIf="showMemberEdit"
+                    style="font-size:9px;opacity:0.3;padding:3px 8px;font-weight:700;"
+                    [style.color]="m.roleInProject==='COUNTRY_DIRECTOR' ? '#a855f7'
+                                 : m.roleInProject==='VICE_PRESIDENT'   ? '#ef4444'
+                                 : '#ec4899'">
+                    🔒 {{ m.roleInProject === 'VICE_PRESIDENT'   ? 'VP'
+                        : m.roleInProject === 'COUNTRY_DIRECTOR' ? 'DIR'
+                        : 'HR' }}
+                  </span>
+                </div>
+              </div>
+            </ng-container>
+          </div>
+        </div>
+
+        <!-- ════ SECTION 2: TEAM MEMBERS (PM / Leader / UI_UX / Dev / QA / Customer) ════ -->
+        <div>
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;padding:0 2px;">
+            <span style="font-size:11px;font-weight:700;color:#22c55e;letter-spacing:0.5px;">TEAM MEMBERS</span>
+            <span style="font-size:9px;opacity:0.5;">({{ getTeamMemberCount() }})</span>
+            <div style="flex:1;height:1px;background:var(--color-border,#1e2d4a);opacity:0.4;"></div>
+          </div>
+
+          <div *ngIf="getTeamMemberCount() === 0" style="text-align:center;padding:20px;font-size:11px;opacity:0.4;">
+            No team members yet
+          </div>
+
+          <div style="display:flex;flex-direction:column;gap:8px;">
+            <ng-container *ngFor="let m of sortMembers(members); let i=index">
+              <div *ngIf="m.roleInProject !== 'COUNTRY_DIRECTOR' && m.roleInProject !== 'VICE_PRESIDENT' && m.roleInProject !== 'ADMIN'"
+                style="display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:10px;border:1px solid var(--color-border,#1e2d4a);transition:all 0.15s;"
+                onmouseenter="this.style.borderColor='#22c55e33'"
+                onmouseleave="this.style.borderColor='var(--color-border,#1e2d4a)'">
+
+                <!-- Avatar -->
+                <div style="width:36px;height:36px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:white;"
+                  [style.background]="m.color || getMemberColor(i)">
+                  {{ m.initial || getMemberInitial(m) }}
+                </div>
+
+                <!-- Name + Role -->
+                <div style="flex:1;min-width:0;">
+                  <div style="font-size:12px;font-weight:700;color:var(--input-text,#e2e8f0);">
+                    {{ m.userName || m.name }}
+                  </div>
+                  <div style="display:flex;align-items:center;gap:4px;margin-top:3px;flex-wrap:wrap;">
+                    <span style="font-size:10px;"
+                      [style.color]="m.roleInProject==='PROJECT_MANAGER'  ? '#22c55e'
+                                   : m.roleInProject==='LEADER'           ? '#0891b2'
+                                   : m.roleInProject==='UI_UX'            ? '#7c3aed'
+                                   : m.roleInProject==='DEVELOPER'        ? '#4f46e5'
+                                   : m.roleInProject==='QA'               ? '#ea580c'
+                                   : m.roleInProject==='CUSTOMER'         ? '#64748b'
+                                   : '#94a3b8'"
+                      [style.fontWeight]="m.roleInProject==='PROJECT_MANAGER' ? '700' : '500'">
+                      {{ m.displayName || m.roleInProject || m.role }}
+                    </span>
+                    <span *ngIf="m.tasks && m.tasks > 0" style="font-size:9px;color:#22c55e;font-weight:600;">
+                      · {{ m.tasks }} tasks
+                    </span>
+                  </div>
+                </div>
+
+                <!-- Online + Remove -->
+                <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
+                  <div style="display:flex;align-items:center;gap:4px;">
+                    <div style="width:6px;height:6px;border-radius:50%;" [style.background]="m.online ? '#22c55e' : '#475569'"></div>
+                    <span style="font-size:9px;opacity:0.4;">{{ m.online ? 'Online' : 'Offline' }}</span>
+                  </div>
+                  <button *ngIf="showMemberEdit
+                              && m.roleInProject !== 'PROJECT_MANAGER'
+                              && !m.isDefault"
+                    (click)="removeMember(m.userId)"
+                    style="padding:3px 10px;border-radius:6px;border:1px solid #ef444444;background:transparent;color:#ef4444;font-size:10px;font-weight:600;cursor:pointer;transition:all 0.15s;"
+                    onmouseenter="this.style.background='#ef444411'"
+                    onmouseleave="this.style.background='transparent'">
+                    Remove
+                  </button>
+                  <span *ngIf="showMemberEdit && (m.roleInProject === 'PROJECT_MANAGER' || m.isDefault)"
+                    style="font-size:9px;opacity:0.3;padding:3px 8px;font-weight:700;color:#22c55e;">
+                    🔒 PM
+                  </span>
+                </div>
+              </div>
+            </ng-container>
           </div>
         </div>
 

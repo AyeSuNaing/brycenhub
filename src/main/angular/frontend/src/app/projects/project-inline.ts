@@ -294,8 +294,14 @@ export class ProjectInlineComponent implements OnInit, OnChanges {
       dbTables: this.http.get<any[]>(`${BASE}/project-design/${id}/db-tables/latest?limit=5`, h).pipe(catchError(() => of([]))),
     }).subscribe({
       next: (res: any) => {
-        this.project = res.project; this.members = res.members || [];
-        this.tasks = res.tasks || []; this.activities = res.activities || [];
+        this.project = res.project;
+        this.members = res.members || [];
+        this.tasks = res.tasks || [];            // ← assign BEFORE enrich
+        this.clients = res.clients || [];
+        this.apiEndpoints = res.apis || [];
+        this.dbTables = res.dbTables || [];
+        // enrich activities AFTER tasks/members are ready
+        this.activities = this.enrichActivities(res.activities || [], this.members);
         this.clients = res.clients || [];
         this.apiEndpoints = res.apis || [];
         this.dbTables = res.dbTables || [];
@@ -837,18 +843,49 @@ export class ProjectInlineComponent implements OnInit, OnChanges {
     return true;
   }
 
+  // ─── Scope lock: Information + Tech Stack edit ───
+  // Tasks ရှိပြီးရင် project scope/tech stack ပြင်လို့ မရတော့ (business rule)
+  // Members, Rules, Setup, Git တို့တော့ ဆက်ပြင်လို့ရ
+  canEditScope(): boolean {
+    if (!this.canEdit()) return false;
+    // Exclude CANCELLED tasks — those don't count as "active work"
+    const activeTasks = (this.tasks || []).filter(t => t.status !== 'CANCELLED');
+    return activeTasks.length === 0;
+  }
+
+  isScopeLocked(): boolean {
+    if (!this.canEdit()) return false;  // not shown for non-editors
+    const activeTasks = (this.tasks || []).filter(t => t.status !== 'CANCELLED');
+    return activeTasks.length > 0;
+  }
+
+  getLockedReason(): string {
+    const activeTasks = (this.tasks || []).filter(t => t.status !== 'CANCELLED');
+    return `🔒 Locked — ${activeTasks.length} task${activeTasks.length === 1 ? '' : 's'} already created`;
+  }
+
   // ══════════════════════════════════════════════════════════════════
   // STATS / GETTERS
   // ══════════════════════════════════════════════════════════════════
 
   get statsCards() {
+    // Compute live from local tasks (exclude CANCELLED from total)
+    const activeTasks = this.tasks.filter(t => t.status !== 'CANCELLED');
+    const total = activeTasks.length;
+    const completed = activeTasks.filter(t => t.status === 'DONE').length;
+    const inProgress = activeTasks.filter(t => t.status === 'IN_PROGRESS').length;
+    const now = new Date();
+    const overdue = activeTasks.filter(t =>
+      t.dueDate && t.status !== 'DONE' && new Date(t.dueDate) < now
+    ).length;
+
     return [
-      { label: 'Total Tasks', value: this.stats?.totalTasks ?? this.tasks.length, icon: '📋', color: 'stat-white' },
-      { label: 'Completed', value: this.stats?.completed ?? 0, icon: '✅', color: 'stat-green' },
-      { label: 'In Progress', value: this.stats?.inProgress ?? 0, icon: '⚡', color: 'stat-blue' },
+      { label: 'Total Tasks', value: total, icon: '📋', color: 'stat-white' },
+      { label: 'Completed', value: completed, icon: '✅', color: 'stat-green' },
+      { label: 'In Progress', value: inProgress, icon: '⚡', color: 'stat-blue' },
       { label: 'Completion', value: (this.project?.progress ?? 0) + '%', icon: '📊', color: 'stat-purple' },
-      { label: 'Team Size', value: this.stats?.teamSize ?? this.members.length, icon: '👥', color: 'stat-cyan' },
-      { label: 'Overdue', value: this.stats?.overdue ?? 0, icon: '⚠️', color: 'stat-red' },
+      { label: 'Team Size', value: this.members.length, icon: '👥', color: 'stat-cyan' },
+      { label: 'Overdue', value: overdue, icon: '⚠️', color: 'stat-red' },
     ];
   }
 
@@ -1015,8 +1052,46 @@ export class ProjectInlineComponent implements OnInit, OnChanges {
   }
 
   getActionText(action: string): string {
-    const m: any = { TASK_CREATED: 'created a task', TASK_MOVED: 'moved a task', TASK_ASSIGNED: 'assigned a task', COMMENT_ADDED: 'added a comment', FILE_UPLOADED: 'uploaded a file', MEMBER_ADDED: 'added a member', PROJECT_CREATED: 'created the project', STATUS_CHANGED: 'changed status' };
-    return m[action] || action;
+    const m: any = {
+      TASK_CREATED: 'created a task',
+      TASK_MOVED: 'moved a task',
+      TASK_ASSIGNED: 'assigned a task',
+      TASK_UPDATED: 'updated a task',
+      TASK_DELETED: 'deleted a task',
+      COMMENT_ADDED: 'added a comment',
+      COMMENTED: 'commented on a task',
+      FILE_UPLOADED: 'uploaded a file',
+      MEMBER_ADDED: 'added a member',
+      MEMBER_REMOVED: 'removed a member',
+      PROJECT_CREATED: 'created the project',
+      PROJECT_UPDATED: 'updated the project',
+      STATUS_CHANGED: 'changed status',
+    };
+    return m[action] || action.replace(/_/g, ' ').toLowerCase();
+  }
+
+  // Enrich activities with userName / initial / task title
+  private enrichActivities(acts: any[], members: any[]): any[] {
+    if (!acts || !acts.length) return [];
+    return acts.map(a => {
+      // find member by userId
+      const m = members.find(x => (x.userId || x.id) === a.userId);
+      const userName = m?.userName || m?.name || 'User';
+
+      // find task title by target_id (if target_type === 'TASK')
+      let targetName = '';
+      if (a.targetType === 'TASK' && a.targetId) {
+        const task = this.tasks.find(t => t.id === a.targetId);
+        targetName = task?.title || `Task #${a.targetId}`;
+      }
+
+      return {
+        ...a,
+        userName: userName,
+        userInitial: (userName || 'U')[0].toUpperCase(),
+        targetName: targetName,
+      };
+    });
   }
 
   parseDbColumns(columnsStr: string): string[] {
@@ -1328,5 +1403,29 @@ export class ProjectInlineComponent implements OnInit, OnChanges {
 
   getGroupChatCount(): number {
     return this.members.filter(m => m.roleInProject !== 'ADMIN').length;
+  }
+
+  // ─── Split into Management (VP + Director) vs Team Members ───
+  // Admin is excluded from both — HR role, not project-related
+  hasManagementMembers(): boolean {
+    return this.members.some(m =>
+      m.roleInProject === 'COUNTRY_DIRECTOR' ||
+      m.roleInProject === 'VICE_PRESIDENT'
+    );
+  }
+
+  getManagementCount(): number {
+    return this.members.filter(m =>
+      m.roleInProject === 'COUNTRY_DIRECTOR' ||
+      m.roleInProject === 'VICE_PRESIDENT'
+    ).length;
+  }
+
+  getTeamMemberCount(): number {
+    return this.members.filter(m =>
+      m.roleInProject !== 'COUNTRY_DIRECTOR' &&
+      m.roleInProject !== 'VICE_PRESIDENT' &&
+      m.roleInProject !== 'ADMIN'
+    ).length;
   }
 }

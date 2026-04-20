@@ -410,10 +410,8 @@
                   {{ c.createdAt | date:'MMM d, h:mm a' }}
                 </span>
               </div>
-              <div *ngIf="c.content" style="font-size:11px;line-height:1.6;opacity:0.8;
-                word-break:break-word;margin-bottom:6px;">
-                {{ c.translatedContent || c.content }}
-              </div>
+              <div *ngIf="c.content" style="font-size:11px;line-height:1.7;opacity:0.85;
+                word-break:break-word;margin-bottom:6px;white-space:pre-wrap;">{{ c.translatedContent || c.content }}</div>
               <div *ngIf="c.attachments?.length > 0" style="display:flex;flex-direction:column;gap:6px;">
                 <ng-container *ngFor="let att of c.attachments">
                   <div *ngIf="isImage(att)" style="border-radius:10px;overflow:hidden;max-width:220px;cursor:pointer;
