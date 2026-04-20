@@ -80,12 +80,7 @@
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
             <div class="card-title" style="margin-bottom:0;">⊞ Board Preview</div>
             <div style="display:flex;align-items:center;gap:6px;">
-              <span style="font-size:10px;padding:3px 10px;border-radius:20px;background:rgba(148,163,184,0.12);color:#94a3b8;font-weight:600;border:1px solid rgba(148,163,184,0.2);">
-                {{ tasks.length }} task{{ tasks.length === 1 ? '' : 's' }}
-              </span>
-              <span style="font-size:10px;padding:3px 10px;border-radius:20px;background:#16a34a22;color:#22c55e;font-weight:700;">
-                {{ boardPct }}% done
-              </span>
+             
               <a [routerLink]="['/kanban', project.id]" style="font-size:10px;border:1px solid #22c55e55;color:#22c55e;padding:3px 10px;border-radius:20px;font-weight:600;text-decoration:none;cursor:pointer;">
                 Open Board →
               </a>
