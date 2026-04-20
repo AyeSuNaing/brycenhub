@@ -2929,3 +2929,120 @@ feat(dashboard): show latest 5 real API endpoints & DB tables in project dashboa
 - Show empty state when no data (guides user to BrycenDesign Tool)
 - Latest-first sort (ORDER BY id DESC) to surface newest extractions
 ```
+# 🔗 Auto-fill GitHub URL from DB — Implementation Guide
+
+**Feature:** AI Assistant popup ဖွင့်တာနဲ့ — project ရဲ့ GitHub URL ကို DB (`projects.repo_url`) ကနေ auto-fetch → input box ထဲ auto-fill → auto-sync ပါ လုပ်ပေးမယ်။
+
+---
+
+## 📋 Summary
+
+### Flow
+```
+1. User → Design Tool ဖွင့် (/design/{projectId})
+2. Angular (design-tool.ts) → GET /api/projects/{id} → repo_url ရ
+3. iframe ready (DESIGN_READY) → PROJECT_INFO postMessage { projectId, userId, repoUrl } → iframe
+4. iframe (design-dev.html) → _projectRepoUrl သိမ်း
+5. User → ✦ Generate Code button click → AI popup ဖွင့်
+6. aiGreet2() → aiAutoFillGitHub() → input box auto-fill
+7. 300ms delay → aiSyncGitHub() auto-trigger
+8. GitHub API call → repo context load → chat မှာ confirm message ပြ
+```
+
+### DB Schema (already exists ✅)
+```sql
+-- projects table
+repo_url      VARCHAR(500)  -- https://github.com/owner/repo
+github_token  VARCHAR(500)  -- (optional, for private repos)
+```
+
+### Backend API (already exists ✅)
+```
+GET /api/projects/{id}           -- returns project with repoUrl field
+PUT /api/project-commits/{id}/repo  -- update repo URL
+```
+
+---
+
+## 📦 Files to Change
+
+| # | File | Language | Change Type |
+|---|------|----------|-------------|
+| 1 | `design-tool.ts` | TypeScript (Angular) | 4 edits (add property + method) |
+| 2 | `design-dev.html` | JavaScript (iframe) | 4 edits (receive + auto-fill) |
+
+**Backend ပြင်စရာ မလိုပါ!** ✅ (existing `/api/projects/{id}` endpoint က `repoUrl` field ပါ return လုပ်ပြီးသား)
+
+---
+
+## 🛠️ Step-by-Step Installation
+
+### Step 1 — Apply PATCH 1
+File: `01-design-tool-ts.PATCH.md`
+Location: `src/main/angular/frontend/src/app/design/design-tool.ts`
+
+→ 4 edits (find & replace)
+
+### Step 2 — Apply PATCH 2
+File: `02-design-dev-html.PATCH.md`
+Location: `src/main/angular/frontend/public/design-dev.html`
+
+→ 4 edits (find & replace)
+
+### Step 3 — Test
+1. `ng serve` running ရဲ့လား စစ် (port 4200)
+2. Browser refresh → Open `http://localhost:4200/design/12`
+3. Any frame click → Dev Inspector → ✦ Generate Code
+4. AI popup တက်လာတာနဲ့ — GitHub URL auto-fill + sync success message မြင်ရမယ်
+
+---
+
+## 🧪 Testing Scenarios
+
+### ✅ Scenario 1 — Happy path (repo_url set in DB)
+```
+Input:  projects.repo_url = 'https://github.com/AyeSuNaing/brycenhub'
+Output: Input box auto-filled → Sync triggered → "🔗 AyeSuNaing/brycenhub synced!"
+```
+
+### ✅ Scenario 2 — No repo_url in DB
+```
+Input:  projects.repo_url = NULL
+Output: Input box empty → User manually paste + click Sync (manual flow)
+```
+
+### ✅ Scenario 3 — Invalid repo_url in DB
+```
+Input:  projects.repo_url = 'not-a-valid-url'
+Output: aiSyncGitHub() → aiParseGitHubUrl() returns null → "❌ Invalid GitHub URL" in chat
+```
+
+### ✅ Scenario 4 — Popup closed then re-opened
+```
+1st open: auto-sync happens
+2nd open: _githubRepo already set → skip re-sync (performance optimization)
+```
+
+---
+
+## 📝 Commit Message Suggestion
+
+```
+feat(design-tool): auto-fill + auto-sync GitHub URL from DB in AI Assistant
+
+- design-tool.ts: capture repo_url from GET /api/projects/{id}
+  and include it in PROJECT_INFO postMessage
+- design-dev.html: receive repoUrl via PROJECT_INFO, auto-fill
+  ai-github-url input box, and auto-trigger aiSyncGitHub() when
+  AI popup opens (once per session)
+- No backend changes needed — repo_url column + GET endpoint
+  already existed
+```
+
+---
+
+## 🔗 Related Files (already exist, no changes)
+
+- `src/main/java/jp/co/brycen/asn/model/Project.java` — `repoUrl` field ✅
+- `src/main/java/jp/co/brycen/asn/controller/ProjectCommitsController.java` — PUT `/repo` endpoint ✅
+- `src/main/angular/frontend/src/app/projects/project-inline.ts` — Git Activity panel + repo edit UI ✅

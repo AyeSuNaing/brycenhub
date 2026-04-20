@@ -22,6 +22,7 @@ export class DesignToolComponent implements OnInit, AfterViewInit, OnDestroy {
 
   projectId!: number;
   projectName = 'Design Board';
+  projectRepoUrl = '';   
   iframeSrc!: SafeResourceUrl;
   loading = true;
   saveStatus: 'idle' | 'saving' | 'saved' = 'idle';
@@ -71,7 +72,12 @@ export class DesignToolComponent implements OnInit, AfterViewInit, OnDestroy {
       ).subscribe({
         next: p => {
           this.projectName = p.title || 'Design Board';
+          this.projectRepoUrl = p.repoUrl || '';  
           this.cdr.detectChanges();
+          if (this.designLoaded) {
+            this.sendProjectInfo();
+          }
+
         },
         error: () => {}
       });
@@ -120,8 +126,7 @@ export class DesignToolComponent implements OnInit, AfterViewInit, OnDestroy {
         const token = localStorage.getItem('token') || '';
         this.sendToIframe({ type: 'AUTH_TOKEN_LOADED', token });
         // ── Project ID + User ID → iframe ပို့ (AI generate save ဖို့) ──
-        const userId = this.auth.getUser()?.id || this.auth.getUser()?.userId;
-        this.sendToIframe({ type: 'PROJECT_INFO', projectId: this.projectId, userId });
+        this.sendProjectInfo();
         break;
       }
 
@@ -186,6 +191,17 @@ export class DesignToolComponent implements OnInit, AfterViewInit, OnDestroy {
     const iframe = this.iframeRef?.nativeElement;
     if (!iframe?.contentWindow) return;
     iframe.contentWindow.postMessage(data, '*');
+  }
+
+  /** ⭐ NEW: Send projectId + userId + repoUrl to iframe for AI Assistant auto-sync */
+  private sendProjectInfo(): void {
+    const userId = this.auth.getUser()?.id || this.auth.getUser()?.userId;
+    this.sendToIframe({
+      type: 'PROJECT_INFO',
+      projectId: this.projectId,
+      userId,
+      repoUrl: this.projectRepoUrl || ''
+    });
   }
 
   sendCmd(cmd: string): void {

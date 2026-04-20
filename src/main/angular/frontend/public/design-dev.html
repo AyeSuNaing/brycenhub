@@ -358,7 +358,9 @@
       if(msg&&msg.type==='PROJECT_INFO'){
         _projectId=msg.projectId||null;
         _userId=msg.userId||null;
-        console.log('[design-dev] PROJECT_INFO received: projectId='+_projectId+' userId='+_userId);
+        _projectRepoUrl=msg.repoUrl||'';
+        console.log('[design-dev] PROJECT_INFO received: projectId='+_projectId+' userId='+_userId+' repoUrl='+_projectRepoUrl);
+        // Note: Sync now triggered when popup opens (in openCodeGenPopup)
         return;
       }
       if(!msg||msg.type!=='AI_RESPONSE')return;
@@ -464,7 +466,28 @@
       document.getElementById('ai-code-side').style.display='none';
       document.getElementById('ai-chat-side').style.width='100%';
       document.getElementById('ai-chat-side').style.flex='1';
-      aiGreet2();
+
+      // ⭐ NEW FLOW: Sync first → then greet
+      if (_projectRepoUrl) {
+        // Auto-fill URL
+        var inp = document.getElementById('ai-github-url');
+        if (inp) {
+          inp.value = _projectRepoUrl;
+          inp.style.borderColor = 'rgba(0,212,168,.4)';
+        }
+        // Show "Syncing..." indicator first
+        aiAddMsg2('assistant', '🔄 GitHub repo sync လုပ်နေပါတယ်... ခဏစောင့်ပေးပါ။');
+        // Sync first, then greet with full context
+        setTimeout(function() {
+          aiSyncGitHub(function() {
+            // Sync done — now greet (AI will have GitHub context)
+            aiGreet2();
+          });
+        }, 300);
+      } else {
+        // No GitHub URL — just greet
+        aiGreet2();
+      }
     }
 
     function cgFetchFrameworks(isMobile){var list=document.getElementById('cg-lang-list');if(_projectTechStacks.length===0){list.innerHTML='<div style="padding:12px 14px;font-size:11px;color:var(--t2);">No tech stacks found.</div>';return;}var catOrder=['frontend','backend','database','mobile','devops','cloud','realtime','payment','mapping','orchestration','other'];var groups={};_projectTechStacks.forEach(function(t){var cat=t.category||'other';if(!groups[cat])groups[cat]=[];groups[cat].push(t);});var catIcons={frontend:'🖥',backend:'⚙️',database:'🗄',mobile:'📱',payment:'💳',realtime:'⚡',devops:'🐳',cloud:'☁️',mapping:'🗺',orchestration:'🔧',other:'🔧'};var sortedCats=Object.keys(groups).sort(function(a,b){var ai=catOrder.indexOf(a);var bi=catOrder.indexOf(b);if(ai===-1)ai=999;if(bi===-1)bi=999;return ai-bi;});var html='';sortedCats.forEach(function(cat){html+='<div style="padding:8px 14px 4px;"><p style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--t2);margin:0 0 6px;">'+(catIcons[cat]||'🔧')+' '+cat.toUpperCase()+'</p>';groups[cat].forEach(function(item){html+='<div class="cg-lang-item" data-name="'+item.name+'" data-lang="'+item.name+'" onclick="cgSelectLang(this,this.dataset.name,this.dataset.lang)" style="padding:8px 10px;border-radius:6px;background:var(--bg3);border:1px solid var(--brd);font-size:12px;cursor:pointer;margin-bottom:4px;display:flex;align-items:center;gap:8px;"><span style="color:var(--t0);flex:1;">'+item.name+'</span><span style="font-size:9px;color:var(--t2);">'+item.category+'</span></div>';});html+='</div>';});list.innerHTML=html;}
@@ -483,17 +506,20 @@
       <div style="padding:12px 18px;border-bottom:1px solid var(--brd);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;">
         <div style="display:flex;align-items:center;gap:10px;">
           <div style="width:28px;height:28px;border-radius:7px;background:rgba(108,99,255,.2);border:1px solid rgba(108,99,255,.4);display:flex;align-items:center;justify-content:center;font-size:14px;">✦</div>
-          <div>
+          <div style="flex:1;min-width:0;">
             <div style="font-family:'Syne',sans-serif;font-size:14px;font-weight:700;color:var(--t0);">AI Assistant</div>
             <div id="cg-frame-info" style="font-size:10px;color:var(--t2);font-family:'DM Mono',monospace;"></div>
           <div style="display:flex;align-items:center;gap:5px;margin-top:4px;">
-            <span style="font-size:10px;color:var(--t2);">GitHub:</span>
+            <span style="font-size:10px;color:var(--t2);white-space:nowrap;">GitHub:</span>
             <input id="ai-github-url" type="text" placeholder="https://github.com/user/repo" 
-              style="flex:1;height:20px;background:var(--bg3);border:1px solid var(--brd);border-radius:4px;padding:0 7px;font-size:10px;color:var(--t0);font-family:DM Mono,monospace;outline:none;"
-              onfocus="this.style.borderColor='var(--acc)'" onblur="this.style.borderColor='var(--brd)'"
+              style="flex:1;min-width:460px;height:22px;background:var(--bg3);border:1px solid var(--brd);border-radius:4px;padding:0 9px;font-size:11px;color:var(--t0);font-family:'DM Mono',monospace;outline:none;text-overflow:ellipsis;"
+              title=""
+              onfocus="this.style.borderColor='var(--acc)';this.setSelectionRange(0,0)" 
+              onblur="this.style.borderColor='var(--brd)';this.scrollLeft=0"
+              onmouseover="if(this.value)this.title=this.value"
               onkeydown="if(event.key==='Enter')aiSyncGitHub()"/>
             <button onclick="aiSyncGitHub()" id="ai-github-btn"
-              style="height:20px;padding:0 8px;background:var(--bg3);border:1px solid var(--brd);border-radius:4px;color:var(--t1);font-size:10px;cursor:pointer;font-family:Inter,sans-serif;white-space:nowrap;"
+              style="height:22px;padding:0 10px;background:var(--bg3);border:1px solid var(--brd);border-radius:4px;color:var(--t1);font-size:10px;cursor:pointer;font-family:Inter,sans-serif;white-space:nowrap;flex-shrink:0;"
               onmouseover="this.style.borderColor='var(--acc)';this.style.color='var(--acc)'"
               onmouseout="this.style.borderColor='var(--brd)';this.style.color='var(--t1)'">Sync</button>
           </div>
@@ -564,6 +590,8 @@
     var _aiGenFiles = [];
     var _pendingFiles = [];   // pending files from AI greeting
     var _projectId = null;    // set via PROJECT_INFO postMessage
+    var _projectRepoUrl = '';       // ⭐ NEW: auto-filled GitHub URL from DB
+    var _autoSyncDone = false;      // ⭐ NEW: prevent double auto-sync
     var _userId = null;       // set via PROJECT_INFO postMessage
     var _checkedFiles = [];
     var _backendPendingFiles = [];  // backend files waiting after frontend done
@@ -623,13 +651,13 @@
       return { owner: match[1], repo: match[2] };
     }
 
-    function aiSyncGitHub() {
+    function aiSyncGitHub(onComplete) {
       var url = document.getElementById('ai-github-url').value.trim();
-      if (!url) return;
+      if (!url) { if (onComplete) onComplete(); return; }
       var parsed = aiParseGitHubUrl(url);
-      if (!parsed) { aiAddMsg2('assistant','❌ Invalid GitHub URL. Example: https://github.com/user/repo'); return; }
+      if (!parsed) { aiAddMsg2('assistant','❌ Invalid GitHub URL. Example: https://github.com/user/repo'); if (onComplete) onComplete(); return; }
       var btn = document.getElementById('ai-github-btn');
-      btn.textContent = '...'; btn.disabled = true;
+      if (btn) { btn.textContent = '...'; btn.disabled = true; }
       var loadId = aiAddMsg2('assistant','● ● ●', true);
       var api = 'https://api.github.com/repos/' + parsed.owner + '/' + parsed.repo;
       var h = {'Accept':'application/vnd.github.v3+json'};
@@ -642,7 +670,9 @@
         var el=document.getElementById(loadId); if(el)el.remove();
         if (repoInfo.message) {
           aiAddMsg2('assistant','❌ '+repoInfo.message);
-          btn.textContent='Sync'; btn.disabled=false; return;
+          if (btn) { btn.textContent='Sync'; btn.disabled=false; }
+          if (onComplete) onComplete();
+          return;
         }
         var files=(tree.tree||[]).filter(function(f){return f.type==='blob';}).map(function(f){return f.path;});
         var extGroups={};
@@ -669,25 +699,208 @@
         }
         msg+='\n\nAI က ဒီ repo ကို context အနေနဲ့ သုံးပြီး code generate လုပ်မယ်။';
         aiAddMsg2('assistant', msg);
-        btn.textContent='✓ Synced'; btn.style.color='var(--acc2)'; btn.style.borderColor='rgba(0,212,168,.4)'; btn.disabled=false;
-        document.getElementById('ai-github-url').style.borderColor='rgba(0,212,168,.4)';
+        if (btn) { btn.textContent='✓ Synced'; btn.style.color='var(--acc2)'; btn.style.borderColor='rgba(0,212,168,.4)'; btn.disabled=false; }
+        var urlInp = document.getElementById('ai-github-url'); if (urlInp) urlInp.style.borderColor='rgba(0,212,168,.4)';
+
+         // ⭐ Sync complete → trigger callback
+        if (onComplete) onComplete();
+
+        // ⭐ Auto-build _pendingFiles from extracted paths (deterministic!)
+        if (_aiFrame2) {
+          var extracted = aiExtractGitHubPaths(_aiFrame2.name);
+          if (extracted) {
+            var allPaths = [];
+            allPaths = allPaths.concat(extracted.suggested.angular || []);
+            allPaths = allPaths.concat(extracted.suggested.spring || []);
+            allPaths = allPaths.concat(extracted.suggested.flutter || []);
+
+            if (allPaths.length) {
+              _pendingFiles = allPaths;
+              aiUpdateGenBtn();
+
+              // Show preview message with ready-to-use paths
+              var pMsg = '🎯 **Ready-to-use paths** (auto-detected from your repo):\n\n';
+              pMsg += '```\n';
+              allPaths.forEach(function(p) { pMsg += p + '\n'; });
+              pMsg += '```\n\n';
+              pMsg += '✦ **Generate ' + allPaths.length + ' Files** button နှိပ်ပြီး — **developer က တိုက်ရိုက် ထည့်လို့ ရတဲ့ paths** တွေနဲ့ generate လုပ်နိုင်ပြီ!';
+              aiAddMsg2('assistant', pMsg);
+            }
+          }
+        }
       }).catch(function(err){
         var el=document.getElementById(loadId); if(el)el.remove();
         aiAddMsg2('assistant','❌ '+err.message);
-        btn.textContent='Sync'; btn.disabled=false;
+        if (btn) { btn.textContent='Sync'; btn.disabled=false; }
+        if (onComplete) onComplete();   // ⭐ Even on error, continue to chat
       });
     }
+    // ── Extract path patterns from synced GitHub repo ──
+    function aiExtractGitHubPaths(frameName) {
+      if (!_githubRepo || !_githubRepo.files) return null;
+
+      var files = _githubRepo.files;
+      var result = {
+        javaRoot: null, javaPackage: null, javaBaseDir: null,
+        angularRoot: null, flutterRoot: null, suggested: {}
+      };
+
+      // ── Java package extraction ──
+      var javaSample = files.find(function(f) {
+        return f.endsWith('.java') && f.indexOf('src/main/java/') !== -1;
+      });
+      if (javaSample) {
+        var idx = javaSample.indexOf('src/main/java/');
+        var beforeJava = javaSample.substring(0, idx);
+        result.javaRoot = beforeJava.replace(/\/$/, '');
+
+        var afterJava = javaSample.substring(idx + 'src/main/java/'.length);
+        var pathParts = afterJava.split('/');
+        pathParts.pop();  // remove filename
+        var commonSubfolders = ['controller','service','model','entity','repository','dto','config','util'];
+        if (pathParts.length > 1 && commonSubfolders.indexOf(pathParts[pathParts.length-1]) !== -1) {
+          pathParts.pop();
+        }
+        result.javaPackage = pathParts.join('.');
+        result.javaBaseDir = (result.javaRoot ? result.javaRoot + '/' : '')
+                           + 'src/main/java/' + pathParts.join('/');
+      }
+
+      // ── Angular root extraction ──
+      var ngSample = files.find(function(f) {
+        return (f.endsWith('.component.ts') || f.endsWith('.module.ts'))
+            && f.indexOf('src/app/') !== -1;
+      });
+      if (ngSample) {
+        var ngIdx = ngSample.indexOf('src/app/');
+        result.angularRoot = ngSample.substring(0, ngIdx) + 'src/app';
+      } else {
+        var tsSample = files.find(function(f) { return f.endsWith('.ts') && f.indexOf('src/') !== -1; });
+        if (tsSample) {
+          var tsIdx = tsSample.indexOf('src/');
+          result.angularRoot = tsSample.substring(0, tsIdx) + 'src/app';
+        }
+      }
+
+      // ── Flutter root extraction ──
+      var dartSample = files.find(function(f) {
+        return f.endsWith('.dart') && f.indexOf('lib/') !== -1;
+      });
+      if (dartSample) {
+        var libIdx = dartSample.indexOf('lib/');
+        result.flutterRoot = dartSample.substring(0, libIdx) + 'lib';
+      }
+
+      // ── Generate suggested paths for the frame ──
+      var slug = (frameName || 'screen').toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/^-+|-+$/g, '');
+      var pascal = slug.split('-').map(function(p) {
+        return p.charAt(0).toUpperCase() + p.slice(1);
+      }).join('');
+
+      result.suggested = {
+        angular: result.angularRoot ? [
+          result.angularRoot + '/' + slug + '/' + slug + '.component.ts',
+          result.angularRoot + '/' + slug + '/' + slug + '.component.html',
+          result.angularRoot + '/' + slug + '/' + slug + '.component.scss',
+          result.angularRoot + '/services/' + slug + '.service.ts'
+        ] : [],
+        spring: result.javaBaseDir ? [
+          result.javaBaseDir + '/controller/' + pascal + 'Controller.java',
+          result.javaBaseDir + '/service/'    + pascal + 'Service.java',
+          result.javaBaseDir + '/model/'      + pascal + '.java'
+        ] : [],
+        flutter: result.flutterRoot ? [
+          result.flutterRoot + '/screens/' + slug + '_screen.dart',
+          result.flutterRoot + '/services/' + slug + '_service.dart'
+        ] : []
+      };
+
+      console.log('[GitHub Paths] Extracted:', result);
+      return result;
+    }
+
 
     function aiGetGitHubContext() {
       if (!_githubRepo) return '';
       var ctx = 'GitHub Repo Context: ' + _githubRepo.owner + '/' + _githubRepo.repo + '\n';
       ctx += 'Language: ' + _githubRepo.language + '\n';
       ctx += 'Description: ' + _githubRepo.description + '\n';
-      ctx += 'Files (' + _githubRepo.files.length + '):\n';
-      _githubRepo.files.slice(0,50).forEach(function(f) { ctx += '  ' + f + '\n'; });
-      if (_githubRepo.readme) ctx += '\nREADME:\n' + _githubRepo.readme.substring(0,1000);
+      ctx += 'Total Files: ' + _githubRepo.files.length + '\n\n';
+
+      // ⭐ Build folder structure summary (top-level folders only)
+      var folderMap = {};
+      _githubRepo.files.forEach(function(f){
+        var parts = f.split('/');
+        if (parts.length > 1) {
+          // Track up to 3 levels deep
+          for (var d = 1; d <= Math.min(3, parts.length - 1); d++) {
+            var key = parts.slice(0, d).join('/');
+            folderMap[key] = (folderMap[key] || 0) + 1;
+          }
+        }
+      });
+      var folders = Object.keys(folderMap).sort();
+      if (folders.length) {
+        ctx += 'Folder Structure (top-level + nested):\n';
+        folders.slice(0, 40).forEach(function(f){
+          var indent = '  '.repeat(f.split('/').length);
+          ctx += indent + f + '/  (' + folderMap[f] + ' files)\n';
+        });
+        ctx += '\n';
+      }
+
+      // ⭐ Sample file paths per extension (helps AI understand conventions)
+      var samplesByExt = {};
+      _githubRepo.files.forEach(function(f){
+        var ext = (f.split('.').pop() || '').toLowerCase();
+        if (['ts','html','scss','css','java','dart','swift','kt','py','go','vue','jsx','tsx'].indexOf(ext) !== -1) {
+          if (!samplesByExt[ext]) samplesByExt[ext] = [];
+          if (samplesByExt[ext].length < 3) samplesByExt[ext].push(f);
+        }
+      });
+      var sampleKeys = Object.keys(samplesByExt);
+      if (sampleKeys.length) {
+        ctx += 'Sample File Paths (by type):\n';
+        sampleKeys.forEach(function(ext){
+          samplesByExt[ext].forEach(function(p){ ctx += '  ' + p + '\n'; });
+        });
+        ctx += '\n';
+      }
+
+      // ⭐ PATCH 12 — JS-extracted paths (deterministic, not AI-guessed)
+      var frameName = (_aiFrame2 && _aiFrame2.name) ? _aiFrame2.name : 'screen';
+      var paths = aiExtractGitHubPaths(frameName);
+      if (paths) {
+        ctx += '=== EXTRACTED PROJECT STRUCTURE ===\n';
+        if (paths.javaPackage) {
+          ctx += 'Java root: ' + (paths.javaRoot || '(repo root)') + '\n';
+          ctx += 'Java package: ' + paths.javaPackage + '\n';
+          ctx += 'Java base dir: ' + paths.javaBaseDir + '\n';
+        }
+        if (paths.angularRoot) ctx += 'Angular root: ' + paths.angularRoot + '\n';
+        if (paths.flutterRoot) ctx += 'Flutter root: ' + paths.flutterRoot + '\n';
+
+        ctx += '\n=== SUGGESTED PATHS FOR THIS FRAME (USE THESE EXACTLY) ===\n';
+        if (paths.suggested.angular.length) {
+          ctx += 'Angular:\n';
+          paths.suggested.angular.forEach(function(p){ ctx += '  ' + p + '\n'; });
+        }
+        if (paths.suggested.spring.length) {
+          ctx += 'Spring Boot:\n';
+          paths.suggested.spring.forEach(function(p){ ctx += '  ' + p + '\n'; });
+        }
+        if (paths.suggested.flutter.length) {
+          ctx += 'Flutter:\n';
+          paths.suggested.flutter.forEach(function(p){ ctx += '  ' + p + '\n'; });
+        }
+        ctx += '\n';
+      }
+
+      if (_githubRepo.readme) ctx += 'README (first 500 chars):\n' + _githubRepo.readme.substring(0,500);
       return ctx;
     }
+
+        // ── Capture frame as base64 image ──
 
         // ── Capture frame as base64 image ──────────────────────────────
     function captureFrameImage(frameId, callback) {
@@ -713,7 +926,25 @@
       }).catch(function() { callback(null); });
     }
 
+    // ⭐ NEW: Auto-fill GitHub URL when AI popup opens
+    function aiAutoFillGitHub() {
+      if (!_projectRepoUrl) return;
+      var inp = document.getElementById('ai-github-url');
+      if (!inp) return;
+      // Skip if already filled or already synced
+      if (inp.value && inp.value.trim() === _projectRepoUrl.trim()) return;
+      if (_githubRepo) return;  // already synced once
+      inp.value = _projectRepoUrl;
+      inp.style.borderColor = 'rgba(0,212,168,.4)';
+      // Auto-trigger sync
+      setTimeout(function(){ aiSyncGitHub(); }, 300);
+    }
+
     function aiGreet2() {
+      if (_projectRepoUrl && !_githubRepo) {
+        _autoSyncDone = false;
+      }
+      // aiAutoFillGitHub();  
       var f = _aiFrame2;
       if (!f) { aiAddMsg2('assistant', 'Hello! How can I help?'); return; }
       var loadId = aiAddMsg2('assistant', '● ● ●', true);
@@ -1268,8 +1499,106 @@
       aiGenerateFileAt(files, idx);
     }
 
-    function aiShowChecklist(message,files){_checkedFiles=files.slice();var msgs=document.getElementById('ai-messages');var div=document.createElement('div');div.style.cssText='display:flex;gap:8px;margin-bottom:10px;';var av=document.createElement('div');av.style.cssText='width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,rgba(108,99,255,.3),rgba(0,212,168,.2));border:1px solid rgba(108,99,255,.4);display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0;margin-top:2px;';av.textContent='✦';var wrap=document.createElement('div');wrap.style.cssText='flex:1;min-width:0;';var bubble=document.createElement('div');bubble.style.cssText='background:var(--bg3);border:1px solid var(--brd);border-radius:10px;padding:10px 12px;font-size:12px;line-height:1.6;color:var(--t0);margin-bottom:8px;';bubble.innerHTML=message.replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/\n/g,'<br>');var list=document.createElement('div');list.style.cssText='background:var(--bg2);border:1px solid var(--brd);border-radius:10px;padding:10px 12px;margin-bottom:8px;display:flex;flex-direction:column;gap:5px;';var extColors={ts:'#3178c6',html:'#e34f26',scss:'#cc6699',java:'#f89820',sql:'#00758f',dart:'#00b4ab',swift:'#f05138',kt:'#7f52ff',js:'#f7df1e'};files.forEach(function(fname){var row=document.createElement('label');row.style.cssText='display:flex;align-items:center;gap:8px;cursor:pointer;padding:3px 0;';var cb=document.createElement('input');cb.type='checkbox';cb.checked=true;cb.style.cssText='width:14px;height:14px;accent-color:var(--acc);cursor:pointer;flex-shrink:0;';cb.onchange=function(){if(cb.checked){if(!_checkedFiles.includes(fname))_checkedFiles.push(fname);}else{_checkedFiles=_checkedFiles.filter(function(f){return f!==fname;});}genBtn.disabled=_checkedFiles.length===0;};var ext=(fname.split('.').pop()||'').toLowerCase();var badge=document.createElement('span');badge.style.cssText='font-size:9px;padding:1px 5px;border-radius:3px;font-weight:700;color:#fff;background:'+(extColors[ext]||'#555')+';flex-shrink:0;font-family:DM Mono,monospace;';badge.textContent=ext.toUpperCase();var label=document.createElement('span');label.style.cssText='font-size:11px;color:var(--t0);font-family:DM Mono,monospace;';label.textContent=fname;row.appendChild(cb);row.appendChild(badge);row.appendChild(label);list.appendChild(row);});var genBtn=document.createElement('button');genBtn.style.cssText='width:100%;height:34px;background:linear-gradient(135deg,rgba(0,212,168,.2),rgba(108,99,255,.15));border:1px solid rgba(0,212,168,.4);border-radius:8px;color:var(--acc2);font-size:12px;font-weight:700;cursor:pointer;font-family:Inter,sans-serif;display:flex;align-items:center;justify-content:center;gap:6px;';genBtn.innerHTML='✦ Generate & Download';genBtn.onclick=function(){aiGenerateConfirmed();};wrap.appendChild(bubble);wrap.appendChild(list);wrap.appendChild(genBtn);div.appendChild(av);div.appendChild(wrap);msgs.appendChild(div);msgs.scrollTop=msgs.scrollHeight;}
+    function aiShowChecklist(message, files) {
+      _checkedFiles = files.slice();
+      var msgs = document.getElementById('ai-messages');
+      var div = document.createElement('div');
+      div.style.cssText = 'display:flex;gap:8px;margin-bottom:10px;';
 
+      var av = document.createElement('div');
+      av.style.cssText = 'width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,rgba(108,99,255,.3),rgba(0,212,168,.2));border:1px solid rgba(108,99,255,.4);display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0;margin-top:2px;';
+      av.textContent = '✦';
+
+      var wrap = document.createElement('div');
+      wrap.style.cssText = 'flex:1;min-width:0;';
+
+      var bubble = document.createElement('div');
+      bubble.style.cssText = 'background:var(--bg3);border:1px solid var(--brd);border-radius:10px;padding:10px 12px;font-size:12px;line-height:1.6;color:var(--t0);margin-bottom:8px;';
+      bubble.innerHTML = message.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>');
+
+      var list = document.createElement('div');
+      list.style.cssText = 'background:var(--bg2);border:1px solid var(--brd);border-radius:10px;padding:10px 12px;margin-bottom:8px;display:flex;flex-direction:column;gap:6px;';
+
+      var extColors = {ts:'#3178c6',html:'#e34f26',scss:'#cc6699',java:'#f89820',sql:'#00758f',dart:'#00b4ab',swift:'#f05138',kt:'#7f52ff',js:'#f7df1e'};
+
+      // ⭐ NEW: Folder group summary
+      var folderGroups = {};
+      files.forEach(function(f) {
+        var fp = f.indexOf('/') !== -1 ? f.substring(0, f.lastIndexOf('/')) : '(root)';
+        folderGroups[fp] = (folderGroups[fp] || 0) + 1;
+      });
+      var summary = document.createElement('div');
+      summary.style.cssText = 'font-size:10px;color:var(--t2);padding:2px 0 6px;border-bottom:1px dashed var(--brd);margin-bottom:4px;';
+      summary.innerHTML = '<strong>' + files.length + ' files</strong> across ' + Object.keys(folderGroups).length + ' folder(s)';
+      list.appendChild(summary);
+
+      // Declare genBtn early so checkbox onchange can reference it
+      var genBtn;
+
+      files.forEach(function(fname) {
+        var row = document.createElement('label');
+        row.style.cssText = 'display:flex;align-items:flex-start;gap:8px;cursor:pointer;padding:4px 0;';
+
+        var cb = document.createElement('input');
+        cb.type = 'checkbox';
+        cb.checked = true;
+        cb.style.cssText = 'width:14px;height:14px;accent-color:var(--acc);cursor:pointer;flex-shrink:0;margin-top:2px;';
+        cb.onchange = function() {
+          if (cb.checked) {
+            if (!_checkedFiles.includes(fname)) _checkedFiles.push(fname);
+          } else {
+            _checkedFiles = _checkedFiles.filter(function(f) { return f !== fname; });
+          }
+          if (genBtn) genBtn.disabled = _checkedFiles.length === 0;
+        };
+
+        // ⭐ NEW: Split path and filename
+        var pathParts = fname.split('/');
+        var onlyName = pathParts[pathParts.length - 1];
+        var folderPath = pathParts.length > 1 ? pathParts.slice(0, -1).join('/') + '/' : '';
+
+        var ext = (onlyName.split('.').pop() || '').toLowerCase();
+        var badge = document.createElement('span');
+        badge.style.cssText = 'font-size:9px;padding:1px 5px;border-radius:3px;font-weight:700;color:#fff;background:' + (extColors[ext] || '#555') + ';flex-shrink:0;font-family:DM Mono,monospace;margin-top:1px;';
+        badge.textContent = ext.toUpperCase();
+
+        // ⭐ NEW: Two-line display (path small + filename bold)
+        var nameWrap = document.createElement('div');
+        nameWrap.style.cssText = 'display:flex;flex-direction:column;gap:1px;min-width:0;flex:1;';
+
+        if (folderPath) {
+          var pathEl = document.createElement('span');
+          pathEl.style.cssText = 'font-family:DM Mono,monospace;font-size:9px;color:var(--t2);opacity:0.75;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;';
+          pathEl.textContent = '📁 ' + folderPath;
+          pathEl.title = folderPath;
+          nameWrap.appendChild(pathEl);
+        }
+
+        var nameEl = document.createElement('span');
+        nameEl.style.cssText = 'font-family:DM Mono,monospace;font-size:11px;font-weight:600;color:var(--t0);';
+        nameEl.textContent = onlyName;
+        nameEl.title = fname;
+        nameWrap.appendChild(nameEl);
+
+        row.appendChild(cb);
+        row.appendChild(badge);
+        row.appendChild(nameWrap);
+        list.appendChild(row);
+      });
+
+      genBtn = document.createElement('button');
+      genBtn.style.cssText = 'width:100%;height:34px;background:linear-gradient(135deg,rgba(0,212,168,.2),rgba(108,99,255,.15));border:1px solid rgba(0,212,168,.4);border-radius:8px;color:var(--acc2);font-size:12px;font-weight:700;cursor:pointer;font-family:Inter,sans-serif;display:flex;align-items:center;justify-content:center;gap:6px;';
+      genBtn.innerHTML = '✦ Generate & Download';
+      genBtn.onclick = function() { aiGenerateConfirmed(); };
+
+      wrap.appendChild(bubble);
+      wrap.appendChild(list);
+      wrap.appendChild(genBtn);
+      div.appendChild(av);
+      div.appendChild(wrap);
+      msgs.appendChild(div);
+      msgs.scrollTop = msgs.scrollHeight;
+    }
     var _aiStyle=document.createElement('style');
     _aiStyle.textContent='@keyframes pulse{0%,100%{opacity:.3}50%{opacity:1}}pre[class*="language-"],code[class*="language-"]{background:transparent!important;text-shadow:none!important;font-family:\'DM Mono\',monospace!important;font-size:11px!important;line-height:1.6!important;}';
     document.head.appendChild(_aiStyle);

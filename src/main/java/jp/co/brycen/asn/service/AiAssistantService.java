@@ -83,6 +83,7 @@ public class AiAssistantService {
         StringBuilder prompt = new StringBuilder();
         prompt.append("You are an expert developer. Generate production-ready code.\n\n");
         prompt.append("File to generate: ").append(targetFile).append("\n");
+        prompt.append("(This is a FULL path - derive package/imports from the folder structure)\n");
 
         if (frame != null) {
             prompt.append("Frame: ").append(frame.getFrameName())
@@ -105,11 +106,23 @@ public class AiAssistantService {
         if (!techStacks.isEmpty()) {
             prompt.append("Tech Stack: ").append(String.join(", ", techStacks)).append("\n\n");
         }
+
         if (!githubCtx.isEmpty()) {
-            prompt.append("GitHub Context:\n").append(githubCtx).append("\n\n");
+            prompt.append("════════════════════════════════════════════════════════\n");
+            prompt.append("🔴 EXISTING PROJECT STRUCTURE (match exactly)\n");
+            prompt.append("════════════════════════════════════════════════════════\n");
+            prompt.append(githubCtx).append("\n");
+            prompt.append("════════════════════════════════════════════════════════\n\n");
         }
         prompt.append("All files in this set: ").append(String.join(", ", allFiles)).append("\n");
-        prompt.append("Generate ONLY ").append(targetFile).append(" — make it complete and production-ready.\n\n");
+        prompt.append("Generate ONLY ").append(targetFile).append(" — complete and production-ready.\n");
+        prompt.append("How to derive details from the file path:\n");
+        prompt.append("- Java package: take the path segment after 'src/main/java/' and convert slashes to dots.\n");
+        prompt.append("  Example: if path is 'X/src/main/java/A/B/C/File.java' → 'package A.B.C;'\n");
+        prompt.append("- TS imports: use relative paths based on the folder depth in this repo\n");
+        prompt.append("- Class/component name: derive from filename\n");
+        prompt.append("- Match existing code style from the repo's sample files (if any in context)\n\n");
+
         prompt.append("Use this format exactly:\n\n");
         prompt.append("===FILE_START===\n");
         prompt.append("[complete file content here]\n");
@@ -177,8 +190,41 @@ public class AiAssistantService {
         if (!techStacks.isEmpty()) {
             prompt.append("Tech Stack: ").append(String.join(", ", techStacks)).append("\n\n");
         }
+
+        // ⭐ PATCH 10 FINAL — GitHub structure + DYNAMIC path derivation
         if (!githubCtx.isEmpty()) {
-            prompt.append("GitHub Repo:\n").append(githubCtx).append("\n\n");
+            prompt.append("════════════════════════════════════════════════════════\n");
+            prompt.append("🔴 CRITICAL: EXISTING REPOSITORY STRUCTURE\n");
+            prompt.append("════════════════════════════════════════════════════════\n");
+            prompt.append(githubCtx).append("\n");
+            prompt.append("════════════════════════════════════════════════════════\n");
+            prompt.append("HOW TO DETERMINE NEW FILE PATHS (step-by-step):\n");
+            prompt.append("\n");
+            prompt.append("STEP 1 — Find the ROOT folder(s) from sample paths above:\n");
+            prompt.append("  Look at the FIRST segment of each sample path.\n");
+            prompt.append("  Common patterns: 'backend/', 'frontend/', 'api/', 'web/', 'server/', 'client/', 'src/', 'app/', 'lib/'\n");
+            prompt.append("  If paths start with the same folder (e.g. all start with 'src/'), that is the root.\n");
+            prompt.append("  If monorepo (separate frontend/ + backend/ folders), use each respectively.\n");
+            prompt.append("\n");
+            prompt.append("STEP 2 — Derive the Java BASE PACKAGE from any .java sample path:\n");
+            prompt.append("  Find 'src/main/java/' in the path, take everything AFTER it (before filename).\n");
+            prompt.append("  Convert folder slashes to dots — that is the base package.\n");
+            prompt.append("  Example: sample path 'X/src/main/java/A/B/C/File.java' → base package 'A.B.C'\n");
+            prompt.append("  Example: sample path 'X/src/main/java/A/B/File.java' → base package 'A.B'\n");
+            prompt.append("  NEW Java files keep the SAME base package, optionally adding a subfolder:\n");
+            prompt.append("  'X/src/main/java/A/B/C/controller/NewController.java' → 'package A.B.C.controller;'\n");
+            prompt.append("\n");
+            prompt.append("STEP 3 — Derive the Angular app folder from any .component.ts sample path:\n");
+            prompt.append("  Find 'src/app/' in the path, take everything BEFORE 'app/' + 'app/'.\n");
+            prompt.append("  Example: 'frontend/src/app/home/home.component.ts' → Angular root 'frontend/src/app/'\n");
+            prompt.append("  NEW components go under: 'frontend/src/app/{feature-name}/'\n");
+            prompt.append("\n");
+            prompt.append("STEP 4 — ABSOLUTE RULES:\n");
+            prompt.append("  ✅ DO copy the exact folder names and package names from sample paths\n");
+            prompt.append("  ❌ DO NOT invent package names not present in the samples\n");
+            prompt.append("  ❌ DO NOT use any specific company prefix (like com.example, jp.co.xxx, org.yyy) unless you see it in the samples\n");
+            prompt.append("  ❌ DO NOT use 'src/main/angular' unless that exact path appears in the samples\n");
+            prompt.append("════════════════════════════════════════════════════════\n\n");
         }
 
         prompt.append("Reply in ").append(getLangName(lang)).append(".\n\n");
@@ -186,7 +232,10 @@ public class AiAssistantService {
         prompt.append("1. Identifies the EXACT screen type (Login/Product List/Dashboard/etc)\n");
         prompt.append("2. Lists features visible in this design (2-3 bullet points)\n");
         prompt.append("3. Lists APIs this screen will need (2-3 bullet points)\n");
-        prompt.append("4. Lists files to generate based on the tech stack\n");
+        prompt.append("4. Lists files to generate with FULL paths\n");
+        prompt.append("   - If GitHub structure is provided, derive paths using STEPS 1-4 above\n");
+        prompt.append("   - If NO GitHub structure, use standard conventions for the tech stack\n");
+        prompt.append("   - Verify each path matches sample paths in the repo (if provided)\n");
         // Frame size hint for AI
         if (frame != null && frame.getFrameWidth() != null) {
             if (frame.getFrameWidth() > 520) {
@@ -201,10 +250,19 @@ public class AiAssistantService {
         prompt.append("Keep it concise. Do NOT return JSON. Just friendly chat text.\n");
         prompt.append("The developer can ask questions or discuss before generating code.");
 
-        // Ask AI to also return file list as JSON at the end
+        // ⭐ FILES_JSON rules — fully dynamic, no hardcoded project names
         prompt.append("\n\nAt the end of your message, append this exact block (do not skip):\n");
-        prompt.append("FILES_JSON:{\"files\":[\"file1.ext\",\"file2.ext\"]}\n");
-        prompt.append("List only the files appropriate for this frame and tech stack.");
+        prompt.append("FILES_JSON:{\"files\":[\"<full-path-1>\",\"<full-path-2>\"]}\n");
+        prompt.append("CRITICAL rules for FILES_JSON paths:\n");
+        prompt.append("- If GitHub structure is provided above, each path MUST use:\n");
+        prompt.append("    * The exact ROOT folders from sample paths (STEP 1)\n");
+        prompt.append("    * The exact Java base package from sample paths (STEP 2)\n");
+        prompt.append("    * The exact Angular app folder from sample paths (STEP 3)\n");
+        prompt.append("- If NO GitHub structure, use standard tech-stack conventions:\n");
+        prompt.append("    * Angular: 'src/app/{feature}/...'\n");
+        prompt.append("    * Spring Boot: 'src/main/java/com/example/...' (or keep generic)\n");
+        prompt.append("    * Flutter: 'lib/screens/{feature}.dart'\n");
+        prompt.append("- Only list files appropriate for this frame and tech stack.");
 
         // If frame image provided → use vision model with image
         String aiText;
