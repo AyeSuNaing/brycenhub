@@ -17,25 +17,20 @@
     </div>
   </header>
 
-  <!-- HERO BANNER -->
-  <div class="swagger-banner">
-    <div class="swagger-banner-title">📡 {{projectName}} API</div>
-    <div class="swagger-banner-sub">Auto-generated from Design Tool · OpenAPI-style documentation</div>
-    <!-- Search -->
-    <div class="swagger-search-wrap">
-      <input class="swagger-search" type="text" placeholder="Search endpoints..."
+  <!-- FRAME FILTER TABS + SEARCH (combined row) -->
+  <div class="swagger-tabs">
+    <div class="swagger-tabs-left" *ngIf="frames.length > 1">
+      <button class="swagger-tab" [class.on]="selectedFrame === 'all'"
+        (click)="filterByFrame('all')">All Frames</button>
+      <button *ngFor="let f of frames" class="swagger-tab"
+        [class.on]="selectedFrame === f" (click)="filterByFrame(f)">{{f}}</button>
+    </div>
+    <div class="swagger-tabs-right">
+      <input class="swagger-search" type="text" placeholder="🔍 Search endpoints..."
         (input)="onSearch($any($event.target).value || '')" />
     </div>
   </div>
-
-  <!-- FRAME FILTER TABS -->
-  <div class="swagger-tabs" *ngIf="frames.length > 1">
-    <button class="swagger-tab" [class.on]="selectedFrame === 'all'"
-      (click)="filterByFrame('all')">All Frames</button>
-    <button *ngFor="let f of frames" class="swagger-tab"
-      [class.on]="selectedFrame === f" (click)="filterByFrame(f)">{{f}}</button>
-  </div>
-
+  
   <!-- LOADING -->
   <div *ngIf="loading" class="swagger-loading">
     <div class="swagger-spinner"></div><span>Loading endpoints...</span>

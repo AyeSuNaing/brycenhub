@@ -202,6 +202,17 @@ export class DbSchemaComponent implements OnInit, AfterViewInit {
     const orderedNames: string[] = [];
     clusters.forEach(cluster => orderedNames.push(...cluster));
 
+    // ── Pre-compute Y positions for each row (cumulative heights) ──
+    // Fix: y = SUM of all previous rows' heights + gaps (not row × thisRowHeight)
+    const totalRows = Math.ceil(orderedNames.length / COLS);
+    const rowYPositions: number[] = [];
+    let cumulativeY = 60;  // initial offset
+    for (let r = 0; r < totalRows; r++) {
+      rowYPositions.push(cumulativeY);
+      const rowH = this.estimateRowHeight(orderedNames, r, COLS, tableMap);
+      cumulativeY += rowH + GAP_Y;
+    }
+
     this.tableNodes = orderedNames.map((name, i) => {
       const pt = tableMap.get(name)!;
       const h = HEADER_H + Math.max(pt.columns.length, 1) * COL_H + CARD_PAD;
@@ -213,7 +224,7 @@ export class DbSchemaComponent implements OnInit, AfterViewInit {
         table:   pt.table,
         columns: pt.columns,
         x: 60 + col * (CARD_W + GAP_X),
-        y: 60 + row * (this.estimateRowHeight(orderedNames, row, COLS, tableMap) + GAP_Y),
+        y: rowYPositions[row],
         width:   CARD_W,
         height:  h,
       };

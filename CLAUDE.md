@@ -3046,3 +3046,171 @@ feat(design-tool): auto-fill + auto-sync GitHub URL from DB in AI Assistant
 - `src/main/java/jp/co/brycen/asn/model/Project.java` — `repoUrl` field ✅
 - `src/main/java/jp/co/brycen/asn/controller/ProjectCommitsController.java` — PUT `/repo` endpoint ✅
 - `src/main/angular/frontend/src/app/projects/project-inline.ts` — Git Activity panel + repo edit UI ✅
+
+# 🗂️ Path-Aware Code Generation — Implementation Guide
+
+**Feature:** AI က code generate တဲ့အခါ — file တိုင်းမှာ **project folder path** အပြည့်အစုံ ပေးအောင် လုပ်တယ်။ GitHub repo structure + Tech Stack ၂ ခုစလုံးကို analyze လုပ်ပြီး၊ မရှိသေးတဲ့ file တွေကို **ဘယ်မှာထည့်ရမယ်** ဆိုတာ AI က အလိုအလျောက် သိပေးမယ်။
+
+---
+
+## 📊 Data Sources (ရှိပြီးသား)
+
+| Source | ဘယ်ကရတာ | သုံးပုံ |
+|--------|-------------|---------|
+| **GitHub files list** | `_githubRepo.files` (Sync button က GET tree API) | Folder structure infer |
+| **Tech Stacks** | `_projectTechStacks` (PROJECT_INFO postMessage) | Framework conventions |
+| **Frame data** | Canvas components (UI type detection) | Login/Dashboard/etc classify |
+
+---
+
+## 🎯 Before vs After
+
+### Before (လက်ရှိ)
+```
+Files to generate:
+- login.component.ts          ← no path
+- login.component.html
+- LoginController.java
+```
+
+### After
+```
+Files to generate:
+Frontend (Angular):
+- src/main/angular/frontend/src/app/login/login.component.ts
+- src/main/angular/frontend/src/app/login/login.component.html
+- src/main/angular/frontend/src/app/login/login.component.scss
+- src/main/angular/frontend/src/app/services/auth.service.ts
+
+Backend (Spring Boot):
+- src/main/java/jp/co/brycen/asn/controller/AuthController.java
+- src/main/java/jp/co/brycen/asn/service/AuthService.java
+- src/main/java/jp/co/brycen/asn/model/User.java
+```
+
+---
+
+## 📦 Files to Change
+
+| # | File | Role | Edits |
+|---|------|------|-------|
+| **06a** | `AiAssistantService.java` | Backend prompts | 5 edits |
+| **06b** | `design-dev.html` | Frontend UI | 2-5 edits |
+
+---
+
+## 🔑 Key Logic
+
+### 1. GitHub Context Enrichment (06b Edit 1)
+Sync တဲ့အခါ → folder structure + sample paths per extension → AI ကို ပို့
+
+```javascript
+// BEFORE
+Files (142):
+  src/app/login.ts
+  src/app/dashboard.ts
+  ...
+
+// AFTER
+Folder Structure (top-level + nested):
+  src/
+    src/main/
+      src/main/angular/  (87 files)
+      src/main/java/     (55 files)
+
+Sample File Paths (by type):
+  .ts:  src/main/angular/frontend/src/app/login/login.component.ts
+  .java: src/main/java/jp/co/brycen/asn/controller/AuthController.java
+  .scss: src/main/angular/frontend/src/app/login/login.component.scss
+```
+
+### 2. AI Prompt Update (06a Edit 1-5)
+Backend က AI ကို ဒီလို instruct:
+- "Use full relative paths from repo root"
+- "Match existing folder conventions EXACTLY"
+- "The filename implies the package, the path implies the imports"
+
+### 3. UI Display (06b Edit 2-5)
+Checklist မှာ — path + filename separate lines (readable)
+File tabs — filename only + tooltip on hover (compact)
+Status bar — full path visible
+
+---
+
+## 🛠️ Installation Order
+
+```
+1. Apply PATCH 06a (Backend)
+   ↓
+2. Restart Spring Boot (port 8080)
+   ↓
+3. Apply PATCH 06b (Frontend)
+   ↓
+4. Browser hard refresh (Cmd+Shift+R)
+   ↓
+5. Test: Open design tool → Generate code → paths ပါတယ်လား စစ်
+```
+
+---
+
+## 🧪 Testing
+
+### Test 1 — GitHub synced project
+- [ ] Auto-sync ပြီးပြီး → AI popup ဖွင့်
+- [ ] Greeting message မှာ — full paths ပေါ်ရမယ်
+- [ ] Paths က သင့် repo structure နဲ့ ကိုက်ညီရမယ်
+- [ ] FILES_JSON ထဲ paths အပြည့်ပါရမယ်
+
+### Test 2 — No GitHub (project without repo_url)
+- [ ] AI က standard Angular/Spring Boot conventions သုံးမယ်
+- [ ] Paths က still full (e.g. `src/app/login/...`)
+
+### Test 3 — Flutter/Mobile project
+- [ ] Tech stack = Flutter
+- [ ] AI က `lib/screens/login_screen.dart` လို Flutter convention သုံးမယ်
+
+### Test 4 — Checklist Display
+- [ ] ☑ checkbox next to each file
+- [ ] Folder path ကို small text မှာ ပြ (e.g. `📁 src/main/angular/.../login/`)
+- [ ] Filename ကို bold ပြ
+- [ ] Tooltip hover ရင် full path ပြ
+
+### Test 5 — File Tabs
+- [ ] Tabs က filename သာ ပြ (space saving)
+- [ ] Tab hover → tooltip မှာ full path ပြ
+
+### Test 6 — DB Save
+```sql
+SELECT file_name FROM asn_db.project_generated_file_items 
+WHERE generated_file_id = (SELECT MAX(id) FROM asn_db.project_generated_files);
+```
+→ Paths က full ဖြစ်ရမယ်: `src/main/angular/frontend/src/app/login/login.component.ts`
+
+---
+
+## 💡 Smart Behavior
+
+### Path inference rules AI က သုံးမယ်:
+
+| Input | AI က ဖြစ်စေမယ့် Path |
+|-------|--------------------|
+| GitHub has `src/main/angular/frontend/src/app/dashboard/` | New Login → `src/main/angular/frontend/src/app/login/` |
+| GitHub has `backend/src/main/java/com/foo/controllers/` | New controller → `backend/src/main/java/com/foo/controllers/AuthController.java` |
+| GitHub has `lib/screens/home_screen.dart` | New → `lib/screens/login_screen.dart` |
+| No GitHub, stack=Angular | Default → `src/app/login/login.component.ts` |
+| No GitHub, stack=Spring Boot | Default → `src/main/java/.../controller/LoginController.java` |
+
+---
+
+## 📝 Commit Message
+
+```
+feat(ai-assistant): generate files with full project paths
+
+- Enhance GitHub context with folder structure + sample paths per extension
+- Update AI greeting prompt to output FILES_JSON with full relative paths
+- Update AI generation prompt to reason about package/imports from path
+- Improve checklist UI: two-line display with folder path + filename
+- File tabs: show filename only with full-path tooltip
+- AI now places new files in folders consistent with existing repo structure
+```

@@ -18,6 +18,11 @@ public interface ProjectDbTableRepository extends JpaRepository<ProjectDbTable, 
     // Usage: PageRequest.of(0, 5) → returns latest 5 tables
     List<ProjectDbTable> findByProjectIdOrderByIdDesc(Long projectId, Pageable pageable);
 
+    // ── NEW ✅ For AI merge — find existing table by (projectId, tableName) ───
+    java.util.Optional<ProjectDbTable> findByProjectIdAndTableName(Long projectId, String tableName);
+
     @Transactional
     void deleteByProjectIdAndFrameName(Long projectId, String frameName);
+    
+    
 }
