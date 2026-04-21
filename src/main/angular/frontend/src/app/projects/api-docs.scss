@@ -32,12 +32,19 @@
 .swagger-top-left { display: flex; align-items: center; gap: 10px; }
 .swagger-logo-wrap {
   width: 32px; height: 32px; border-radius: 8px;
-  background: linear-gradient(135deg, #1d4ed8, #7c3aed);
+  background: linear-gradient(135deg, #14532d, #16a34a);
   display: flex; align-items: center; justify-content: center;
 }
-.swagger-logo-b { font-weight: 800; font-size: 16px; color: #fff; }
+.swagger-logo-b { font-weight: 900; font-size: 16px; color: #86efac; }
 .swagger-logo-text { font-weight: 700; font-size: 13px; color: #f1f5f9; }
-.swagger-logo-slogan { font-size: 10px; color: #64748b; }
+.swagger-logo-slogan {
+  font-size: 10px; color: #64748b;
+  font-style: italic;
+  background: linear-gradient(90deg, #a855f7, #22c55e);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
 .swagger-top-center { flex: 1; display: flex; justify-content: center; }
 .swagger-back-btn {
   background: rgba(255,255,255,.05); border: 1px solid #1e2d4a;
@@ -45,10 +52,13 @@
   font-size: 12px; cursor: pointer; transition: .15s;
   &:hover { background: rgba(255,255,255,.1); color: #e2e8f0; }
 }
-.swagger-top-right { display: flex; align-items: center; }
+.swagger-top-right { display: flex; align-items: center; gap: 8px; }
+.swagger-title-text {
+  font-size: 12px; font-weight: 700; color: #e2e8f0;
+}
 .swagger-badge {
-  background: rgba(99,102,241,.15); color: #818cf8;
-  border: 1px solid rgba(99,102,241,.3);
+  background: rgba(34,197,94,.15); color: #22c55e;
+  border: 1px solid rgba(34,197,94,.3);
   border-radius: 20px; padding: 3px 12px; font-size: 11px; font-weight: 600;
 }
 

@@ -87,29 +87,34 @@
             </div>
           </div>
 
+          
           <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;">
             <div *ngFor="let col of boardColumns"
-              style="border-radius:8px;border:1px solid rgba(30,45,74,0.5);overflow:hidden;cursor:pointer;transition:border-color 0.15s;background:#0d1424;display:flex;flex-direction:column;"
+              style="border-radius:8px;border:1px solid;overflow:hidden;cursor:pointer;transition:border-color 0.15s;display:flex;flex-direction:column;"
+              [style.background]="isDark ? '#0d1424' : '#f8fafc'"
+              [style.borderColor]="isDark ? 'rgba(30,45,74,0.5)' : '#e2e8f0'"
               onmouseenter="this.style.borderColor='#22c55e66'"
-              onmouseleave="this.style.borderColor='rgba(30,45,74,0.5)'"
+              [attr.data-default-border]="isDark ? 'rgba(30,45,74,0.5)' : '#e2e8f0'"
+              onmouseleave="this.style.borderColor=this.getAttribute('data-default-border')"
               [routerLink]="['/kanban', project.id]">
 
-              <!-- HEADER (top): ● Column name  N — 30px fixed with 2-line support -->
-              <div style="height:45px;padding:4px 5px;border-bottom:1px solid rgba(30,45,74,0.3);display:flex;align-items:center;justify-content:space-between;gap:4px;flex-shrink:0;box-sizing:border-box;">
+              <!-- HEADER -->
+              <div style="height:45px;padding:4px 5px;border-bottom:1px solid;display:flex;align-items:center;justify-content:space-between;gap:4px;flex-shrink:0;box-sizing:border-box;"
+                [style.borderBottomColor]="isDark ? 'rgba(30,45,74,0.3)' : '#e2e8f0'">
                 <div style="display:flex;align-items:center;gap:5px;min-width:0;flex:1;">
                   <div style="width:6px;height:6px;border-radius:2px;flex-shrink:0;" [style.background]="col.color"></div>
-                  <span style="font-size:10px;font-weight:600;color:#e2e8f0;line-height:1.2;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;word-break:break-word;">{{ col.label }}</span>
+                  <span style="font-size:10px;font-weight:600;line-height:1.2;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;word-break:break-word;"
+                    [style.color]="isDark ? '#e2e8f0' : '#1e293b'">{{ col.label }}</span>
                 </div>
                 <span style="font-size:9px;color:#64748b;font-family:'DM Mono',monospace;flex-shrink:0;">
                   {{ getTasksByStatus(col.status).length }}
                 </span>
               </div>
 
-              <!-- BODY: task card (140px fixed, title auto-fills with ellipsis) -->
+              <!-- BODY: task card -->
               <ng-container *ngIf="getTopTasksByStatus(col.status, 1)[0] as t">
                 <div style="height:100px;padding:5px;display:flex;flex-direction:column;border-left:2px solid;box-sizing:border-box;gap:6px;"
                   [style.borderLeftColor]="getTaskPriorityColor(t.priority)">
-                  <!-- Top row: PRIORITY | date -->
                   <div style="display:flex;align-items:center;justify-content:space-between;gap:4px;flex-shrink:0;">
                     <span style="font-size:7px;font-weight:700;letter-spacing:0.3px;" [style.color]="getTaskPriorityColor(t.priority)">
                       {{ t.priority }}
@@ -118,8 +123,9 @@
                       {{ formatShortDate(t.dueDate) }}
                     </span>
                   </div>
-                  <!-- Title — fills remaining, ellipsis on overflow -->
-                  <div style="flex:1;min-height:0;min-width:0;font-size:10px;line-height:1.4;color:#e2e8f0;display:-webkit-box;-webkit-line-clamp:5;-webkit-box-orient:vertical;overflow:hidden;" [title]="t.title">
+                  <div style="flex:1;min-height:0;min-width:0;font-size:10px;line-height:1.4;display:-webkit-box;-webkit-line-clamp:5;-webkit-box-orient:vertical;overflow:hidden;"
+                    [style.color]="isDark ? '#e2e8f0' : '#1e293b'"
+                    [title]="t.title">
                     {{ t.title }}
                   </div>
                 </div>
@@ -132,6 +138,9 @@
               </div>
             </div>
           </div>
+
+
+
         </div>
         <!-- ═══ END BOARD PREVIEW ═══ -->
 
@@ -231,10 +240,28 @@
 
       <!-- Activity Log -->
       <div class="card">
-        <div class="card-title">🕐 Activity Log</div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+          <div class="card-title" style="margin-bottom:0;">🕐 Activity Log</div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span style="font-size:9px;padding:2px 8px;border-radius:20px;background:rgba(148,163,184,0.12);color:#94a3b8;font-weight:600;border:1px solid rgba(148,163,184,0.2);">
+              {{ activities.length }} total
+            </span>
+            <a *ngIf="activities.length > 3"
+              [routerLink]="['/projects', projectId, 'activity']"
+              style="font-size:10px;padding:4px 12px;border-radius:8px;border:1px solid #22c55e44;background:rgba(34,197,94,0.08);color:#22c55e;font-weight:700;cursor:pointer;transition:all 0.15s;text-decoration:none;display:inline-block;"
+              onmouseenter="this.style.background='rgba(34,197,94,0.15)'"
+              onmouseleave="this.style.background='rgba(34,197,94,0.08)'">
+              View All →
+            </a>
+          </div>
+        </div>
+
         <div *ngIf="!activities.length" style="text-align:center;padding:20px;font-size:11px;opacity:0.35;">No activity yet</div>
+
+        <!-- Activity list — scrollable when expanded -->
         <div style="display:flex;flex-direction:column;gap:8px;">
-          <div *ngFor="let act of activities.slice(0,6)" style="display:flex;align-items:flex-start;gap:8px;">
+          <div *ngFor="let act of activities.slice(0, 3)"
+            style="display:flex;align-items:flex-start;gap:8px;">
             <div style="width:24px;height:24px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:white;background:linear-gradient(135deg,#14532d,#16a34a);">{{ (act.userName || 'U')[0].toUpperCase() }}</div>
             <div style="flex:1;min-width:0;">
               <div class="act-text">
@@ -242,13 +269,13 @@
                 {{ getActionText(act.action) }}
                 <span *ngIf="act.targetName" style="color:#22c55e;font-weight:600;"> "{{ act.targetName }}"</span>
                 <span *ngIf="act.newValue && act.action !== 'COMMENTED'" style="opacity:0.5;"> → {{ act.newValue }}</span>
-                <span *ngIf="act.action === 'COMMENTED' && act.newValue" style="opacity:0.5;font-style:italic;"> — "{{ act.newValue | slice:0:40 }}{{ act.newValue.length > 40 ? '…' : '' }}"</span>
-              </div>
+                <span *ngIf="act.action === 'COMMENTED' && act.newValue" style="opacity:0.5;font-style:italic;"> — "{{ (act.newValue | slice:0:40) + (act.newValue.length > 40 ? '…' : '') }}"</span>              </div>
               <div class="act-time">{{ act.createdAt | date:'MMM d, h:mm a' }}</div>
             </div>
             <span style="font-size:13px;">{{ getActionIcon(act.action) }}</span>
           </div>
         </div>
+
       </div>
     </ng-container>
 

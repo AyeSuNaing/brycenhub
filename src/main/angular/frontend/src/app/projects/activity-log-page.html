@@ -1,0 +1,210 @@
+<div class="app-shell" [class.dark]="isDark" [class.light]="!isDark">
+
+  <!-- ════════════ TOPBAR (same as Kanban board) ════════════ -->
+  <header class="topbar">
+    <div class="logo-wrap">
+      <div style="width:32px;height:32px;background:linear-gradient(135deg,#14532d,#16a34a);
+        border-radius:8px;display:flex;align-items:center;justify-content:center;">
+        <span style="color:#86efac;font-weight:900;font-size:16px">B</span>
+      </div>
+      <div>
+        <div class="logo-text">Brycen Hub</div>
+        <div class="logo-slogan">One Group. One Platform. Full Visibility.</div>
+      </div>
+    </div>
+
+    <div class="topbar-spacer"></div>
+
+    <!-- Breadcrumb -->
+    <button (click)="goBack()"
+      [style.background]="isDark ? 'rgba(255,255,255,0.06)' : '#f1f5f9'"
+      [style.borderColor]="isDark ? 'rgba(255,255,255,0.12)' : '#e2e8f0'"
+      [style.color]="isDark ? '#94a3b8' : '#64748b'"
+      style="border-width:1px;border-style:solid;border-radius:8px;padding:6px 16px;font-size:11px;font-weight:500;cursor:pointer;transition:all 0.2s;white-space:nowrap;font-family:inherit;"
+      onmouseenter="this.style.opacity='0.75'; this.style.transform='translateY(-1px)'"
+      onmouseleave="this.style.opacity='1'; this.style.transform='translateY(0)'">
+      ← Back to {{ project?.title || 'Project' }}
+    </button>
+
+    <div class="topbar-spacer"></div>
+
+    <!-- Theme toggle -->
+    <div class="icon-btn" (click)="toggleTheme()" title="Toggle theme">
+      <span style="font-size:13px">{{ isDark ? '🌙' : '☀️' }}</span>
+    </div>
+  </header>
+
+  <!-- ════════════ BODY ════════════ -->
+  <div style="flex:1;overflow-y:auto;display:flex;flex-direction:column;">
+
+    <!-- Page header info
+    <div style="padding:14px 24px 0;display:flex;align-items:center;gap:12px;flex-shrink:0;">
+      <span style="font-size:18px;">🕐</span>
+      <span style="font-size:14px;font-weight:700;">Activity Log</span>
+      <span style="font-size:10px;padding:2px 8px;border-radius:20px;
+        background:#16a34a22;color:#22c55e;font-weight:600;">
+        {{ project?.title }}
+      </span>
+      <span style="font-size:10px;opacity:0.45;">
+        {{ activities.length }} {{ activities.length === 1 ? 'activity' : 'activities' }} total
+      </span>
+    </div> -->
+
+    <!-- Loading -->
+    <div *ngIf="isLoading" style="flex:1;display:flex;align-items:center;justify-content:center;gap:10px;">
+      <div style="width:18px;height:18px;border:3px solid #16a34a;border-top-color:transparent;
+        border-radius:50%;animation:spin 0.8s linear infinite;"></div>
+      <span style="font-size:12px;color:#22c55e;font-weight:600;">Loading activities...</span>
+    </div>
+
+    <!-- Main content -->
+    <ng-container *ngIf="!isLoading">
+
+      <!-- FILTER BAR -->
+      <div style="padding:14px 24px;flex-shrink:0;">
+        <div [style.background]="isDark ? '#0d1424' : 'white'"
+             [style.border]="isDark ? '1px solid #1e2d4a' : '1px solid #e2e8f0'"
+             style="border-radius:12px;padding:14px 16px;">
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+
+            <!-- Search -->
+            <div style="position:relative;flex:1;min-width:220px;">
+              <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:13px;opacity:0.4;">🔍</span>
+              <input [(ngModel)]="searchQuery" (ngModelChange)="applyFilters()"
+                placeholder="Search by user, task, action..."
+                [style.background]="isDark ? '#131929' : '#f8fafc'"
+                [style.border]="isDark ? '1px solid #1e2d4a' : '1px solid #e2e8f0'"
+                [style.color]="isDark ? '#e2e8f0' : '#1e293b'"
+                style="width:100%;padding:8px 12px 8px 34px;border-radius:8px;font-size:12px;outline:none;box-sizing:border-box;">
+            </div>
+
+            <!-- Action filter -->
+            <select [(ngModel)]="filterAction" (ngModelChange)="applyFilters()"
+              [style.background]="isDark ? '#131929' : '#f8fafc'"
+              [style.border]="isDark ? '1px solid #1e2d4a' : '1px solid #e2e8f0'"
+              [style.color]="isDark ? '#94a3b8' : '#64748b'"
+              style="padding:8px 12px;border-radius:8px;font-size:12px;outline:none;cursor:pointer;">
+              <option *ngFor="let opt of actionOptions" [value]="opt.value">{{ opt.icon }} {{ opt.label }}</option>
+            </select>
+
+            <!-- User filter -->
+            <select [(ngModel)]="filterUser" (ngModelChange)="applyFilters()"
+              [style.background]="isDark ? '#131929' : '#f8fafc'"
+              [style.border]="isDark ? '1px solid #1e2d4a' : '1px solid #e2e8f0'"
+              [style.color]="isDark ? '#94a3b8' : '#64748b'"
+              style="padding:8px 12px;border-radius:8px;font-size:12px;outline:none;cursor:pointer;">
+              <option value="ALL">👥 All Users</option>
+              <option *ngFor="let u of getUniqueUsers()" [value]="u.userId">{{ u.userName }}</option>
+            </select>
+
+            <!-- Date filter -->
+            <select [(ngModel)]="filterDateRange" (ngModelChange)="applyFilters()"
+              [style.background]="isDark ? '#131929' : '#f8fafc'"
+              [style.border]="isDark ? '1px solid #1e2d4a' : '1px solid #e2e8f0'"
+              [style.color]="isDark ? '#94a3b8' : '#64748b'"
+              style="padding:8px 12px;border-radius:8px;font-size:12px;outline:none;cursor:pointer;">
+              <option *ngFor="let opt of dateRangeOptions" [value]="opt.value">📅 {{ opt.label }}</option>
+            </select>
+
+            <!-- Reset -->
+            <button (click)="resetFilters()"
+              style="padding:8px 14px;border-radius:8px;border:1px solid #ef444433;background:transparent;color:#ef4444;font-size:12px;font-weight:600;cursor:pointer;transition:all 0.15s;"
+              onmouseenter="this.style.background='#ef444411'"
+              onmouseleave="this.style.background='transparent'">
+              ✕ Clear
+            </button>
+          </div>
+
+          <!-- Results count -->
+          <div style="margin-top:10px;font-size:11px;opacity:0.55;">
+            Showing <strong style="color:#22c55e;">{{ filteredActivities.length }}</strong> of {{ activities.length }} activities
+          </div>
+        </div>
+      </div>
+
+      <!-- EMPTY STATE -->
+      <div *ngIf="filteredActivities.length === 0"
+        style="margin:0 24px 24px;padding:60px 20px;text-align:center;border-radius:12px;"
+        [style.background]="isDark ? '#0d1424' : 'white'"
+        [style.border]="isDark ? '1px dashed #1e2d4a' : '1px dashed #e2e8f0'">
+        <div style="font-size:48px;opacity:0.3;margin-bottom:12px;">🕐</div>
+        <div style="font-size:14px;font-weight:700;color:#94a3b8;margin-bottom:6px;">No activities found</div>
+        <div style="font-size:11px;opacity:0.5;">Try adjusting your filters</div>
+      </div>
+
+      <!-- ACTIVITY LIST — grouped by date -->
+      <div *ngIf="filteredActivities.length > 0"
+        style="padding:0 24px 24px;display:flex;flex-direction:column;gap:18px;">
+        <div *ngFor="let group of groupedActivities">
+
+          <!-- Date header -->
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;padding:0 4px;">
+            <span style="font-size:11px;font-weight:700;color:#94a3b8;letter-spacing:0.5px;text-transform:uppercase;">
+              {{ formatDateHeader(group.date) }}
+            </span>
+            <span style="font-size:9px;opacity:0.4;">({{ group.items.length }})</span>
+            <div style="flex:1;height:1px;opacity:0.4;"
+              [style.background]="isDark ? '#1e2d4a' : '#e2e8f0'"></div>
+          </div>
+
+          <!-- Activities for this date -->
+          <div [style.background]="isDark ? '#0d1424' : 'white'"
+               [style.border]="isDark ? '1px solid #1e2d4a' : '1px solid #e2e8f0'"
+               style="border-radius:12px;overflow:hidden;">
+            <div *ngFor="let act of group.items; let last = last"
+              style="display:flex;align-items:flex-start;gap:12px;padding:14px 16px;transition:background 0.15s;"
+              [style.borderBottom]="!last ? (isDark ? '1px solid rgba(30,45,74,0.4)' : '1px solid #f1f5f9') : 'none'"
+              onmouseenter="this.style.background='rgba(34,197,94,0.03)'"
+              onmouseleave="this.style.background='transparent'">
+
+              <!-- Avatar -->
+              <div style="width:32px;height:32px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:white;background:linear-gradient(135deg,#14532d,#16a34a);">
+                {{ act.userInitial }}
+              </div>
+
+              <!-- Content -->
+              <div style="flex:1;min-width:0;">
+                <div style="font-size:12px;line-height:1.7;">
+                  <strong [style.color]="isDark ? '#e2e8f0' : '#1e293b'">{{ act.userName }}</strong>
+                  <span style="opacity:0.75;"> {{ getActionText(act.action) }}</span>
+                  <span *ngIf="act.targetName" style="color:#22c55e;font-weight:600;"> "{{ act.targetName }}"</span>
+                  <span *ngIf="act.newValue && act.action !== 'COMMENTED'" style="opacity:0.6;"> → </span>
+                  <span *ngIf="act.newValue && act.action !== 'COMMENTED'"
+                    style="font-size:10px;padding:2px 8px;border-radius:5px;font-weight:700;"
+                    [style.color]="getActionColor(act.action)"
+                    [style.background]="getActionColor(act.action) + '22'"
+                    [style.border]="'1px solid ' + getActionColor(act.action) + '44'">
+                    {{ act.newValue }}
+                  </span>
+                  <span *ngIf="act.action === 'COMMENTED' && act.newValue"
+                    style="display:block;margin-top:6px;padding:8px 12px;border-radius:8px;background:rgba(6,182,212,0.08);border-left:3px solid #06b6d4;font-size:11px;line-height:1.6;opacity:0.85;font-style:italic;white-space:pre-wrap;">
+                    "{{ act.newValue }}"
+                  </span>
+                  <span *ngIf="act.oldValue && act.newValue && act.action === 'TASK_MOVED'"
+                    style="font-size:10px;opacity:0.5;margin-left:6px;">
+                    (from {{ act.oldValue }})
+                  </span>
+                </div>
+                <div style="font-size:10px;opacity:0.4;margin-top:5px;">
+                  {{ act.createdAt | date:'h:mm a' }}
+                </div>
+              </div>
+
+              <!-- Action icon -->
+              <div style="width:32px;height:32px;border-radius:8px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:14px;"
+                [style.background]="getActionColor(act.action) + '15'"
+                [style.border]="'1px solid ' + getActionColor(act.action) + '33'">
+                {{ getActionIcon(act.action) }}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </ng-container>
+  </div>
+</div>
+
+<style>
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>

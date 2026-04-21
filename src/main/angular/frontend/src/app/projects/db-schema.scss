@@ -36,7 +36,16 @@
 }
 .erd-logo-b      { color: #86efac; font-weight: 900; font-size: 16px; }
 .erd-logo-text   { font-size: 13px; font-weight: 700; color: #e2e8f0; line-height: 1.2; }
-.erd-logo-slogan { font-size: 9px; color: #22c55e; font-weight: 500; }
+.erd-logo-slogan {
+  font-size: 9px;
+  font-weight: 600;
+  font-style: italic;
+  letter-spacing: 0.3px;
+  background: linear-gradient(90deg, #a855f7, #22c55e);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
 
 .erd-top-center {
   flex: 1;

@@ -1126,10 +1126,13 @@ body.light {
 
 .logo-slogan {
     font-size: 9px;
-    color: #16a34a;
     font-weight: 600;
     letter-spacing: 0.3px;
     font-style: italic;
+    background: linear-gradient(90deg, #a855f7, #22c55e);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
 }
 
 .topbar-spacer {

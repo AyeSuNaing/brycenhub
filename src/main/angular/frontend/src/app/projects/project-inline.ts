@@ -1,6 +1,6 @@
 import {
   Component, Input, Output, EventEmitter,
-  OnInit, OnChanges, SimpleChanges, ChangeDetectorRef
+  OnInit, OnChanges, OnDestroy, SimpleChanges, ChangeDetectorRef
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -58,7 +58,10 @@ export class ProjectInlineComponent implements OnInit, OnChanges {
   showApi = false;
   showDb = false;
   showFullDesc = false;
+  showAllActivities = false;
   activeTab = 'overview';
+  isDark = true;
+  private themeObserver?: MutationObserver;
 
   showEdit = false;
   isSaving = false;
@@ -191,6 +194,27 @@ export class ProjectInlineComponent implements OnInit, OnChanges {
   ) { }
 
   ngOnInit() {
+    // Theme detection — body class first, then localStorage, default dark
+    if (document.body.classList.contains('light')) {
+      this.isDark = false;
+    } else if (document.body.classList.contains('dark')) {
+      this.isDark = true;
+    } else {
+      const saved = localStorage.getItem('brycen-theme');
+      this.isDark = saved !== 'light';  // default to dark
+    }
+
+    // Watch for theme changes from parent dashboard
+    this.themeObserver = new MutationObserver(() => {
+      const nowDark = document.body.classList.contains('dark') ||
+                     !document.body.classList.contains('light');
+      if (nowDark !== this.isDark) {
+        this.isDark = nowDark;
+        this.cdr.detectChanges();
+      }
+    });
+    this.themeObserver.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+
     const savedLang = this.auth.getUser()?.preferredLanguage || 'en';
     this.currentLang = savedLang;
     if (savedLang !== 'en') this.pendingLang = savedLang;
@@ -1160,6 +1184,7 @@ export class ProjectInlineComponent implements OnInit, OnChanges {
     });
   }
 
+
   deleteTechStack(id: number) {
     if (!id) return;
     const h = { headers: this.auth.getHeaders() };
@@ -1428,4 +1453,9 @@ export class ProjectInlineComponent implements OnInit, OnChanges {
       m.roleInProject !== 'ADMIN'
     ).length;
   }
+
+  ngOnDestroy() {
+    this.themeObserver?.disconnect();
+  }
+
 }

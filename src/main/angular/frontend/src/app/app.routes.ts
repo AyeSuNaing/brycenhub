@@ -37,11 +37,18 @@ export const routes: Routes = [
     loadComponent: () => import('./projects/api-docs').then(m => m.ApiDocsComponent),
   },
 
-  // ── DB Schema ERD page ──
+// ── DB Schema ERD page ──
   {
     path: 'projects/:projectId/db-schema',
     canActivate: [authGuard],
     loadComponent: () => import('./projects/db-schema').then(m => m.DbSchemaComponent),
+  },
+
+  // ── Activity Log page ──
+  {
+    path: 'projects/:id/activity',
+    canActivate: [authGuard],
+    loadComponent: () => import('./projects/activity-log-page').then(m => m.ActivityLogPageComponent),
   },
 
   {
