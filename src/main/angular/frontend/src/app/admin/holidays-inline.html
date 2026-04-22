@@ -1,0 +1,311 @@
+<div class="holidays-wrapper">
+
+  <!-- ═══════════════════════════════════════════
+       LEFT — MAIN CONTENT (scrollable)
+  ═══════════════════════════════════════════ -->
+  <div class="holidays-main">
+
+    <!-- ═══════════════════════════════════════
+         STATS ROW (member-dashboard style)
+    ═══════════════════════════════════════ -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-label">Total Holidays</div>
+        <div class="stat-value">{{ statsTotal }}</div>
+        <div class="stat-sub">● {{ currentYear }} · {{ countryName }}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">This Month</div>
+        <div class="stat-value accent-purple">{{ statsThisMonth }}</div>
+        <div class="stat-sub">● {{ calendarMonthShort }} {{ calendarYear }}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Upcoming 30 Days</div>
+        <div class="stat-value accent-green">{{ statsUpcoming }}</div>
+        <div class="stat-sub">Next month window</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Weekend Overlap</div>
+        <div class="stat-value accent-amber">{{ statsWeekendOverlap }}</div>
+        <div class="stat-sub">Falls on Sat/Sun</div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════
+         MAIN CARD — Holidays
+    ═══════════════════════════════════════ -->
+    <div class="hol-card">
+
+      <!-- Card Header -->
+      <div class="hol-card-header">
+        <div class="hol-title-row">
+          <div class="card-title">
+            <span class="title-icon">🗓️</span>
+            <span>Public Holidays</span>
+          </div>
+
+          <!-- Country switcher dropdown -->
+          <div class="country-switcher" *ngIf="viewingCountry">
+            <button class="country-pill"
+                    [class.not-own]="!isViewingOwnCountry && !isGlobalAdmin"
+                    (click)="toggleCountryMenu()">
+              {{ countryFlag }} {{ countryName }}
+              <span *ngIf="!isViewingOwnCountry && !isGlobalAdmin" class="view-only-badge">👁️ View</span>
+              <span class="dropdown-arrow">▾</span>
+            </button>
+
+            <div *ngIf="showCountryMenu" class="country-menu-backdrop" (click)="showCountryMenu = false"></div>
+            <div *ngIf="showCountryMenu" class="country-menu">
+              <div class="menu-header">Switch country</div>
+
+              <button *ngIf="country"
+                      class="country-option own"
+                      [class.active]="viewingCountry.id === country.id"
+                      (click)="selectCountry(country)">
+                <span class="opt-flag">{{ getFlagFor(country) }}</span>
+                <span class="opt-name">{{ country.name }}</span>
+                <span class="opt-badge own-badge">⭐ Yours</span>
+              </button>
+
+              <div class="menu-divider" *ngIf="country"></div>
+
+              <ng-container *ngFor="let c of allCountries">
+                <button *ngIf="!country || c.id !== country.id"
+                        class="country-option"
+                        [class.active]="viewingCountry.id === c.id"
+                        (click)="selectCountry(c)">
+                  <span class="opt-flag">{{ getFlagFor(c) }}</span>
+                  <span class="opt-name">{{ c.name }}</span>
+                  <span class="opt-badge view-badge">👁️</span>
+                </button>
+              </ng-container>
+            </div>
+          </div>
+        </div>
+
+        <div class="hol-actions">
+          <div class="view-toggle">
+            <button class="toggle-btn"
+                    [class.active]="viewMode === 'calendar'"
+                    (click)="setViewMode('calendar')">
+              📅 Calendar
+            </button>
+            <button class="toggle-btn"
+                    [class.active]="viewMode === 'list'"
+                    (click)="setViewMode('list')">
+              📋 List
+            </button>
+          </div>
+
+          <ng-container *ngIf="canEdit">
+            <button *ngIf="hasPresetForCountry"
+                    class="btn-secondary"
+                    (click)="seedCountryPreset()"
+                    [disabled]="saving">
+              {{ seedButtonLabel }}
+            </button>
+            <button class="btn-primary" (click)="openCreateForm()">
+              + Add Holiday
+            </button>
+          </ng-container>
+
+          <div *ngIf="!canEdit" class="readonly-hint">
+            👁️ View only
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══════════════════════════════════════
+           CALENDAR VIEW
+      ═══════════════════════════════════════ -->
+      <div *ngIf="viewMode === 'calendar'" class="calendar-view">
+
+        <div class="cal-nav">
+          <button class="nav-btn" (click)="changeCalendarMonth(-1)">‹</button>
+          <h3 class="cal-title">{{ calendarMonthName }} {{ calendarYear }}</h3>
+          <button class="nav-btn" (click)="changeCalendarMonth(1)">›</button>
+          <button class="today-btn" (click)="goToToday()">Today</button>
+
+          <div class="cal-legend">
+            <span class="legend-item"><span class="legend-dot holiday"></span> Holiday</span>
+            <span class="legend-item"><span class="legend-dot weekend"></span> Weekend</span>
+            <span class="legend-item"><span class="legend-dot today"></span> Today</span>
+          </div>
+        </div>
+
+        <div class="cal-weekdays">
+          <div class="weekday sun">Sun</div>
+          <div class="weekday">Mon</div>
+          <div class="weekday">Tue</div>
+          <div class="weekday">Wed</div>
+          <div class="weekday">Thu</div>
+          <div class="weekday">Fri</div>
+          <div class="weekday sat">Sat</div>
+        </div>
+
+        <div class="cal-grid">
+          <div *ngFor="let week of calendarGrid" class="cal-week">
+            <div *ngFor="let cell of week"
+                 class="cal-cell"
+                 [class.other-month]="!cell.isCurrentMonth"
+                 [class.weekend]="cell.isWeekend && cell.isCurrentMonth"
+                 [class.today]="cell.isToday"
+                 [class.has-holiday]="cell.holiday && cell.isCurrentMonth"
+                 [class.not-editable]="!canEdit"
+                 (click)="onCellClick(cell)"
+                 [title]="cell.holiday ? cell.holiday.name : ''">
+
+              <div class="cell-day">{{ cell.day }}</div>
+
+              <div *ngIf="cell.holiday && cell.isCurrentMonth" class="cell-holiday">
+                {{ cell.holiday.name }}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══════════════════════════════════════
+           LIST VIEW
+      ═══════════════════════════════════════ -->
+      <div *ngIf="viewMode === 'list'">
+
+        <div class="hol-controls">
+          <div class="year-nav">
+            <button class="nav-btn" (click)="changeYear(-1)">‹</button>
+            <span class="year-label">{{ currentYear }}</span>
+            <button class="nav-btn" (click)="changeYear(1)">›</button>
+          </div>
+
+          <div class="month-filter">
+            <button class="chip"
+                    [class.active]="selectedMonth === 0"
+                    (click)="selectedMonth = 0">All</button>
+            <button *ngFor="let m of [1,2,3,4,5,6,7,8,9,10,11,12]"
+                    class="chip"
+                    [class.active]="selectedMonth === m"
+                    (click)="selectedMonth = m">
+              {{ ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][m-1] }}
+            </button>
+          </div>
+
+          <div class="total-count">
+            <strong>{{ filteredHolidays.length }}</strong>
+          </div>
+        </div>
+
+        <div *ngIf="loading" class="loading-box">Loading holidays...</div>
+
+        <div *ngIf="!loading && filteredHolidays.length === 0" class="empty-box">
+          <div class="empty-icon">{{ countryFlag }}</div>
+          <div class="empty-title">No holidays yet for {{ countryName }}</div>
+          <div class="empty-sub">
+            <ng-container *ngIf="hasPresetForCountry && canEdit">
+              Click "Seed {{ countryName }} {{ currentYear }}" for a quick start.
+            </ng-container>
+            <ng-container *ngIf="!canEdit">
+              Switch to your country to add holidays.
+            </ng-container>
+          </div>
+        </div>
+
+        <div *ngIf="!loading && filteredHolidays.length > 0" class="hol-list">
+          <div *ngFor="let group of holidaysByMonth" class="month-group">
+            <div class="month-header">
+              <span class="month-name">{{ group.month }}</span>
+              <span class="month-badge">{{ group.items.length }}</span>
+            </div>
+
+            <div class="holiday-cards">
+              <div *ngFor="let h of group.items"
+                   class="holiday-card"
+                   [class.weekend]="isWeekend(h.holidayDate)">
+
+                <div class="date-box">
+                  <span class="date-day">{{ formatDate(h.holidayDate).split(' ')[1] }}</span>
+                  <span class="date-month">{{ formatDate(h.holidayDate).split(' ')[0] }}</span>
+                </div>
+
+                <div class="card-main">
+                  <div class="holiday-name" [title]="h.name">{{ h.name }}</div>
+                  <div class="holiday-meta">
+                    <span class="meta-day">{{ formatDay(h.holidayDate) }}</span>
+                    <span *ngIf="isWeekend(h.holidayDate)" class="meta-weekend">Weekend</span>
+                  </div>
+                </div>
+
+                <div *ngIf="canEdit" class="card-actions">
+                  <button class="btn-icon" (click)="openEditForm(h)" aria-label="Edit">✏️</button>
+                  <button class="btn-icon danger" (click)="confirmDelete(h)" aria-label="Delete">🗑️</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+    <!-- /.hol-card -->
+
+  </div>
+  <!-- /.holidays-main -->
+
+
+
+</div>
+
+
+<!-- ═══════════════════════════════════════════
+     ADD / EDIT MODAL
+════════════════════════════════════════════ -->
+<div *ngIf="showForm" class="modal-backdrop" (click)="closeForm()">
+  <div class="modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>{{ editMode ? '✏️ Edit Holiday' : '+ Add Holiday' }}</h3>
+      <button class="btn-close" (click)="closeForm()">×</button>
+    </div>
+
+    <div class="modal-body">
+      <div class="form-row">
+        <label>Date <span class="required">*</span></label>
+        <input type="date" [(ngModel)]="form.holidayDate" class="input">
+      </div>
+
+      <div class="form-row">
+        <label>Holiday Name <span class="required">*</span></label>
+        <input type="text" [(ngModel)]="form.name" class="input"
+               placeholder="e.g. Khmer New Year (Day 1)" maxlength="200">
+      </div>
+
+      <div *ngIf="formError" class="form-error">⚠️ {{ formError }}</div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-secondary" (click)="closeForm()" [disabled]="saving">Cancel</button>
+      <button class="btn-primary" (click)="saveForm()" [disabled]="saving">
+        {{ saving ? 'Saving...' : (editMode ? 'Update' : 'Create') }}
+      </button>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════
+     DELETE MODAL
+════════════════════════════════════════════ -->
+<div *ngIf="deleteTarget" class="modal-backdrop" (click)="cancelDelete()">
+  <div class="modal modal-sm" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>🗑️ Delete Holiday?</h3>
+    </div>
+    <div class="modal-body">
+      <p>Delete <strong>{{ deleteTarget.name }}</strong>
+         on {{ formatDate(deleteTarget.holidayDate) }}?</p>
+      <p class="muted">This action cannot be undone.</p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" (click)="cancelDelete()">Cancel</button>
+      <button class="btn-danger" (click)="executeDelete()">Delete</button>
+    </div>
+  </div>
+</div>

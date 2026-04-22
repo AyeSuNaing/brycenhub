@@ -49,7 +49,68 @@
 }
 
 /* ── MAIN ROW ───────────────────────────────── */
-.main-row { flex: 1; display: flex; overflow: hidden; }
+.main-row { flex: 1; display: flex; overflow: hidden; min-height: 0; }
+
+/* ══════════════════════════════════════════════
+   CENTER + RIGHT PANEL WRAPPER
+═══════════════════════════════════════════════ */
+.main-with-panel {
+  flex: 1;
+  display: flex;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.main-center {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Inline views (Angular custom elements) — flex children */
+.main-center > main,
+.main-center > app-staff-list-inline,
+.main-center > app-add-staff-inline,
+.main-center > app-staff-profile-inline,
+.main-center > app-holidays-inline,
+.main-center > app-tax-brackets-inline,
+.main-center > app-salary-structures-inline {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  /* NO overflow:hidden — let each component manage its own scroll */
+}
+
+/* Dashboard home <main> — allow scrolling */
+.main-center > main.main-content {
+  overflow-y: auto;
+  overflow-x: hidden;
+
+  /* Thin custom scrollbar — dashboard main only */
+  &::-webkit-scrollbar {
+    width: 2px;
+  }
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: rgba(99, 102, 241, 0.5);
+    border-radius: 1px;
+  }
+
+  /* Firefox */
+  scrollbar-width: thin;
+  scrollbar-color: rgba(99, 102, 241, 0.5) transparent;
+}
+
+/* Right panel keeps fixed width */
+.main-with-panel > app-staff-panel {
+  flex-shrink: 0;
+}
 
 /* ── LEFT SIDEBAR ───────────────────────────── */
 .left-sidebar {
@@ -104,7 +165,6 @@
 
 .settings-wrap { position: relative; }
 
-/* ✅ FIX: proper positioning + no transparent bg */
 .settings-submenu {
   padding: 6px;
   border-radius: 10px;
@@ -130,8 +190,8 @@
   &:hover { background: rgba(239, 68, 68, 0.1) !important; }
 }
 
-/* ── MAIN CONTENT ───────────────────────────── */
-.main-content { flex: 1; overflow-y: auto; padding: 16px 20px; min-width: 0; }
+/* ── MAIN CONTENT (Dashboard home) ───────────── */
+.main-content { padding: 16px 20px; min-width: 0; }
 
 /* ROW 1 — Stats */
 .stats-grid {
@@ -175,6 +235,173 @@
 
 .next-box { padding: 8px 10px; border-radius: 8px; margin-bottom: 6px; }
 
+/* ══════════════════════════════════════════════
+   MINI CALENDAR (Dashboard Holidays card)
+═══════════════════════════════════════════════ */
+.cal-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+  margin-bottom: 3px;
+}
+.cal-wd {
+  font-size: 8px;
+  text-align: center;
+  opacity: 0.35;
+  font-weight: 500;
+  padding: 1px 0;
+}
+.cal-sun { color: #f87171; }
+.cal-sat { color: #60a5fa; }
+
+.cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+}
+.cal-cell {
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  border-radius: 3px;
+  transition: all 0.15s;
+}
+.cal-cell.cal-out { opacity: 0.2; }
+.cal-cell.cal-sun-bg { background: rgba(248, 113, 113, 0.04); opacity: 0.6; }
+.cal-cell.cal-sat-bg { background: rgba(96, 165, 250, 0.04); opacity: 0.6; }
+.cal-cell.cal-today {
+  border: 1px solid #22c55e;
+  color: #22c55e;
+  font-weight: 500;
+  opacity: 1;
+}
+.cal-cell.cal-holiday {
+  background: rgba(168, 85, 247, 0.18);
+  border: 1px solid rgba(168, 85, 247, 0.4);
+  color: #e9d5ff;
+  font-weight: 500;
+  cursor: pointer;
+  opacity: 1;
+  &:hover {
+    background: rgba(168, 85, 247, 0.28);
+    border-color: rgba(168, 85, 247, 0.6);
+  }
+}
+.cal-cell.cal-today.cal-holiday {
+  box-shadow: 0 0 0 1px #22c55e;
+}
+
+/* ══════════════════════════════════════════════
+   HOLIDAY DETAIL MODAL
+═══════════════════════════════════════════════ */
+.holiday-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: holidayFadeIn 0.15s ease;
+}
+.holiday-modal {
+  background: #131929;
+  border: 1px solid rgba(168, 85, 247, 0.3);
+  border-radius: 14px;
+  padding: 16px 18px;
+  width: 320px;
+  max-width: 90vw;
+  color: #e2e8f0;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  animation: holidayScaleIn 0.2s ease;
+}
+.holiday-modal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+.holiday-modal-date {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  opacity: 0.6;
+}
+.holiday-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #c084fc;
+  flex-shrink: 0;
+}
+.holiday-modal-close {
+  font-size: 13px;
+  opacity: 0.4;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: all 0.15s;
+  &:hover { opacity: 1; background: rgba(255, 255, 255, 0.05); }
+}
+.holiday-modal-title {
+  font-size: 15px;
+  font-weight: 500;
+  color: #e9d5ff;
+  margin-bottom: 10px;
+}
+.holiday-modal-desc {
+  font-size: 11px;
+  opacity: 0.65;
+  line-height: 1.6;
+  margin-bottom: 12px;
+}
+.holiday-modal-tags {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.holiday-tag-country {
+  font-size: 10px;
+  padding: 3px 9px;
+  border-radius: 20px;
+  background: rgba(239, 68, 68, 0.12);
+  color: #f87171;
+  font-weight: 500;
+}
+.holiday-tag-type {
+  font-size: 10px;
+  padding: 3px 9px;
+  border-radius: 20px;
+  background: rgba(168, 85, 247, 0.15);
+  color: #c084fc;
+  font-weight: 500;
+}
+
+@keyframes holidayFadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes holidayScaleIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+/* Light mode overrides */
+.light {
+  .cal-cell.cal-holiday { color: #7c3aed; }
+  .cal-sun-bg { background: rgba(248, 113, 113, 0.06); }
+  .cal-sat-bg { background: rgba(96, 165, 250, 0.06); }
+  .holiday-modal {
+    background: white;
+    border-color: rgba(168, 85, 247, 0.4);
+    color: #1e293b;
+  }
+  .holiday-modal-title { color: #7c3aed; }
+}
+
 /* ── DARK MODE ─────────────────────────────── */
 .dark {
   .topbar          { background: #0d1424; border-bottom-color: #1e2d4a; }
@@ -208,7 +435,6 @@
   .quick-title     { color: #e2e8f0; }
   .today-name      { color: #e2e8f0; }
   .next-box        { background: #0d1424; border-color: #1e2d4a22; }
-  /* ✅ FIX: solid background */
   .settings-submenu {
     background: #131929 !important;
     border-color: #1e2d4a !important;
@@ -218,7 +444,7 @@
   .btn-sm          { background: rgba(255,255,255,0.06); color: #8896b3; }
 }
 
-/* ── LIGHT MODE ─────────────────────────────── */
+/* ── LIGHT MODE ────────────────────────────── */
 .light {
   .topbar          { background: white; border-bottom-color: #e2e8f0; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
   .left-sidebar    { background: white; border-right-color: #e2e8f0; }
@@ -250,7 +476,6 @@
   .quick-title     { color: #1e293b; }
   .today-name      { color: #1e293b; }
   .next-box        { background: #f8fafc; border-color: #e2e8f022; }
-  /* ✅ FIX: solid white background */
   .settings-submenu {
     background: #ffffff !important;
     border-color: #e2e8f0 !important;

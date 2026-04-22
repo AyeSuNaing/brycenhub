@@ -1,0 +1,556 @@
+/* ═══════════════════════════════════════════════
+   ATTENDANCE UPLOAD — Group by Staff layout
+═══════════════════════════════════════════════ */
+
+.attendance-upload-wrap {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+
+  &::-webkit-scrollbar { width: 2px; }
+  &::-webkit-scrollbar-thumb { background: rgba(99, 102, 241, 0.5); border-radius: 1px; }
+  scrollbar-width: thin;
+  scrollbar-color: rgba(99, 102, 241, 0.5) transparent;
+}
+
+/* ── HEADER ──────────────────────────────── */
+.au-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  flex-shrink: 0;
+}
+.au-back {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 11px; opacity: 0.5;
+  background: none; border: none; color: inherit;
+  padding: 6px 8px; border-radius: 6px;
+  cursor: pointer; transition: all 0.15s;
+  &:hover { opacity: 1; background: rgba(255, 255, 255, 0.04); }
+}
+.au-title-wrap { flex: 1; }
+.au-title { font-size: 15px; font-weight: 700; letter-spacing: -0.2px; }
+.au-subtitle { font-size: 10px; opacity: 0.4; margin-top: 2px; }
+
+.au-step-dots { display: flex; align-items: center; gap: 6px; }
+.au-dot {
+  width: 22px; height: 22px; border-radius: 50%;
+  background: rgba(255, 255, 255, 0.06);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 10px; font-weight: 700; opacity: 0.4;
+  transition: all 0.2s;
+}
+.au-dot-active {
+  background: linear-gradient(135deg, #16a34a, #22c55e);
+  color: white; opacity: 1;
+}
+.au-dot-line { width: 24px; height: 1px; background: rgba(255, 255, 255, 0.1); }
+
+/* ── STEP BODY ─────────────────────────── */
+.au-step-body {
+  flex: 1; min-height: 0;
+  overflow-y: auto;
+  padding: 20px;
+
+  &::-webkit-scrollbar { width: 2px; }
+  &::-webkit-scrollbar-thumb { background: rgba(99, 102, 241, 0.5); border-radius: 1px; }
+}
+
+.au-step-head { margin-bottom: 16px; }
+.au-step-num {
+  font-size: 9px; font-weight: 700; letter-spacing: 1px;
+  text-transform: uppercase; opacity: 0.4; margin-bottom: 4px;
+}
+.au-step-title {
+  font-size: 16px; font-weight: 700; margin-bottom: 4px;
+  display: flex; align-items: center; gap: 10px;
+}
+.au-step-sub-badge {
+  font-size: 10px;
+  font-weight: 500;
+  padding: 3px 10px;
+  border-radius: 20px;
+  background: rgba(99, 102, 241, 0.15);
+  color: #818cf8;
+}
+.au-step-desc {
+  font-size: 11px; opacity: 0.6; line-height: 1.5;
+  strong { color: #22c55e; font-weight: 700; }
+}
+
+/* ── STEP 1: DROPZONE ───────────────────── */
+.au-dropzone {
+  border: 2px dashed rgba(99, 102, 241, 0.25);
+  border-radius: 14px;
+  padding: 40px 20px;
+  text-align: center;
+  transition: all 0.2s;
+  background: rgba(99, 102, 241, 0.03);
+  margin-bottom: 12px;
+
+  &.au-drag {
+    border-color: #6366f1;
+    background: rgba(99, 102, 241, 0.08);
+  }
+  &.au-has-file {
+    padding: 16px;
+    text-align: left;
+    background: rgba(34, 197, 94, 0.06);
+    border-color: rgba(34, 197, 94, 0.3);
+    border-style: solid;
+  }
+}
+.au-drop-icon { font-size: 40px; margin-bottom: 10px; opacity: 0.6; }
+.au-drop-title { font-size: 13px; font-weight: 600; margin-bottom: 8px; }
+.au-drop-sub { font-size: 10px; opacity: 0.4; margin-bottom: 10px; }
+.au-browse-btn {
+  display: inline-block;
+  padding: 8px 18px;
+  background: linear-gradient(135deg, #16a34a, #22c55e);
+  color: white;
+  font-size: 11px; font-weight: 600;
+  border-radius: 8px; cursor: pointer;
+  transition: opacity 0.15s;
+  &:hover { opacity: 0.9; }
+}
+.au-drop-hint { font-size: 10px; opacity: 0.4; margin-top: 12px; }
+
+.au-file-preview { display: flex; align-items: center; gap: 12px; }
+.au-file-icon { font-size: 28px; }
+.au-file-info { flex: 1; }
+.au-file-name { font-size: 12px; font-weight: 600; }
+.au-file-size { font-size: 10px; opacity: 0.5; margin-top: 2px; }
+.au-file-remove {
+  background: none;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #ef4444;
+  width: 28px; height: 28px;
+  border-radius: 6px; cursor: pointer;
+  font-size: 12px;
+  &:hover { background: rgba(239, 68, 68, 0.1); }
+}
+
+/* ── FILE BAR (compact, shown when file selected + parsed) ── */
+.au-file-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  background: rgba(34, 197, 94, 0.06);
+  border: 1px solid rgba(34, 197, 94, 0.25);
+  border-radius: 10px;
+  margin-bottom: 14px;
+  animation: slideDown 0.2s ease;
+
+  .au-file-icon { font-size: 20px; }
+  .au-file-name { font-size: 12px; font-weight: 600; }
+  .au-file-size { font-size: 10px; opacity: 0.6; margin-top: 2px; }
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── LOADING SPINNER ── */
+.au-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  gap: 14px;
+}
+.au-spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid rgba(99, 102, 241, 0.2);
+  border-top-color: #6366f1;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+.au-loading-text {
+  font-size: 12px;
+  opacity: 0.6;
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ── PREVIEW SECTION (appears after parse) ── */
+.au-preview-section {
+  animation: fadeIn 0.25s ease;
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* ── STEP 2: SUMMARY CARDS ──────────────── */
+.au-summary {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.au-sum-card {
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.02);
+  cursor: pointer;
+  transition: all 0.15s;
+  &:hover { background: rgba(255, 255, 255, 0.04); }
+}
+.au-sum-active {
+  border-color: rgba(99, 102, 241, 0.5);
+  background: rgba(99, 102, 241, 0.08);
+}
+.au-sum-label {
+  font-size: 9px; text-transform: uppercase;
+  letter-spacing: 0.5px; opacity: 0.5;
+  font-weight: 600; margin-bottom: 4px;
+}
+.au-sum-value { font-size: 20px; font-weight: 800; }
+
+/* ── TOOLBAR (search + actions) ─────────── */
+.au-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+.au-search {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 12px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  height: 34px;
+  transition: all 0.15s;
+
+  &:focus-within {
+    border-color: rgba(99, 102, 241, 0.5);
+    background: rgba(99, 102, 241, 0.04);
+  }
+}
+.au-search-icon { font-size: 11px; opacity: 0.4; }
+.au-search input {
+  flex: 1;
+  background: none;
+  border: none;
+  color: inherit;
+  font-size: 12px;
+  outline: none;
+  &::placeholder { opacity: 0.35; }
+}
+.au-search-clear {
+  background: none; border: none; color: inherit;
+  opacity: 0.4; cursor: pointer; font-size: 11px;
+  padding: 2px 6px; border-radius: 4px;
+  &:hover { opacity: 1; background: rgba(255, 255, 255, 0.05); }
+}
+.au-toolbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.au-toolbar-sep { opacity: 0.2; font-size: 11px; padding: 0 4px; }
+.au-link-btn {
+  background: none;
+  border: none;
+  color: #818cf8;
+  font-size: 11px;
+  cursor: pointer;
+  padding: 6px 8px;
+  border-radius: 6px;
+  white-space: nowrap;
+  transition: background 0.15s;
+  &:hover { background: rgba(129, 140, 248, 0.1); }
+}
+
+.au-select-info {
+  font-size: 11px;
+  opacity: 0.7;
+  margin-bottom: 12px;
+  padding: 0 4px;
+  strong { color: #22c55e; font-size: 12px; font-weight: 700; }
+}
+.au-filter-info { opacity: 0.5; margin-left: 6px; }
+
+/* ── STAFF CARDS ────────────────────────── */
+.au-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.au-card {
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 10px;
+  overflow: hidden;
+  transition: all 0.15s;
+
+  &:hover { border-color: rgba(255, 255, 255, 0.12); }
+  &.au-card-issue { border-color: rgba(245, 158, 11, 0.3); }
+  &.au-card-expanded {
+    border-color: rgba(99, 102, 241, 0.4);
+    background: rgba(99, 102, 241, 0.04);
+  }
+}
+
+.au-card-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  cursor: pointer;
+  user-select: none;
+  &:hover { background: rgba(255, 255, 255, 0.02); }
+}
+
+.au-card-checkbox {
+  display: flex;
+  align-items: center;
+  input { cursor: pointer; }
+}
+
+.au-card-avatar {
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  color: white;
+  font-size: 12px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.au-avatar-gray { background: rgba(148, 163, 184, 0.4) !important; }
+
+.au-card-info { flex: 1; min-width: 0; }
+.au-card-name {
+  font-size: 12px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.au-card-tag-warn {
+  font-size: 9px;
+  padding: 2px 6px;
+  border-radius: 10px;
+  background: rgba(239, 68, 68, 0.15);
+  color: #f87171;
+  font-weight: 500;
+}
+.au-card-meta {
+  font-size: 10px;
+  opacity: 0.5;
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.au-card-email { opacity: 0.7; }
+
+.au-card-stats {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+.au-stat-days {
+  display: flex;
+  align-items: baseline;
+  gap: 3px;
+}
+.au-stat-num { font-size: 16px; font-weight: 700; color: #22c55e; }
+.au-stat-lbl { font-size: 10px; opacity: 0.5; }
+
+.au-card-status-badge {
+  font-size: 9px;
+  padding: 3px 9px;
+  border-radius: 20px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+}
+
+.au-card-toggle {
+  font-size: 10px;
+  opacity: 0.4;
+  width: 16px;
+  text-align: center;
+}
+
+/* ── CARD BODY (expanded day-by-day) ──── */
+.au-card-body {
+  padding: 6px 14px 14px 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.04);
+  background: rgba(0, 0, 0, 0.15);
+}
+
+.au-day-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11px;
+
+  th {
+    text-align: left;
+    padding: 8px 10px;
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 700;
+    opacity: 0.45;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  }
+  td {
+    padding: 7px 10px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+    vertical-align: middle;
+  }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr:hover { background: rgba(255, 255, 255, 0.02); }
+}
+
+.au-row-issue { opacity: 0.6; }
+
+.au-day-date { font-family: 'DM Mono', monospace; font-size: 10px; }
+.au-day-time { font-family: 'DM Mono', monospace; font-size: 10px; }
+.au-day-status {
+  font-size: 9px;
+  padding: 2px 7px;
+  border-radius: 10px;
+  font-weight: 600;
+}
+.au-day-msg { font-size: 10px; opacity: 0.5; }
+
+/* ── Empty state ────────────────────────── */
+.au-empty-state {
+  text-align: center;
+  padding: 40px 20px;
+  border: 1px dashed rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.01);
+}
+.au-empty-icon { font-size: 28px; margin-bottom: 8px; opacity: 0.4; }
+.au-empty-title { font-size: 12px; font-weight: 600; margin-bottom: 4px; }
+.au-empty-desc { font-size: 10px; opacity: 0.5; }
+
+/* ── ACTIONS ────────────────────────────── */
+.au-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 14px 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  margin-top: 14px;
+  position: sticky;
+  bottom: 0;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.4), transparent);
+  z-index: 10;
+}
+.au-btn-primary {
+  padding: 10px 20px;
+  background: linear-gradient(135deg, #16a34a, #22c55e);
+  color: white;
+  border: none;
+  border-radius: 9px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  &:hover:not(:disabled) { opacity: 0.9; }
+  &:disabled { opacity: 0.4; cursor: not-allowed; }
+}
+.au-btn-ghost {
+  padding: 10px 16px;
+  background: transparent;
+  color: inherit;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 9px;
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  opacity: 0.7;
+  &:hover { opacity: 1; background: rgba(255, 255, 255, 0.04); }
+}
+
+/* ── ERROR ──────────────────────────────── */
+.au-error {
+  padding: 10px 14px;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #ef4444;
+  border-radius: 8px;
+  font-size: 11px;
+  margin: 10px 0;
+}
+
+/* ── STEP 3: DONE ───────────────────────── */
+.au-done-card {
+  max-width: 480px;
+  margin: 60px auto;
+  text-align: center;
+  padding: 40px 30px;
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.08), rgba(34, 197, 94, 0.02));
+  border: 1px solid rgba(34, 197, 94, 0.25);
+  border-radius: 16px;
+}
+.au-done-icon {
+  width: 60px; height: 60px;
+  margin: 0 auto 16px;
+  background: linear-gradient(135deg, #16a34a, #22c55e);
+  color: white;
+  font-size: 26px;
+  font-weight: 700;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+}
+.au-done-title { font-size: 16px; font-weight: 700; margin-bottom: 6px; }
+.au-done-msg { font-size: 11px; opacity: 0.6; margin-bottom: 24px; }
+.au-done-stats {
+  display: flex;
+  justify-content: center;
+  gap: 32px;
+  margin-bottom: 28px;
+  padding: 16px 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+.au-done-stat { text-align: center; }
+.au-done-num { font-size: 22px; font-weight: 800; }
+.au-done-lbl { font-size: 9px; opacity: 0.5; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 4px; }
+.au-done-actions { display: flex; gap: 10px; justify-content: center; }
+
+/* ── LIGHT MODE ─────────────────────────── */
+:host-context(body.light) {
+  .au-header { border-color: #e2e8f0; }
+  .au-back:hover { background: #f1f5f9; }
+  .au-dot { background: #e2e8f0; }
+  .au-dot-line { background: #e2e8f0; }
+  .au-dropzone { background: #f8fafc; border-color: #cbd5e1; }
+  .au-dropzone.au-drag { background: #e0e7ff; }
+  .au-sum-card { border-color: #e2e8f0; background: white; }
+  .au-sum-active { background: #eef2ff; border-color: #818cf8; }
+  .au-search { background: white; border-color: #cbd5e1; }
+  .au-card { border-color: #e2e8f0; background: white; }
+  .au-card.au-card-expanded { background: #f8fafc; border-color: #818cf8; }
+  .au-card-body { background: #f8fafc; }
+  .au-day-table th { border-color: #e2e8f0; }
+  .au-day-table td { border-color: #f1f5f9; }
+  .au-actions { border-color: #e2e8f0; background: linear-gradient(to top, rgba(255,255,255,0.9), transparent); }
+  .au-btn-ghost { border-color: #cbd5e1; }
+  .au-btn-ghost:hover { background: #f1f5f9; }
+  .au-done-stats { border-color: #e2e8f0; }
+  .au-empty-state { border-color: #cbd5e1; background: #f8fafc; }
+}

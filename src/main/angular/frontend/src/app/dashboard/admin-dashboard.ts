@@ -14,6 +14,11 @@ import { environment } from '../../environments/environment';
 import { StaffListInline } from '../admin/staff-list-inline';
 import { AddStaffInline } from '../admin/add-staff-inline';
 import { StaffProfileInline } from '../admin/staff-profile-inline';
+import { HolidaysInline } from '../admin/holidays-inline';
+import { TaxBracketsInline } from '../admin/tax-brackets-inline';
+import { SalaryStructuresInline } from '../admin/salary-structures-inline';
+import { AttendanceUploadInline } from '../admin/attendance-upload-inline';
+import { StaffPanelComponent } from '../shared/staff-panel/staff-panel.component';
 
 const BASE = environment.apiBaseUrl;
 const ADMIN_BASE = `${environment.apiBaseUrl}/admin/dashboard`;
@@ -29,13 +34,18 @@ const LOGO_SVG = `data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIiIGhlaWdodD0iMzIi
     StaffListInline,
     AddStaffInline,
     StaffProfileInline,
+    HolidaysInline,
+    TaxBracketsInline,
+    SalaryStructuresInline,
+    AttendanceUploadInline,
+    StaffPanelComponent,
   ],
   templateUrl: './admin-dashboard.html',
   styleUrl: './admin-dashboard.scss'
 })
 export class AdminDashboard implements OnInit, OnDestroy {
 
-  // ── Shell state (same as member-dashboard) ──
+  // ── Shell state ──
   logoSrc = LOGO_SVG;
   isDark = true;
   showLangMenu = false;
@@ -43,10 +53,23 @@ export class AdminDashboard implements OnInit, OnDestroy {
   searchQuery = '';
   currentUser: any = null;
 
-  // ── Inline view state (same pattern as showProjectDetail) ──
+  // ── Inline view state ──
   activeView = 'dashboard';
   selectedStaffId = 0;
-  // dashboard | staff-list | add-staff | department | leave | payroll | holidays
+
+  // ── Holiday modal state ──
+  selectedHoliday: any = null;
+
+  // ── Right panel visibility (persistent layout) ──
+  /**
+   * Views that want FULL-WIDTH main content (hide right staff panel).
+   * Keep empty [] to show right panel on ALL pages including Salary.
+   */
+  fullWidthViews: string[] = [];  // empty = always show right panel
+
+  get showRightPanel(): boolean {
+    return !this.fullWidthViews.includes(this.activeView);
+  }
 
   // ── Stats ──────────────────────────────────
   stats = {
@@ -104,6 +127,8 @@ export class AdminDashboard implements OnInit, OnDestroy {
     },
     {
       label: 'PAYROLL', items: [
+        { key: 'salary', icon: '💵', label: 'Salary Structures' },
+        { key: 'attendance', icon: '📅', label: 'Upload Attendance' },
         { key: 'payroll', icon: '💰', label: 'Monthly Payroll' },
       ]
     },
@@ -134,7 +159,7 @@ export class AdminDashboard implements OnInit, OnDestroy {
 
   ngOnDestroy() { }
 
-  // ── Load all (same as member-dashboard.loadAll) ──
+  // ── Load all ──
   loadAll() {
     this.loadStats();
     this.loadStaff();
@@ -250,7 +275,7 @@ export class AdminDashboard implements OnInit, OnDestroy {
     });
   }
 
-  // ── Nav (same as openProject / closeProject pattern) ──
+  // ── Nav ──
   setView(key: string, route?: string) {
     this.activeView = key;
     if (route) this.router.navigate([route]);
@@ -268,7 +293,8 @@ export class AdminDashboard implements OnInit, OnDestroy {
     this.selectedStaffId = staff.id;
     this.activeView = 'staff-profile';
   }
-  // ── Staff activate / deactivate (dashboard preview table) ──
+
+  // ── Staff activate / deactivate ──
   toggleActivation(staff: any) {
     const url = staff.isActive
       ? `${BASE}/users/${staff.id}/deactivate`
@@ -349,6 +375,66 @@ export class AdminDashboard implements OnInit, OnDestroy {
       UNPAID: 'background:#ef444422;color:#ef4444',
     };
     return m[type] || 'background:#1e293b;color:#94a3b8';
+  }
+
+  // ══════════════════════════════════════════════
+  // CALENDAR HELPERS — Dashboard Holidays card
+  // ══════════════════════════════════════════════
+
+  /** Grid of 42 cells (6 weeks × 7 days) covering current month + padding */
+  get calendarGrid(): { date: Date; inMonth: boolean }[] {
+    const now = new Date();
+    const y = now.getFullYear();
+    const m = now.getMonth();
+
+    const firstDay = new Date(y, m, 1);
+    const startOffset = firstDay.getDay(); // 0 = Sun
+    const gridStart = new Date(y, m, 1 - startOffset);
+
+    const cells: { date: Date; inMonth: boolean }[] = [];
+    for (let i = 0; i < 42; i++) {
+      const d = new Date(gridStart);
+      d.setDate(gridStart.getDate() + i);
+      cells.push({ date: d, inMonth: d.getMonth() === m });
+    }
+    return cells;
+  }
+
+  isWeekend(d: Date): boolean {
+    const day = d.getDay();
+    return day === 0 || day === 6;
+  }
+
+  isSunday(d: Date): boolean { return d.getDay() === 0; }
+  isSaturday(d: Date): boolean { return d.getDay() === 6; }
+
+  isToday(d: Date): boolean {
+    const t = new Date();
+    return d.getFullYear() === t.getFullYear()
+        && d.getMonth() === t.getMonth()
+        && d.getDate() === t.getDate();
+  }
+
+  /** Returns holiday object for given date (or null) */
+  getHolidayForDate(d: Date): any | null {
+    if (!this.holidays || this.holidays.length === 0) return null;
+    const ymd = this.toYMD(d);
+    return this.holidays.find(h => this.toYMD(new Date(h.holidayDate)) === ymd) || null;
+  }
+
+  private toYMD(d: Date): string {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${dd}`;
+  }
+
+  openHolidayModal(holiday: any): void {
+    this.selectedHoliday = holiday;
+  }
+
+  closeHolidayModal(): void {
+    this.selectedHoliday = null;
   }
 
   signOut() {

@@ -70,6 +70,9 @@ public class UserDto {
         private String        name;
         private String        email;
         private Long          branchId;
+        private String 		  branchName;     // ← ensure this exists
+        private Long 		  countryId;        // optional — for country badge
+        private String 		  countryName;    // optional
         private Boolean       isActive;
         private String        preferredLanguage;
         private String        profileImage;

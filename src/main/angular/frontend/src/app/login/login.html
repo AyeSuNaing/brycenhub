@@ -1,31 +1,95 @@
-<!-- Login Page - ASN Global PMS -->
-<div class="min-h-screen bg-gray-950 flex items-center justify-center p-4">
+<!-- Login Page - Brycen Hub PMS -->
+<div class="min-h-screen bg-gray-950 flex items-center justify-center p-4 relative overflow-hidden">
 
   <!-- Background grid pattern -->
   <div class="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:64px_64px]"></div>
 
-  <!-- Glow effects -->
-  <div class="absolute top-0 left-1/4 w-96 h-96 bg-blue-600/10 rounded-full blur-3xl"></div>
-  <div class="absolute bottom-0 right-1/4 w-96 h-96 bg-indigo-600/10 rounded-full blur-3xl"></div>
+  <!-- Glow effects (Brycen green theme) -->
+  <div class="absolute top-0 left-1/4 w-96 h-96 bg-green-600/10 rounded-full blur-3xl"></div>
+  <div class="absolute bottom-0 right-1/4 w-96 h-96 bg-emerald-600/10 rounded-full blur-3xl"></div>
 
   <!-- Login Card -->
-  <div class="relative w-full max-w-md">
+  <div class="relative w-full max-w-md z-10">
 
     <!-- Logo / Brand -->
     <div class="text-center mb-8">
-      <div class="inline-flex items-center justify-center w-16 h-16 bg-blue-600 rounded-2xl mb-4 shadow-lg shadow-blue-600/30">
-        <svg class="w-8 h-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-            d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064" />
-        </svg>
+      <div class="inline-flex items-center justify-center w-20 h-20 bg-white rounded-2xl mb-4 shadow-lg shadow-green-600/30 p-2">
+        <img src="brycen-logo.png" alt="Brycen Group" class="w-full h-full object-contain" />
       </div>
-      <h1 class="text-2xl font-bold text-white tracking-tight">ASN Global PMS</h1>
-      <p class="text-gray-400 text-sm mt-1">Project Management System</p>
+      <h1 class="text-2xl font-bold text-white tracking-tight">Brycen Hub</h1>
+      <p class="text-gray-400 text-sm mt-1 italic">
+        <span class="bg-gradient-to-r from-purple-400 to-green-400 bg-clip-text text-transparent">
+          One Group. One Platform. Full Visibility.
+        </span>
+      </p>
     </div>
 
     <!-- Card -->
     <div class="bg-gray-900 border border-gray-800 rounded-2xl p-8 shadow-2xl">
       <h2 class="text-xl font-semibold text-white mb-6">Sign in to your account</h2>
+
+      <!-- Error Alert -->
+      <div
+        *ngIf="errorMessage"
+        class="mb-5 rounded-xl px-4 py-3 flex items-start gap-3 animate-fadeIn"
+        [ngClass]="{
+          'bg-red-500/10 border border-red-500/30':       errorType === 'INVALID_CREDENTIALS' || errorType === 'VALIDATION' || errorType === 'UNKNOWN',
+          'bg-amber-500/10 border border-amber-500/30':   errorType === 'ACCOUNT_INACTIVE',
+          'bg-orange-500/10 border border-orange-500/30': errorType === 'NETWORK' || errorType === 'SERVER' || errorType === 'TIMEOUT'
+        }">
+
+        <!-- Icon -->
+        <svg
+          class="w-5 h-5 flex-shrink-0 mt-0.5"
+          [ngClass]="{
+            'text-red-400':    errorType === 'INVALID_CREDENTIALS' || errorType === 'VALIDATION' || errorType === 'UNKNOWN',
+            'text-amber-400':  errorType === 'ACCOUNT_INACTIVE',
+            'text-orange-400': errorType === 'NETWORK' || errorType === 'SERVER' || errorType === 'TIMEOUT'
+          }"
+          fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path *ngIf="errorType === 'NETWORK' || errorType === 'TIMEOUT'"
+            stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M18.364 5.636a9 9 0 010 12.728m0 0l-2.829-2.829m2.829 2.829L21 21M15.536 8.464a5 5 0 010 7.072m0 0l-2.829-2.829m-4.243 2.829a4.978 4.978 0 01-1.414-2.83m-1.414 5.658a9 9 0 01-2.167-9.238m7.824 2.167a1 1 0 111.414 1.414m-1.414-1.414L3 3m8.293 8.293l1.414 1.414" />
+          <path *ngIf="errorType === 'ACCOUNT_INACTIVE'"
+            stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+          <path *ngIf="errorType !== 'NETWORK' && errorType !== 'TIMEOUT' && errorType !== 'ACCOUNT_INACTIVE'"
+            stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+
+        <!-- Message -->
+        <div class="flex-1 min-w-0">
+          <p class="text-sm font-medium"
+             [ngClass]="{
+               'text-red-400':    errorType === 'INVALID_CREDENTIALS' || errorType === 'VALIDATION' || errorType === 'UNKNOWN',
+               'text-amber-400':  errorType === 'ACCOUNT_INACTIVE',
+               'text-orange-400': errorType === 'NETWORK' || errorType === 'SERVER' || errorType === 'TIMEOUT'
+             }">
+            {{ errorMessage }}
+          </p>
+          <p *ngIf="errorType === 'NETWORK'" class="text-xs text-gray-500 mt-1">
+            Check if the backend server is running on port 8080
+          </p>
+          <p *ngIf="errorType === 'ACCOUNT_INACTIVE'" class="text-xs text-gray-500 mt-1">
+            Contact your HR / Admin to reactivate your account
+          </p>
+          <p *ngIf="errorType === 'TIMEOUT'" class="text-xs text-gray-500 mt-1">
+            The server took too long to respond
+          </p>
+        </div>
+
+        <!-- Dismiss button -->
+        <button
+          type="button"
+          (click)="dismissError()"
+          class="flex-shrink-0 text-gray-500 hover:text-gray-300 transition-colors"
+          aria-label="Dismiss">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
 
       <!-- Email -->
       <div class="mb-4">
@@ -40,10 +104,17 @@
           <input
             type="email"
             [(ngModel)]="email"
+            (ngModelChange)="onInputChange()"
+            (keyup.enter)="onKeyEnter()"
             name="email"
-            placeholder="you@asn.com"
+            placeholder="you@brycen.co.kh"
+            autocomplete="email"
             required
-            class="w-full bg-gray-800 border border-gray-700 text-white placeholder-gray-500 rounded-xl pl-10 pr-4 py-3 text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
+            [disabled]="isLoading"
+            class="w-full bg-gray-800 border text-white placeholder-gray-500 rounded-xl pl-10 pr-4 py-3 text-sm focus:outline-none focus:ring-1 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+            [ngClass]="(errorType === 'VALIDATION' || errorType === 'INVALID_CREDENTIALS')
+              ? 'border-red-500/50 focus:border-red-500 focus:ring-red-500'
+              : 'border-gray-700 focus:border-green-500 focus:ring-green-500'"
           />
         </div>
       </div>
@@ -61,28 +132,27 @@
           <input
             type="password"
             [(ngModel)]="password"
+            (ngModelChange)="onInputChange()"
+            (keyup.enter)="onKeyEnter()"
             name="password"
             placeholder="••••••••"
+            autocomplete="current-password"
             required
-            class="w-full bg-gray-800 border border-gray-700 text-white placeholder-gray-500 rounded-xl pl-10 pr-4 py-3 text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
+            [disabled]="isLoading"
+            class="w-full bg-gray-800 border text-white placeholder-gray-500 rounded-xl pl-10 pr-4 py-3 text-sm focus:outline-none focus:ring-1 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+            [ngClass]="(errorType === 'VALIDATION' || errorType === 'INVALID_CREDENTIALS')
+              ? 'border-red-500/50 focus:border-red-500 focus:ring-red-500'
+              : 'border-gray-700 focus:border-green-500 focus:ring-green-500'"
           />
         </div>
       </div>
 
-      <!-- Error -->
-      <div *ngIf="errorMessage" class="mb-4 bg-red-500/10 border border-red-500/30 rounded-xl px-4 py-3 flex items-center gap-2">
-        <svg class="w-4 h-4 text-red-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-            d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
-        <p class="text-red-400 text-sm">{{ errorMessage }}</p>
-      </div>
-
-      <!-- Submit -->
+      <!-- Submit button - Brycen green gradient -->
       <button
+        type="button"
         (click)="login()"
         [disabled]="isLoading"
-        class="w-full bg-blue-600 hover:bg-blue-500 disabled:bg-blue-800 disabled:cursor-not-allowed text-white font-semibold rounded-xl py-3 text-sm transition-colors flex items-center justify-center gap-2 shadow-lg shadow-blue-600/20">
+        class="w-full bg-gradient-to-r from-green-700 to-green-500 hover:from-green-600 hover:to-green-400 disabled:opacity-60 disabled:cursor-not-allowed text-white font-semibold rounded-xl py-3 text-sm transition-all flex items-center justify-center gap-2 shadow-lg shadow-green-600/20">
         <svg *ngIf="isLoading" class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
           <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
           <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
@@ -93,7 +163,7 @@
 
     <!-- Footer -->
     <p class="text-center text-gray-600 text-xs mt-6">
-      © 2026 ASN Global · All rights reserved
+      © 2026 Brycen Group · All rights reserved
     </p>
   </div>
 </div>

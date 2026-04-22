@@ -46,6 +46,21 @@ public class UserController {
 		return ResponseEntity.ok(userService.getUsersByBranch(branchId));
 	}
 
+	/**
+	 * GET /api/users/staff-panel
+	 * Smart scope based on role:
+	 *   BOSS              → all active users (global)
+	 *   COUNTRY_DIRECTOR  → users in their assigned countries
+	 *   VP/ADMIN/PM/etc.  → own branch only
+	 */
+	@GetMapping("/staff-panel")
+	@PreAuthorize("isAuthenticated()")
+	public ResponseEntity<List<UserDto.UserResponse>> getStaffPanel(
+	        @AuthenticationPrincipal User caller) {
+	    return ResponseEntity.ok(userService.getStaffPanelList(caller));
+	}
+	
+	
 	// ============================================================
 	// GET /api/users/staff-list
 	// Dashboard staff list — with role name + skills

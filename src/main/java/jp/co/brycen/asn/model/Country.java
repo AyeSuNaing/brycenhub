@@ -23,4 +23,8 @@ public class Country {
     @Column(nullable = false)
     private String name;
     // Japan, Myanmar, Cambodia...
+
+    @Column(length = 10)
+    private String currency;
+    // JPY, MMK, USD, VND, KRW, USD
 }

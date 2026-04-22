@@ -1,0 +1,113 @@
+<aside class="staff-panel">
+
+  <div class="staff-header">
+    <div class="staff-title">
+      <span class="staff-icon">👥</span>
+      <span>{{ panelTitle }}</span>
+      <span *ngIf="isGlobalRole" class="global-tag">🌍</span>
+      <span class="staff-total">{{ filteredStaff.length }}</span>
+    </div>
+  </div>
+
+  <div class="staff-search-wrap">
+    <span class="search-icon">🔍</span>
+    <input type="text"
+           class="staff-search-input"
+           placeholder="Search name, role, branch..."
+           [(ngModel)]="searchQuery">
+    <button *ngIf="searchQuery"
+            class="clear-btn"
+            (click)="searchQuery = ''">×</button>
+  </div>
+
+  <!-- Branch filter — only for BOSS/CD with multiple branches -->
+  <div *ngIf="showBranchFilter" class="branch-filter">
+    <div class="filter-label">🏢 Branch</div>
+    <div class="chip-row">
+      <button class="branch-chip"
+              [class.active]="selectedBranchFilter === 'ALL'"
+              (click)="setBranchFilter('ALL')">
+        All <span class="chip-count">{{ staffList.length }}</span>
+      </button>
+      <button *ngFor="let b of availableBranches"
+              class="branch-chip"
+              [class.active]="selectedBranchFilter === b.id"
+              (click)="setBranchFilter(b.id)">
+        {{ b.name }} <span class="chip-count">{{ b.count }}</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Role filter -->
+  <div class="staff-role-filter">
+    <div *ngIf="showBranchFilter" class="filter-label">👤 Role</div>
+    <div class="chip-row">
+      <button *ngFor="let r of visibleRoleFilters"
+              class="role-chip"
+              [class.active]="selectedRoleFilter === r.key"
+              [style.--role-color]="r.color"
+              (click)="setRoleFilter(r.key)">
+        {{ r.label }}
+        <span class="role-count">{{ staffCountByRole[r.key] || 0 }}</span>
+      </button>
+    </div>
+  </div>
+
+  <div *ngIf="loading" class="staff-loading">Loading...</div>
+
+  <div *ngIf="!loading && filteredStaff.length === 0" class="staff-empty">
+    No matching staff
+  </div>
+
+  <div *ngIf="!loading && filteredStaff.length > 0" class="staff-list">
+    <div *ngFor="let s of filteredStaff"
+         class="staff-card"
+         [class.is-self]="s.id === currentUser?.id">
+      <div class="staff-avatar" [style.background]="getAvatarColor(s.id)">
+        {{ getInitial(s.name) }}
+      </div>
+      <div class="staff-info">
+        <div class="staff-name" [title]="s.name">{{ toTitleCase(s.name) }}</div>
+        <div class="staff-meta">
+          <span class="role-badge"
+                *ngIf="s.roleDisplayName"
+                [style.background]="(s.roleColor || '#64748b') + '22'"
+                [style.color]="s.roleColor || '#94a3b8'"
+                [style.border]="'1px solid ' + (s.roleColor || '#64748b') + '33'">
+            {{ s.roleDisplayName }}
+          </span>
+          <span *ngIf="s.branchName && isGlobalRole"
+                class="branch-text"
+                [title]="s.branchName">
+            · {{ s.branchName }}
+          </span>
+          <span *ngIf="s.departmentName && !isGlobalRole"
+                class="dept-text"
+                [title]="s.departmentName">
+            · {{ s.departmentName }}
+          </span>
+        </div>
+      </div>
+
+      <!-- Chat button — only for others, hidden when disabled -->
+      <button *ngIf="enableChat && s.id !== currentUser?.id"
+              class="chat-btn"
+              (click)="openChatWith(s)"
+              [title]="'Chat with ' + s.name">
+        💬
+      </button>
+
+      <!-- "YOU" label for own card -->
+      <span *ngIf="s.id === currentUser?.id" class="self-label">You</span>
+    </div>
+  </div>
+</aside>
+
+<!-- ═══════════════════════════════════════════
+     CHAT POPUP (floating window)
+═══════════════════════════════════════════ -->
+<app-chat-popup *ngIf="chatTarget"
+                [member]="chatTarget"
+                [isGroup]="false"
+                (close)="closeChat()">
+</app-chat-popup>

@@ -1,0 +1,269 @@
+<div class="attendance-upload-wrap">
+
+  <!-- ═══════════════ HEADER ═══════════════ -->
+  <div class="au-header">
+    <button class="au-back" (click)="back.emit()">
+      <span>←</span>
+      <span>Back to Dashboard</span>
+    </button>
+
+    <div class="au-title-wrap">
+      <div class="au-title">📅 Upload Attendance</div>
+      <div class="au-subtitle">Fingerprint Excel file</div>
+    </div>
+
+    <div class="au-step-dots">
+      <span class="au-dot" [class.au-dot-active]="step >= 1">1</span>
+      <span class="au-dot-line"></span>
+      <span class="au-dot" [class.au-dot-active]="step >= 2">2</span>
+    </div>
+  </div>
+
+  <!-- ═══════════════ STEP 1: UPLOAD + PREVIEW (combined) ═══════════════ -->
+  <div *ngIf="step === 1" class="au-step-body">
+
+    <!-- ── COMPACT DROPZONE ── -->
+    <div *ngIf="!selectedFile" class="au-dropzone"
+         [class.au-drag]="isDragging"
+         (dragover)="onDragOver($event)"
+         (dragleave)="onDragLeave($event)"
+         (drop)="onDrop($event)">
+
+      <div class="au-drop-empty">
+        <div class="au-drop-icon">📄</div>
+        <div class="au-drop-title">Drop Excel file here</div>
+        <div class="au-drop-sub">or</div>
+        <label class="au-browse-btn">
+          Choose file
+          <input type="file"
+                 accept=".xlsx,.xls"
+                 (change)="onFileSelect($event)"
+                 style="display:none;">
+        </label>
+        <div class="au-drop-hint">
+          Required: <strong>Email</strong>, <strong>Date</strong>, <strong>Time In</strong>, <strong>Time Out</strong>
+          &nbsp;·&nbsp; .xlsx or .xls · Max {{ MAX_SIZE_MB }} MB
+        </div>
+      </div>
+    </div>
+
+    <!-- ── FILE BAR (compact, when selected) ── -->
+    <div *ngIf="selectedFile" class="au-file-bar">
+      <div class="au-file-icon">📊</div>
+      <div class="au-file-info">
+        <div class="au-file-name">{{ selectedFile.name }}</div>
+        <div class="au-file-size">
+          {{ formatFileSize(selectedFile.size) }}
+          <span *ngIf="isParsing"> · ⏳ Parsing...</span>
+          <span *ngIf="!isParsing && preview" style="color:#22c55e;">
+            · ✓ Parsed {{ preview.totalRows }} rows
+          </span>
+        </div>
+      </div>
+      <button class="au-file-remove" (click)="removeFile()" title="Remove file">✕</button>
+    </div>
+
+    <!-- ── ERRORS ── -->
+    <div *ngIf="parseError" class="au-error">⚠️ {{ parseError }}</div>
+
+    <!-- ── LOADING STATE ── -->
+    <div *ngIf="isParsing && !preview" class="au-loading">
+      <div class="au-spinner"></div>
+      <div class="au-loading-text">Parsing Excel file...</div>
+    </div>
+
+    <!-- ═══════════ INLINE PREVIEW ═══════════ -->
+    <div *ngIf="preview && !isParsing" class="au-preview-section">
+
+      <!-- Summary cards -->
+      <div class="au-summary">
+        <div class="au-sum-card" (click)="setFilter('ALL')" [class.au-sum-active]="filterStatus === 'ALL'">
+          <div class="au-sum-label">Total</div>
+          <div class="au-sum-value">{{ preview.totalRows }}</div>
+        </div>
+        <div class="au-sum-card" (click)="setFilter('MATCHED')" [class.au-sum-active]="filterStatus === 'MATCHED'">
+          <div class="au-sum-label">✓ Matched</div>
+          <div class="au-sum-value" style="color:#22c55e;">{{ preview.matchedCount }}</div>
+        </div>
+        <div class="au-sum-card" (click)="setFilter('UNMATCHED')" [class.au-sum-active]="filterStatus === 'UNMATCHED'">
+          <div class="au-sum-label">⚠ Unmatched</div>
+          <div class="au-sum-value" style="color:#ef4444;">{{ preview.unmatchedCount }}</div>
+        </div>
+        <div class="au-sum-card" (click)="setFilter('DUPLICATE')" [class.au-sum-active]="filterStatus === 'DUPLICATE'">
+          <div class="au-sum-label">⚠ Duplicate</div>
+          <div class="au-sum-value" style="color:#f59e0b;">{{ preview.duplicateCount }}</div>
+        </div>
+        <div class="au-sum-card" (click)="setFilter('INVALID')" [class.au-sum-active]="filterStatus === 'INVALID'">
+          <div class="au-sum-label">✕ Invalid</div>
+          <div class="au-sum-value" style="color:#94a3b8;">{{ preview.invalidCount }}</div>
+        </div>
+      </div>
+
+      <!-- Toolbar -->
+      <div class="au-toolbar">
+        <div class="au-search">
+          <span class="au-search-icon">🔍</span>
+          <input type="text"
+                 placeholder="Search by name, email, role, branch..."
+                 [(ngModel)]="searchQuery">
+          <button *ngIf="searchQuery" class="au-search-clear" (click)="searchQuery=''">✕</button>
+        </div>
+
+        <div class="au-toolbar-actions">
+          <button class="au-link-btn" (click)="expandAll()">⊕ Expand</button>
+          <button class="au-link-btn" (click)="collapseAll()">⊖ Collapse</button>
+          <span class="au-toolbar-sep">|</span>
+          <button class="au-link-btn" (click)="selectAllMatched()">Select matched</button>
+          <button class="au-link-btn" (click)="deselectAll()">Deselect</button>
+        </div>
+      </div>
+
+      <div class="au-select-info">
+        <strong>{{ totalSelectedCount }}</strong> rows selected of {{ preview.matchedCount }} matched
+        <span *ngIf="filteredGroups.length !== groups.length" class="au-filter-info">
+          · Showing {{ filteredGroups.length }} of {{ groups.length }} staff
+        </span>
+      </div>
+
+      <!-- Staff cards -->
+      <div class="au-cards">
+        <div *ngFor="let g of filteredGroups"
+             class="au-card"
+             [class.au-card-issue]="g.hasIssues"
+             [class.au-card-expanded]="g.expanded">
+
+          <div class="au-card-head" (click)="toggleExpand(g)">
+            <div class="au-card-checkbox" (click)="toggleGroupSelection(g, $event)">
+              <input type="checkbox"
+                     [checked]="g.allSelected"
+                     [disabled]="g.matchedDays === 0"
+                     (click)="$event.stopPropagation()"
+                     (change)="toggleGroupSelection(g, $event)">
+            </div>
+
+            <div class="au-card-avatar"
+                 [style.background]="getAvatarColor(g.matchedName || g.email)"
+                 [class.au-avatar-gray]="!g.matchedName">
+              {{ getInitial(g.matchedName || g.email) }}
+            </div>
+
+            <div class="au-card-info">
+              <div class="au-card-name">
+                {{ g.matchedName || g.email }}
+                <span *ngIf="!g.matchedName" class="au-card-tag-warn">Not in system</span>
+              </div>
+              <div class="au-card-meta">
+                <span *ngIf="g.matchedRole">{{ g.matchedRole }}</span>
+                <span *ngIf="g.matchedBranch"> · {{ g.matchedBranch }}</span>
+                <span *ngIf="g.matchedRole || g.matchedBranch"> · </span>
+                <span class="au-card-email">{{ g.email }}</span>
+              </div>
+            </div>
+
+            <div class="au-card-stats">
+              <div class="au-stat-days">
+                <span class="au-stat-num">{{ g.matchedDays }}</span>
+                <span class="au-stat-lbl">/ {{ g.totalDays }} days</span>
+              </div>
+              <span class="au-card-status-badge"
+                    [style.background]="statusBg(g.status)"
+                    [style.color]="statusColor(g.status)">
+                {{ g.status }}
+              </span>
+            </div>
+
+            <div class="au-card-toggle">{{ g.expanded ? '▾' : '▸' }}</div>
+          </div>
+
+          <div *ngIf="g.expanded" class="au-card-body">
+            <table class="au-day-table">
+              <thead>
+                <tr>
+                  <th style="width:32px;"></th>
+                  <th>Date</th>
+                  <th>In</th>
+                  <th>Out</th>
+                  <th>Status</th>
+                  <th>Note</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let r of g.rows" [class.au-row-issue]="r.status !== 'MATCHED'">
+                  <td>
+                    <input type="checkbox"
+                           [checked]="r.selected"
+                           [disabled]="r.status !== 'MATCHED'"
+                           (click)="toggleRow(r, g, $event)">
+                  </td>
+                  <td class="au-day-date">{{ r.workDate || '—' }}</td>
+                  <td class="au-day-time">{{ r.timeIn || '—' }}</td>
+                  <td class="au-day-time">{{ r.timeOut || '—' }}</td>
+                  <td>
+                    <span class="au-day-status"
+                          [style.background]="statusBg(r.status)"
+                          [style.color]="statusColor(r.status)">
+                      {{ r.status }}
+                    </span>
+                  </td>
+                  <td class="au-day-msg">{{ r.message || '—' }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div *ngIf="filteredGroups.length === 0" class="au-empty-state">
+          <div class="au-empty-icon">🔍</div>
+          <div class="au-empty-title">No staff match your filter</div>
+          <div class="au-empty-desc">Try clearing search or changing status filter</div>
+        </div>
+      </div>
+
+      <div *ngIf="saveError" class="au-error">⚠️ {{ saveError }}</div>
+
+      <!-- Save action bar -->
+      <div class="au-actions">
+        <button class="au-btn-ghost" (click)="clearAll()">✕ Clear</button>
+        <button class="au-btn-primary"
+                [disabled]="totalSelectedCount === 0 || isSaving"
+                (click)="confirmSave()">
+          <span *ngIf="!isSaving">💾 Save {{ totalSelectedCount }} record{{ totalSelectedCount !== 1 ? 's' : '' }}</span>
+          <span *ngIf="isSaving">⏳ Saving...</span>
+        </button>
+      </div>
+    </div>
+
+  </div>
+  <!-- ══════ END STEP 1 ══════ -->
+
+
+  <!-- ═══════════════ STEP 2: DONE ═══════════════ -->
+  <div *ngIf="step === 2 && saveResult" class="au-step-body">
+    <div class="au-done-card">
+      <div class="au-done-icon">✓</div>
+      <div class="au-done-title">Attendance saved successfully</div>
+      <div class="au-done-msg">{{ saveResult.message }}</div>
+
+      <div class="au-done-stats">
+        <div class="au-done-stat">
+          <div class="au-done-num" style="color:#22c55e;">{{ saveResult.savedCount }}</div>
+          <div class="au-done-lbl">New records</div>
+        </div>
+        <div class="au-done-stat">
+          <div class="au-done-num" style="color:#3b82f6;">{{ saveResult.updatedCount }}</div>
+          <div class="au-done-lbl">Updated</div>
+        </div>
+        <div class="au-done-stat" *ngIf="saveResult.skippedCount > 0">
+          <div class="au-done-num" style="color:#94a3b8;">{{ saveResult.skippedCount }}</div>
+          <div class="au-done-lbl">Skipped</div>
+        </div>
+      </div>
+
+      <div class="au-done-actions">
+        <button class="au-btn-ghost" (click)="back.emit()">Back to Dashboard</button>
+        <button class="au-btn-primary" (click)="uploadAnother()">Upload another file</button>
+      </div>
+    </div>
+  </div>
+
+</div>

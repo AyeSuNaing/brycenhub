@@ -55,7 +55,7 @@
   <!-- ════════════ MAIN ROW ════════════ -->
   <div class="main-row">
 
-    <!-- ══════════ LEFT SIDEBAR ══════════ -->
+    <!-- ══════════ LEFT SIDEBAR (STATIC) ══════════ -->
     <aside class="left-sidebar">
       <div class="sidebar-scroll">
 
@@ -80,7 +80,7 @@
         </div>
         <hr class="profile-divider" />
 
-        <!-- Nav sections — same pattern as member-dashboard -->
+        <!-- Nav sections -->
         <div *ngFor="let section of navSections" style="margin-top:6px;">
           <div class="proj-section-label">{{ section.label }}</div>
           <div *ngFor="let item of section.items" class="sidebar-item" [class.active]="activeView === item.key"
@@ -117,319 +117,394 @@
       </div>
     </aside>
 
-    <!-- ══════════════════════════════════
-         MAIN CONTENT — dashboard home
-         (hidden when inline view is active — same as member-dashboard)
-    ══════════════════════════════════ -->
-    <main *ngIf="activeView === 'dashboard'" class="main-content">
+    <!-- ══════════════════════════════════════════════
+         NEW: CENTER + RIGHT PANEL WRAPPER
+         Center = swappable views
+         Right  = persistent StaffPanel
+    ══════════════════════════════════════════════ -->
+    <div class="main-with-panel">
 
-      <!-- ── ROW 1: Stats ── -->
-      <div class="stats-grid">
-        <div class="stat-card">
-          <div class="stat-label">Total Staff</div>
-          <div class="stat-value">{{ loading.stats ? '—' : stats.totalStaff }}</div>
-          <div class="stat-sub">Branch members</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">Pending OT / Total hrs</div>
-          <div class="stat-value">
-            <span style="color:#f59e0b;">{{ stats.pendingOT }}</span>
-            <span style="font-size:14px;color:#818cf8;"> / {{ stats.totalOTHours }}h</span>
-          </div>
-          <div class="stat-sub">This month</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">Leave Requests / Today</div>
-          <div class="stat-value">
-            <span style="color:#a78bfa;">{{ stats.leaveRequests }}</span>
-            <span style="font-size:14px;color:#f87171;"> / {{ stats.todayLeave }}</span>
-          </div>
-          <div class="stat-sub">Pending / Out today</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">Payroll</div>
-          <div class="stat-value" style="color:#22c55e;">{{ currentMonth }}</div>
-          <div class="stat-sub" style="color:#f59e0b;">● {{ payrollStatus }}</div>
-        </div>
-      </div>
+      <!-- ══════════ CENTER: Swappable Views ══════════ -->
+      <div class="main-center">
 
-      <!-- ── ROW 2: Holidays | Quick Actions | Today Leave ── -->
-      <div class="row2-grid">
+        <!-- ══════════ DASHBOARD HOME ══════════ -->
+        <main *ngIf="activeView === 'dashboard'" class="main-content">
 
-        <!-- Holidays -->
-        <div class="card">
-          <div class="card-header">
-            <div class="card-title">🗓️ {{ currentMonth }} Holidays</div>
-            <span class="badge-purple">{{ holidays.length }}</span>
-          </div>
-          <div *ngIf="loading.holiday" class="loading-txt">Loading...</div>
-          <div *ngIf="!loading.holiday">
-            <div *ngFor="let h of holidays" class="holiday-item">
-              <span class="holiday-date">{{ h.holidayDate | date:'MMM d' }}</span>
-              <span class="holiday-name">{{ h.name }}</span>
-              <span class="holiday-day">{{ h.holidayDate | date:'EEE' }}</span>
+          <!-- ── ROW 1: Stats ── -->
+          <div class="stats-grid">
+            <div class="stat-card">
+              <div class="stat-label">Total Staff</div>
+              <div class="stat-value">{{ loading.stats ? '—' : stats.totalStaff }}</div>
+              <div class="stat-sub">Branch members</div>
             </div>
-            <div *ngIf="holidays.length === 0" style="font-size:10px;opacity:0.4;text-align:center;padding:8px 0;">
-              No holidays this month
-            </div>
-          </div>
-        </div>
-
-        <!-- Quick Actions -->
-        <div class="card">
-          <div class="card-header">
-            <div class="card-title">⚡ Quick Actions</div>
-          </div>
-          <div class="quick-grid">
-            <div class="quick-btn" (click)="setView('payroll')">
-              <span class="quick-icon">📅</span>
-              <div>
-                <div class="quick-title">Upload Attendance</div>
-                <div class="quick-sub">Fingerprint Excel</div>
+            <div class="stat-card">
+              <div class="stat-label">Pending OT / Total hrs</div>
+              <div class="stat-value">
+                <span style="color:#f59e0b;">{{ stats.pendingOT }}</span>
+                <span style="font-size:14px;color:#818cf8;"> / {{ stats.totalOTHours }}h</span>
               </div>
+              <div class="stat-sub">This month</div>
             </div>
-            <div class="quick-btn" (click)="setView('payroll')">
-              <span class="quick-icon">💰</span>
-              <div>
-                <div class="quick-title">Monthly Payroll</div>
-                <div class="quick-sub">{{ currentMonth }} · {{ payrollStatus }}</div>
+            <div class="stat-card">
+              <div class="stat-label">Leave Requests / Today</div>
+              <div class="stat-value">
+                <span style="color:#a78bfa;">{{ stats.leaveRequests }}</span>
+                <span style="font-size:14px;color:#f87171;"> / {{ stats.todayLeave }}</span>
               </div>
+              <div class="stat-sub">Pending / Out today</div>
             </div>
-            <div class="quick-btn" (click)="setView('add-staff')">
-              <span class="quick-icon">➕</span>
-              <div>
-                <div class="quick-title">Add Staff</div>
-                <div class="quick-sub">New member</div>
+            <div class="stat-card">
+              <div class="stat-label">Payroll</div>
+              <div class="stat-value" style="color:#22c55e;">{{ currentMonth }}</div>
+              <div class="stat-sub" style="color:#f59e0b;">● {{ payrollStatus }}</div>
+            </div>
+          </div>
+
+          <!-- ── ROW 2: Holidays | Quick Actions | Today Leave ── -->
+          <div class="row2-grid">
+
+            <!-- Holidays — Mini Calendar -->
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title">🗓️ {{ currentMonth }} Holidays</div>
+                <span class="badge-purple">{{ holidays.length }}</span>
               </div>
-            </div>
-            <div class="quick-btn" (click)="setView('holidays')">
-              <span class="quick-icon">🗓️</span>
-              <div>
-                <div class="quick-title">Add Holiday</div>
-                <div class="quick-sub">Next month</div>
+
+              <!-- Weekday header -->
+              <div class="cal-weekdays">
+                <div class="cal-wd cal-sun">S</div>
+                <div class="cal-wd">M</div>
+                <div class="cal-wd">T</div>
+                <div class="cal-wd">W</div>
+                <div class="cal-wd">T</div>
+                <div class="cal-wd">F</div>
+                <div class="cal-wd cal-sat">S</div>
               </div>
-            </div>
-          </div>
-        </div>
 
-        <!-- Today on Leave -->
-        <div class="card">
-          <div class="card-header">
-            <div class="card-title">📋 Today on Leave</div>
-            <span class="badge-red">{{ stats.todayLeave }} out</span>
-          </div>
-          <div *ngIf="todayLeaveList.length === 0" style="font-size:10px;opacity:0.4;text-align:center;padding:8px 0;">
-            Everyone is in today
-          </div>
-          <div *ngFor="let l of todayLeaveList" class="today-item">
-            <div class="today-avatar" [style.background]="getAvatarColor(l.userName || '')">
-              {{ getInitial(l.userName || '') }}
-            </div>
-            <span class="today-name">{{ l.userName }}</span>
-            <span class="leave-badge" [style]="getLeaveTypeStyle(l.leaveType)">
-              {{ l.leaveType }}
-            </span>
-          </div>
-        </div>
-
-      </div>
-
-      <!-- ── ROW 3: OT Requests ── -->
-      <div class="card">
-        <div class="card-header">
-          <div class="card-title">⏰ OT Requests</div>
-          <span class="badge-yellow">{{ stats.pendingOT }} pending</span>
-        </div>
-        <div *ngIf="loading.ot" class="loading-txt">Loading...</div>
-        <div *ngIf="!loading.ot && otRequests.length === 0" class="empty-txt">
-          No pending OT requests
-        </div>
-        <table *ngIf="!loading.ot && otRequests.length > 0" class="data-table">
-          <thead>
-            <tr>
-              <th>Staff</th>
-              <th>Date</th>
-              <th>Day</th>
-              <th>Hours</th>
-              <th>Rate</th>
-              <th>Project</th>
-              <th>Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr *ngFor="let ot of otRequests">
-              <td>
-                <div class="table-user">
-                  <div class="tbl-avatar" [style.background]="getAvatarColor(ot.userName || '')">
-                    {{ getInitial(ot.userName || '') }}
-                  </div>
-                  {{ ot.userName }}
+              <!-- Day grid -->
+              <div class="cal-grid">
+                <div *ngFor="let cell of calendarGrid"
+                     class="cal-cell"
+                     [class.cal-out]="!cell.inMonth"
+                     [class.cal-sun-bg]="cell.inMonth && isSunday(cell.date)"
+                     [class.cal-sat-bg]="cell.inMonth && isSaturday(cell.date)"
+                     [class.cal-today]="isToday(cell.date)"
+                     [class.cal-holiday]="getHolidayForDate(cell.date) && cell.inMonth"
+                     (click)="getHolidayForDate(cell.date) && cell.inMonth ? openHolidayModal(getHolidayForDate(cell.date)) : null">
+                  {{ cell.date.getDate() }}
                 </div>
-              </td>
-              <td class="muted">{{ ot.workDate | date:'MMM d' }}</td>
-              <td class="muted">{{ ot.dayType }}</td>
-              <td>{{ ot.otHours }}hrs</td>
-              <td><span style="color:#818cf8;">×{{ ot.otRate }}</span></td>
-              <td class="muted" style="font-size:10px;">{{ ot.projectName || '—' }}</td>
-              <td>
-                <button class="btn-approve" (click)="approveOT(ot.id)">✓ Approve</button>
-                <button class="btn-reject" (click)="rejectOT(ot.id)">✕ Reject</button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+              </div>
+            </div>
 
-      <!-- ── ROW 4: Leave Requests ── -->
-      <div class="card">
-        <div class="card-header">
-          <div class="card-title">🏖️ Leave Requests</div>
-          <span class="badge-purple">{{ stats.leaveRequests }} pending</span>
-        </div>
-        <div *ngIf="loading.leave" class="loading-txt">Loading...</div>
-        <div *ngIf="!loading.leave && leaveRequests.length === 0" class="empty-txt">
-          No pending leave requests
-        </div>
-        <table *ngIf="!loading.leave && leaveRequests.length > 0" class="data-table">
-          <thead>
-            <tr>
-              <th>Staff</th>
-              <th>Type</th>
-              <th>Dates</th>
-              <th>Days</th>
-              <th>Reason</th>
-              <th>Status</th>
-              <th>Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr *ngFor="let lv of leaveRequests">
-              <td>
-                <div class="table-user">
-                  <div class="tbl-avatar" [style.background]="getAvatarColor(lv.userName || '')">
-                    {{ getInitial(lv.userName || '') }}
+            <!-- Quick Actions -->
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title">⚡ Quick Actions</div>
+              </div>
+              <div class="quick-grid">
+                <div class="quick-btn" (click)="setView('attendance')">
+                  <span class="quick-icon">📅</span>
+                  <div>
+                    <div class="quick-title">Upload Attendance</div>
+                    <div class="quick-sub">Fingerprint Excel</div>
                   </div>
-                  {{ lv.userName }}
                 </div>
-              </td>
-              <td>
-                <span class="leave-badge" [style]="getLeaveTypeStyle(lv.leaveType)">
-                  {{ lv.leaveType }}
+                <div class="quick-btn" (click)="setView('payroll')">
+                  <span class="quick-icon">💰</span>
+                  <div>
+                    <div class="quick-title">Monthly Payroll</div>
+                    <div class="quick-sub">{{ currentMonth }} · {{ payrollStatus }}</div>
+                  </div>
+                </div>
+                <div class="quick-btn" (click)="setView('add-staff')">
+                  <span class="quick-icon">➕</span>
+                  <div>
+                    <div class="quick-title">Add Staff</div>
+                    <div class="quick-sub">New member</div>
+                  </div>
+                </div>
+                <div class="quick-btn" (click)="setView('holidays')">
+                  <span class="quick-icon">🗓️</span>
+                  <div>
+                    <div class="quick-title">Add Holiday</div>
+                    <div class="quick-sub">Next month</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Today on Leave -->
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title">📋 Today on Leave</div>
+                <span class="badge-red">{{ stats.todayLeave }} out</span>
+              </div>
+              <div *ngIf="todayLeaveList.length === 0" style="font-size:10px;opacity:0.4;text-align:center;padding:8px 0;">
+                Everyone is in today
+              </div>
+              <div *ngFor="let l of todayLeaveList" class="today-item">
+                <div class="today-avatar" [style.background]="getAvatarColor(l.userName || '')">
+                  {{ getInitial(l.userName || '') }}
+                </div>
+                <span class="today-name">{{ l.userName }}</span>
+                <span class="leave-badge" [style]="getLeaveTypeStyle(l.leaveType)">
+                  {{ l.leaveType }}
                 </span>
-              </td>
-              <td class="muted">
-                {{ lv.startDate | date:'MMM d' }}
-                <span *ngIf="lv.startDate !== lv.endDate"> – {{ lv.endDate | date:'MMM d' }}</span>
-              </td>
-              <td class="muted">{{ lv.totalDays }} days</td>
-              <td class="reason-cell">{{ lv.reason || '—' }}</td>
-              <td><span class="badge-yellow">Pending</span></td>
-              <td>
-                <button class="btn-approve" (click)="approveLeave(lv.id)">✓ Approve</button>
-                <button class="btn-reject" (click)="rejectLeave(lv.id)">✕ Reject</button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+              </div>
+            </div>
 
-      <!-- ── ROW 5: Staff Preview (top 5 only — full list via Staff List nav) ── -->
-      <div class="card">
-        <div class="card-header">
-          <div class="card-title">
-            👥 Staff List
-            <span style="font-size:10px;font-weight:400;opacity:0.4;margin-left:6px;">
-              {{ staffList.length }} members
-            </span>
           </div>
-          <button class="btn-primary" (click)="setView('add-staff')">+ Add Staff</button>
-        </div>
-        <div *ngIf="loading.staff" class="loading-txt">Loading...</div>
-        <div *ngIf="!loading.staff" style="overflow-x:auto;">
-          <table class="data-table" style="min-width:900px;">
-            <thead>
-              <tr>
-                <th>Name</th>
-                <th>Role</th>
-                <th>Department</th>
-                <th>Email</th>
-                <th>Status</th>
-                <th>Skills</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr *ngFor="let s of staffList.slice(0,5)">
-                <td>
-                  <div class="table-user">
-                    <!-- <div class="tbl-avatar" [style.background]="getAvatarColor(s.name)">
-                      {{ getInitial(s.name) }}
-                    </div> -->
-                    {{ s.name }}
-                  </div>
-                </td>
-                <td>
-                  <span style="font-size:9px;font-weight:700;padding:3px 9px;
-                border-radius:20px;white-space:nowrap;"
-                [style.background]="(s.roleColor || '#64748b') + '22'"
-                [style.color]="s.roleColor || '#94a3b8'"
-                [style.border]="'1px solid ' + (s.roleColor || '#64748b') + '44'">
-                    {{ s.roleDisplayName || '—' }}
-                  </span>
-                </td>
-                <td>
-                  <span *ngIf="s.departmentName; else noDept" style="font-size:10px;padding:2px 8px;border-radius:20px;
-                      background:#818cf822;color:#818cf8;font-weight:600;">
-                    {{ s.departmentName }}
-                  </span>
-                  <ng-template #noDept><span class="muted">—</span></ng-template>
-                </td>
-                <td class="muted">{{ s.email }}</td>
-                <td>
-                  <span class="status-dot" [style.background]="s.isActive ? '#22c55e' : '#ef4444'">
-                  </span>
-                  <span [style.color]="s.isActive ? '#22c55e' : '#ef4444'" style="font-size:11px;">
-                    {{ s.isActive ? 'Active' : 'Inactive' }}
-                  </span>
-                </td>
-                <td style="font-size:10px;">
-                  <span *ngIf="s.skills?.length; else noSkills">{{ s.skills.join(', ') }}</span>
-                  <ng-template #noSkills>
-                    <span class="muted" style="font-style:italic;">— (upload CV)</span>
-                  </ng-template>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-        <!-- View all link -->
-        <div style="text-align:center;padding:8px 0 0;font-size:10px;cursor:pointer;opacity:0.5;"
-          (click)="setView('staff-list')">
-          View all {{ staffList.length }} staff →
-        </div>
+
+          <!-- ── ROW 3: OT Requests ── -->
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">⏰ OT Requests</div>
+              <span class="badge-yellow">{{ stats.pendingOT }} pending</span>
+            </div>
+            <div *ngIf="loading.ot" class="loading-txt">Loading...</div>
+            <div *ngIf="!loading.ot && otRequests.length === 0" class="empty-txt">
+              No pending OT requests
+            </div>
+            <table *ngIf="!loading.ot && otRequests.length > 0" class="data-table">
+              <thead>
+                <tr>
+                  <th>Staff</th>
+                  <th>Date</th>
+                  <th>Day</th>
+                  <th>Hours</th>
+                  <th>Rate</th>
+                  <th>Project</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let ot of otRequests">
+                  <td>
+                    <div class="table-user">
+                      <div class="tbl-avatar" [style.background]="getAvatarColor(ot.userName || '')">
+                        {{ getInitial(ot.userName || '') }}
+                      </div>
+                      {{ ot.userName }}
+                    </div>
+                  </td>
+                  <td class="muted">{{ ot.workDate | date:'MMM d' }}</td>
+                  <td class="muted">{{ ot.dayType }}</td>
+                  <td>{{ ot.otHours }}hrs</td>
+                  <td><span style="color:#818cf8;">×{{ ot.otRate }}</span></td>
+                  <td class="muted" style="font-size:10px;">{{ ot.projectName || '—' }}</td>
+                  <td>
+                    <button class="btn-approve" (click)="approveOT(ot.id)">✓ Approve</button>
+                    <button class="btn-reject" (click)="rejectOT(ot.id)">✕ Reject</button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- ── ROW 4: Leave Requests ── -->
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">🏖️ Leave Requests</div>
+              <span class="badge-purple">{{ stats.leaveRequests }} pending</span>
+            </div>
+            <div *ngIf="loading.leave" class="loading-txt">Loading...</div>
+            <div *ngIf="!loading.leave && leaveRequests.length === 0" class="empty-txt">
+              No pending leave requests
+            </div>
+            <table *ngIf="!loading.leave && leaveRequests.length > 0" class="data-table">
+              <thead>
+                <tr>
+                  <th>Staff</th>
+                  <th>Type</th>
+                  <th>Dates</th>
+                  <th>Days</th>
+                  <th>Reason</th>
+                  <th>Status</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let lv of leaveRequests">
+                  <td>
+                    <div class="table-user">
+                      <div class="tbl-avatar" [style.background]="getAvatarColor(lv.userName || '')">
+                        {{ getInitial(lv.userName || '') }}
+                      </div>
+                      {{ lv.userName }}
+                    </div>
+                  </td>
+                  <td>
+                    <span class="leave-badge" [style]="getLeaveTypeStyle(lv.leaveType)">
+                      {{ lv.leaveType }}
+                    </span>
+                  </td>
+                  <td class="muted">
+                    {{ lv.startDate | date:'MMM d' }}
+                    <span *ngIf="lv.startDate !== lv.endDate"> – {{ lv.endDate | date:'MMM d' }}</span>
+                  </td>
+                  <td class="muted">{{ lv.totalDays }} days</td>
+                  <td class="reason-cell">{{ lv.reason || '—' }}</td>
+                  <td><span class="badge-yellow">Pending</span></td>
+                  <td>
+                    <button class="btn-approve" (click)="approveLeave(lv.id)">✓ Approve</button>
+                    <button class="btn-reject" (click)="rejectLeave(lv.id)">✕ Reject</button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- ── ROW 5: Staff Preview (top 5) ── -->
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">
+                👥 Staff List
+                <span style="font-size:10px;font-weight:400;opacity:0.4;margin-left:6px;">
+                  {{ staffList.length }} members
+                </span>
+              </div>
+              <button class="btn-primary" (click)="setView('add-staff')">+ Add Staff</button>
+            </div>
+            <div *ngIf="loading.staff" class="loading-txt">Loading...</div>
+            <div *ngIf="!loading.staff" style="overflow-x:auto;">
+              <table class="data-table" style="min-width:900px;">
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Role</th>
+                    <th>Department</th>
+                    <th>Email</th>
+                    <th>Status</th>
+                    <th>Skills</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let s of staffList.slice(0,5)">
+                    <td>
+                      <div class="table-user">
+                        {{ s.name }}
+                      </div>
+                    </td>
+                    <td>
+                      <span style="font-size:9px;font-weight:700;padding:3px 9px;
+                      border-radius:20px;white-space:nowrap;"
+                      [style.background]="(s.roleColor || '#64748b') + '22'"
+                      [style.color]="s.roleColor || '#94a3b8'"
+                      [style.border]="'1px solid ' + (s.roleColor || '#64748b') + '44'">
+                        {{ s.roleDisplayName || '—' }}
+                      </span>
+                    </td>
+                    <td>
+                      <span *ngIf="s.departmentName; else noDept" style="font-size:10px;padding:2px 8px;border-radius:20px;
+                          background:#818cf822;color:#818cf8;font-weight:600;">
+                        {{ s.departmentName }}
+                      </span>
+                      <ng-template #noDept><span class="muted">—</span></ng-template>
+                    </td>
+                    <td class="muted">{{ s.email }}</td>
+                    <td>
+                      <span class="status-dot" [style.background]="s.isActive ? '#22c55e' : '#ef4444'">
+                      </span>
+                      <span [style.color]="s.isActive ? '#22c55e' : '#ef4444'" style="font-size:11px;">
+                        {{ s.isActive ? 'Active' : 'Inactive' }}
+                      </span>
+                    </td>
+                    <td style="font-size:10px;">
+                      <span *ngIf="s.skills?.length; else noSkills">{{ s.skills.join(', ') }}</span>
+                      <ng-template #noSkills>
+                        <span class="muted" style="font-style:italic;">— (upload CV)</span>
+                      </ng-template>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <!-- View all link -->
+            <div style="text-align:center;padding:8px 0 0;font-size:10px;cursor:pointer;opacity:0.5;"
+              (click)="setView('staff-list')">
+              View all {{ staffList.length }} staff →
+            </div>
+          </div>
+
+        </main>
+        <!-- ════ END DASHBOARD HOME ════ -->
+
+        <!-- ══════════════════════════════════
+             INLINE VIEWS — swappable based on activeView
+        ══════════════════════════════════ -->
+
+        <!-- Staff List -->
+        <app-staff-list-inline *ngIf="activeView === 'staff-list'"
+          (addStaff)="setView('add-staff')"
+          (viewProfile)="onViewProfile($event)"
+          (back)="closeToDashboard()">
+        </app-staff-list-inline>
+
+        <!-- Add Staff -->
+        <app-add-staff-inline *ngIf="activeView === 'add-staff'"
+          (close)="setView('staff-list')"
+          (created)="onStaffCreated()">
+        </app-add-staff-inline>
+
+        <!-- Staff Profile -->
+        <app-staff-profile-inline *ngIf="activeView === 'staff-profile'"
+          [staffId]="selectedStaffId"
+          (back)="setView('staff-list')"
+          (edit)="setView('add-staff')">
+        </app-staff-profile-inline>
+
+        <!-- Public Holidays -->
+        <app-holidays-inline *ngIf="activeView === 'holidays'"
+          (back)="closeToDashboard()">
+        </app-holidays-inline>
+
+        <!-- Tax Brackets -->
+        <app-tax-brackets-inline *ngIf="activeView === 'tax'"
+          (back)="closeToDashboard()">
+        </app-tax-brackets-inline>
+
+        <!-- Salary Structures -->
+        <app-salary-structures-inline *ngIf="activeView === 'salary'"
+          (back)="closeToDashboard()">
+        </app-salary-structures-inline>
+
+        <!-- Attendance Upload -->
+        <app-attendance-upload-inline *ngIf="activeView === 'attendance'"
+          (back)="closeToDashboard()">
+        </app-attendance-upload-inline>
+
       </div>
+      <!-- /.main-center -->
 
-    </main>
-    <!-- ════ END DASHBOARD HOME ════ -->
+      <!-- ══════════ RIGHT STAFF PANEL (PERSISTENT) ══════════ -->
+      <app-staff-panel *ngIf="showRightPanel"></app-staff-panel>
 
-    <!-- ══════════════════════════════════
-         INLINE VIEWS — same as project-inline pattern
-         member-dashboard: <app-project-inline *ngIf="showProjectDetail">
-    ══════════════════════════════════ -->
-
-    <!-- Staff List Inline -->
-    <app-staff-list-inline *ngIf="activeView === 'staff-list'" (addStaff)="setView('add-staff')"
-      (viewProfile)="onViewProfile($event)" (back)="closeToDashboard()">
-    </app-staff-list-inline>
-
-    <!-- Add Staff Inline -->
-    <app-add-staff-inline *ngIf="activeView === 'add-staff'" (close)="setView('staff-list')"
-      (created)="onStaffCreated()">
-    </app-add-staff-inline>
-
-    <app-staff-profile-inline *ngIf="activeView === 'staff-profile'" [staffId]="selectedStaffId"
-      (back)="setView('staff-list')" (edit)="setView('add-staff')">
-    </app-staff-profile-inline>
-
+    </div>
+    <!-- /.main-with-panel -->
 
   </div><!-- /main-row -->
+
+  <!-- ════════════ HOLIDAY DETAIL MODAL ════════════ -->
+  <div *ngIf="selectedHoliday" class="holiday-modal-overlay" (click)="closeHolidayModal()">
+    <div class="holiday-modal" (click)="$event.stopPropagation()">
+      <div class="holiday-modal-head">
+        <div class="holiday-modal-date">
+          <span class="holiday-dot"></span>
+          <span>{{ selectedHoliday.holidayDate | date:'MMM d, y' }}</span>
+          <span style="opacity:0.4;">·</span>
+          <span>{{ selectedHoliday.holidayDate | date:'EEE' }}</span>
+        </div>
+        <span class="holiday-modal-close" (click)="closeHolidayModal()">✕</span>
+      </div>
+      <div class="holiday-modal-title">{{ selectedHoliday.name }}</div>
+      <div *ngIf="selectedHoliday.description" class="holiday-modal-desc">
+        {{ selectedHoliday.description }}
+      </div>
+      <div class="holiday-modal-tags">
+        <span class="holiday-tag-country">🇰🇭 {{ selectedHoliday.countryName || 'Cambodia' }}</span>
+        <span class="holiday-tag-type">{{ selectedHoliday.type || 'Public' }}</span>
+      </div>
+    </div>
+  </div>
+
 </div>

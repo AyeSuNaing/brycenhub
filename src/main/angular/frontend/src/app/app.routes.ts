@@ -13,8 +13,10 @@ export const routes: Routes = [
     path: 'dashboard',
     canActivate: [authGuard],
     children: [
-      { path: 'boss',    loadComponent: () => import('./dashboard/boss-dashboard').then(m => m.BossDashboard) },
-      { path: 'admin',   loadComponent: () => import('./dashboard/admin-dashboard').then(m => m.AdminDashboard) },
+      { path: 'boss',      loadComponent: () => import('./dashboard/boss-dashboard').then(m => m.BossDashboard) },
+      // { path: 'director',  loadComponent: () => import('./dashboard/director-dashboard').then(m => m.DirectorDashboard) },
+      { path: 'vp',        loadComponent: () => import('./dashboard/vp-dashboard/vp-dashboard').then(m => m.VpDashboardComponent) },
+      { path: 'admin',     loadComponent: () => import('./dashboard/admin-dashboard').then(m => m.AdminDashboard) },
       { path: 'pm',        loadComponent: () => import('./dashboard/member-dashboard').then(m => m.MemberDashboard) },
       { path: 'leader',    loadComponent: () => import('./dashboard/member-dashboard').then(m => m.MemberDashboard) },
       { path: 'developer', loadComponent: () => import('./dashboard/member-dashboard').then(m => m.MemberDashboard) },
@@ -37,7 +39,7 @@ export const routes: Routes = [
     loadComponent: () => import('./projects/api-docs').then(m => m.ApiDocsComponent),
   },
 
-// ── DB Schema ERD page ──
+  // ── DB Schema ERD page ──
   {
     path: 'projects/:projectId/db-schema',
     canActivate: [authGuard],
