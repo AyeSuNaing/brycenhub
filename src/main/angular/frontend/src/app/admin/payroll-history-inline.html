@@ -1,0 +1,306 @@
+<div class="payroll-history">
+
+  <!-- ═══════════ HEADER ═══════════ -->
+  <div class="hist-header">
+    <button class="btn-back" (click)="back.emit()">← Back to Dashboard</button>
+    <div class="hist-title">
+      <span class="hist-icon">📊</span>
+      <span>Payroll History</span>
+    </div>
+    <div class="period-selector" *ngIf="data?.availablePeriods?.length">
+      <label>Period:</label>
+      <select class="period-select"
+              [(ngModel)]="selectedPeriod"
+              (change)="onPeriodChange()">
+        <option *ngFor="let p of data?.availablePeriods" [value]="p">
+          {{ formatPeriodLabel(p) }}
+        </option>
+      </select>
+    </div>
+  </div>
+
+  <!-- ═══════════ BATCH STATUS BANNER ═══════════ -->
+  <div *ngIf="batchStatus && batchStatus.dominantStatus !== 'NONE'" class="batch-banner">
+
+    <!-- Stage progress track -->
+    <div class="stage-track">
+      <div class="stage" [class.stage-active]="batchStatus.dominantStatus === 'DRAFT'"
+                         [class.stage-done]="isDoneStage('DRAFT')">
+        <span class="stage-dot"></span>
+        <span class="stage-label">Draft</span>
+      </div>
+      <div class="stage-line" [class.line-done]="isDoneStage('DRAFT')"></div>
+
+      <div class="stage" [class.stage-active]="batchStatus.dominantStatus === 'PENDING_APPROVAL'"
+                         [class.stage-done]="isDoneStage('PENDING_APPROVAL')">
+        <span class="stage-dot"></span>
+        <span class="stage-label">Pending</span>
+      </div>
+      <div class="stage-line" [class.line-done]="isDoneStage('PENDING_APPROVAL')"></div>
+
+      <div class="stage" [class.stage-active]="batchStatus.dominantStatus === 'CONFIRMED'"
+                         [class.stage-done]="isDoneStage('CONFIRMED')">
+        <span class="stage-dot"></span>
+        <span class="stage-label">Confirmed</span>
+      </div>
+      <div class="stage-line" [class.line-done]="isDoneStage('CONFIRMED')"></div>
+
+      <div class="stage" [class.stage-active]="batchStatus.dominantStatus === 'PAID'"
+                         [class.stage-done]="isDoneStage('PAID')">
+        <span class="stage-dot"></span>
+        <span class="stage-label">Paid</span>
+      </div>
+    </div>
+
+    <!-- Reject reason -->
+    <div *ngIf="batchStatus.lastRejectReason" class="reject-alert">
+      <span class="reject-icon">⚠️</span>
+      <div>
+        <div class="reject-label">Rejected:</div>
+        <div class="reject-reason">{{ batchStatus.lastRejectReason }}</div>
+      </div>
+    </div>
+
+    <!-- Inline action (text style, not button) -->
+    <div class="banner-action-inline" *ngIf="isAdmin">
+      <span *ngIf="batchStatus.canSubmit"
+            class="action-text action-blue"
+            (click)="openActionDialog('submit')">
+        📤 Submit to Approval
+      </span>
+      <span *ngIf="batchStatus.canMarkPaid"
+            class="action-text action-green"
+            (click)="openActionDialog('paid')">
+        💰 Mark as Paid
+      </span>
+      <span *ngIf="!batchStatus.canSubmit && !batchStatus.canMarkPaid && batchStatus.pendingCount > 0"
+            class="action-text action-dim">
+        ⏳ Waiting for approval...
+      </span>
+      <span *ngIf="batchStatus.paidCount === data?.totalRecords && batchStatus.paidCount > 0"
+            class="action-text action-done">
+        ✅ All paid
+      </span>
+    </div>
+  </div>
+
+  <!-- Loading -->
+  <div *ngIf="loading && !data" class="loading-state">
+    <div class="spinner"></div>
+    <div>Loading history...</div>
+  </div>
+
+  <!-- Error -->
+  <div *ngIf="errorMsg" class="error-state">⚠️ {{ errorMsg }}</div>
+
+  <!-- Empty state -->
+  <div *ngIf="data && data.totalRecords === 0 && !loading" class="empty-state">
+    <div class="empty-icon">📭</div>
+    <div class="empty-title">No payroll records yet</div>
+    <div class="empty-sub">
+      Go to <b>Monthly Payroll</b> to calculate and save payroll for a period.
+    </div>
+  </div>
+
+  <!-- Main content -->
+  <div *ngIf="data && data.totalRecords > 0" class="hist-content">
+
+    <!-- Summary strip -->
+    <div class="summary-strip">
+      <div class="sum-card">
+        <div class="sum-label">Records</div>
+        <div class="sum-value">{{ data.totalRecords }}</div>
+      </div>
+      <div class="sum-card">
+        <div class="sum-label">Total Gross</div>
+        <div class="sum-value money">
+          {{ currencyPrefix(data.currency) }}{{ formatMoney(data.totalGross) }}
+        </div>
+      </div>
+      <div class="sum-card">
+        <div class="sum-label">Total Tax</div>
+        <div class="sum-value money tax">
+          {{ currencyPrefix(data.currency) }}{{ formatMoney(data.totalTax) }}
+        </div>
+      </div>
+      <div class="sum-card sum-highlight">
+        <div class="sum-label">Total Net</div>
+        <div class="sum-value money net">
+          {{ currencyPrefix(data.currency) }}{{ formatMoney(data.totalNet) }}
+        </div>
+      </div>
+    </div>
+
+    <!-- Status filter pills — always show all, highlight active state -->
+    <div class="status-strip">
+
+      <div class="status-pill"
+           [class.active]="statusFilter === 'ALL'"
+           (click)="statusFilter = 'ALL'">
+        <span>All</span>
+        <span class="pill-count">{{ data.totalRecords }}</span>
+      </div>
+
+      <div class="status-pill status-draft"
+           [class.active]="statusFilter === 'DRAFT'"
+           (click)="statusFilter = 'DRAFT'">
+        <span>📝 Draft</span>
+      </div>
+
+      <div class="status-pill status-pending"
+           [class.active]="statusFilter === 'PENDING_APPROVAL'"
+           (click)="statusFilter = 'PENDING_APPROVAL'">
+        <span>⏳ Pending</span>
+      </div>
+
+      <div class="status-pill status-confirmed"
+           [class.active]="statusFilter === 'CONFIRMED'"
+           (click)="statusFilter = 'CONFIRMED'">
+        <span>✓ Confirmed</span>
+      </div>
+
+      <div class="status-pill status-paid"
+           [class.active]="statusFilter === 'PAID'"
+           (click)="statusFilter = 'PAID'">
+        <span>💰 Paid</span>
+      </div>
+
+      <div class="search-wrap">
+        <input type="text"
+               class="search-input"
+               placeholder="🔍 Search name, role, dept..."
+               [(ngModel)]="searchQuery">
+      </div>
+    </div>
+
+    <!-- Table -->
+    <div class="table-wrap">
+      <table class="hist-table">
+        <thead>
+          <tr>
+            <th>Staff</th>
+            <th style="text-align:right;">Gross</th>
+            <th style="text-align:right;">Tax</th>
+            <th style="text-align:right;">Net</th>
+            <th style="text-align:center;">Status</th>
+            <th style="text-align:center;">Paid Date</th>
+            <th style="text-align:center;width:60px;">View</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let r of visibleRows"
+              (click)="openPayslip(r)"
+              class="hist-row">
+            <td>
+              <div class="staff-cell">
+                <div class="avatar-sm" [style.background]="getAvatarColor(r.userId)">
+                  {{ getInitial(r.userName) }}
+                </div>
+                <div class="staff-info">
+                  <div class="staff-name">{{ r.userName }}</div>
+                  <div class="staff-meta">
+                    <span *ngIf="r.roleDisplayName" class="role-pill"
+                          [style.color]="r.roleColor || '#9ca3af'">
+                      {{ r.roleDisplayName }}
+                    </span>
+                    <span *ngIf="r.departmentName" class="dot">·</span>
+                    <span *ngIf="r.departmentName">{{ r.departmentName }}</span>
+                  </div>
+                </div>
+              </div>
+            </td>
+            <td class="money">
+              {{ currencyPrefix(r.currency) }}{{ formatMoney(r.grossSalary) }}
+            </td>
+            <td class="money tax">
+              −{{ currencyPrefix(r.currency) }}{{ formatMoney(r.taxAmount) }}
+            </td>
+            <td class="money net bold">
+              {{ currencyPrefix(r.currency) }}{{ formatMoney(r.netSalary) }}
+            </td>
+            <td style="text-align:center;">
+              <span class="status-badge"
+                    [style.background]="statusColor(r.status) + '22'"
+                    [style.color]="statusColor(r.status)"
+                    [style.border-color]="statusColor(r.status) + '66'">
+                {{ statusIcon(r.status) }} {{ statusLabel(r.status) }}
+              </span>
+            </td>
+            <td style="text-align:center; color:#64748b; font-size:11px;">
+              <span *ngIf="r.paidAt">{{ r.paidAt | date: 'MMM d, y' }}</span>
+              <span *ngIf="!r.paidAt" class="muted">—</span>
+            </td>
+            <td style="text-align:center;">
+              <button class="btn-view" (click)="$event.stopPropagation(); openPayslip(r)">
+                📄
+              </button>
+            </td>
+          </tr>
+          <tr *ngIf="visibleRows.length === 0">
+            <td colspan="7" class="empty-row">No records match current filters.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ═══════════ BATCH ACTION DIALOG ═══════════ -->
+  <div *ngIf="actionDialog" class="dialog-backdrop" (click)="closeActionDialog()">
+    <div class="dialog-container" (click)="$event.stopPropagation()">
+      <div class="dialog-header">
+        <span class="dialog-icon">
+          {{ actionDialog === 'submit' ? '📤' : '💰' }}
+        </span>
+        <div>
+          <div class="dialog-title">
+            {{ actionDialog === 'submit'
+                ? ('Submit ' + batchStatus?.draftCount + ' records for approval')
+                : ('Mark ' + batchStatus?.confirmedCount + ' records as PAID') }}
+          </div>
+          <div class="dialog-sub">
+            {{ formatPeriodLabel(selectedPeriod) }} · Batch action
+          </div>
+        </div>
+      </div>
+      <div class="dialog-body">
+        <p class="dialog-desc" *ngIf="actionDialog === 'submit'">
+          All DRAFT records will be marked <b>PENDING_APPROVAL</b> and sent to VP/Boss for approval.
+          You won't be able to edit them until approved or rejected.
+        </p>
+        <p class="dialog-desc" *ngIf="actionDialog === 'paid'">
+          All CONFIRMED records will be marked <b>PAID</b>. Only do this <b>after</b> bank transfer is complete.
+          This action cannot be undone.
+        </p>
+        <label class="dialog-label">Optional note (audit trail)</label>
+        <input type="text" class="dialog-input"
+               [(ngModel)]="actionNote"
+               [placeholder]="actionDialog === 'submit'
+                  ? 'e.g. All attendance verified'
+                  : 'e.g. Bank transfer ref #12345'"
+               maxlength="500">
+        <div *ngIf="errorMsg" class="dialog-error">⚠️ {{ errorMsg }}</div>
+      </div>
+      <div class="dialog-footer">
+        <button class="btn-ghost-sm" (click)="closeActionDialog()" [disabled]="actionLoading">
+          Cancel
+        </button>
+        <button class="btn-batch"
+                [class.btn-blue]="actionDialog === 'submit'"
+                [class.btn-green]="actionDialog === 'paid'"
+                [disabled]="actionLoading"
+                (click)="doBatchAction()">
+          {{ actionLoading ? '...' :
+             (actionDialog === 'submit' ? '📤 Submit batch' : '💰 Confirm payment') }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════ PAYSLIP MODAL ═══════════ -->
+  <app-payslip-modal
+    [isOpen]="modalOpen"
+    [recordId]="selectedRecordId"
+    (close)="onModalClose()"
+    (actionSuccess)="onActionSuccess($event)">
+  </app-payslip-modal>
+</div>

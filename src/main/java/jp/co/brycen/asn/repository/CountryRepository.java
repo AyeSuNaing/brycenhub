@@ -9,4 +9,6 @@ import java.util.Optional;
 public interface CountryRepository extends JpaRepository<Country, Long> {
     Optional<Country> findByCode(String code);
     boolean existsByCode(String code);
+    
+    
 }

@@ -30,18 +30,22 @@ public class Announcement {
 
     @Column(name = "target_scope")
     private String targetScope;
-    // GLOBAL, BRANCH, PROJECT, ROLE
+    // GLOBAL | BRANCH | PROJECT | ROLE
 
     @Column(name = "target_id")
     private Long targetId;
 
     @Column(name = "is_pinned")
     private Integer isPinned = 0;
-    // 0 = not pinned, 1 = pinned
 
     @Column(name = "priority")
     private String priority = "NORMAL";
-    // NORMAL, IMPORTANT, URGENT
+    // NORMAL | IMPORTANT | URGENT
+
+    @Column(name = "expires_at")
+    private LocalDateTime expiresAt;
+    // NULL = never expire
+    // SET  = auto-hide after this datetime
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;

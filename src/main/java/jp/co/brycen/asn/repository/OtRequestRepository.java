@@ -5,6 +5,10 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+import java.math.BigDecimal;
+import java.time.LocalDate;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -57,4 +61,19 @@ public interface OtRequestRepository extends JpaRepository<OtRequest, Long> {
             @Param("branchId") Long branchId,
             @Param("year")     int year,
             @Param("month")    int month);
+    
+	
+	/**
+	 * Sum approved OT amounts in [start, end]. Returns null if none.
+	 */
+	@Query("SELECT COALESCE(SUM(o.otAmount), 0) FROM OtRequest o " +
+	       "WHERE o.userId = :userId " +
+	       "  AND o.status = 'APPROVED' " +
+	       "  AND o.workDate BETWEEN :start AND :end")
+	BigDecimal sumApprovedOtAmount(@Param("userId") Long userId,
+	                               @Param("start")  LocalDate start,
+	                               @Param("end")    LocalDate end);
+	
+
+
 }

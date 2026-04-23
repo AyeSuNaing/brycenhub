@@ -13,6 +13,7 @@ import { HttpClient } from '@angular/common/http';
 import { API } from '../constants/api-endpoints';
 import { ProjectNewInline } from '../projects/project-new-inline';
 import { ChatPopupComponent, ChatMember } from '../shared/chat-popup/chat-popup.component';
+import { AnnouncementHistoryComponent } from '../shared/announcement-history/announcement-history.component';
 
 import {
   Announcement, Notification, ActiveProject, PortfolioProject,
@@ -24,9 +25,16 @@ const LOGO_SVG = `data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIiIGhlaWdodD0iMzIi
 @Component({
   selector: 'app-member-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule,
-    AnnouncementBarComponent, BellNotificationComponent, ProjectInlineComponent, ProjectNewInline,
-    ChatPopupComponent],
+  imports: [CommonModule,
+    RouterModule,
+    FormsModule,
+    AnnouncementBarComponent,
+    BellNotificationComponent,
+    ProjectInlineComponent,
+    ProjectNewInline,
+    ChatPopupComponent,
+    AnnouncementHistoryComponent,],
+
   templateUrl: './member-dashboard.html',
   styleUrl: './member-dashboard.scss'
 })
@@ -58,6 +66,17 @@ export class MemberDashboard implements OnInit, AfterViewInit, OnDestroy {
   searchQuery = '';
   myTasksMaxH = 300;
   currentUser: any = null;
+  activeView = 'dashboard';
+
+
+  setView(v: string): void {
+    this.activeView = v;
+    if (v === 'dashboard') {
+      this.showProjectDetail = false;
+      this.showNewProject    = false;
+    }
+    this.cdr.detectChanges();
+  }
 
   loading = {
     stats: true, projects: true, team: true, tasks: true,
@@ -267,6 +286,7 @@ export class MemberDashboard implements OnInit, AfterViewInit, OnDestroy {
 
   closeProject() {
     this.router.navigate(['/dashboard/member']);
+     this.activeView = 'dashboard'; 
   }
 
   openNewProject() { this.showNewProject = true; this.showProjectDetail = false; }

@@ -2974,3 +2974,72 @@ body.light input[type="datetime-local"]::-webkit-calendar-picker-indicator {
   .vp-body { grid-template-columns: 1fr; }
   .vp-sidebar, .vp-right-panel { display: none; }
 }
+
+/* ── Announcement Modal Footer Buttons ── */
+.modal-nav-btn {
+    background: none;
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    border-radius: 8px;
+    color: inherit;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 5px 12px;
+    cursor: pointer;
+    opacity: 0.7;
+    transition: all 0.15s;
+    font-family: inherit;
+}
+
+.modal-nav-btn:hover:not(:disabled) {
+    opacity: 1;
+    background: rgba(148, 163, 184, 0.1);
+}
+
+.modal-nav-btn:disabled {
+    opacity: 0.25;
+    cursor: not-allowed;
+}
+
+.dismiss-btn {
+    background: none;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    border-radius: 8px;
+    color: #ef4444;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 5px 14px;
+    cursor: pointer;
+    opacity: 0.8;
+    transition: all 0.15s;
+    font-family: inherit;
+}
+
+.dismiss-btn:hover {
+    opacity: 1;
+    background: rgba(239, 68, 68, 0.1);
+}
+
+/* ── VP Dashboard layout ── */
+.main-with-panel {
+    flex: 1;
+    display: flex;
+    min-width: 0;
+    min-height: 0;
+    overflow: hidden;
+}
+
+.main-with-panel > main {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    min-height: 0;
+}
+
+.main-with-panel > aside.right-sidebar {
+    flex-shrink: 0;
+    overflow-y: auto;
+}

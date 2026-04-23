@@ -5,6 +5,10 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+import java.time.LocalDate;
+import java.util.List;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -57,4 +61,17 @@ public interface PublicHolidayRepository extends JpaRepository<PublicHoliday, Lo
     boolean existsByCountryIdAndDate(
             @Param("countryId") Long countryId,
             @Param("date")      LocalDate date);
+    
+	
+	/**
+	 * Holidays of a country within [start, end] inclusive.
+	 */
+	@Query("SELECT h FROM PublicHoliday h " +
+	       "WHERE h.countryId = :countryId " +
+	       "  AND h.holidayDate BETWEEN :start AND :end " +
+	       "ORDER BY h.holidayDate ASC")
+	List<PublicHoliday> findByCountryIdAndDateRange(@Param("countryId") Long countryId,
+	                                                @Param("start")     LocalDate start,
+	                                                @Param("end")       LocalDate end);
+
 }

@@ -16,6 +16,12 @@ import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import java.time.LocalDate;
+
+
 @RestController
 @RequestMapping("/api/dashboard/pm")
 @CrossOrigin(origins = "http://localhost:4200")
@@ -381,46 +387,196 @@ public class DashboardController {
 		}).collect(Collectors.toList());
 		return ResponseEntity.ok(result);
 	}
+	// ⑨ ANNOUNCEMENTS (dashboard bar — active only)
+		@GetMapping("/announcements")
+		public ResponseEntity<List<AnnouncementResponse>> getAnnouncements(
+		        @AuthenticationPrincipal User user) {
 
-	// ⑨ ANNOUNCEMENTS
-	@GetMapping("/announcements")
-	public ResponseEntity<List<AnnouncementResponse>> getAnnouncements(@AuthenticationPrincipal User user) {
-		Long branchId = user.getBranchId() != null ? user.getBranchId() : 0L;
-		List<Long> pIds = getProjectIds(user.getId());
-		if (pIds.isEmpty()) pIds = Collections.singletonList(0L);
-		Map<Long, User> authorCache = new HashMap<>();
-		List<AnnouncementResponse> result = announcementRepository.findForDashboard(branchId, pIds).stream().map(a -> {
-			User author = authorCache.computeIfAbsent(a.getAuthorId(), id -> userRepository.findById(id).orElse(null));
-			String authorName = author != null ? author.getName() : "Unknown";
-			String tag = "📌 INFO", tagColor = "#64748b";
-			if (a.getTargetScope() != null) {
-				switch (a.getTargetScope()) {
-					case "GLOBAL":  tag = "📌 BOSS";     tagColor = "#f59e0b"; break;
-					case "BRANCH":  tag = "🌏 DIRECTOR"; tagColor = "#a855f7"; break;
-					case "PROJECT": tag = "👔 PM";        tagColor = "#3b82f6"; break;
-					case "ROLE":    tag = "⚡ LEADER";   tagColor = "#06b6d4"; break;
-				}
-			}
-			if (a.getPriority() != null) {
-				switch (a.getPriority()) {
-					case "URGENT":    tagColor = "#ef4444"; break;
-					case "IMPORTANT": tagColor = "#f97316"; break;
-				}
-			}
-			AnnouncementResponse r = new AnnouncementResponse();
-			r.setId(a.getId());
-			r.setPinned(a.getIsPinned() != null && a.getIsPinned() == 1);
-			r.setPriority(a.getPriority() != null ? a.getPriority() : "NORMAL");
-			r.setTag(tag);
-			r.setTagColor(tagColor);
-			r.setTitle(a.getTitle());
-			r.setText(a.getContent());
-			r.setMeta(authorName);
-			r.setTime(timeAgo(a.getCreatedAt()));
-			return r;
-		}).collect(Collectors.toList());
-		return ResponseEntity.ok(result);
-	}
+		    Long branchId = user.getBranchId() != null ? user.getBranchId() : 0L;
+		    List<Long> pIds = getProjectIds(user.getId());
+		    if (pIds.isEmpty()) pIds = Collections.singletonList(0L);
+
+		    Map<Long, User>     authorCache = new HashMap<>();
+		    Map<Long, UserRole> roleCache   = new HashMap<>();
+
+		    List<AnnouncementResponse> result = announcementRepository
+		    	.findForDashboard(branchId, pIds, LocalDateTime.now()).stream().map(a -> {
+
+		        User author = authorCache.computeIfAbsent(
+		            a.getAuthorId(), id -> userRepository.findById(id).orElse(null));
+		        String authorName = author != null ? author.getName() : "Unknown";
+
+		        String roleName = "";
+		        if (author != null && author.getRoleId() != null) {
+		            UserRole role = roleCache.computeIfAbsent(
+		                author.getRoleId(),
+		                id -> userRoleRepository.findById(id).orElse(null));
+		            if (role != null) roleName = role.getName();
+		        }
+
+		        String tag, tagColor;
+		        switch (roleName) {
+		            case "BOSS":             tag = "👑 BOSS";     tagColor = "#f59e0b"; break;
+		            case "COUNTRY_DIRECTOR": tag = "🌏 DIRECTOR"; tagColor = "#a855f7"; break;
+		            case "VICE_PRESIDENT":   tag = "⭐ VP";        tagColor = "#06b6d4"; break;
+		            case "ADMIN":            tag = "⚙️ HR";        tagColor = "#10b981"; break;
+		            case "PROJECT_MANAGER":  tag = "👔 PM";        tagColor = "#3b82f6"; break;
+		            default:                 tag = "📌 INFO";      tagColor = "#64748b"; break;
+		        }
+		        if (a.getPriority() != null) {
+		            switch (a.getPriority()) {
+		                case "URGENT":    tagColor = "#ef4444"; break;
+		                case "IMPORTANT": tagColor = "#f97316"; break;
+		            }
+		        }
+
+		        AnnouncementResponse r = new AnnouncementResponse();
+		        r.setId(a.getId());
+		        r.setPinned(a.getIsPinned() != null && a.getIsPinned() == 1);
+		        r.setPriority(a.getPriority() != null ? a.getPriority() : "NORMAL");
+		        r.setTag(tag);
+		        r.setTagColor(tagColor);
+		        r.setTitle(a.getTitle());
+		        r.setText(a.getContent());
+		        r.setMeta(authorName);
+		        r.setTime(timeAgo(a.getCreatedAt()));
+		        return r;
+		    }).collect(Collectors.toList());
+
+		    return ResponseEntity.ok(result);
+		}
+
+		// ⑨-b ANNOUNCEMENT HISTORY — Role-based scope + Paginated
+		// GET /api/dashboard/pm/announcements/history
+		//     ?from=2026-01-01&to=2026-04-23&page=0&size=20
+		//
+		// BOSS        → all announcements
+		// DIRECTOR    → director_countries → all assigned branches
+		// VP/Admin/PM → own branch only
+		//
+		// imports:
+		// import org.springframework.data.domain.Page;
+		// import org.springframework.data.domain.PageRequest;
+		// import org.springframework.data.domain.Pageable;
+		// import java.time.LocalDate;
+
+		@GetMapping("/announcements/history")
+		public ResponseEntity<?> getAnnouncementHistory(
+		        @AuthenticationPrincipal User user,
+		        @RequestParam(defaultValue = "")   String from,
+		        @RequestParam(defaultValue = "")   String to,
+		        @RequestParam(defaultValue = "0")  int    page,
+		        @RequestParam(defaultValue = "20") int    size) {
+
+		    // Date range
+		    LocalDateTime fromDt = from.isEmpty()
+		        ? LocalDate.now().atStartOfDay()
+		        : LocalDate.parse(from).atStartOfDay();
+		    LocalDateTime toDt = to.isEmpty()
+		        ? LocalDate.now().atTime(23, 59, 59)
+		        : LocalDate.parse(to).atTime(23, 59, 59);
+
+		    Pageable pageable = PageRequest.of(page, size);
+
+		    // Role resolve
+		    String roleName = "";
+		    if (user.getRoleId() != null) {
+		        UserRole ur = userRoleRepository.findById(user.getRoleId()).orElse(null);
+		        if (ur != null) roleName = ur.getName();
+		    }
+
+		    // Scope
+		    Page<Announcement> pageResult;
+
+		    if ("BOSS".equals(roleName)) {
+		        // Boss — all
+		        pageResult = announcementRepository.findHistoryAll(fromDt, toDt, pageable);
+
+		    } else {
+		        List<Long> branchIds = new ArrayList<>();
+		        List<Long> pIds = getProjectIds(user.getId());
+		        if (pIds.isEmpty()) pIds = Collections.singletonList(0L);
+
+		        if ("COUNTRY_DIRECTOR".equals(roleName)) {
+		            // Director — all assigned branches
+		            directorCountryRepository.findByDirectorId(user.getId())
+		                .forEach(dc ->
+		                    branchRepository.findByCountryId(dc.getCountryId())
+		                        .forEach(b -> branchIds.add(b.getId())));
+		        } else {
+		            // VP / Admin / PM / others — own branch
+		            if (user.getBranchId() != null) branchIds.add(user.getBranchId());
+		        }
+
+		        if (branchIds.isEmpty()) branchIds.add(0L);
+
+		        pageResult = announcementRepository
+		            .findHistoryByBranches(branchIds, pIds, fromDt, toDt, pageable);
+		    }
+
+		    // Map to response
+		    Map<Long, User>     authorCache = new HashMap<>();
+		    Map<Long, UserRole> roleCache   = new HashMap<>();
+
+		    List<AnnouncementResponse> items = pageResult.getContent().stream().map(a -> {
+
+		        User author = authorCache.computeIfAbsent(
+		            a.getAuthorId(), id -> userRepository.findById(id).orElse(null));
+		        String authorName = author != null ? author.getName() : "Unknown";
+
+		        String authorRole = "";
+		        if (author != null && author.getRoleId() != null) {
+		            UserRole role = roleCache.computeIfAbsent(
+		                author.getRoleId(),
+		                id -> userRoleRepository.findById(id).orElse(null));
+		            if (role != null) authorRole = role.getName();
+		        }
+
+		        String tag, tagColor;
+		        switch (authorRole) {
+		            case "BOSS":             tag = "👑 BOSS";     tagColor = "#f59e0b"; break;
+		            case "COUNTRY_DIRECTOR": tag = "🌏 DIRECTOR"; tagColor = "#a855f7"; break;
+		            case "VICE_PRESIDENT":   tag = "⭐ VP";        tagColor = "#06b6d4"; break;
+		            case "ADMIN":            tag = "⚙️ HR";        tagColor = "#10b981"; break;
+		            case "PROJECT_MANAGER":  tag = "👔 PM";        tagColor = "#3b82f6"; break;
+		            default:                 tag = "📌 INFO";      tagColor = "#64748b"; break;
+		        }
+
+		        boolean expired = a.getExpiresAt() != null &&
+		            a.getExpiresAt().isBefore(LocalDateTime.now());
+
+		        String priority = expired ? "EXPIRED"
+		            : (a.getPriority() != null ? a.getPriority() : "NORMAL");
+
+		        if (!expired) {
+		            if ("URGENT".equals(a.getPriority()))    tagColor = "#ef4444";
+		            if ("IMPORTANT".equals(a.getPriority())) tagColor = "#f97316";
+		        } else {
+		            tagColor = "#64748b";
+		        }
+
+		        AnnouncementResponse r = new AnnouncementResponse();
+		        r.setId(a.getId());
+		        r.setPinned(a.getIsPinned() != null && a.getIsPinned() == 1);
+		        r.setPriority(priority);
+		        r.setTag(tag);
+		        r.setTagColor(tagColor);
+		        r.setTitle(a.getTitle());
+		        r.setText(a.getContent());
+		        r.setMeta(authorName);
+		        r.setTime(timeAgo(a.getCreatedAt()));
+		        return r;
+		    }).collect(Collectors.toList());
+
+		    Map<String, Object> result = new HashMap<>();
+		    result.put("items",       items);
+		    result.put("totalItems",  pageResult.getTotalElements());
+		    result.put("totalPages",  pageResult.getTotalPages());
+		    result.put("currentPage", page);
+		    result.put("hasNext",     pageResult.hasNext());
+
+		    return ResponseEntity.ok(result);
+		}
 
 	// ⑩ TASK STATS
 	@GetMapping("/task-stats")

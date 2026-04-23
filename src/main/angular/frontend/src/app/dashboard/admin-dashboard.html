@@ -473,6 +473,22 @@
           (back)="closeToDashboard()">
         </app-attendance-upload-inline>
 
+        <!-- Announcements History -->
+        <app-announcement-history
+          *ngIf="activeView === 'announce'"
+          [isDark]="isDark">
+        </app-announcement-history>
+
+        <!-- Monthly Payroll Wizard -->
+        <app-payroll-wizard-inline *ngIf="activeView === 'payroll'"
+          (back)="closeToDashboard()">
+        </app-payroll-wizard-inline>
+
+        <!-- Payroll History (NEW) -->
+        <app-payroll-history-inline *ngIf="activeView === 'payroll-history'"
+          (back)="closeToDashboard()">
+        </app-payroll-history-inline>
+
       </div>
       <!-- /.main-center -->
 

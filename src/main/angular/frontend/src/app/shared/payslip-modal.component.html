@@ -1,0 +1,275 @@
+<!-- Backdrop — click closes -->
+<div *ngIf="isOpen" class="modal-backdrop" (click)="onBackdropClick($event)">
+
+  <!-- Modal content -->
+  <div class="modal-container" (click)="$event.stopPropagation()">
+
+    <!-- ═══════════ HEADER ═══════════ -->
+    <div class="modal-header">
+      <div class="header-left">
+        <span class="header-icon">📄</span>
+        <div>
+          <div class="header-title">Payslip</div>
+          <div class="header-sub" *ngIf="payslip">
+            {{ payslip.payPeriod }} · {{ payslip.branchName }}
+          </div>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button *ngIf="payslip" class="btn-icon" (click)="print()" title="Print">🖨️</button>
+        <button class="btn-close" (click)="close.emit()">×</button>
+      </div>
+    </div>
+
+    <!-- Loading state -->
+    <div *ngIf="loading" class="modal-body loading">
+      <div class="spinner"></div>
+      <div>Loading payslip...</div>
+    </div>
+
+    <!-- Error state -->
+    <div *ngIf="errorMsg && !loading" class="modal-body error-state">
+      <div class="error-icon">⚠️</div>
+      <div class="error-msg">{{ errorMsg }}</div>
+    </div>
+
+    <!-- ═══════════ BODY (printable) ═══════════ -->
+    <div *ngIf="payslip && !loading" class="modal-body payslip-printable">
+
+      <!-- Staff identity -->
+      <div class="staff-block">
+        <div class="staff-avatar-lg" [style.background]="getAvatarColor(payslip.userId)">
+          {{ getInitial(payslip.userName) }}
+        </div>
+        <div class="staff-info">
+          <div class="staff-name">{{ payslip.userName }}</div>
+          <div class="staff-meta">
+            <span *ngIf="payslip.roleDisplayName" class="role-pill"
+                  [style.color]="payslip.roleColor || '#9ca3af'">
+              {{ payslip.roleDisplayName }}
+            </span>
+            <span *ngIf="payslip.departmentName" class="dot">·</span>
+            <span *ngIf="payslip.departmentName">{{ payslip.departmentName }}</span>
+          </div>
+          <div class="staff-contact">
+            <span>✉️ {{ payslip.userEmail }}</span>
+            <span *ngIf="payslip.userPhone">· 📱 {{ payslip.userPhone }}</span>
+          </div>
+        </div>
+        <div class="status-badge-lg"
+             [style.background]="statusColor(payslip.status) + '22'"
+             [style.color]="statusColor(payslip.status)"
+             [style.border-color]="statusColor(payslip.status) + '66'">
+          {{ statusIcon(payslip.status) }} {{ payslip.status }}
+        </div>
+      </div>
+
+      <!-- Period strip -->
+      <div class="period-strip">
+        <div class="period-item">
+          <div class="period-lbl">Pay Period</div>
+          <div class="period-val">{{ payslip.payPeriod }}</div>
+        </div>
+        <div class="period-item">
+          <div class="period-lbl">From</div>
+          <div class="period-val">{{ formatDateOnly(payslip.periodStart) }}</div>
+        </div>
+        <div class="period-item">
+          <div class="period-lbl">To</div>
+          <div class="period-val">{{ formatDateOnly(payslip.periodEnd) }}</div>
+        </div>
+        <div class="period-item">
+          <div class="period-lbl">Branch</div>
+          <div class="period-val">{{ payslip.branchName }}</div>
+        </div>
+      </div>
+
+      <!-- ═══════════ BREAKDOWN TABLE ═══════════ -->
+      <div class="section-title">💰 Earnings breakdown</div>
+      <table class="breakdown-table">
+        <tbody>
+          <tr>
+            <td class="lbl">Base salary (monthly)</td>
+            <td class="val">{{ currencyPrefix(payslip.currency) }}{{ formatMoney(payslip.baseSalary) }}</td>
+          </tr>
+          <tr>
+            <td class="lbl">Working days in period</td>
+            <td class="val">{{ payslip.workingDays }} days (Mon–Fri, ex-holidays)</td>
+          </tr>
+          <tr>
+            <td class="lbl">Days actually worked</td>
+            <td class="val" [class.val-warn]="payslip.actualDays < payslip.workingDays">
+              {{ payslip.actualDays }} / {{ payslip.workingDays }} days
+            </td>
+          </tr>
+          <tr class="calc-row">
+            <td class="lbl">Daily rate</td>
+            <td class="val mono">
+              {{ currencyPrefix(payslip.currency) }}{{ formatMoney(payslip.baseSalary) }}
+              ÷ {{ payslip.workingDays }} =
+              <b>{{ currencyPrefix(payslip.currency) }}{{ formatMoney(payslip.dailyRate) }}</b>
+            </td>
+          </tr>
+          <tr class="calc-row">
+            <td class="lbl">Earned salary</td>
+            <td class="val mono">
+              {{ currencyPrefix(payslip.currency) }}{{ formatMoney(payslip.dailyRate) }}
+              × {{ payslip.actualDays }} =
+              <b>{{ currencyPrefix(payslip.currency) }}{{ formatMoney(payslip.earnedSalary) }}</b>
+            </td>
+          </tr>
+          <tr>
+            <td class="lbl">OT amount</td>
+            <td class="val">
+              <span [class.muted]="payslip.otAmount === 0">
+                + {{ currencyPrefix(payslip.currency) }}{{ formatMoney(payslip.otAmount) }}
+              </span>
+            </td>
+          </tr>
+          <tr *ngIf="payslip.bonuses > 0">
+            <td class="lbl">Bonuses</td>
+            <td class="val">+ {{ currencyPrefix(payslip.currency) }}{{ formatMoney(payslip.bonuses) }}</td>
+          </tr>
+          <tr *ngIf="payslip.deductions > 0">
+            <td class="lbl">Deductions</td>
+            <td class="val val-neg">− {{ currencyPrefix(payslip.currency) }}{{ formatMoney(payslip.deductions) }}</td>
+          </tr>
+          <tr class="subtotal-row">
+            <td class="lbl">Gross salary</td>
+            <td class="val val-bold">
+              {{ currencyPrefix(payslip.currency) }}{{ formatMoney(payslip.grossSalary) }}
+            </td>
+          </tr>
+          <tr>
+            <td class="lbl">Income tax (progressive)</td>
+            <td class="val val-neg">
+              − {{ currencyPrefix(payslip.currency) }}{{ formatMoney(payslip.taxAmount) }}
+            </td>
+          </tr>
+          <tr class="total-row">
+            <td class="lbl">Net salary (take-home)</td>
+            <td class="val val-net">
+              {{ currencyPrefix(payslip.currency) }}{{ formatMoney(payslip.netSalary) }}
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- ═══════════ AUDIT TRAIL ═══════════ -->
+      <div class="section-title">🕐 Approval timeline</div>
+      <div class="timeline">
+        <div class="timeline-step" [class.done]="payslip.status !== 'DRAFT' || !!payslip.calculatedAt">
+          <div class="step-icon">📝</div>
+          <div class="step-body">
+            <div class="step-title">Calculated</div>
+            <div class="step-sub">
+              {{ payslip.calculatedByName || '—' }} ·
+              {{ formatDate(payslip.calculatedAt) }}
+            </div>
+          </div>
+        </div>
+
+        <div class="timeline-step"
+             [class.done]="['HR_REVIEWED','CONFIRMED','PAID'].includes(payslip.status)"
+             [class.pending]="payslip.status === 'DRAFT'">
+          <div class="step-icon">👁</div>
+          <div class="step-body">
+            <div class="step-title">HR Reviewed</div>
+            <div class="step-sub">
+              {{ ['HR_REVIEWED','CONFIRMED','PAID'].includes(payslip.status) ? 'Reviewed by admin' : 'Pending...' }}
+            </div>
+          </div>
+        </div>
+
+        <div class="timeline-step"
+             [class.done]="['CONFIRMED','PAID'].includes(payslip.status)"
+             [class.pending]="!['CONFIRMED','PAID'].includes(payslip.status)">
+          <div class="step-icon">✓</div>
+          <div class="step-body">
+            <div class="step-title">Confirmed</div>
+            <div class="step-sub">
+              <span *ngIf="payslip.confirmedAt">
+                {{ payslip.confirmedByName || '—' }} · {{ formatDate(payslip.confirmedAt) }}
+              </span>
+              <span *ngIf="!payslip.confirmedAt">Pending VP/Director approval</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="timeline-step"
+             [class.done]="payslip.status === 'PAID'"
+             [class.pending]="payslip.status !== 'PAID'">
+          <div class="step-icon">💰</div>
+          <div class="step-body">
+            <div class="step-title">Paid</div>
+            <div class="step-sub">
+              <span *ngIf="payslip.paidAt">{{ formatDate(payslip.paidAt) }}</span>
+              <span *ngIf="!payslip.paidAt">Pending bank transfer</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Note -->
+      <div *ngIf="payslip.note" class="note-block">
+        <div class="note-label">📌 Note</div>
+        <div class="note-text">{{ payslip.note }}</div>
+      </div>
+    </div>
+
+    <!-- ═══════════ ACTION FOOTER ═══════════ -->
+    <div *ngIf="payslip && !loading" class="modal-footer">
+
+      <!-- Inline action form (optional note) -->
+      <div *ngIf="showActionForm" class="action-form">
+        <label class="action-label">Optional note (audit trail)</label>
+        <input type="text" class="action-input"
+               [(ngModel)]="actionNote"
+               placeholder="e.g. Verified attendance + OT"
+               maxlength="500">
+        <div class="action-buttons">
+          <button class="btn-ghost-sm"
+                  (click)="showActionForm = null; actionNote = ''"
+                  [disabled]="actionLoading">Cancel</button>
+          <button *ngIf="showActionForm === 'review'"
+                  class="btn-primary-sm btn-blue"
+                  [disabled]="actionLoading"
+                  (click)="doAction('review')">
+            {{ actionLoading ? '...' : '👁 Confirm review' }}
+          </button>
+          <button *ngIf="showActionForm === 'confirm'"
+                  class="btn-primary-sm btn-amber"
+                  [disabled]="actionLoading"
+                  (click)="doAction('confirm')">
+            {{ actionLoading ? '...' : '✓ Confirm payroll' }}
+          </button>
+          <button *ngIf="showActionForm === 'pay'"
+                  class="btn-primary-sm btn-green"
+                  [disabled]="actionLoading"
+                  (click)="doAction('pay')">
+            {{ actionLoading ? '...' : '💰 Mark as paid' }}
+          </button>
+        </div>
+      </div>
+
+      <!-- Default action buttons -->
+      <div *ngIf="!showActionForm" class="footer-actions">
+        <div class="footer-info">
+          Status: <b [style.color]="statusColor(payslip.status)">{{ payslip.status }}</b>
+        </div>
+        <div class="footer-btns">
+          <button *ngIf="canMarkReviewed()"
+                  class="btn-primary-sm btn-blue"
+                  (click)="showActionForm = 'review'">👁 Mark as reviewed</button>
+          <button *ngIf="canConfirm()"
+                  class="btn-primary-sm btn-amber"
+                  (click)="showActionForm = 'confirm'">✓ Confirm</button>
+          <button *ngIf="canMarkPaid()"
+                  class="btn-primary-sm btn-green"
+                  (click)="showActionForm = 'pay'">💰 Mark paid</button>
+          <button class="btn-ghost-sm" (click)="close.emit()">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

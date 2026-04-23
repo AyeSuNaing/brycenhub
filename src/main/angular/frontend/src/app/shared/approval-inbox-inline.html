@@ -1,0 +1,168 @@
+<div class="approval-inbox">
+
+  <!-- ═══════════ HEADER ═══════════ -->
+  <div class="inbox-header">
+    <button class="btn-back" (click)="back.emit()">← Back to Dashboard</button>
+    <div class="inbox-title">
+      <span class="inbox-icon">📥</span>
+      <span>Payroll Approvals</span>
+    </div>
+    <div class="inbox-stats" *ngIf="data && data.totalBatches > 0">
+      <span class="stat-pill">
+        <b>{{ data.totalBatches }}</b> pending batches
+      </span>
+      <span class="stat-pill">
+        <b>{{ data.totalStaff }}</b> total staff
+      </span>
+    </div>
+  </div>
+
+  <!-- Loading -->
+  <div *ngIf="loading" class="loading-state">
+    <div class="spinner"></div>
+    <div>Loading pending approvals...</div>
+  </div>
+
+  <!-- Error -->
+  <div *ngIf="errorMsg && !actionDialog" class="error-state">⚠️ {{ errorMsg }}</div>
+
+  <!-- Empty state -->
+  <div *ngIf="data && data.totalBatches === 0 && !loading" class="empty-state">
+    <div class="empty-icon">✨</div>
+    <div class="empty-title">All caught up!</div>
+    <div class="empty-sub">No pending payroll batches to review.</div>
+  </div>
+
+  <!-- Batch list -->
+  <div *ngIf="data && data.totalBatches > 0" class="batch-list">
+    <div *ngFor="let b of data.batches" class="batch-card">
+
+      <!-- Left: info -->
+      <div class="batch-info">
+        <div class="batch-top">
+          <div class="batch-branch">
+            <span class="branch-flag">🏢</span>
+            <b>{{ b.branchName }}</b>
+            <span *ngIf="b.countryName" class="country-sub">· {{ b.countryName }}</span>
+          </div>
+          <div class="batch-period">
+            📅 {{ formatPeriod(b.payPeriod) }}
+          </div>
+        </div>
+
+        <div class="batch-metrics">
+          <div class="metric">
+            <div class="metric-lbl">Staff</div>
+            <div class="metric-val">{{ b.staffCount }}</div>
+          </div>
+          <div class="metric">
+            <div class="metric-lbl">Gross</div>
+            <div class="metric-val money">
+              {{ currencyPrefix(b.currency) }}{{ formatMoney(b.totalGross) }}
+            </div>
+          </div>
+          <div class="metric">
+            <div class="metric-lbl">Tax</div>
+            <div class="metric-val money tax">
+              {{ currencyPrefix(b.currency) }}{{ formatMoney(b.totalTax) }}
+            </div>
+          </div>
+          <div class="metric metric-highlight">
+            <div class="metric-lbl">Net</div>
+            <div class="metric-val money net">
+              {{ currencyPrefix(b.currency) }}{{ formatMoney(b.totalNet) }}
+            </div>
+          </div>
+        </div>
+
+        <div class="batch-footer-info">
+          <span>📤 Submitted by <b>{{ b.submittedByName || '—' }}</b></span>
+          <span>· {{ formatSubmitted(b.submittedAt) }}</span>
+        </div>
+
+        <div *ngIf="b.submitNote" class="batch-note">
+          💬 {{ b.submitNote }}
+        </div>
+      </div>
+
+      <!-- Right: actions -->
+      <div class="batch-actions">
+        <button class="btn-batch btn-green"
+                (click)="openDialog('approve', b)">
+          ✓ Approve
+        </button>
+        <button class="btn-batch btn-red"
+                (click)="openDialog('reject', b)">
+          ✗ Reject
+        </button>
+        <button class="btn-ghost-sm" (click)="onViewDetail(b)">
+          📄 View details
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════ ACTION DIALOG ═══════════ -->
+  <div *ngIf="actionDialog && actionTarget" class="dialog-backdrop" (click)="closeDialog()">
+    <div class="dialog-container" (click)="$event.stopPropagation()">
+
+      <div class="dialog-header">
+        <span class="dialog-icon">
+          {{ actionDialog === 'approve' ? '✓' : '✗' }}
+        </span>
+        <div>
+          <div class="dialog-title">
+            {{ actionDialog === 'approve' ? 'Approve' : 'Reject' }} batch
+          </div>
+          <div class="dialog-sub">
+            {{ actionTarget.branchName }} · {{ formatPeriod(actionTarget.payPeriod) }}
+          </div>
+        </div>
+      </div>
+
+      <div class="dialog-body">
+        <div class="dialog-summary">
+          <div><b>{{ actionTarget.staffCount }}</b> staff</div>
+          <div>Net total: <b>{{ currencyPrefix(actionTarget.currency) }}{{ formatMoney(actionTarget.totalNet) }}</b></div>
+        </div>
+
+        <p class="dialog-desc" *ngIf="actionDialog === 'approve'">
+          All {{ actionTarget.staffCount }} records will be marked <b>CONFIRMED</b>
+          and admin can proceed with payment.
+        </p>
+        <p class="dialog-desc" *ngIf="actionDialog === 'reject'">
+          All {{ actionTarget.staffCount }} records will be sent back to <b>DRAFT</b> status.
+          Admin will see your rejection reason and need to re-submit after corrections.
+        </p>
+
+        <label class="dialog-label">
+          {{ actionDialog === 'reject' ? 'Rejection reason (required)' : 'Optional note' }}
+        </label>
+        <textarea class="dialog-textarea"
+                  [(ngModel)]="actionNote"
+                  [placeholder]="actionDialog === 'reject'
+                     ? 'e.g. Attendance data incorrect for John Doe'
+                     : 'e.g. Reviewed, looks good'"
+                  maxlength="500"
+                  rows="3"></textarea>
+
+        <div *ngIf="errorMsg" class="dialog-error">⚠️ {{ errorMsg }}</div>
+      </div>
+
+      <div class="dialog-footer">
+        <button class="btn-ghost-sm" (click)="closeDialog()" [disabled]="actionLoading">
+          Cancel
+        </button>
+        <button class="btn-batch"
+                [class.btn-green]="actionDialog === 'approve'"
+                [class.btn-red]="actionDialog === 'reject'"
+                [disabled]="actionLoading"
+                (click)="doAction()">
+          {{ actionLoading ? '...' :
+             (actionDialog === 'approve' ? '✓ Approve ' + actionTarget.staffCount + ' records'
+                                         : '✗ Reject ' + actionTarget.staffCount + ' records') }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

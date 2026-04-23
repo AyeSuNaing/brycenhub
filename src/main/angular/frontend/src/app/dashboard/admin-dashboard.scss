@@ -78,11 +78,21 @@
 .main-center > app-staff-profile-inline,
 .main-center > app-holidays-inline,
 .main-center > app-tax-brackets-inline,
-.main-center > app-salary-structures-inline {
+.main-center > app-salary-structures-inline,
+.main-center > app-payroll-wizard-inline,
+.main-center > app-payroll-history-inline {
   flex: 1;
   min-width: 0;
   min-height: 0;
-  /* NO overflow:hidden — let each component manage its own scroll */
+  overflow-y: auto;
+  overflow-x: hidden;
+
+  /* Green thin scrollbar for payroll / all inline views */
+  &::-webkit-scrollbar       { width: 2px; }
+  &::-webkit-scrollbar-track { background: transparent; }
+  &::-webkit-scrollbar-thumb { background: rgba(22, 163, 74, 0.4); border-radius: 2px; }
+  scrollbar-width: thin;
+  scrollbar-color: rgba(22, 163, 74, 0.4) transparent;
 }
 
 /* Dashboard home <main> — allow scrolling */

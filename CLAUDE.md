@@ -3214,3 +3214,504 @@ feat(ai-assistant): generate files with full project paths
 - File tabs: show filename only with full-path tooltip
 - AI now places new files in folders consistent with existing repo structure
 ```
+# BRYCEN HUB PMS — SESSION HANDOVER
+# Date: 2026-04-22
+# Previous session: Attendance Excel Upload feature (COMPLETED)
+# ═══════════════════════════════════════════════════════════
+
+## 🎯 COPY THIS TO NEW CHAT
+
+```
+Hi Claude, continuing Brycen Hub PMS development.
+
+Project: /Users/brycen_cambodia_2/Documents/1ASNworkspace/welcome/
+Stack: Spring Boot 2.7.18 + Angular 21 + MySQL asn_db
+Contest: Brycen AI Contest 2026 — Deadline May 18 (26 days left)
+Language: Reply in Myanmar (Burmese) mixed with English tech terms
+
+Read CLAUDE.md first. Current status:
+
+✅ COMPLETED (this week):
+- Shared StaffPanel component
+- Admin dashboard persistent right panel
+- Mini calendar + holiday modal popup
+- Scrollbar polish (2px global)
+- Attendance Excel Upload feature (FULL-STACK DONE + TESTED)
+
+⏳ NEXT: PayrollCalculator Service (Spring Boot)
+
+Load context from: HANDOVER.md in project knowledge
+```
+
+---
+
+## 📦 THIS SESSION DELIVERABLES (All tested & working)
+
+### 🗄️ Database
+**Table: `attendance_logs`** — created, tested with 500+ rows
+```sql
+id, user_id FK, work_date DATE,
+time_in TIME, time_out TIME,
+is_dayoff TINYINT(1), source VARCHAR(20),
+note VARCHAR(500), uploaded_by FK,
+created_at DATETIME, updated_at DATETIME,
+UNIQUE(user_id, work_date)
+```
+SQL file: `/attendance-upload/attendance_logs.sql`
+Fix SQL (if needed): `/attendance-upload/FIX_missing_column.sql`
+
+### 🧩 Backend (Spring Boot) — Apache POI 5.2.5
+Files placed in `src/main/java/jp/co/brycen/asn/`:
+- `model/AttendanceLog.java`
+- `repository/AttendanceLogRepository.java`
+- `dto/AttendanceDto.java` (ParsedRow, PreviewResponse, SaveRow, SaveResponse)
+- `service/AttendanceService.java` (parser + bulk upsert, 6 date + 4 time formats)
+- `controller/AttendanceController.java`
+
+**Endpoints:**
+- `POST /api/attendance/upload-preview` (multipart, 5MB max)
+- `POST /api/attendance/confirm-save` (JSON body)
+
+**pom.xml added:**
+```xml
+<dependency>
+    <groupId>org.apache.poi</groupId>
+    <artifactId>poi-ooxml</artifactId>
+    <version>5.2.5</version>
+</dependency>
+```
+
+**application.properties added:**
+```
+spring.servlet.multipart.max-file-size=5MB
+spring.servlet.multipart.max-request-size=5MB
+```
+
+### 🎨 Frontend (Angular)
+Files placed in `src/main/angular/frontend/src/app/admin/`:
+- `attendance-upload-inline.ts`
+- `attendance-upload-inline.html`
+- `attendance-upload-inline.scss`
+
+### 🔌 Wired in admin-dashboard
+- `admin-dashboard.ts`: Added `AttendanceUploadInline` import + component
+- `admin-dashboard.html`: Added `<app-attendance-upload-inline>` routing
+- Quick Action button: `(click)="setView('attendance')"`
+- Nav item: `PAYROLL > 📅 Upload Attendance`
+
+---
+
+## 🎯 DESIGN DECISIONS (Important for next session)
+
+### UX Pattern: 2-step wizard (NOT 3)
+```
+Step 1: Upload + Auto-preview (combined)  ← MERGED
+  - Drop file → auto-parse → inline preview cards
+  - Clear button to reset
+Step 2: Done screen
+```
+
+### Group-by-Staff (NOT flat table)
+- 26 cards instead of 500+ rows
+- Collapsed by default, expand to see day-by-day
+- Search box (name/email/role/branch)
+- Status filter (Matched/Unmatched/Duplicate/Invalid)
+- **Sort: ISSUES FIRST, MATCHED LAST** (admin attention priority)
+
+### Matching Strategy
+- **Email only** — NOT user_id (fingerprint machine exports email)
+- Case-insensitive lookup
+- Duplicate = same email+date in file
+- Unmatched = email not in DB
+- Invalid = missing email or date
+
+### Upsert Behavior
+- Re-upload same file → UPDATE existing rows (not error)
+- Returns: savedCount, updatedCount, skippedCount
+- Safe to run N times
+
+---
+
+## ✅ TESTED WITH REAL DATA
+
+**Test file:** `attendance_march_2026.xlsx` (514 rows)
+- Pay period: Feb 25 - Mar 24, 2026
+- 26 Cambodia branch users
+- Working days: 20 (excluding Mar 8 holiday)
+- 8 random absences + 2 edge cases (1 unmatched + 1 duplicate)
+
+**DB verification:**
+```sql
+SELECT user_id, COUNT(*) AS days
+FROM attendance_logs
+WHERE work_date BETWEEN '2026-02-25' AND '2026-03-24'
+GROUP BY user_id
+ORDER BY user_id;
+-- Result: 26 users, ~18-20 days each
+```
+
+---
+
+## 🚀 NEXT STEPS (Priority Order)
+
+### Priority 1 — PayrollCalculator Service (2 days)
+Backend service to calculate monthly payroll:
+
+```java
+// Formula chain
+working_days = Mon-Fri count in period - public holidays in period
+daily_rate = base_salary / working_days
+actual_days = count of attendance_logs WHERE status worked
+gross = (daily_rate × actual_days) + ot_amount - deductions
+tax = progressive calculation from tax_brackets
+net = gross - tax
+```
+
+**Data sources already ready:**
+- ✅ salary_structures (base salary, latest effective_date)
+- ✅ public_holidays (working day calculation)
+- ✅ tax_brackets (progressive tax)
+- ✅ attendance_logs (actual days worked) — JUST DONE
+- ⚠️ ot_requests (backend exists, UI needed)
+
+**Suggested files:**
+- `PayrollCalculatorService.java` — main service
+- `PayrollCalculationDto.java` — request/response DTOs
+- Formula methods: `calculateWorkingDays()`, `calculateTax()`, `calculateNetSalary()`
+
+### Priority 2 — OT Request UI (1 day)
+Staff submit form (backend approve flow already works)
+
+### Priority 3 — Monthly Payroll Wizard (3 days)
+Angular 4-step UI:
+1. Select period (25th-24th)
+2. Preview all staff calculations
+3. Adjust deductions/bonuses (editable)
+4. Confirm → save to `salary_history`
+
+### Priority 4 — Boss Dashboard, PM Dashboard CSS fix
+
+---
+
+## 💰 SALARY CYCLE (Locked decisions)
+
+```
+Pay Period: 25th (this month) ~ 24th (next month)
+Pay Date:   25th of month
+Working:    Mon-Fri only (Sat/Sun off)
+OT Rate:    Mon-Fri/Sat = ×1.5 | Sun/Holiday = ×2.0
+Currency:   Per-branch (JP=JPY, MM=MMK, KH=KHR, VN=VND, KR=KRW, US=USD)
+Status:     DRAFT → HR_REVIEWED → CONFIRMED → PAID
+```
+
+---
+
+## 🔑 KEY USER PREFERENCES
+
+- Burmese mixed with English technical terms
+- Iterative screenshot-driven feedback
+- Senior-level code expected, DRY principles
+- Prefers matching existing patterns
+- Compact UI (2px scrollbars, 22px calendar cells)
+- No white/bright accents in dark theme
+- Cambodia branch_id=3, USD currency
+- Login: Super Admin (admin@asn.com)
+
+---
+
+## 📁 OUTPUT FILE LOCATIONS
+
+```
+/mnt/user-data/outputs/
+├── attendance-upload/
+│   ├── INSTALL.md                    ← Step-by-step guide
+│   ├── attendance_logs.sql           ← DB migration
+│   ├── FIX_missing_column.sql        ← Patch if updated_at missing
+│   ├── RESET_attendance_logs.sql     ← Nuclear option
+│   ├── attendance_march_2026.xlsx    ← 514-row test data
+│   ├── attendance_test_5rows.xlsx    ← Smoke test
+│   ├── backend/
+│   │   ├── AttendanceLog.java
+│   │   ├── AttendanceLogRepository.java
+│   │   ├── AttendanceDto.java
+│   │   ├── AttendanceService.java
+│   │   ├── AttendanceController.java
+│   │   └── POM_AND_PROPERTIES.md
+│   └── frontend/
+│       ├── attendance-upload-inline.ts     ← group-by-staff, sort issues first
+│       ├── attendance-upload-inline.html   ← 2-step wizard
+│       └── attendance-upload-inline.scss
+└── admin-dashboard-full/
+    ├── admin-dashboard.ts   ← Attendance wired in
+    ├── admin-dashboard.html ← Attendance view routing
+    └── admin-dashboard.scss ← Mini calendar + modal
+```
+
+---
+
+## 🐛 BUGS FIXED THIS SESSION
+
+1. **Hibernate unknown column `updated_at`** — Solved by ALTER TABLE add column
+2. **`ADD COLUMN IF NOT EXISTS` not MySQL** — Changed to plain `ADD COLUMN`
+3. **StaffPanel import paths wrong** — Fixed `../../services/` etc.
+4. **Scrollbar too thick** — Iteratively reduced 6px → 2px
+5. **Holidays calendar too tall** — Fixed height 22px per cell
+6. **Quick Action pointing to payroll instead of attendance** — Fixed setView
+
+---
+
+## ✅ VERIFIED WORKING
+
+- [x] Upload 5-row test file → Preview correct
+- [x] Upload 514-row March file → All parsed correctly
+- [x] Matched rows save to DB
+- [x] Unmatched rows show warning
+- [x] Duplicate detection works
+- [x] Re-upload = upsert (no duplicate rows)
+- [x] Group-by-staff cards render
+- [x] Search + filter works
+- [x] Expand/collapse works
+- [x] Sort: issues first, matched last
+- [x] Auto-preview on file drop (no manual button)
+
+---
+
+*Ready for next session. Load this file first, then continue with PayrollCalculator.*
+
+# SESSION REPORT — 2026-04-23
+# Brycen Hub PMS — Payroll Module Completion Session
+# ⚠️ Add this to CLAUDE.md
+
+---
+
+## ✅ COMPLETED THIS SESSION
+
+### Phase 3 — Batch Approval Workflow (DONE)
+
+**Status flow:**
+```
+DRAFT → PENDING_APPROVAL → CONFIRMED → PAID
+Admin     Admin             VP/Boss      Admin
+```
+
+**New endpoints (PayrollController.java — 10 total):**
+```
+POST /api/payroll/batch/submit       ← ADMIN: DRAFT → PENDING_APPROVAL
+POST /api/payroll/batch/approve      ← VP/Director/Boss: → CONFIRMED
+POST /api/payroll/batch/reject       ← VP/Director/Boss: → DRAFT + reject_reason
+POST /api/payroll/batch/mark-paid    ← ADMIN: → PAID + finance sync
+GET  /api/payroll/batch-status       ← batch state for history banner
+GET  /api/payroll/pending-batches    ← VP/Boss inbox list
+GET  /api/payroll/history            ← history list
+GET  /api/payroll/payslip/{id}       ← individual payslip
+POST /api/payroll/preview            ← Phase 1
+POST /api/payroll/save               ← Phase 1
+```
+
+**DB changes applied:**
+```sql
+ALTER TABLE salary_history ADD COLUMN reject_reason VARCHAR(500) NULL AFTER note;
+
+CREATE TABLE finance_categories (...);  -- 12 default rows seeded
+CREATE TABLE branch_expenses (...);
+CREATE TABLE branch_income (...);
+```
+
+**New Java files:**
+```
+model/FinanceCategory.java                    ← NEW
+repository/FinanceCategoryRepository.java     ← NEW
+dto/PayrollBatchDto.java                      ← NEW
+dto/PayrollApprovalDto.java                   ← NEW (Phase 2)
+service/PayrollCalculatorService.java         ← REPLACED (Phase 1+2+3+Finance)
+controller/PayrollController.java             ← REPLACED (10 endpoints)
+model/SalaryHistory.java                      ← UPDATED (rejectReason field)
+```
+
+**Finance Auto-Sync (Option A1):**
+```
+Mark Batch Paid → branch_expenses INSERT (1 row per batch)
+  amount      = SUM(gross_salary)   ← company cash outflow
+  description = "Payroll 2026-03 · 25 staff · USD 31978.75 net"
+  category    = "Salary" (auto-create if missing — hybrid find-or-create)
+  status      = APPROVED (VP already confirmed)
+  approved_by = VP's user_id
+```
+
+### Frontend — Payroll History Page
+
+**Files updated:**
+```
+admin/payroll-history-inline.ts    ← batch actions + isDoneStage()
+admin/payroll-history-inline.html  ← stage progress banner + pills
+admin/payroll-history-inline.scss  ← scroll fix + stage styles
+```
+
+**UI features:**
+- Stage progress track: Draft → Pending → Confirmed → Paid (dot + line)
+- Action text (not button): "📤 Submit to Approval" / "💰 Mark as Paid"
+- Status pills: All 5 always visible, active state per-color highlight
+- Scroll fix: `:host { display:flex; flex:1 }` + `.payroll-history { overflow-y:auto }`
+
+### VP Dashboard — Approval Inbox
+
+**File updated:** `dashboard/vp-dashboard/vp-dashboard.ts` + `.html`
+
+```
+Sidebar → PAYROLL section → 📥 Batch Approvals
+Click → activeView = 'payroll-approvals'
+→ <app-approval-inbox-inline> renders
+← Back → activeView = 'dashboard'
+```
+
+**Files moved:** `admin/approval-inbox-inline.*` → `shared/approval-inbox-inline.*`
+
+### Admin Dashboard Scroll Fix
+
+**File updated:** `dashboard/admin-dashboard.scss`
+
+```scss
+/* Added payroll components to scrollable list */
+.main-center > app-payroll-wizard-inline,
+.main-center > app-payroll-history-inline {
+  flex: 1; min-width: 0; min-height: 0;
+  overflow-y: auto; overflow-x: hidden;
+}
+```
+
+---
+
+## 🐛 BUGS FIXED
+
+| Bug | Fix |
+|-----|-----|
+| CLIENT users (role_id=10) in payroll | filter u.getRoleId() != 10L in preview() |
+| PayrollBatchDto ClassNotFoundException | Added to dto/ folder |
+| SalaryHistory.setRejectReason() not found | Added rejectReason field + DB column |
+| finance_categories table missing | Created migration SQL + seeded 12 rows |
+| Payroll History scroll broken | :host flex + .payroll-history overflow-y |
+| batch-status 404 | PayrollController Phase 3 version not deployed |
+
+---
+
+## 🧪 VERIFIED WORKING
+
+- [x] Cambodia branch March 2026 — 25 DRAFT records ($35,150 gross)
+- [x] CLIENT users filtered out (25 staff, not 31)
+- [x] Batch banner shows correct stage (Draft → Pending → Confirmed → Paid)
+- [x] Submit to Approval button (text style) appears for ADMIN
+- [x] VP Dashboard sidebar → 📥 Batch Approvals → Approval Inbox renders
+- [x] Admin Dashboard main content scroll works
+- [x] Status pills: All 5 always visible, active highlight per status
+
+---
+
+## ⏳ NOT YET DONE / NEXT STEPS
+
+### Priority 1 — Boss Dashboard Approval Inbox
+```
+boss-dashboard.ts → import ApprovalInboxInline
+Add "📥 Payroll Approvals" button in header
+activeView: 'dashboard' | 'payroll-approvals'
+```
+
+### Priority 2 — End-to-End Test
+```
+Admin: Submit batch (25 DRAFT → PENDING_APPROVAL)
+VP/Boss: Approval Inbox → Approve
+Admin: Mark as Paid → verify branch_expenses row created
+DB: SELECT * FROM branch_expenses WHERE expense_type='SALARY'
+```
+
+### Priority 3 — PM Dashboard CSS Fix
+```
+Focus from system prompt — needs CSS review
+```
+
+### Priority 4 — Payslip PDF
+```
+payslip-modal.component.html → print CSS already done
+Add "Download PDF" button (window.print() with @media print)
+```
+
+### Priority 5 — CSV Export for Bank Transfer
+```
+Admin: Payroll History → "Export CSV" button
+Columns: staff_name, bank_name, account_number, net_salary, currency
+Backend: GET /api/payroll/export?branchId=&payPeriod=
+```
+
+### Priority 6 — April 2026 Payroll
+```
+March 2026 done → test April run
+Period: Mar 25 → Apr 24
+```
+
+---
+
+## 📁 KEY FILE LOCATIONS (updated)
+
+```
+Backend:
+  service/PayrollCalculatorService.java   ← Phase 1+2+3+Finance (MASTER)
+  controller/PayrollController.java       ← 10 endpoints
+  dto/PayrollDto.java                     ← Phase 1
+  dto/PayrollApprovalDto.java             ← Phase 2
+  dto/PayrollBatchDto.java                ← Phase 3 (NEW)
+  model/SalaryHistory.java                ← includes rejectReason
+  model/FinanceCategory.java              ← NEW
+  model/BranchExpense.java                ← EXISTS
+  repository/FinanceCategoryRepository.java ← NEW
+
+Frontend:
+  admin/payroll-wizard-inline.*           ← Phase 1 calculator
+  admin/payroll-history-inline.*          ← Phase 2+3 (with batch banner)
+  shared/payslip-modal.component.*        ← Phase 2 payslip
+  shared/approval-inbox-inline.*          ← Phase 3 VP/Boss inbox (MOVED from admin/)
+  dashboard/vp-dashboard/vp-dashboard.*   ← Includes Batch Approvals sidebar
+  dashboard/boss-dashboard.ts             ← TODO: add Approval Inbox
+  dashboard/admin-dashboard.scss          ← Scroll fix applied
+
+DB:
+  salary_history      ← 25 rows March 2026 (DRAFT), reject_reason column added
+  finance_categories  ← 12 rows seeded (Salary, Office Rent, etc.)
+  branch_expenses     ← Table created (empty — will fill on Mark Paid)
+  branch_income       ← Table created (empty)
+```
+
+---
+
+## 💡 IMPORTANT DESIGN DECISIONS (CONFIRMED)
+
+| Decision | Value |
+|----------|-------|
+| Batch approval | 1 click = all rows at once (not row-level) |
+| Reject behavior | All rows → back to DRAFT + reject_reason filled |
+| Finance sync trigger | PAID only (not on approve) — Option A1 |
+| Finance sync amount | GROSS salary (company cash outflow) |
+| Finance sync description | "Payroll {period} · {N} staff · {currency} {net} net" |
+| Category resolution | Hybrid: find name contains "salary" → else auto-create |
+| Status names | DRAFT / PENDING_APPROVAL / CONFIRMED / PAID |
+| CLIENT role filter | role_id = 10 excluded from all payroll queries |
+
+---
+
+## 📊 DB STATE (as of session end)
+
+```sql
+-- salary_history: 25 DRAFT rows (March 2026, branch_id=3)
+SELECT status, COUNT(*) FROM salary_history WHERE pay_period='2026-03' GROUP BY status;
+-- Expected: DRAFT | 25
+
+-- finance_categories: 12 seeded rows
+SELECT COUNT(*) FROM finance_categories; -- 12
+
+-- branch_expenses: empty (no Mark Paid done yet)
+SELECT COUNT(*) FROM branch_expenses; -- 0
+```
+
+---
+
+*Session end: 2026-04-23 01:10 AM*
+*Contest deadline: May 18, 2026 (25 days remaining)*
+*Next focus: Boss Dashboard → E2E test → PM Dashboard CSS*

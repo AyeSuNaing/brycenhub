@@ -102,26 +102,22 @@
         <div style="height:6px"></div>
 
         <div class="sidebar-nav-wrap">
-          <div class="sidebar-item active" (click)="closeProject()">
+          <div class="sidebar-item" 
+              [class.active]="activeView==='dashboard'"
+              (click)="setView('dashboard')">
             <span class="nav-icon">📊</span>
             <span>Dashboard</span>
+          </div>
+          
+          <div class="sidebar-item" [class.active]="activeView==='announce'" (click)="setView('announce')">
+            <span class="nav-icon">📢</span>
+            <span>Announcements</span>
           </div>
           <div class="sidebar-item" [routerLink]="['/projects']">
             <span class="nav-icon">📁</span>
             <span>All Projects</span>
           </div>
-          <div class="sidebar-item">
-            <span class="nav-icon">📅</span>
-            <span>Timeline</span>
-          </div>
-          <div class="sidebar-item">
-            <span class="nav-icon">📈</span>
-            <span>Reports</span>
-          </div>
-          <div class="sidebar-item">
-            <span class="nav-icon">📹</span>
-            <span>Video Call</span>
-          </div>
+          
           <div *ngIf="canCreateProject()" (click)="openNewProject()"
             style="display:flex;align-items:center;gap:8px;margin:6px 8px 2px;padding:9px 12px;
                    border-radius:10px;cursor:pointer;background:linear-gradient(135deg,#14532d,#16a34a);
@@ -179,7 +175,8 @@
     </aside>
 
     <!-- MAIN CONTENT -->
-    <main *ngIf="!showProjectDetail && !showNewProject" class="main-content">
+    <main *ngIf="!showProjectDetail && !showNewProject && activeView!=='announce'" class="main-content">
+ 
       <div class="stats-grid">
         <div class="stat-card">
           <div class="stat-label">Total Projects</div>
@@ -397,6 +394,12 @@
       <app-project-new-inline (close)="closeNewProject()" (created)="onProjectCreated($event)"></app-project-new-inline>
     </ng-container>
 
+      <app-announcement-history
+      *ngIf="activeView==='announce'"
+      [isDark]="isDark"
+      style="flex:1;min-width:0;overflow:hidden;">
+    </app-announcement-history>
+
     <!-- RIGHT SIDEBAR -->
     <aside *ngIf="!showProjectDetail && !showNewProject" class="right-sidebar">
       <div class="my-tasks-section">
@@ -504,6 +507,9 @@
       </div>
 
     </aside>
+
+
+
   </div>
 
   <app-chat-popup

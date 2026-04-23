@@ -19,6 +19,10 @@ import { TaxBracketsInline } from '../admin/tax-brackets-inline';
 import { SalaryStructuresInline } from '../admin/salary-structures-inline';
 import { AttendanceUploadInline } from '../admin/attendance-upload-inline';
 import { StaffPanelComponent } from '../shared/staff-panel/staff-panel.component';
+import { PayrollWizardInline } from '../admin/payroll-wizard-inline';
+import { PayrollHistoryInline } from '../admin/payroll-history-inline';
+import { AnnouncementHistoryComponent } from '../shared/announcement-history/announcement-history.component';
+
 
 const BASE = environment.apiBaseUrl;
 const ADMIN_BASE = `${environment.apiBaseUrl}/admin/dashboard`;
@@ -39,6 +43,9 @@ const LOGO_SVG = `data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIiIGhlaWdodD0iMzIi
     SalaryStructuresInline,
     AttendanceUploadInline,
     StaffPanelComponent,
+    PayrollWizardInline, 
+    PayrollHistoryInline, 
+    AnnouncementHistoryComponent,
   ],
   templateUrl: './admin-dashboard.html',
   styleUrl: './admin-dashboard.scss'
@@ -113,7 +120,6 @@ export class AdminDashboard implements OnInit, OnDestroy {
     {
       label: 'MAIN', items: [
         { key: 'dashboard', icon: '📊', label: 'Dashboard' },
-        { key: 'chat', icon: '💬', label: 'Chat', route: '/chat' },
         { key: 'announce', icon: '📢', label: 'Announcements' },
       ]
     },
@@ -130,6 +136,7 @@ export class AdminDashboard implements OnInit, OnDestroy {
         { key: 'salary', icon: '💵', label: 'Salary Structures' },
         { key: 'attendance', icon: '📅', label: 'Upload Attendance' },
         { key: 'payroll', icon: '💰', label: 'Monthly Payroll' },
+        { key: 'payroll-history',icon: '📊', label: 'Payroll History' }, 
       ]
     },
     {

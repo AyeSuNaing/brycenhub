@@ -52,6 +52,8 @@ public class VpDashboardController {
     @Autowired private BranchExpenseRepository branchExpenseRepository;
     @Autowired private ProjectRepository projectRepository;
     @Autowired private TaskRepository taskRepository;
+ // @Autowired ထပ်ထည့်
+    @Autowired private SalaryHistoryRepository salaryHistoryRepository;
 
     // ============================================================
     // HELPERS
@@ -105,8 +107,9 @@ public class VpDashboardController {
         // Pending counts
         r.setPendingLeave(leaveRequestRepository.countByBranchIdAndStatus(branchId, "PENDING"));
         r.setPendingOT(otRequestRepository.countByBranchIdAndStatus(branchId, "PENDING"));
-        r.setPendingSalary(branchExpenseRepository.countByBranchIdAndStatusAndExpenseType(branchId, "PENDING", "SALARY"));
-        r.setPendingExpense(branchExpenseRepository.countByBranchIdAndStatusAndExpenseType(branchId, "PENDING", "EXPENSE"));
+        r.setPendingSalary(salaryHistoryRepository.countByBranchIdAndStatus(branchId, "PENDING_APPROVAL"));
+
+        r.setPendingSalary(salaryHistoryRepository.countByBranchIdAndStatus(branchId, "PENDING_APPROVAL"));
         r.setTotalPending(r.getPendingLeave() + r.getPendingOT() + r.getPendingSalary() + r.getPendingExpense());
 
         // OT hours this month (approved)

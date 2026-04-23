@@ -5,6 +5,10 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+import java.time.LocalDate;
+
 
 import java.time.LocalDate;
 import java.util.List;
@@ -27,4 +31,19 @@ public interface AttendanceLogRepository extends JpaRepository<AttendanceLog, Lo
                          @Param("end") LocalDate end);
 
     List<AttendanceLog> findByWorkDateOrderByUserId(LocalDate workDate);
+    
+	
+	/**
+	 * Count days a user actually worked in [start, end] inclusive.
+	 * Definition of "worked" = is_dayoff = 0 AND time_in IS NOT NULL.
+	 */
+	@Query("SELECT COUNT(a) FROM AttendanceLog a " +
+	       "WHERE a.userId = :userId " +
+	       "  AND a.workDate BETWEEN :start AND :end " +
+	       "  AND (a.isDayoff IS NULL OR a.isDayoff = false) " +
+	       "  AND a.timeIn IS NOT NULL")
+	int countWorkedDaysInPeriod(@Param("userId") Long userId,
+	                            @Param("start")  LocalDate start,
+	                            @Param("end")    LocalDate end);
+
 }
