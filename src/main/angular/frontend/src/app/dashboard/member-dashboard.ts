@@ -14,6 +14,8 @@ import { API } from '../constants/api-endpoints';
 import { ProjectNewInline } from '../projects/project-new-inline';
 import { ChatPopupComponent, ChatMember } from '../shared/chat-popup/chat-popup.component';
 import { AnnouncementHistoryComponent } from '../shared/announcement-history/announcement-history.component';
+import { MyLeaveRequestComponent } from '../shared/my-leave-request/my-leave-request.component';
+import { MyOtRequestComponent }    from '../shared/my-ot-request/my-ot-request.component';
 
 import {
   Announcement, Notification, ActiveProject, PortfolioProject,
@@ -33,7 +35,10 @@ const LOGO_SVG = `data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIiIGhlaWdodD0iMzIi
     ProjectInlineComponent,
     ProjectNewInline,
     ChatPopupComponent,
-    AnnouncementHistoryComponent,],
+    AnnouncementHistoryComponent,
+    MyLeaveRequestComponent,   // ← ထည့်
+    MyOtRequestComponent,  
+  ],
 
   templateUrl: './member-dashboard.html',
   styleUrl: './member-dashboard.scss'

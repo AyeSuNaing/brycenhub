@@ -3715,3 +3715,127 @@ SELECT COUNT(*) FROM branch_expenses; -- 0
 *Session end: 2026-04-23 01:10 AM*
 *Contest deadline: May 18, 2026 (25 days remaining)*
 *Next focus: Boss Dashboard → E2E test → PM Dashboard CSS*
+# ═══════════════════════════════════════════════════════════════
+# BRYCEN HUB PMS — SESSION HANDOVER
+# Date: 2026-04-24
+# ═══════════════════════════════════════════════════════════════
+
+## 🚀 New Chat Starting Prompt
+
+```
+Hi Claude, continuing Brycen Hub PMS development.
+Project: /Users/brycen_cambodia_2/Documents/1ASNworkspace/welcome/
+Stack: Spring Boot 2.7.18 + Angular 21 + MySQL asn_db
+Branch: Cambodia (branch_id=3, USD)
+Logins: admin@asn.com (ADMIN), vp@brycen.co.kh (VP Tony)
+Deadline: May 18, 2026
+Language: Reply in Myanmar (Burmese)
+Read CLAUDE.md first.
+```
+
+---
+
+## ✅ 2026-04-24 Session — Completed
+
+### Member Dashboard
+- Leave/OT/Announce view — right sidebar ပါ ✅
+- Leave submit `setBranchId` error fix ✅
+- OT project dropdown (mandatory) — `GET /dashboard/pm/active-projects` ✅
+- OT edit PENDING — `PUT /api/staff/ot-requests/{id}` ✅
+- `StaffRequestController.java` — `projectName` resolve ✅
+
+### VP Dashboard
+- Sidebar: All tab ဖြုတ်၊ Leave/OT/Salary/Expense သီးသန့် view ✅
+- Leave view — pay period nav (◀ April 2026 ▶) + Custom date range ✅
+- OT view — pay period nav + Custom date range ✅
+- Salary view — `salary_history` PENDING_APPROVAL batch summary + payslip modal ✅
+- Approve All / Reject All → reset + redirect ✅
+- `VpDashboardController.java` — full rewrite (clean) ✅
+- `GET /api/vp/dashboard/salary-approvals` ✅
+
+---
+
+## ⏳ Next Session — TODO
+
+### 🔴 Priority 1 — Repository methods (install မပြီးရင်)
+
+**LeaveRequestRepository.java** — ထည့်ပါ:
+```java
+List<LeaveRequest> findByUserIdInOrderByCreatedAtDesc(List<Long> userIds);
+List<LeaveRequest> findByUserIdInAndStartDateBetweenOrderByCreatedAtDesc(
+    List<Long> userIds, LocalDate from, LocalDate to);
+List<LeaveRequest> findByUserIdInAndStatusAndStartDateBetweenOrderByCreatedAtDesc(
+    List<Long> userIds, String status, LocalDate from, LocalDate to);
+```
+
+**OtRequestRepository.java** — ထည့်ပါ:
+```java
+List<OtRequest> findByUserIdInOrderByCreatedAtDesc(List<Long> userIds);
+List<OtRequest> findByUserIdInAndWorkDateBetweenOrderByWorkDateDesc(
+    List<Long> userIds, LocalDate from, LocalDate to);
+List<OtRequest> findByUserIdInAndStatusAndWorkDateBetweenOrderByWorkDateDesc(
+    List<Long> userIds, String status, LocalDate from, LocalDate to);
+```
+
+**BranchExpenseRepository.java** — ထည့်ပါ:
+```java
+List<BranchExpense> findByBranchIdAndExpenseTypeOrderByCreatedAtDesc(
+    Long branchId, String expenseType);
+List<BranchExpense> findByBranchIdOrderByCreatedAtDesc(Long branchId);
+```
+
+### 🔴 Priority 2 — Test VP Dashboard
+- Leave view: Mar 25 - Apr 24 default ◀ ▶ navigation
+- OT view: workDate filter အလုပ်လုပ်မလား
+- Salary Approve All → count 0 ဖြစ်မလား
+
+### 🟡 Priority 3 — Boss Dashboard
+- All branches, all data
+- Country Director Dashboard
+
+### 🟡 Priority 4 — PM Dashboard CSS fix
+
+---
+
+## 💡 Pay Period Logic
+
+```
+Day 1-24  → prev month 25 ~ this month 24  (label = this month)
+Day 25-31 → this month 25 ~ next month 24  (label = next month)
+
+Example:
+  Apr 24 → Mar 25 ~ Apr 24 → "April 2026"
+  Apr 25 → Apr 25 ~ May 24 → "May 2026"
+```
+
+---
+
+## 📂 Key Files (latest)
+
+```
+Frontend:
+  src/app/dashboard/vp-dashboard/vp-dashboard.ts
+  src/app/dashboard/vp-dashboard/vp-dashboard.html
+  src/app/shared/my-ot-request/my-ot-request.component.ts
+  src/app/shared/my-ot-request/my-ot-request.component.html
+  src/app/shared/my-leave-request/my-leave-request.component.ts
+  src/app/shared/my-leave-request/my-leave-request.component.html
+
+Backend:
+  src/main/java/.../controller/VpDashboardController.java
+  src/main/java/.../controller/StaffRequestController.java
+  src/main/java/.../repository/LeaveRequestRepository.java  ← add methods
+  src/main/java/.../repository/OtRequestRepository.java     ← add methods
+  src/main/java/.../repository/BranchExpenseRepository.java ← add methods
+```
+
+---
+
+## 🗄️ DB State (2026-04-24)
+
+```sql
+salary_history: 25 rows — PENDING_APPROVAL (December 2025, branch_id=3)
+leave_requests:  1 row  — APPROVED (id=1, AyeSuNaing)
+ot_requests:     3 rows — PENDING (branch_id null, user_id=44)
+branch_expenses: empty
+```

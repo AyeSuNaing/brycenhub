@@ -10,11 +10,12 @@ import { AnnouncementBarComponent } from '../../shared/announcement-bar.componen
 import { BellNotificationComponent } from '../../shared/bell-notification.component';
 import { ApprovalInboxInline } from '../../shared/approval-inbox-inline';
 import { ChatPopupComponent, ChatMember } from '../../shared/chat-popup/chat-popup.component';
+import { PayslipModalComponent } from '../../shared/payslip-modal.component';
 import { AuthService } from '../../services/auth.service';
 import { RefreshService } from '../../services/refresh.service';
 import { environment } from '../../../environments/environment';
 
-const BASE = environment.apiBaseUrl;
+const BASE    = environment.apiBaseUrl;
 const VP_BASE = `${BASE}/vp/dashboard`;
 
 export type ApprovalTab = 'LEAVE' | 'OT' | 'SALARY' | 'EXPENSE';
@@ -38,13 +39,18 @@ export interface BranchMemberItem {
   initial: string; color: string; taskCount: number; online: boolean;
 }
 
+export interface DepartmentItem {
+  id: number;
+  name: string;
+}
+
 @Component({
   selector: 'app-vp-dashboard',
   standalone: true,
   imports: [
     CommonModule, FormsModule, RouterModule,
     AnnouncementBarComponent, BellNotificationComponent,
-    ApprovalInboxInline, ChatPopupComponent,
+    ApprovalInboxInline, ChatPopupComponent, PayslipModalComponent,
   ],
   templateUrl: './vp-dashboard.html',
   styleUrl: './vp-dashboard.scss'
@@ -56,34 +62,54 @@ export class VpDashboardComponent implements OnInit, OnDestroy {
   isDark = true;
   activeView = 'dashboard';
 
-  // Chat popup
   activeChatMember: ChatMember | null = null;
 
   langs = [
-    { code: 'en', display: 'EN', name: 'English', flag: '🇺🇸' },
-    { code: 'ja', display: 'JP', name: 'Japanese', flag: '🇯🇵' },
-    { code: 'my', display: 'MM', name: 'Myanmar', flag: '🇲🇲' },
-    { code: 'km', display: 'KH', name: 'Khmer', flag: '🇰🇭' },
+    { code: 'en', display: 'EN', name: 'English',    flag: '🇺🇸' },
+    { code: 'ja', display: 'JP', name: 'Japanese',   flag: '🇯🇵' },
+    { code: 'my', display: 'MM', name: 'Myanmar',    flag: '🇲🇲' },
+    { code: 'km', display: 'KH', name: 'Khmer',      flag: '🇰🇭' },
     { code: 'vi', display: 'VN', name: 'Vietnamese', flag: '🇻🇳' },
-    { code: 'ko', display: 'KR', name: 'Korean', flag: '🇰🇷' },
+    { code: 'ko', display: 'KR', name: 'Korean',     flag: '🇰🇷' },
   ];
   currentLangObj = this.langs[0];
-  showLangMenu = false; settingsOpen = false; searchQuery = ''; myTasksMaxH = 300;
+  showLangMenu = false;
+  settingsOpen = false;
+  searchQuery  = '';
+  myTasksMaxH  = 300;
 
+  // ── Approval tabs ────────────────────────────────────────────
   activeApprovalTab: ApprovalTab = 'LEAVE';
   readonly approvalTabs: { key: ApprovalTab; label: string }[] = [
-    { key: 'LEAVE', label: 'Leave' }, { key: 'OT', label: 'OT' },
-    { key: 'SALARY', label: 'Salary' }, { key: 'EXPENSE', label: 'Expense' },
+    { key: 'LEAVE',   label: 'Leave'   },
+    { key: 'OT',      label: 'OT'      },
+    { key: 'SALARY',  label: 'Salary'  },
+    { key: 'EXPENSE', label: 'Expense' },
   ];
 
   loading = { stats: true, approvals: true, projects: true, members: true };
-  stats = { activeProjects: 0, totalStaff: 0, pendingApprovals: 0, monthlyOTHours: 0, monthlySpend: 0, onLeaveToday: 0 };
+  stats   = {
+    activeProjects: 0, totalStaff: 0, pendingApprovals: 0,
+    monthlyOTHours: 0, monthlySpend: 0, onLeaveToday: 0,
+  };
   approvalCounts: Record<ApprovalTab, number> = { LEAVE: 0, OT: 0, SALARY: 0, EXPENSE: 0 };
 
-  leaveApprovals: PendingApproval[] = []; otApprovals: PendingApproval[] = [];
-  salaryApprovals: PendingApproval[] = []; expenseApprovals: PendingApproval[] = [];
-  branchProjects: BranchProject[] = []; teamMembers: BranchMemberItem[] = [];
+  leaveApprovals:   PendingApproval[] = [];
+  otApprovals:      PendingApproval[] = [];
+  salaryApprovals:  PendingApproval[] = [];
+  expenseApprovals: PendingApproval[] = [];
+  branchProjects:   BranchProject[]   = [];
+  teamMembers:      BranchMemberItem[] = [];
   allAnnouncements: any[] = [];
+
+  // ── Salary approval ──────────────────────────────────────────
+  salaryApproval: any = null;
+  loadingSalary       = false;
+  salaryActing        = false;
+
+  // ── Payslip modal ────────────────────────────────────────────
+  payslipOpen      = false;
+  payslipRecordId: number | null = null;
 
   chartData = [
     { month: 'Nov', done: 0, inProgress: 0, todo: 0 },
@@ -94,29 +120,64 @@ export class VpDashboardComponent implements OnInit, OnDestroy {
     { month: 'Apr', done: 0, inProgress: 0, todo: 0 },
   ];
   donutData = [
-    { label: 'To Do', count: 0, color: '#6366f1' },
+    { label: 'To Do',       count: 0, color: '#6366f1' },
     { label: 'In Progress', count: 0, color: '#3b82f6' },
-    { label: 'In Review', count: 0, color: '#f59e0b' },
-    { label: 'Done', count: 0, color: '#22c55e' },
+    { label: 'In Review',   count: 0, color: '#f59e0b' },
+    { label: 'Done',        count: 0, color: '#22c55e' },
   ];
-  overdueTasks: any[] = []; activities: any[] = []; deadlines: any[] = [];
+  overdueTasks: any[] = [];
+  activities:   any[] = [];
+  deadlines:    any[] = [];
+
+  // ── History views ────────────────────────────────────────────
+  historyFilter  = 'ALL';
+  loadingHistory = false;
+  historyLeave:   any[] = [];
+  historyOt:      any[] = [];
+  historyExpense: any[] = [];
+
+  // ── Pay period ───────────────────────────────────────────────
+  periodFrom  = '';
+  periodTo    = '';
+  periodLabel = '';
+  customFrom  = '';
+  customTo    = '';
+  useCustom   = false;
+
+  // ════════════════════════════════════════════════════════════
+  // SEARCH FILTERS — Leave & OT view
+  // ════════════════════════════════════════════════════════════
+  searchName    = '';            // Staff name ရှာ
+  searchFrom    = '';            // Custom from date (VP override)
+  searchTo      = '';            // Custom to date
+  searchDeptId: number | null = null;  // Department filter
+  departments:  DepartmentItem[] = [];  // Dropdown list
 
   constructor(
-    private http: HttpClient, private router: Router,
-    private auth: AuthService, private cdr: ChangeDetectorRef,
+    private http: HttpClient,
+    private router: Router,
+    private auth: AuthService,
+    private cdr: ChangeDetectorRef,
     private refreshService: RefreshService,
-  ) { }
+  ) {}
+
+  // ══════════════════════════════════════════════════════════════
+  // LIFECYCLE
+  // ══════════════════════════════════════════════════════════════
 
   ngOnInit(): void {
     const saved = localStorage.getItem('brycen-theme');
     this.setTheme(saved !== 'light');
-    this.currentUser = this.auth.getUser();
+    this.currentUser    = this.auth.getUser();
     this.currentLangObj = this.langs.find(l => l.code === (this.currentUser?.preferredLanguage || 'en')) || this.langs[0];
     this.loadAll();
     this.updateMyTasksHeight();
     this._refreshSub = this.refreshService.refresh$.subscribe(() => {
-      this.loadStats(); this.loadLeaveRequests(); this.loadOtRequests();
-      this.loadExpenseApprovals('SALARY'); this.loadExpenseApprovals('EXPENSE');
+      this.loadStats();
+      this.loadLeaveRequests();
+      this.loadOtRequests();
+      this.loadExpenseApprovals('SALARY');
+      this.loadExpenseApprovals('EXPENSE');
       this.cdr.detectChanges();
     });
   }
@@ -125,38 +186,334 @@ export class VpDashboardComponent implements OnInit, OnDestroy {
 
   private get headers() { return this.auth.getHeaders(); }
 
-  // ── View switching ──────────────────────────────────────
+  // ══════════════════════════════════════════════════════════════
+  // VIEW ROUTING
+  // ══════════════════════════════════════════════════════════════
+
   setView(view: string): void {
     this.activeView = view;
-    if (view === 'announcements') this.loadAnnouncements();
+
+    if (view === 'announcements') { this.loadAnnouncements(); }
+
+    if (view === 'salary-approvals' && !this.salaryApproval?.totalRecords) {
+      this.loadSalaryApprovals();
+    }
+
+    if (view === 'view-leave') {
+      this.historyFilter = 'ALL';
+      this.useCustom     = false;
+      this.resetSearch();
+      const p          = this.getCurrentPayPeriod();
+      this.periodFrom  = this.fmtDate(p.from);
+      this.periodTo    = this.fmtDate(p.to);
+      this.periodLabel = p.label;
+      this.loadDepartments();
+      this.loadHistoryLeave();
+    }
+
+    if (view === 'view-ot') {
+      this.historyFilter = 'ALL';
+      this.useCustom     = false;
+      this.resetSearch();
+      const p          = this.getCurrentPayPeriod();
+      this.periodFrom  = this.fmtDate(p.from);
+      this.periodTo    = this.fmtDate(p.to);
+      this.periodLabel = p.label;
+      this.loadDepartments();
+      this.loadHistoryOt();
+    }
+
+    if (view === 'view-expense') {
+      this.historyFilter = 'ALL';
+      this.loadHistoryExpense();
+    }
+
     this.cdr.detectChanges();
   }
-  openPayrollApprovals(): void { this.activeView = 'payroll-approvals'; this.cdr.detectChanges(); }
-  closePayrollApprovals(): void { this.activeView = 'dashboard'; this.cdr.detectChanges(); }
 
-  // ── Chat popup ──────────────────────────────────────────
-  openMemberPopup(m: BranchMemberItem): void {
-    this.activeChatMember = {
-      id: m.id,
-      name: m.name,
-      role: m.role,
-      color: m.color,
-      initial: m.initial,
-      online: m.online,
-    };
+  resetSearch(): void {
+    this.searchName   = '';
+    this.searchFrom   = '';
+    this.searchTo     = '';
+    this.searchDeptId = null;
+  }
+
+  /** Search button click */
+  applySearch(): void {
+    if (this.activeView === 'view-leave') this.loadHistoryLeave();
+    if (this.activeView === 'view-ot')    this.loadHistoryOt();
     this.cdr.detectChanges();
   }
 
-  closeMemberPopup(): void {
-    this.activeChatMember = null;
+  /** Clear button click */
+  clearSearch(): void {
+    this.resetSearch();
+    if (this.activeView === 'view-leave') this.loadHistoryLeave();
+    if (this.activeView === 'view-ot')    this.loadHistoryOt();
     this.cdr.detectChanges();
   }
 
-  // ── Data loading ────────────────────────────────────────
+  // ══════════════════════════════════════════════════════════════
+  // PAY PERIOD UTILS
+  // ══════════════════════════════════════════════════════════════
+
+  getCurrentPayPeriod(): { from: Date; to: Date; label: string } {
+    const today = new Date();
+    const d     = today.getDate();
+    let fromY: number, fromM: number, toY: number, toM: number;
+
+    if (d >= 25) {
+      fromY = today.getFullYear(); fromM = today.getMonth();
+      toY   = today.getFullYear(); toM   = today.getMonth() + 1;
+    } else {
+      fromY = today.getFullYear(); fromM = today.getMonth() - 1;
+      toY   = today.getFullYear(); toM   = today.getMonth();
+    }
+
+    if (fromM < 0)  { fromM = 11; fromY--; }
+    if (toM   > 11) { toM   = 0;  toY++;  }
+
+    const from  = new Date(fromY, fromM, 25);
+    const to    = new Date(toY,   toM,   24);
+    const label = to.toLocaleString('en-US', { month: 'long', year: 'numeric' });
+    return { from, to, label };
+  }
+
+  shiftPayPeriod(delta: number): void {
+    const from = new Date(this.periodFrom);
+    const to   = new Date(this.periodTo);
+    from.setMonth(from.getMonth() + delta);
+    to.setMonth(to.getMonth()   + delta);
+    this.periodFrom  = this.fmtDate(from);
+    this.periodTo    = this.fmtDate(to);
+    this.periodLabel = to.toLocaleString('en-US', { month: 'long', year: 'numeric' });
+    this.reloadHistory();
+  }
+
+  reloadHistory(): void {
+    if (this.activeView === 'view-leave')   this.loadHistoryLeave();
+    if (this.activeView === 'view-ot')      this.loadHistoryOt();
+    if (this.activeView === 'view-expense') this.loadHistoryExpense();
+  }
+
+  fmtDate(d: Date): string {
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  }
+
+  // ══════════════════════════════════════════════════════════════
+  // DEPARTMENTS
+  // ══════════════════════════════════════════════════════════════
+
+  loadDepartments(): void {
+    if (this.departments.length > 0) return; // cache — once only
+    this.http.get<DepartmentItem[]>(`${VP_BASE}/departments`, { headers: this.headers })
+      .pipe(catchError(() => of([])))
+      .subscribe(list => {
+        this.departments = list || [];
+        this.cdr.detectChanges();
+      });
+  }
+
+  // ══════════════════════════════════════════════════════════════
+  // QUERY BUILDERS
+  // ══════════════════════════════════════════════════════════════
+
+  /** Leave API query — pay period + search filters ပေါင်း */
+  private buildLeaveQuery(): string {
+    const p: string[] = [];
+
+    if (this.historyFilter !== 'ALL') p.push(`status=${this.historyFilter}`);
+
+    // Date: searchFrom/To > useCustom > pay period
+    const from = this.searchFrom  || (this.useCustom ? this.customFrom : this.periodFrom);
+    const to   = this.searchTo    || (this.useCustom ? this.customTo   : this.periodTo);
+    if (from) p.push(`from=${from}`);
+    if (to)   p.push(`to=${to}`);
+
+    if (this.searchName.trim())  p.push(`name=${encodeURIComponent(this.searchName.trim())}`);
+    if (this.searchDeptId)       p.push(`departmentId=${this.searchDeptId}`);
+
+    return p.length ? '?' + p.join('&') : '';
+  }
+
+  /** OT API query */
+  private buildOtQuery(): string {
+    const p: string[] = [];
+
+    if (this.historyFilter !== 'ALL') p.push(`status=${this.historyFilter}`);
+
+    const from = this.searchFrom  || (this.useCustom ? this.customFrom : this.periodFrom);
+    const to   = this.searchTo    || (this.useCustom ? this.customTo   : this.periodTo);
+    if (from) p.push(`from=${from}`);
+    if (to)   p.push(`to=${to}`);
+
+    if (this.searchName.trim())  p.push(`name=${encodeURIComponent(this.searchName.trim())}`);
+    if (this.searchDeptId)       p.push(`departmentId=${this.searchDeptId}`);
+
+    return p.length ? '?' + p.join('&') : '';
+  }
+
+  // ══════════════════════════════════════════════════════════════
+  // HISTORY LOADERS
+  // ══════════════════════════════════════════════════════════════
+
+  loadHistoryLeave(): void {
+    this.loadingHistory = true;
+    this.http.get<any[]>(`${VP_BASE}/leave-requests${this.buildLeaveQuery()}`, { headers: this.headers })
+      .pipe(catchError(() => of([])))
+      .subscribe(list => {
+        this.historyLeave   = list || [];
+        this.loadingHistory = false;
+        this.cdr.detectChanges();
+      });
+  }
+
+  loadHistoryOt(): void {
+    this.loadingHistory = true;
+    this.http.get<any[]>(`${VP_BASE}/ot-requests${this.buildOtQuery()}`, { headers: this.headers })
+      .pipe(catchError(() => of([])))
+      .subscribe(list => {
+        this.historyOt      = list || [];
+        this.loadingHistory = false;
+        this.cdr.detectChanges();
+      });
+  }
+
+  loadHistoryExpense(): void {
+    this.loadingHistory = true;
+    const param = this.historyFilter === 'ALL'
+      ? `?type=EXPENSE`
+      : `?status=${this.historyFilter}&type=EXPENSE`;
+    this.http.get<any[]>(`${VP_BASE}/branch-expenses${param}`, { headers: this.headers })
+      .pipe(catchError(() => of([])))
+      .subscribe(list => {
+        this.historyExpense = list || [];
+        this.loadingHistory = false;
+        this.cdr.detectChanges();
+      });
+  }
+
+  // ── History item actions ─────────────────────────────────────
+  approveLeaveItem(r: any): void {
+    this.http.patch(`${VP_BASE}/leave-requests/${r.id}/approve`, {}, { headers: this.headers })
+      .pipe(catchError(() => of(null)))
+      .subscribe(res => { if (res !== null) { this.loadHistoryLeave(); this.loadStats(); } });
+  }
+  rejectLeaveItem(r: any): void {
+    this.http.patch(`${VP_BASE}/leave-requests/${r.id}/reject`, { reason: 'Rejected by VP' }, { headers: this.headers })
+      .pipe(catchError(() => of(null)))
+      .subscribe(res => { if (res !== null) { this.loadHistoryLeave(); this.loadStats(); } });
+  }
+  approveOtItem(r: any): void {
+    this.http.patch(`${VP_BASE}/ot-requests/${r.id}/approve`, {}, { headers: this.headers })
+      .pipe(catchError(() => of(null)))
+      .subscribe(res => { if (res !== null) { this.loadHistoryOt(); this.loadStats(); } });
+  }
+  rejectOtItem(r: any): void {
+    this.http.patch(`${VP_BASE}/ot-requests/${r.id}/reject`, { reason: 'Rejected by VP' }, { headers: this.headers })
+      .pipe(catchError(() => of(null)))
+      .subscribe(res => { if (res !== null) { this.loadHistoryOt(); this.loadStats(); } });
+  }
+  approveExpenseItem(r: any): void {
+    this.http.patch(`${VP_BASE}/branch-expenses/${r.id}/approve`, {}, { headers: this.headers })
+      .pipe(catchError(() => of(null)))
+      .subscribe(res => { if (res !== null) { this.loadHistoryExpense(); this.loadStats(); } });
+  }
+  rejectExpenseItem(r: any): void {
+    this.http.patch(`${VP_BASE}/branch-expenses/${r.id}/reject`, { reason: 'Rejected by VP' }, { headers: this.headers })
+      .pipe(catchError(() => of(null)))
+      .subscribe(res => { if (res !== null) { this.loadHistoryExpense(); this.loadStats(); } });
+  }
+
+  openPayrollApprovals(): void  { this.activeView = 'payroll-approvals'; this.cdr.detectChanges(); }
+  closePayrollApprovals(): void { this.activeView = 'dashboard';          this.cdr.detectChanges(); }
+
+  // ══════════════════════════════════════════════════════════════
+  // SALARY APPROVAL
+  // ══════════════════════════════════════════════════════════════
+
+  loadSalaryApprovals(): void {
+    this.loadingSalary = true;
+    this.http.get<any>(`${VP_BASE}/salary-approvals`, { headers: this.headers })
+      .pipe(catchError(() => of(null)))
+      .subscribe(data => {
+        this.salaryApproval = data;
+        this.loadingSalary  = false;
+        if (data?.rows?.length) {
+          this.salaryApprovals = data.rows.map((r: any) => ({
+            id:           r.id,
+            type:         'SALARY' as ApprovalTab,
+            staffName:    r.userName,
+            staffInitial: r.userInitial,
+            avatarColor:  r.userColor,
+            subtitle:     `${r.roleName} · ${this.formatMoney(r.currency, r.grossSalary)}`,
+            reason:       `Net: ${this.formatMoney(r.currency, r.netSalary)}`,
+            dueText:      data.payPeriod ? this.formatPeriodLabel(data.payPeriod) : '—',
+            priority:     'soon' as 'soon',
+          }));
+          this.approvalCounts.SALARY = this.salaryApprovals.length;
+          this.recomputeTotalPending();
+        }
+        this.cdr.detectChanges();
+      });
+  }
+
+  approveSalaryBatch(): void {
+    if (!this.salaryApproval?.payPeriod) return;
+    this.salaryActing = true;
+    const payload = { branchId: this.salaryApproval.branchId, payPeriod: this.salaryApproval.payPeriod };
+    this.http.post(`${BASE}/payroll/batch/approve`, payload, { headers: this.headers })
+      .pipe(catchError(() => { alert('Failed to approve.'); this.salaryActing = false; this.cdr.detectChanges(); return of(null); }))
+      .subscribe(r => {
+        this.salaryActing = false;
+        if (r !== null) {
+          this.salaryApproval = null; this.salaryApprovals = [];
+          this.approvalCounts.SALARY = 0; this.recomputeTotalPending();
+          this.activeView = 'dashboard'; this.activeApprovalTab = 'LEAVE';
+          this.loadStats();
+        }
+        this.cdr.detectChanges();
+      });
+  }
+
+  rejectSalaryBatch(): void {
+    if (!this.salaryApproval?.payPeriod) return;
+    const reason  = prompt('Reject reason (optional):') ?? 'Rejected by VP';
+    this.salaryActing = true;
+    const payload = { branchId: this.salaryApproval.branchId, payPeriod: this.salaryApproval.payPeriod, note: reason };
+    this.http.post(`${BASE}/payroll/batch/reject`, payload, { headers: this.headers })
+      .pipe(catchError(() => { alert('Failed to reject.'); this.salaryActing = false; this.cdr.detectChanges(); return of(null); }))
+      .subscribe(r => {
+        this.salaryActing = false;
+        if (r !== null) {
+          this.salaryApproval = null; this.salaryApprovals = [];
+          this.approvalCounts.SALARY = 0; this.recomputeTotalPending();
+          this.activeView = 'dashboard'; this.activeApprovalTab = 'LEAVE';
+          this.loadStats();
+        }
+        this.cdr.detectChanges();
+      });
+  }
+
+  // ══════════════════════════════════════════════════════════════
+  // PAYSLIP MODAL
+  // ══════════════════════════════════════════════════════════════
+
+  openPayslip(recordId: number): void {
+    this.payslipRecordId = recordId; this.payslipOpen = true; this.cdr.detectChanges();
+  }
+  closePayslip(): void {
+    this.payslipOpen = false; this.payslipRecordId = null; this.cdr.detectChanges();
+  }
+
+  // ══════════════════════════════════════════════════════════════
+  // DATA LOADING
+  // ══════════════════════════════════════════════════════════════
+
   loadAll(): void {
     this.loadStats(); this.loadLeaveRequests(); this.loadOtRequests();
     this.loadExpenseApprovals('SALARY'); this.loadExpenseApprovals('EXPENSE');
-    this.loadBranchProjects(); this.loadBranchMembers();
+    this.loadSalaryApprovals(); this.loadBranchProjects(); this.loadBranchMembers();
   }
 
   loadStats(): void {
@@ -165,16 +522,17 @@ export class VpDashboardComponent implements OnInit, OnDestroy {
       .pipe(catchError(() => of(null)))
       .subscribe(s => {
         if (s) {
-          this.stats.activeProjects = Number(s.activeProjects ?? 0);
-          this.stats.totalStaff = Number(s.totalStaff ?? 0);
-          this.stats.pendingApprovals = Number(s.totalPending ?? 0);
-          this.stats.monthlyOTHours = Number(s.monthlyOTHours ?? 0);
-          this.stats.monthlySpend = Number(s.monthlySpend ?? 0);
-          this.stats.onLeaveToday = Number(s.onLeaveToday ?? 0);
-          this.approvalCounts.LEAVE = Number(s.pendingLeave ?? 0);
-          this.approvalCounts.OT = Number(s.pendingOT ?? 0);
-          this.approvalCounts.SALARY = Number(s.pendingSalary ?? 0);
-          this.approvalCounts.EXPENSE = Number(s.pendingExpense ?? 0);
+          this.stats.activeProjects   = Number(s.activeProjects   ?? 0);
+          this.stats.totalStaff       = Number(s.totalStaff       ?? 0);
+          this.stats.pendingApprovals = Number(s.totalPending      ?? 0);
+          this.stats.monthlyOTHours   = Number(s.monthlyOTHours   ?? 0);
+          this.stats.monthlySpend     = Number(s.monthlySpend      ?? 0);
+          this.stats.onLeaveToday     = Number(s.onLeaveToday      ?? 0);
+          this.approvalCounts.LEAVE   = Number(s.pendingLeave      ?? 0);
+          this.approvalCounts.OT      = Number(s.pendingOT         ?? 0);
+          this.approvalCounts.SALARY  = Number(s.pendingSalary     ?? 0);
+          this.approvalCounts.EXPENSE = Number(s.pendingExpense    ?? 0);
+          this.recomputeTotalPending();
         }
         this.loading.stats = false; this.cdr.detectChanges();
       });
@@ -230,27 +588,25 @@ export class VpDashboardComponent implements OnInit, OnDestroy {
   }
 
   loadAnnouncements(): void {
-    // /all → expires filter မပါ
-    this.http.get<any[]>(`${BASE}/dashboard/pm/announcements/all`,
-      { headers: this.headers })
+    this.http.get<any[]>(`${BASE}/dashboard/pm/announcements/all`, { headers: this.headers })
       .pipe(catchError(() => of([])))
-      .subscribe(list => {
-        this.allAnnouncements = list || [];
-        this.cdr.detectChanges();
-      });
+      .subscribe(list => { this.allAnnouncements = list || []; this.cdr.detectChanges(); });
   }
 
-  // ── Normalizers ─────────────────────────────────────────
+  // ══════════════════════════════════════════════════════════════
+  // NORMALIZERS
+  // ══════════════════════════════════════════════════════════════
+
   private normalizeLeave(lv: any): PendingApproval {
     const s = lv.startDate ? new Date(lv.startDate) : null;
-    const e = lv.endDate ? new Date(lv.endDate) : null;
+    const e = lv.endDate   ? new Date(lv.endDate)   : null;
     const d = s ? Math.ceil((s.getTime() - Date.now()) / 86400000) : 99;
     return {
       id: lv.id, type: 'LEAVE', staffName: lv.userName || 'Unknown',
       staffInitial: lv.userInitial || '?', avatarColor: lv.userColor || '#64748b',
       subtitle: `${this.formatLeaveType(lv.leaveType)} · ${lv.totalDays} day${lv.totalDays > 1 ? 's' : ''}`,
       reason: lv.reason || 'No reason', dueText: this.formatDateRange(s, e),
-      priority: d <= 1 ? 'urgent' : d <= 7 ? 'soon' : 'normal'
+      priority: d <= 1 ? 'urgent' : d <= 7 ? 'soon' : 'normal',
     };
   }
 
@@ -263,13 +619,15 @@ export class VpDashboardComponent implements OnInit, OnDestroy {
       subtitle: `OT · ${ot.otHours} hrs ${ot.dayType ? '(' + ot.dayType + ')' : ''}`,
       reason: ot.reason || ot.projectName || 'No reason',
       dueText: w ? this.formatDate(w) : '—',
-      priority: Math.abs(d) <= 1 ? 'urgent' : Math.abs(d) <= 7 ? 'soon' : 'normal'
+      priority: Math.abs(d) <= 1 ? 'urgent' : Math.abs(d) <= 7 ? 'soon' : 'normal',
     };
   }
 
   private normalizeExpense(e: any, type: 'SALARY' | 'EXPENSE'): PendingApproval {
     const dt = e.date ? new Date(e.date) : null;
-    const title = type === 'SALARY' ? (e.description?.slice(0, 40) || 'Monthly Payroll') : (e.description?.slice(0, 40) || 'Expense');
+    const title = type === 'SALARY'
+      ? (e.description?.slice(0, 40) || 'Monthly Payroll')
+      : (e.description?.slice(0, 40) || 'Expense');
     return {
       id: e.id, type, staffName: title,
       staffInitial: type === 'SALARY' ? '$' : 'E',
@@ -277,21 +635,23 @@ export class VpDashboardComponent implements OnInit, OnDestroy {
       subtitle: `${type === 'SALARY' ? 'Salary' : 'Expense'} · ${e.currency || 'USD'} ${Number(e.amount || 0).toLocaleString()}`,
       reason: e.createdByName ? `Submitted by ${e.createdByName}` : '—',
       dueText: dt ? this.formatDate(dt) : '—',
-      priority: (dt && dt.getTime() < Date.now()) ? 'urgent' : 'soon'
+      priority: (dt && dt.getTime() < Date.now()) ? 'urgent' : 'soon',
     };
   }
 
   private normalizeProject(p: any): BranchProject {
     const prog = Number(p.progress ?? 0);
-    const ed = p.endDate ? new Date(p.endDate) : null;
-    const dl = ed ? Math.ceil((ed.getTime() - Date.now()) / 86400000) : 999;
+    const ed   = p.endDate ? new Date(p.endDate) : null;
+    const dl   = ed ? Math.ceil((ed.getTime() - Date.now()) / 86400000) : 999;
     let st: 'On Track' | 'At Risk' | 'Delayed' = 'On Track';
-    if (dl < 0) st = 'Delayed'; else if (dl < 14 && prog < 70) st = 'At Risk'; else if (prog < 30 && dl < 30) st = 'At Risk';
+    if (dl < 0) st = 'Delayed';
+    else if (dl < 14 && prog < 70) st = 'At Risk';
+    else if (prog < 30 && dl < 30) st = 'At Risk';
     return {
       id: p.id, name: p.title || 'Untitled', status: st, progress: prog,
       ownerName: p.pmName || 'Unassigned', ownerInitial: p.pmInitial || '?',
       ownerColor: p.pmColor || '#64748b', dueDate: ed ? this.formatDate(ed) : '—',
-      health: this.calcHealth(st, prog, dl)
+      health: this.calcHealth(st, prog, dl),
     };
   }
 
@@ -299,71 +659,99 @@ export class VpDashboardComponent implements OnInit, OnDestroy {
     return {
       id: m.id, name: m.name || 'Unknown', role: this.shortRole(m.role || ''),
       initial: m.initial || '?', color: m.color || '#64748b',
-      taskCount: m.taskCount || 0, online: m.online === true
+      taskCount: m.taskCount || 0, online: m.online === true,
     };
   }
 
-  // ── Approve / Reject ────────────────────────────────────
+  // ══════════════════════════════════════════════════════════════
+  // APPROVE / REJECT (inbox cards)
+  // ══════════════════════════════════════════════════════════════
+
   approveApproval(a: PendingApproval): void {
     const url = this.approveUrl(a); if (!url) return;
-    this.http.patch(url, {}, { headers: this.headers }).pipe(catchError(() => { alert('Failed.'); return of(null); }))
+    this.http.patch(url, {}, { headers: this.headers })
+      .pipe(catchError(() => { alert('Failed.'); return of(null); }))
       .subscribe(r => { if (r !== null) { this.removeApprovalLocally(a); this.loadStats(); } });
   }
   rejectApproval(a: PendingApproval): void {
     const url = this.rejectUrl(a); if (!url) return;
-    this.http.patch(url, { reason: 'Rejected by VP' }, { headers: this.headers }).pipe(catchError(() => { alert('Failed.'); return of(null); }))
+    this.http.patch(url, { reason: 'Rejected by VP' }, { headers: this.headers })
+      .pipe(catchError(() => { alert('Failed.'); return of(null); }))
       .subscribe(r => { if (r !== null) { this.removeApprovalLocally(a); this.loadStats(); } });
   }
+
   private approveUrl(a: PendingApproval): string | null {
     switch (a.type) {
-      case 'LEAVE': return `${VP_BASE}/leave-requests/${a.id}/approve`;
-      case 'OT': return `${VP_BASE}/ot-requests/${a.id}/approve`;
-      case 'SALARY': case 'EXPENSE': return `${VP_BASE}/branch-expenses/${a.id}/approve`;
+      case 'LEAVE':   return `${VP_BASE}/leave-requests/${a.id}/approve`;
+      case 'OT':      return `${VP_BASE}/ot-requests/${a.id}/approve`;
+      case 'SALARY':
+      case 'EXPENSE': return `${VP_BASE}/branch-expenses/${a.id}/approve`;
       default: return null;
     }
   }
   private rejectUrl(a: PendingApproval): string | null {
     switch (a.type) {
-      case 'LEAVE': return `${VP_BASE}/leave-requests/${a.id}/reject`;
-      case 'OT': return `${VP_BASE}/ot-requests/${a.id}/reject`;
-      case 'SALARY': case 'EXPENSE': return `${VP_BASE}/branch-expenses/${a.id}/reject`;
+      case 'LEAVE':   return `${VP_BASE}/leave-requests/${a.id}/reject`;
+      case 'OT':      return `${VP_BASE}/ot-requests/${a.id}/reject`;
+      case 'SALARY':
+      case 'EXPENSE': return `${VP_BASE}/branch-expenses/${a.id}/reject`;
       default: return null;
     }
   }
   private removeApprovalLocally(a: PendingApproval): void {
     const list = this.getList(a.type);
-    const idx = list.findIndex(x => x.id === a.id);
+    const idx  = list.findIndex(x => x.id === a.id);
     if (idx > -1) list.splice(idx, 1);
     this.approvalCounts[a.type] = list.length;
     this.recomputeTotalPending(); this.cdr.detectChanges();
   }
   private getList(type: ApprovalTab): PendingApproval[] {
     switch (type) {
-      case 'LEAVE': return this.leaveApprovals; case 'OT': return this.otApprovals;
-      case 'SALARY': return this.salaryApprovals; case 'EXPENSE': return this.expenseApprovals;
+      case 'LEAVE':   return this.leaveApprovals;
+      case 'OT':      return this.otApprovals;
+      case 'SALARY':  return this.salaryApprovals;
+      case 'EXPENSE': return this.expenseApprovals;
+      default:        return [];
     }
   }
-  private recomputeTotalPending(): void {
-    this.stats.pendingApprovals = this.approvalCounts.LEAVE + this.approvalCounts.OT + this.approvalCounts.SALARY + this.approvalCounts.EXPENSE;
+
+  // ══════════════════════════════════════════════════════════════
+  // GETTERS
+  // ══════════════════════════════════════════════════════════════
+
+  get filteredPendingApprovals(): PendingApproval[] {
+    if (this.activeApprovalTab === 'SALARY') return [];
+    return this.getList(this.activeApprovalTab);
   }
-
-  // ── Getters ─────────────────────────────────────────────
-  get filteredPendingApprovals(): PendingApproval[] { return this.getList(this.activeApprovalTab); }
+  private recomputeTotalPending(): void {
+    this.stats.pendingApprovals =
+      this.approvalCounts.LEAVE + this.approvalCounts.OT +
+      this.approvalCounts.SALARY + this.approvalCounts.EXPENSE;
+  }
   get totalPendingCount(): number { return this.stats.pendingApprovals; }
-  get donutTotal(): number { return this.donutData.reduce((s, d) => s + d.count, 0); }
+  get donutTotal(): number        { return this.donutData.reduce((s, d) => s + d.count, 0); }
 
-  // ── Theme / Lang / Tabs ─────────────────────────────────
+  // ══════════════════════════════════════════════════════════════
+  // THEME / LANG / TABS
+  // ══════════════════════════════════════════════════════════════
+
   setTheme(dark: boolean): void {
     this.isDark = dark;
-    document.body.classList.toggle('dark', dark);
+    document.body.classList.toggle('dark',  dark);
     document.body.classList.toggle('light', !dark);
     localStorage.setItem('brycen-theme', dark ? 'dark' : 'light');
   }
   toggleTheme(): void { this.setTheme(!this.isDark); }
   selectLang(lang: any): void { this.currentLangObj = lang; this.showLangMenu = false; }
-  setApprovalTab(tab: ApprovalTab): void { this.activeApprovalTab = tab; }
+  setApprovalTab(tab: ApprovalTab): void {
+    this.activeApprovalTab = tab;
+    if (tab === 'SALARY' && this.salaryApproval === null) this.loadSalaryApprovals();
+  }
 
-  // ── Chart helpers ───────────────────────────────────────
+  // ══════════════════════════════════════════════════════════════
+  // CHART HELPERS
+  // ══════════════════════════════════════════════════════════════
+
   getBarMaxVal(): number { return Math.max(1, ...this.chartData.map(d => d.done + d.inProgress + d.todo)); }
   getBarHeight(val: number, max: number): number { return max === 0 ? 0 : (val / max) * 100; }
   getDonutDashArray(count: number): string {
@@ -376,13 +764,18 @@ export class VpDashboardComponent implements OnInit, OnDestroy {
     return ((offset % 100) + 100) % 100;
   }
 
-  // ── Style helpers ───────────────────────────────────────
-  getStatusColor(s: string): string { return s === 'On Track' ? '#22c55e' : s === 'At Risk' ? '#f59e0b' : '#ef4444'; }
+  // ══════════════════════════════════════════════════════════════
+  // STYLE HELPERS
+  // ══════════════════════════════════════════════════════════════
+
+  getStatusColor(s: string): string {
+    return s === 'On Track' ? '#22c55e' : s === 'At Risk' ? '#f59e0b' : '#ef4444';
+  }
   getProgressGradient(s: string): string {
     return s === 'On Track' ? 'linear-gradient(90deg,#3b82f6,#6366f1)'
       : s === 'At Risk' ? 'linear-gradient(90deg,#f59e0b,#fb923c)' : 'linear-gradient(90deg,#ef4444,#f87171)';
   }
-  getHealthDots(h: number): number[] { return [0, 1, 2, 3, 4]; }
+  getHealthDots(h: number): number[]         { return [0, 1, 2, 3, 4]; }
   getHealthDotColor(i: number, h: number): string {
     if (i >= h) return '#1e2d4a';
     return h >= 4 ? '#22c55e' : h >= 2 ? '#f59e0b' : '#ef4444';
@@ -396,7 +789,27 @@ export class VpDashboardComponent implements OnInit, OnDestroy {
     return { background: `${c}22`, color: c };
   }
 
-  // ── Utilities ───────────────────────────────────────────
+  // ══════════════════════════════════════════════════════════════
+  // FORMAT HELPERS
+  // ══════════════════════════════════════════════════════════════
+
+  formatMoney(currency: string, amount: number): string {
+    const sym: Record<string, string> = { USD: '$', JPY: '¥', KHR: '៛', MMK: 'K', VND: '₫', KRW: '₩' };
+    const s = sym[currency] || (currency + ' ');
+    return s + Number(amount || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+  formatPeriodLabel(code: string): string {
+    if (!code || code.length < 7) return code || '';
+    const [y, m] = code.split('-');
+    return new Date(Number(y), Number(m) - 1, 1).toLocaleString('en-US', { month: 'long', year: 'numeric' });
+  }
+
+  openMemberPopup(m: BranchMemberItem): void {
+    this.activeChatMember = { id: m.id, name: m.name, role: m.role, color: m.color, initial: m.initial, online: m.online };
+    this.cdr.detectChanges();
+  }
+  closeMemberPopup(): void { this.activeChatMember = null; this.cdr.detectChanges(); }
+
   private formatLeaveType(t: string): string {
     return ({ ANNUAL: '🏖 Annual leave', SICK: '🤒 Sick leave', UNPAID: '💼 Unpaid leave' } as any)[t] || t || 'Leave';
   }
@@ -407,11 +820,9 @@ export class VpDashboardComponent implements OnInit, OnDestroy {
     return `${this.formatDate(s!)} — ${this.formatDate(e!)}`;
   }
   private shortRole(r: string): string {
-    return ({
-      'Project Manager': 'PM', 'Leader': 'Leader', 'Developer': 'Dev',
+    return ({ 'Project Manager': 'PM', 'Leader': 'Leader', 'Developer': 'Dev',
       'UI/UX Designer': 'UI/UX', 'QA Engineer': 'QA', 'Admin': 'Admin',
-      'Vice President': 'VP', 'Country Director': 'CD'
-    } as any)[r] || r?.slice(0, 8) || '—';
+      'Vice President': 'VP', 'Country Director': 'CD' } as any)[r] || r?.slice(0, 8) || '—';
   }
   private calcHealth(s: string, p: number, d: number): number {
     if (s === 'Delayed') return 1; if (s === 'At Risk') return 2;
@@ -420,5 +831,6 @@ export class VpDashboardComponent implements OnInit, OnDestroy {
   private updateMyTasksHeight(): void {
     setTimeout(() => { this.myTasksMaxH = Math.floor(window.innerHeight * 0.42); this.cdr.detectChanges(); }, 0);
   }
+
   signOut(): void { this.auth.logout(); this.router.navigate(['/login']); }
 }

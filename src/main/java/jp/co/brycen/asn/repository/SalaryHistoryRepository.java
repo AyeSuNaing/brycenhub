@@ -19,8 +19,9 @@ public interface SalaryHistoryRepository extends JpaRepository<SalaryHistory, Lo
     @Query("SELECT s FROM SalaryHistory s " +
            "WHERE s.branchId = :branchId AND s.payPeriod = :payPeriod " +
            "ORDER BY s.userId ASC")
-    List<SalaryHistory> findByBranchAndPeriod(@Param("branchId") Long branchId,
-                                              @Param("payPeriod") String payPeriod);
+    List<SalaryHistory> findByBranchAndPeriod(
+            @Param("branchId")  Long branchId,
+            @Param("payPeriod") String payPeriod);
 
     /** Company-wide for a given period (Boss dashboard). */
     List<SalaryHistory> findByPayPeriodOrderByBranchIdAscUserIdAsc(String payPeriod);
@@ -30,7 +31,16 @@ public interface SalaryHistoryRepository extends JpaRepository<SalaryHistory, Lo
 
     /** Count how many records already exist for a branch in a period (was it calculated?). */
     long countByBranchIdAndPayPeriod(Long branchId, String payPeriod);
-    
-    // ဒီ line ထပ်ထည့်
+
+    /** Count by status — company wide (Boss dashboard). */
+    long countByStatus(String status);
+
+    /** Count by branch + status (VP Dashboard stats). */
     long countByBranchIdAndStatus(Long branchId, String status);
+
+    /** List by branch + status — VP Dashboard salary approvals inbox. */
+    List<SalaryHistory> findByBranchIdAndStatus(Long branchId, String status);
+
+    /** List by branch + status, sorted newest first. */
+    List<SalaryHistory> findByBranchIdAndStatusOrderByCreatedAtDesc(Long branchId, String status);
 }

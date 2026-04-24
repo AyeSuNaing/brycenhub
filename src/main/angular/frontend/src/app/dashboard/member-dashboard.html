@@ -113,6 +113,17 @@
             <span class="nav-icon">📢</span>
             <span>Announcements</span>
           </div>
+
+          <div class="sidebar-item" [class.active]="activeView==='leave'" (click)="setView('leave')">
+            <span class="nav-icon">🏖</span>
+            <span>Leave Request</span>
+          </div>
+
+          <div class="sidebar-item" [class.active]="activeView==='ot'" (click)="setView('ot')">
+            <span class="nav-icon">⏰</span>
+            <span>OT Request</span>
+          </div>
+
           <div class="sidebar-item" [routerLink]="['/projects']">
             <span class="nav-icon">📁</span>
             <span>All Projects</span>
@@ -175,7 +186,8 @@
     </aside>
 
     <!-- MAIN CONTENT -->
-    <main *ngIf="!showProjectDetail && !showNewProject && activeView!=='announce'" class="main-content">
+    <main *ngIf="!showProjectDetail && !showNewProject && activeView==='dashboard'" class="main-content">
+
  
       <div class="stats-grid">
         <div class="stat-card">
@@ -400,8 +412,23 @@
       style="flex:1;min-width:0;overflow:hidden;">
     </app-announcement-history>
 
+    <!-- Leave Request -->
+    <app-my-leave-request
+      *ngIf="activeView==='leave'"
+      (back)="setView('dashboard')"
+      style="flex:1;min-width:0;overflow:hidden;">
+    </app-my-leave-request>
+
+    <!-- OT Request -->
+    <app-my-ot-request
+      *ngIf="activeView==='ot'"
+      (back)="setView('dashboard')"
+      style="flex:1;min-width:0;overflow:hidden;">
+    </app-my-ot-request>
+
     <!-- RIGHT SIDEBAR -->
-    <aside *ngIf="!showProjectDetail && !showNewProject" class="right-sidebar">
+<aside *ngIf="!showProjectDetail && !showNewProject && (activeView==='dashboard' || activeView==='leave' || activeView==='ot' || activeView==='announce')" class="right-sidebar">
+
       <div class="my-tasks-section">
         <div class="rs-section-header">
           <span style="font-size:11px;font-weight:700;">My Tasks</span>

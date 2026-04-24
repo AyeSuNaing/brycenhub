@@ -75,5 +75,13 @@ public interface OtRequestRepository extends JpaRepository<OtRequest, Long> {
 	                               @Param("end")    LocalDate end);
 	
 
+	// ── VP History — all statuses, by branch user IDs ─────────────
+	List<OtRequest> findByUserIdInOrderByCreatedAtDesc(List<Long> userIds);
+
+	List<OtRequest> findByUserIdInAndWorkDateBetweenOrderByWorkDateDesc(
+	    List<Long> userIds, LocalDate from, LocalDate to);
+	List<OtRequest> findByUserIdInAndStatusAndWorkDateBetweenOrderByWorkDateDesc(
+	    List<Long> userIds, String status, LocalDate from, LocalDate to);
+
 
 }

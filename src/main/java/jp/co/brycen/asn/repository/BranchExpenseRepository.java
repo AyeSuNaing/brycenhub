@@ -28,6 +28,9 @@ public interface BranchExpenseRepository extends JpaRepository<BranchExpense, Lo
     long countByStatus(String status);
 
     long countByBranchIdAndStatusAndExpenseType(Long branchId, String status, String expenseType);
+    
+    List<BranchExpense> findByBranchIdAndExpenseTypeOrderByCreatedAtDesc(Long branchId, String expenseType);
+    List<BranchExpense> findByBranchIdOrderByCreatedAtDesc(Long branchId);
 
     // ── Monthly totals (approved) ───────────────────────────────
     @Query("SELECT COALESCE(SUM(e.amount), 0) FROM BranchExpense e " +
