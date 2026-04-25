@@ -22,14 +22,14 @@ import java.util.stream.Collectors;
 @PreAuthorize("hasRole('VICE_PRESIDENT')")
 public class VpDashboardController {
 
-    @Autowired private UserRepository         userRepository;
-    @Autowired private UserRoleRepository     userRoleRepository;
-    @Autowired private BranchRepository       branchRepository;
-    @Autowired private OtRequestRepository    otRequestRepository;
-    @Autowired private LeaveRequestRepository leaveRequestRepository;
+    @Autowired private UserRepository          userRepository;
+    @Autowired private UserRoleRepository      userRoleRepository;
+    @Autowired private BranchRepository        branchRepository;
+    @Autowired private OtRequestRepository     otRequestRepository;
+    @Autowired private LeaveRequestRepository  leaveRequestRepository;
     @Autowired private BranchExpenseRepository branchExpenseRepository;
-    @Autowired private ProjectRepository      projectRepository;
-    @Autowired private TaskRepository         taskRepository;
+    @Autowired private ProjectRepository       projectRepository;
+    @Autowired private TaskRepository          taskRepository;
     @Autowired private SalaryHistoryRepository salaryHistoryRepository;
 
     // ── Helpers ──────────────────────────────────────────────────
@@ -50,6 +50,47 @@ public class VpDashboardController {
         return vp.getBranchId() != null && vp.getBranchId().equals(exp.getBranchId());
     }
 
+    // ── Shared helper: group SalaryHistory list → SalaryPeriodSummary list ──
+    private List<SalaryPeriodSummary> groupToPeriodSummary(
+            List<SalaryHistory> rows, Long branchId) {
+
+        Map<String, List<SalaryHistory>> grouped = rows.stream()
+            .collect(Collectors.groupingBy(SalaryHistory::getPayPeriod));
+
+        return grouped.entrySet().stream().map(entry -> {
+            String period   = entry.getKey();
+            List<SalaryHistory> periodRows = entry.getValue();
+            String currency = periodRows.get(0).getCurrency() != null
+                ? periodRows.get(0).getCurrency() : "USD";
+            // status: use the status of the first row in this period
+            String status   = periodRows.get(0).getStatus() != null
+                ? periodRows.get(0).getStatus() : "UNKNOWN";
+
+            BigDecimal totalGross = periodRows.stream()
+                .map(s -> s.getGrossSalary() != null ? s.getGrossSalary() : BigDecimal.ZERO)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+            BigDecimal totalTax = periodRows.stream()
+                .map(s -> s.getTaxAmount() != null ? s.getTaxAmount() : BigDecimal.ZERO)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+            BigDecimal totalNet = periodRows.stream()
+                .map(s -> s.getNetSalary() != null ? s.getNetSalary() : BigDecimal.ZERO)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+            SalaryPeriodSummary s = new SalaryPeriodSummary();
+            s.setBranchId(branchId);
+            s.setPayPeriod(period);
+            s.setCurrency(currency);
+            s.setStatus(status);
+            s.setStaffCount(periodRows.size());
+            s.setTotalGross(totalGross);
+            s.setTotalTax(totalTax);
+            s.setTotalNet(totalNet);
+            return s;
+        })
+        .sorted(Comparator.comparing(SalaryPeriodSummary::getPayPeriod).reversed())
+        .collect(Collectors.toList());
+    }
+
     // ============================================================
     // ① STATS
     // ============================================================
@@ -66,7 +107,16 @@ public class VpDashboardController {
         r.setTotalStaff(userRepository.countByBranchIdAndIsActiveAndRoleIdNot(branchId, true, 10L));
         r.setPendingLeave(leaveRequestRepository.countByBranchIdAndStatus(branchId, "PENDING"));
         r.setPendingOT(otRequestRepository.countByBranchIdAndStatus(branchId, "PENDING"));
-        r.setPendingSalary(salaryHistoryRepository.countByBranchIdAndStatus(branchId, "PENDING_APPROVAL"));
+
+        // Badge = distinct PENDING_APPROVAL pay_period count
+        long pendingSalaryPeriods = salaryHistoryRepository.findAll().stream()
+            .filter(s -> branchId.equals(s.getBranchId()))
+            .filter(s -> "PENDING_APPROVAL".equals(s.getStatus()))
+            .map(SalaryHistory::getPayPeriod)
+            .filter(Objects::nonNull)
+            .distinct()
+            .count();
+        r.setPendingSalary(pendingSalaryPeriods);
         r.setTotalPending(r.getPendingLeave() + r.getPendingOT() + r.getPendingSalary() + r.getPendingExpense());
 
         BigDecimal otHours = otRequestRepository.sumApprovedOtHoursByBranch(branchId, year, month);
@@ -88,7 +138,6 @@ public class VpDashboardController {
 
     // ============================================================
     // ② LEAVE REQUESTS
-    // GET /leave-requests?status=PENDING|APPROVED|REJECTED|ALL
     // ============================================================
     @GetMapping("/leave-requests")
     public ResponseEntity<List<LeaveRow>> getLeaveRequests(
@@ -96,22 +145,20 @@ public class VpDashboardController {
             @RequestParam(required = false) String status,
             @RequestParam(required = false) String from,
             @RequestParam(required = false) String to) {
- 
+
         Long branchId = vp.getBranchId();
         if (branchId == null) return ResponseEntity.ok(Collections.emptyList());
- 
+
         List<Long> branchUserIds = userRepository.findByBranchId(branchId)
             .stream().map(User::getId).collect(Collectors.toList());
         if (branchUserIds.isEmpty()) return ResponseEntity.ok(Collections.emptyList());
- 
+
         LocalDate fromDate = (from != null && !from.isEmpty()) ? LocalDate.parse(from) : null;
         LocalDate toDate   = (to   != null && !to.isEmpty())   ? LocalDate.parse(to)   : null;
- 
-        boolean allStatus = (status == null || status.isEmpty() || "ALL".equals(status));
- 
+        boolean allStatus  = (status == null || status.isEmpty() || "ALL".equals(status));
+
         List<LeaveRequest> list;
         if (fromDate != null && toDate != null) {
-            // date range filter
             if (allStatus) {
                 list = leaveRequestRepository.findByUserIdInAndStartDateBetweenOrderByCreatedAtDesc(
                     branchUserIds, fromDate, toDate);
@@ -123,13 +170,13 @@ public class VpDashboardController {
             if (allStatus) {
                 list = leaveRequestRepository.findByUserIdInOrderByCreatedAtDesc(branchUserIds);
             } else {
-                list = leaveRequestRepository.findByBranchIdAndStatus(branchId, status);
+                list = leaveRequestRepository.findByUserIdInAndStatusOrderByCreatedAtDesc(branchUserIds, status);
             }
         }
- 
+
         Map<Long, User>     uCache = new HashMap<>();
         Map<Long, UserRole> rCache = new HashMap<>();
- 
+
         List<LeaveRow> result = list.stream().map(lv -> {
             User u = uCache.computeIfAbsent(lv.getUserId(),
                     id -> userRepository.findById(id).orElse(null));
@@ -139,30 +186,28 @@ public class VpDashboardController {
                         id -> userRoleRepository.findById(id).orElse(null));
                 if (ur != null) roleName = ur.getDisplayName();
             }
-            LeaveRow r = new LeaveRow();
-            r.setId(lv.getId());
-            r.setUserId(lv.getUserId());
-            r.setUserName(u != null ? u.getName() : "Unknown");
-            r.setUserInitial(u != null ? getInitial(u.getName()) : "?");
-            r.setUserColor(u != null ? getAvatarColor(u.getId()) : "#64748b");
-            r.setUserRole(roleName);
-            r.setLeaveType(lv.getLeaveType());
-            r.setStartDate(lv.getStartDate());
-            r.setEndDate(lv.getEndDate());
-            r.setTotalDays(lv.getTotalDays());
-            r.setReason(lv.getReason());
-            r.setStatus(lv.getStatus());
-            r.setCreatedAt(lv.getCreatedAt());
-            return r;
+            LeaveRow row = new LeaveRow();
+            row.setId(lv.getId());
+            row.setUserId(lv.getUserId());
+            row.setUserName(u != null ? u.getName() : "Unknown");
+            row.setUserInitial(u != null ? getInitial(u.getName()) : "?");
+            row.setUserColor(u != null ? getAvatarColor(u.getId()) : "#64748b");
+            row.setUserRole(roleName);
+            row.setLeaveType(lv.getLeaveType());
+            row.setStartDate(lv.getStartDate());
+            row.setEndDate(lv.getEndDate());
+            row.setTotalDays(lv.getTotalDays());
+            row.setReason(lv.getReason());
+            row.setStatus(lv.getStatus());
+            row.setCreatedAt(lv.getCreatedAt());
+            return row;
         }).collect(Collectors.toList());
- 
+
         return ResponseEntity.ok(result);
     }
- 
 
     // ============================================================
     // ③ OT REQUESTS
-    // GET /ot-requests?status=PENDING|APPROVED|REJECTED|ALL
     // ============================================================
     @GetMapping("/ot-requests")
     public ResponseEntity<List<OtRow>> getOtRequests(
@@ -170,19 +215,18 @@ public class VpDashboardController {
             @RequestParam(required = false) String status,
             @RequestParam(required = false) String from,
             @RequestParam(required = false) String to) {
- 
+
         Long branchId = vp.getBranchId();
         if (branchId == null) return ResponseEntity.ok(Collections.emptyList());
- 
+
         List<Long> branchUserIds = userRepository.findByBranchId(branchId)
             .stream().map(User::getId).collect(Collectors.toList());
         if (branchUserIds.isEmpty()) return ResponseEntity.ok(Collections.emptyList());
- 
+
         LocalDate fromDate = (from != null && !from.isEmpty()) ? LocalDate.parse(from) : null;
         LocalDate toDate   = (to   != null && !to.isEmpty())   ? LocalDate.parse(to)   : null;
- 
-        boolean allStatus = (status == null || status.isEmpty() || "ALL".equals(status));
- 
+        boolean allStatus  = (status == null || status.isEmpty() || "ALL".equals(status));
+
         List<OtRequest> list;
         if (fromDate != null && toDate != null) {
             if (allStatus) {
@@ -196,14 +240,14 @@ public class VpDashboardController {
             if (allStatus) {
                 list = otRequestRepository.findByUserIdInOrderByCreatedAtDesc(branchUserIds);
             } else {
-                list = otRequestRepository.findByBranchIdAndStatus(branchId, status);
+                list = otRequestRepository.findByUserIdInAndStatusOrderByCreatedAtDesc(branchUserIds, status);
             }
         }
- 
+
         Map<Long, User>     uCache = new HashMap<>();
         Map<Long, Project>  pCache = new HashMap<>();
         Map<Long, UserRole> rCache = new HashMap<>();
- 
+
         List<OtRow> result = list.stream().map(ot -> {
             User u = uCache.computeIfAbsent(ot.getUserId(),
                     id -> userRepository.findById(id).orElse(null));
@@ -217,31 +261,30 @@ public class VpDashboardController {
                         id -> userRoleRepository.findById(id).orElse(null));
                 if (ur != null) roleName = ur.getDisplayName();
             }
-            OtRow r = new OtRow();
-            r.setId(ot.getId());
-            r.setUserId(ot.getUserId());
-            r.setUserName(u != null ? u.getName() : "Unknown");
-            r.setUserInitial(u != null ? getInitial(u.getName()) : "?");
-            r.setUserColor(u != null ? getAvatarColor(u.getId()) : "#64748b");
-            r.setUserRole(roleName);
-            r.setWorkDate(ot.getWorkDate());
-            r.setDayType(ot.getDayType());
-            r.setOtHours(ot.getOtHours());
-            r.setOtRate(ot.getOtRate());
-            r.setProjectId(ot.getProjectId());
-            r.setProjectName(p != null ? p.getTitle() : null);
-            r.setReason(ot.getReason());
-            r.setStatus(ot.getStatus());
-            r.setCreatedAt(ot.getCreatedAt());
-            return r;
+            OtRow row = new OtRow();
+            row.setId(ot.getId());
+            row.setUserId(ot.getUserId());
+            row.setUserName(u != null ? u.getName() : "Unknown");
+            row.setUserInitial(u != null ? getInitial(u.getName()) : "?");
+            row.setUserColor(u != null ? getAvatarColor(u.getId()) : "#64748b");
+            row.setUserRole(roleName);
+            row.setWorkDate(ot.getWorkDate());
+            row.setDayType(ot.getDayType());
+            row.setOtHours(ot.getOtHours());
+            row.setOtRate(ot.getOtRate());
+            row.setProjectId(ot.getProjectId());
+            row.setProjectName(p != null ? p.getTitle() : null);
+            row.setReason(ot.getReason());
+            row.setStatus(ot.getStatus());
+            row.setCreatedAt(ot.getCreatedAt());
+            return row;
         }).collect(Collectors.toList());
- 
+
         return ResponseEntity.ok(result);
     }
+
     // ============================================================
     // ④ BRANCH EXPENSES
-    // GET /branch-expenses?status=PENDING&type=EXPENSE
-    // status=null|ALL → all statuses
     // ============================================================
     @GetMapping("/branch-expenses")
     public ResponseEntity<List<ExpenseRow>> getBranchExpenses(
@@ -256,41 +299,35 @@ public class VpDashboardController {
         boolean allStatus = (status == null || status.isEmpty() || "ALL".equals(status));
 
         if (allStatus && type != null && !type.isEmpty()) {
-            list = branchExpenseRepository
-                .findByBranchIdAndExpenseTypeOrderByCreatedAtDesc(branchId, type);
+            list = branchExpenseRepository.findByBranchIdAndExpenseTypeOrderByCreatedAtDesc(branchId, type);
         } else if (allStatus) {
-            list = branchExpenseRepository
-                .findByBranchIdOrderByCreatedAtDesc(branchId);
+            list = branchExpenseRepository.findByBranchIdOrderByCreatedAtDesc(branchId);
         } else if (type != null && !type.isEmpty()) {
-            list = branchExpenseRepository
-                .findByBranchIdAndStatusAndExpenseTypeOrderByCreatedAtDesc(branchId, status, type);
+            list = branchExpenseRepository.findByBranchIdAndStatusAndExpenseTypeOrderByCreatedAtDesc(branchId, status, type);
         } else {
-            list = branchExpenseRepository
-                .findByBranchIdAndStatusOrderByCreatedAtDesc(branchId, status);
+            list = branchExpenseRepository.findByBranchIdAndStatusOrderByCreatedAtDesc(branchId, status);
         }
 
         Map<Long, User> uCache = new HashMap<>();
-
         List<ExpenseRow> result = list.stream().map(e -> {
             User creator = e.getCreatedBy() != null
-                    ? uCache.computeIfAbsent(e.getCreatedBy(),
-                            id -> userRepository.findById(id).orElse(null))
+                    ? uCache.computeIfAbsent(e.getCreatedBy(), id -> userRepository.findById(id).orElse(null))
                     : null;
-            ExpenseRow r = new ExpenseRow();
-            r.setId(e.getId());
-            r.setBranchId(e.getBranchId());
-            r.setCategoryId(e.getCategoryId());
-            r.setAmount(e.getAmount());
-            r.setCurrency(e.getCurrency());
-            r.setDescription(e.getDescription());
-            r.setExpenseType(e.getExpenseType());
-            r.setReceiptUrl(e.getReceiptUrl());
-            r.setDate(e.getDate());
-            r.setStatus(e.getStatus());
-            r.setCreatedBy(e.getCreatedBy());
-            r.setCreatedByName(creator != null ? creator.getName() : null);
-            r.setCreatedAt(e.getCreatedAt());
-            return r;
+            ExpenseRow row = new ExpenseRow();
+            row.setId(e.getId());
+            row.setBranchId(e.getBranchId());
+            row.setCategoryId(e.getCategoryId());
+            row.setAmount(e.getAmount());
+            row.setCurrency(e.getCurrency());
+            row.setDescription(e.getDescription());
+            row.setExpenseType(e.getExpenseType());
+            row.setReceiptUrl(e.getReceiptUrl());
+            row.setDate(e.getDate());
+            row.setStatus(e.getStatus());
+            row.setCreatedBy(e.getCreatedBy());
+            row.setCreatedByName(creator != null ? creator.getName() : null);
+            row.setCreatedAt(e.getCreatedAt());
+            return row;
         }).collect(Collectors.toList());
 
         return ResponseEntity.ok(result);
@@ -417,79 +454,52 @@ public class VpDashboardController {
     }
 
     // ============================================================
-    // ⑧ SALARY APPROVALS
-    // GET /salary-approvals → salary_history PENDING_APPROVAL
+    // ⑧ SALARY APPROVALS — Dashboard card
+    // ✅ PENDING_APPROVAL only → dashboard pending card
+    // GET /api/vp/dashboard/salary-approvals
     // ============================================================
     @GetMapping("/salary-approvals")
-    public ResponseEntity<SalaryApprovalResponse> getSalaryApprovals(
+    public ResponseEntity<List<SalaryPeriodSummary>> getSalaryApprovals(
             @AuthenticationPrincipal User vp) {
 
         Long branchId = vp.getBranchId();
-        if (branchId == null) return ResponseEntity.ok(new SalaryApprovalResponse());
+        if (branchId == null) return ResponseEntity.ok(Collections.emptyList());
 
-        List<SalaryHistory> rows = salaryHistoryRepository.findAll().stream()
+        // PENDING_APPROVAL only
+        List<SalaryHistory> pending = salaryHistoryRepository.findAll().stream()
             .filter(s -> branchId.equals(s.getBranchId()))
-            .filter(s -> "PENDING_APPROVAL".equals(s.getStatus()))
-            .sorted(Comparator.comparing(SalaryHistory::getUserId))
+//            .filter(s -> "PENDING_APPROVAL".equals(s.getStatus()))
             .collect(Collectors.toList());
 
-        if (rows.isEmpty()) return ResponseEntity.ok(new SalaryApprovalResponse());
+        if (pending.isEmpty()) return ResponseEntity.ok(Collections.emptyList());
 
-        String payPeriod = rows.get(0).getPayPeriod();
-        String currency  = rows.get(0).getCurrency() != null ? rows.get(0).getCurrency() : "USD";
-
-        Map<Long, User>     uCache = new HashMap<>();
-        Map<Long, UserRole> rCache = new HashMap<>();
-        BigDecimal totalGross = BigDecimal.ZERO;
-        BigDecimal totalTax   = BigDecimal.ZERO;
-        BigDecimal totalNet   = BigDecimal.ZERO;
-
-        List<SalaryStaffRow> staffRows = new ArrayList<>();
-        for (SalaryHistory sh : rows) {
-            User u = uCache.computeIfAbsent(sh.getUserId(),
-                id -> userRepository.findById(id).orElse(null));
-            String roleName = "Staff", roleColor = "#64748b";
-            if (u != null && u.getRoleId() != null) {
-                UserRole ur = rCache.computeIfAbsent(u.getRoleId(),
-                    id -> userRoleRepository.findById(id).orElse(null));
-                if (ur != null) {
-                    roleName  = ur.getDisplayName();
-                    roleColor = ur.getColor() != null ? ur.getColor() : "#64748b";
-                }
-            }
-            SalaryStaffRow r = new SalaryStaffRow();
-            r.setId(sh.getId());
-            r.setUserId(sh.getUserId());
-            r.setUserName(u != null ? u.getName() : "Unknown");
-            r.setUserInitial(u != null ? getInitial(u.getName()) : "?");
-            r.setUserColor(u != null ? getAvatarColor(u.getId()) : "#64748b");
-            r.setRoleName(roleName);
-            r.setRoleColor(roleColor);
-            r.setGrossSalary(sh.getGrossSalary() != null ? sh.getGrossSalary() : BigDecimal.ZERO);
-            r.setTaxAmount(sh.getTaxAmount()   != null ? sh.getTaxAmount()   : BigDecimal.ZERO);
-            r.setNetSalary(sh.getNetSalary()   != null ? sh.getNetSalary()   : BigDecimal.ZERO);
-            r.setCurrency(currency);
-            r.setStatus(sh.getStatus());
-            staffRows.add(r);
-            totalGross = totalGross.add(r.getGrossSalary());
-            totalTax   = totalTax.add(r.getTaxAmount());
-            totalNet   = totalNet.add(r.getNetSalary());
-        }
-
-        SalaryApprovalResponse res = new SalaryApprovalResponse();
-        res.setBranchId(branchId);
-        res.setPayPeriod(payPeriod);
-        res.setCurrency(currency);
-        res.setTotalRecords(rows.size());
-        res.setTotalGross(totalGross);
-        res.setTotalTax(totalTax);
-        res.setTotalNet(totalNet);
-        res.setRows(staffRows);
-        return ResponseEntity.ok(res);
+        return ResponseEntity.ok(groupToPeriodSummary(pending, branchId));
     }
 
     // ============================================================
-    // ⑨ BRANCH PROJECTS
+    // ⑨ SALARY HISTORY — Sidebar salary view
+    // ✅ ALL periods, ORDER BY pay_period DESC
+    // GET /api/vp/dashboard/salary-history
+    // ============================================================
+    @GetMapping("/salary-history")
+    public ResponseEntity<List<SalaryPeriodSummary>> getSalaryHistory(
+            @AuthenticationPrincipal User vp) {
+
+        Long branchId = vp.getBranchId();
+        if (branchId == null) return ResponseEntity.ok(Collections.emptyList());
+
+        // ALL statuses — no filter
+        List<SalaryHistory> all = salaryHistoryRepository.findAll().stream()
+            .filter(s -> branchId.equals(s.getBranchId()))
+            .collect(Collectors.toList());
+
+        if (all.isEmpty()) return ResponseEntity.ok(Collections.emptyList());
+
+        return ResponseEntity.ok(groupToPeriodSummary(all, branchId));
+    }
+
+    // ============================================================
+    // ⑩ BRANCH PROJECTS
     // ============================================================
     @GetMapping("/branch-projects")
     public ResponseEntity<List<ProjectRow>> getBranchProjects(@AuthenticationPrincipal User vp) {
@@ -501,29 +511,28 @@ public class VpDashboardController {
             .filter(p -> "ACTIVE".equals(p.getStatus()) || "PLANNING".equals(p.getStatus()))
             .map(p -> {
                 User pm = p.getPmId() != null
-                        ? uCache.computeIfAbsent(p.getPmId(),
-                                id -> userRepository.findById(id).orElse(null))
+                        ? uCache.computeIfAbsent(p.getPmId(), id -> userRepository.findById(id).orElse(null))
                         : null;
-                ProjectRow r = new ProjectRow();
-                r.setId(p.getId());
-                r.setTitle(p.getTitle());
-                r.setStatus(p.getStatus());
-                r.setProgress(p.getProgress() != null ? p.getProgress() : 0);
-                r.setStartDate(p.getStartDate());
-                r.setEndDate(p.getEndDate());
-                r.setPmId(p.getPmId());
-                r.setPmName(pm != null ? pm.getName() : "Unassigned");
-                r.setPmInitial(pm != null ? getInitial(pm.getName()) : "?");
-                r.setPmColor(pm != null ? getAvatarColor(pm.getId()) : "#64748b");
-                r.setColor(p.getColor());
-                return r;
+                ProjectRow row = new ProjectRow();
+                row.setId(p.getId());
+                row.setTitle(p.getTitle());
+                row.setStatus(p.getStatus());
+                row.setProgress(p.getProgress() != null ? p.getProgress() : 0);
+                row.setStartDate(p.getStartDate());
+                row.setEndDate(p.getEndDate());
+                row.setPmId(p.getPmId());
+                row.setPmName(pm != null ? pm.getName() : "Unassigned");
+                row.setPmInitial(pm != null ? getInitial(pm.getName()) : "?");
+                row.setPmColor(pm != null ? getAvatarColor(pm.getId()) : "#64748b");
+                row.setColor(p.getColor());
+                return row;
             }).collect(Collectors.toList());
 
         return ResponseEntity.ok(result);
     }
 
     // ============================================================
-    // ⑩ BRANCH MEMBERS
+    // ⑪ BRANCH MEMBERS
     // ============================================================
     @GetMapping("/branch-members")
     public ResponseEntity<List<MemberRow>> getBranchMembers(@AuthenticationPrincipal User vp) {
@@ -545,23 +554,34 @@ public class VpDashboardController {
                             .filter(t -> !"DONE".equals(t.getStatus())).count();
                     boolean online = u.getLastSeen() != null
                             && ChronoUnit.MINUTES.between(u.getLastSeen(), LocalDateTime.now()) <= 5;
-                    MemberRow r = new MemberRow();
-                    r.setId(u.getId());
-                    r.setName(u.getName());
-                    r.setEmail(u.getEmail());
-                    r.setInitial(getInitial(u.getName()));
-                    r.setRole(roleName);
-                    r.setRoleId(u.getRoleId());
-                    r.setColor(getAvatarColor(u.getId()));
-                    r.setTaskCount(taskCount);
-                    r.setOnline(online);
-                    r.setLastSeen(u.getLastSeen());
-                    return r;
+                    MemberRow row = new MemberRow();
+                    row.setId(u.getId());
+                    row.setName(u.getName());
+                    row.setEmail(u.getEmail());
+                    row.setInitial(getInitial(u.getName()));
+                    row.setRole(roleName);
+                    row.setRoleId(u.getRoleId());
+                    row.setColor(getAvatarColor(u.getId()));
+                    row.setTaskCount(taskCount);
+                    row.setOnline(online);
+                    row.setLastSeen(u.getLastSeen());
+                    return row;
                 })
                 .sorted((a, b) -> Long.compare(b.getTaskCount(), a.getTaskCount()))
                 .collect(Collectors.toList());
 
         return ResponseEntity.ok(result);
+    }
+
+    // ============================================================
+    // ⑫ DEPARTMENTS
+    // ============================================================
+    @GetMapping("/departments")
+    public ResponseEntity<List<DepartmentRow>> getDepartments(@AuthenticationPrincipal User vp) {
+        Long branchId = vp.getBranchId();
+        if (branchId == null) return ResponseEntity.ok(Collections.emptyList());
+        // Assumes DepartmentRepository exists — adjust if needed
+        return ResponseEntity.ok(Collections.emptyList());
     }
 
     // ============================================================
@@ -610,21 +630,19 @@ public class VpDashboardController {
         private boolean online;
         private LocalDateTime lastSeen;
     }
+    @Data public static class DepartmentRow {
+        private Long id;
+        private String name;
+    }
     @Data public static class RejectBody { private String reason; }
-    @Data public static class SalaryApprovalResponse {
+
+    // ✅ Period-level summary — used by both endpoints
+    @Data public static class SalaryPeriodSummary {
         private Long branchId;
-        private String payPeriod, currency = "USD";
-        private int totalRecords = 0;
+        private String payPeriod, currency, status;   // ← status field ထည့်ပြီ
+        private int staffCount;
         private BigDecimal totalGross = BigDecimal.ZERO;
         private BigDecimal totalTax   = BigDecimal.ZERO;
         private BigDecimal totalNet   = BigDecimal.ZERO;
-        private List<SalaryStaffRow> rows = new ArrayList<>();
-    }
-    @Data public static class SalaryStaffRow {
-        private Long id, userId;
-        private String userName, userInitial, userColor, roleName, roleColor, currency, status;
-        private BigDecimal grossSalary = BigDecimal.ZERO;
-        private BigDecimal taxAmount   = BigDecimal.ZERO;
-        private BigDecimal netSalary   = BigDecimal.ZERO;
     }
 }

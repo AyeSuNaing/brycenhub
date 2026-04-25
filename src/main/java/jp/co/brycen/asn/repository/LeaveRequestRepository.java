@@ -71,17 +71,19 @@ public interface LeaveRequestRepository extends JpaRepository<LeaveRequest, Long
     List<LeaveRequest> findTomorrowLeaveByBranch(
             @Param("branchId") Long branchId,
             @Param("tomorrow") LocalDate tomorrow);
-    
-    
- // ── VP History — all statuses, by branch user IDs ─────────────
+
+    // ── VP History — all statuses, by branch user IDs ─────────────
     List<LeaveRequest> findByUserIdInOrderByCreatedAtDesc(List<Long> userIds);
-    
 
-	List<LeaveRequest> findByUserIdInAndStartDateBetweenOrderByCreatedAtDesc(
-	    List<Long> userIds, LocalDate from, LocalDate to);
-	List<LeaveRequest> findByUserIdInAndStatusAndStartDateBetweenOrderByCreatedAtDesc(
-    List<Long> userIds, String status, LocalDate from, LocalDate to);
+    // ── VP History — date range filter ───────────────────────────
+    List<LeaveRequest> findByUserIdInAndStartDateBetweenOrderByCreatedAtDesc(
+            List<Long> userIds, LocalDate from, LocalDate to);
 
-    
-    
+    // ── VP History — status + date range filter ───────────────────
+    List<LeaveRequest> findByUserIdInAndStatusAndStartDateBetweenOrderByCreatedAtDesc(
+            List<Long> userIds, String status, LocalDate from, LocalDate to);
+
+    // ── VP History — status filter only (no date) ─────────────────  ← NEW
+    List<LeaveRequest> findByUserIdInAndStatusOrderByCreatedAtDesc(
+            List<Long> userIds, String status);
 }

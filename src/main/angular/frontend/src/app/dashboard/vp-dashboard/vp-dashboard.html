@@ -36,16 +36,14 @@
         </div>
       </div>
     </div>
-    <div class="icon-btn" (click)="toggleTheme()">
-      <span style="font-size:13px">{{ isDark?'🌙':'☀️' }}</span>
-    </div>
+    <div class="icon-btn" (click)="toggleTheme()"><span style="font-size:13px">{{ isDark?'🌙':'☀️' }}</span></div>
     <app-bell-notification></app-bell-notification>
   </header>
 
   <app-announcement-bar></app-announcement-bar>
 
   <div class="main-row">
-    <!-- ════════ LEFT SIDEBAR ════════ -->
+    <!-- ════════ SIDEBAR ════════ -->
     <aside class="left-sidebar">
       <div class="sidebar-scroll">
         <div class="profile-section">
@@ -69,102 +67,38 @@
           <div class="member-badge">⭐ Cambodia Branch</div>
         </div>
         <hr class="profile-divider"/>
-
         <div style="margin-top:6px;">
           <div class="proj-section-label">MAIN</div>
-          <div class="sidebar-item" [class.active]="activeView==='dashboard'" (click)="setView('dashboard')">
-            <span class="nav-icon">📊</span><span>Dashboard</span>
-          </div>
-          <div class="sidebar-item" [routerLink]="['/projects']">
-            <span class="nav-icon">📁</span><span>Branch Projects</span>
-          </div>
-          <div class="sidebar-item">
-            <span class="nav-icon">👥</span><span>Members</span>
-          </div>
-          <div class="sidebar-item">
-            <span class="nav-icon">💰</span><span>Finance</span>
-          </div>
-          <div class="sidebar-item" [class.active]="activeView==='announcements'" (click)="setView('announcements')">
-            <span class="nav-icon">📢</span><span>Announcements</span>
-          </div>
+          <div class="sidebar-item" [class.active]="activeView==='dashboard'" (click)="setView('dashboard')"><span class="nav-icon">📊</span><span>Dashboard</span></div>
+          <div class="sidebar-item" [routerLink]="['/projects']"><span class="nav-icon">📁</span><span>Branch Projects</span></div>
+          <div class="sidebar-item"><span class="nav-icon">👥</span><span>Members</span></div>
+          <div class="sidebar-item"><span class="nav-icon">💰</span><span>Finance</span></div>
+          <div class="sidebar-item" [class.active]="activeView==='announcements'" (click)="setView('announcements')"><span class="nav-icon">📢</span><span>Announcements</span></div>
           <hr class="section-divider"/>
         </div>
-
         <div style="margin-top:6px;">
           <div class="proj-section-label">APPROVALS</div>
-
-          <!-- LEAVE -->
-          <div class="proj-item-v2"
-               (click)="setView('view-leave')"
-               [class.active-proj]="activeView==='view-leave'">
-            <div class="proj-item-top">
-              <div class="proj-item-left">
-                <span class="proj-dot-sq" style="background:#ef4444"></span>
-                <span class="proj-name" style="font-size:10px;">🗓 Leave</span>
-              </div>
-              <span *ngIf="approvalCounts.LEAVE>0" class="rs-badge-red" style="font-size:9px;">{{ approvalCounts.LEAVE }}</span>
-            </div>
+          <div class="proj-item-v2" (click)="setView('view-leave')" [class.active-proj]="activeView==='view-leave'">
+            <div class="proj-item-top"><div class="proj-item-left"><span class="proj-dot-sq" style="background:#ef4444"></span><span class="proj-name" style="font-size:10px;">🗓 Leave</span></div><span *ngIf="approvalCounts.LEAVE>0" class="rs-badge-red" style="font-size:9px;">{{ approvalCounts.LEAVE }}</span></div>
           </div>
-
-          <!-- OT -->
-          <div class="proj-item-v2"
-               (click)="setView('view-ot')"
-               [class.active-proj]="activeView==='view-ot'">
-            <div class="proj-item-top">
-              <div class="proj-item-left">
-                <span class="proj-dot-sq" style="background:#ef4444"></span>
-                <span class="proj-name" style="font-size:10px;">⏰ OT</span>
-              </div>
-              <span *ngIf="approvalCounts.OT>0" class="rs-badge-red" style="font-size:9px;">{{ approvalCounts.OT }}</span>
-            </div>
+          <div class="proj-item-v2" (click)="setView('view-ot')" [class.active-proj]="activeView==='view-ot'">
+            <div class="proj-item-top"><div class="proj-item-left"><span class="proj-dot-sq" style="background:#ef4444"></span><span class="proj-name" style="font-size:10px;">⏰ OT</span></div><span *ngIf="approvalCounts.OT>0" class="rs-badge-red" style="font-size:9px;">{{ approvalCounts.OT }}</span></div>
           </div>
-
-          <!-- SALARY -->
-          <div class="proj-item-v2"
-               (click)="setView('salary-approvals')"
-               [class.active-proj]="activeView==='salary-approvals'">
-            <div class="proj-item-top">
-              <div class="proj-item-left">
-                <span class="proj-dot-sq" style="background:#f59e0b"></span>
-                <span class="proj-name" style="font-size:10px;">💵 Salary</span>
-              </div>
-              <span *ngIf="approvalCounts.SALARY>0"
-                    class="rs-badge-red"
-                    style="font-size:9px;background:rgba(245,158,11,.2);color:#f59e0b;">
-                {{ approvalCounts.SALARY }}
-              </span>
-            </div>
+          <div class="proj-item-v2" (click)="setView('salary-approvals')" [class.active-proj]="activeView==='salary-approvals'">
+            <div class="proj-item-top"><div class="proj-item-left"><span class="proj-dot-sq" style="background:#f59e0b"></span><span class="proj-name" style="font-size:10px;">💵 Salary</span></div><span *ngIf="approvalCounts.SALARY>0" class="rs-badge-red" style="font-size:9px;background:rgba(245,158,11,.2);color:#f59e0b;">{{ approvalCounts.SALARY }}</span></div>
           </div>
-
-          <!-- EXPENSE -->
-          <div class="proj-item-v2"
-               (click)="setView('view-expense')"
-               [class.active-proj]="activeView==='view-expense'">
-            <div class="proj-item-top">
-              <div class="proj-item-left">
-                <span class="proj-dot-sq" style="background:#f59e0b"></span>
-                <span class="proj-name" style="font-size:10px;">🧾 Expense</span>
-              </div>
-              <span class="rs-badge-red" style="font-size:9px;background:rgba(245,158,11,.2);color:#f59e0b;">
-                {{ approvalCounts.EXPENSE }}
-              </span>
-            </div>
+          <div class="proj-item-v2" (click)="setView('view-expense')" [class.active-proj]="activeView==='view-expense'">
+            <div class="proj-item-top"><div class="proj-item-left"><span class="proj-dot-sq" style="background:#f59e0b"></span><span class="proj-name" style="font-size:10px;">🧾 Expense</span></div><span class="rs-badge-red" style="font-size:9px;background:rgba(245,158,11,.2);color:#f59e0b;">{{ approvalCounts.EXPENSE }}</span></div>
           </div>
         </div>
       </div>
-
       <div class="sidebar-bottom">
         <div class="settings-wrap">
-          <div class="sidebar-item" (click)="settingsOpen=!settingsOpen">
-            <span class="nav-icon">⚙️</span><span>Settings</span>
-            <span style="margin-left:auto;font-size:8px;">{{ settingsOpen?'▲':'▼' }}</span>
-          </div>
+          <div class="sidebar-item" (click)="settingsOpen=!settingsOpen"><span class="nav-icon">⚙️</span><span>Settings</span><span style="margin-left:auto;font-size:8px;">{{ settingsOpen?'▲':'▼' }}</span></div>
           <div *ngIf="settingsOpen" class="settings-submenu">
             <div class="sub-item"><span>👤</span><span>Profile</span></div>
             <div class="sub-item"><span>🔒</span><span>Change Password</span></div>
-            <div class="sub-item signout-item" (click)="signOut()">
-              <span>🚪</span><span>Sign out</span>
-            </div>
+            <div class="sub-item signout-item" (click)="signOut()"><span>🚪</span><span>Sign out</span></div>
           </div>
         </div>
       </div>
@@ -174,298 +108,168 @@
     <div class="main-with-panel">
       <main class="main-content">
 
-        <!-- ── PAYROLL APPROVALS ── -->
-        <app-approval-inbox-inline
-            *ngIf="activeView==='payroll-approvals-legacy'"
-            (back)="setView('dashboard')">
-        </app-approval-inbox-inline>
+        <app-approval-inbox-inline *ngIf="activeView==='payroll-approvals-legacy'" (back)="setView('dashboard')"></app-approval-inbox-inline>
 
-        <!-- ── SALARY APPROVALS VIEW ── -->
-        <div *ngIf="activeView==='salary-approvals'"
-             style="padding:16px;display:flex;flex-direction:column;gap:14px;overflow-y:auto;height:100%;">
-          <div style="display:flex;align-items:center;gap:10px;flex-shrink:0;">
-            <button (click)="setView('dashboard')" style="background:transparent;border:none;cursor:pointer;font-size:16px;opacity:0.5;padding:0;line-height:1;color:inherit;">←</button>
-            <div style="font-size:14px;font-weight:700;">💵 Salary Approvals</div>
-            <span *ngIf="salaryApproval?.payPeriod"
-                  style="font-size:11px;padding:3px 10px;border-radius:20px;background:rgba(59,130,246,0.15);color:#60a5fa;font-weight:600;">
-              {{ formatPeriodLabel(salaryApproval.payPeriod) }}
-            </span>
+        <!-- ════ SALARY APPROVALS DETAIL ════ -->
+        <div *ngIf="activeView==='salary-approvals'" style="padding:16px;display:flex;flex-direction:column;gap:10px;overflow-y:auto;height:100%;">
+
+          <!-- Header -->
+          <div style="display:flex;align-items:center;gap:10px;flex-shrink:0;margin-bottom:4px;">
+            <div style="font-size:14px;font-weight:700;">💵 Salary History</div>
+            <span style="font-size:10px;opacity:0.4;">{{ salaryPeriods.length }} periods</span>
           </div>
+
+          <!-- Loading / Empty -->
           <div *ngIf="loadingSalary" style="text-align:center;padding:48px;font-size:12px;opacity:0.4;">Loading...</div>
-          <div *ngIf="!loadingSalary && !salaryApproval?.totalRecords" style="text-align:center;padding:48px;font-size:12px;opacity:0.4;">
-            📭 No pending salary approvals
+          <div *ngIf="!loadingSalary && salaryPeriods.length===0" style="text-align:center;padding:48px;font-size:12px;opacity:0.4;">📭 No salary records</div>
+
+          <!-- Cards -->
+          <ng-container *ngIf="!loadingSalary && salaryPeriods.length>0">
+            <div *ngFor="let p of salaryPeriods" class="card"
+                 style="padding:0;flex-shrink:0;"
+                 [style.borderColor]="p.status==='PENDING_APPROVAL'?'rgba(245,158,11,0.3)':p.status==='CONFIRMED'?'rgba(96,165,250,0.25)':p.status==='PAID'?'rgba(34,197,94,0.25)':'rgba(148,163,184,0.15)'"
+                 [style.background]="p.status==='PENDING_APPROVAL'?'rgba(245,158,11,0.03)':p.status==='PAID'?'rgba(34,197,94,0.03)':'transparent'">
+
+              <!-- Card Header row -->
+              <div style="display:flex;align-items:center;gap:8px;padding:10px 16px;flex-wrap:wrap;">
+                <div style="font-size:11px;font-weight:700;">{{ formatPeriodLabel(p.payPeriod) }}</div>
+                <span style="font-size:9px;padding:1px 7px;border-radius:20px;background:rgba(96,165,250,0.15);color:#60a5fa;font-weight:600;">{{ p.staffCount }} staff</span>
+                <span style="font-size:9px;font-weight:700;padding:1px 7px;border-radius:20px;white-space:nowrap;"
+                      [style.background]="p.status==='PENDING_APPROVAL'?'rgba(245,158,11,0.15)':p.status==='CONFIRMED'?'rgba(96,165,250,0.15)':p.status==='PAID'?'rgba(34,197,94,0.15)':'rgba(100,116,139,0.15)'"
+                      [style.color]="p.status==='PENDING_APPROVAL'?'#f59e0b':p.status==='CONFIRMED'?'#60a5fa':p.status==='PAID'?'#22c55e':'#94a3b8'">
+                  {{ p.status==='PENDING_APPROVAL' ? 'PENDING' : p.status==='CONFIRMED' ? 'CONFIRMED' : p.status==='PAID' ? 'PAID' : p.status }}
+                </span>
+                <div *ngIf="p.status==='PENDING_APPROVAL'" style="margin-left:auto;display:flex;gap:6px;">
+                  <button (click)="rejectSalaryPeriod(p)" [disabled]="salaryActing[p.payPeriod]" [style.opacity]="salaryActing[p.payPeriod]?'0.5':'1'"
+                          style="padding:4px 12px;border-radius:6px;border:1px solid rgba(239,68,68,0.3);background:rgba(239,68,68,0.08);color:#ef4444;font-size:10px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap;">✕ Reject</button>
+                  <button (click)="approveSalaryPeriod(p)" [disabled]="salaryActing[p.payPeriod]" [style.opacity]="salaryActing[p.payPeriod]?'0.5':'1'"
+                          style="padding:4px 16px;border-radius:6px;border:none;background:linear-gradient(135deg,#14532d,#16a34a);color:white;font-size:10px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;">{{ salaryActing[p.payPeriod] ? '...' : '✓ Approve' }}</button>
+                </div>
+              </div>
+
+              <!-- Card stats row -->
+              <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:0 16px 10px;">
+                <div style="background:rgba(148,163,184,0.06);border-radius:7px;padding:7px 12px;">
+                  <div style="font-size:8px;opacity:0.4;text-transform:uppercase;letter-spacing:0.7px;margin-bottom:2px;">Gross</div>
+                  <div style="font-size:12px;font-weight:700;">{{ formatMoney(p.currency, p.totalGross) }}</div>
+                </div>
+                <div style="background:rgba(148,163,184,0.06);border-radius:7px;padding:7px 12px;">
+                  <div style="font-size:8px;opacity:0.4;text-transform:uppercase;letter-spacing:0.7px;margin-bottom:2px;">Tax</div>
+                  <div style="font-size:12px;font-weight:700;color:#ef4444;">-{{ formatMoney(p.currency, p.totalTax) }}</div>
+                </div>
+                <div style="background:rgba(148,163,184,0.06);border-radius:7px;padding:7px 12px;">
+                  <div style="font-size:8px;opacity:0.4;text-transform:uppercase;letter-spacing:0.7px;margin-bottom:2px;">Net</div>
+                  <div style="font-size:12px;font-weight:700;">{{ formatMoney(p.currency, p.totalNet) }}</div>
+                </div>
+              </div>
+
+            </div>
+          </ng-container>
+        </div>
+
+        <!-- ════ LEAVE VIEW ════ -->
+        <div *ngIf="activeView==='view-leave'" style="padding:16px;display:flex;flex-direction:column;gap:12px;overflow-y:auto;height:100%;">
+          <div style="display:flex;align-items:center;gap:10px;flex-shrink:0;flex-wrap:wrap;">
+            <div style="font-size:14px;font-weight:700;">🗓 Leave Requests</div>
+            <span style="font-size:10px;opacity:0.4;">{{ sortedLeave.length }} records</span>
+            <div style="display:flex;gap:4px;margin-left:auto;">
+              <button *ngFor="let s of ['ALL','PENDING','APPROVED','REJECTED']" (click)="historyFilter=s; loadHistoryLeave()" style="font-size:10px;padding:4px 10px;border-radius:20px;cursor:pointer;font-family:inherit;" [style.background]="historyFilter===s?'linear-gradient(135deg,#14532d,#16a34a)':'transparent'" [style.color]="historyFilter===s?'white':'currentColor'" [style.border]="historyFilter===s?'none':'1px solid rgba(148,163,184,0.2)'" [style.opacity]="historyFilter===s?'1':'0.55'">{{ s }}</button>
+            </div>
           </div>
-          <ng-container *ngIf="!loadingSalary && salaryApproval?.totalRecords">
-            <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;flex-shrink:0;">
-              <div class="stat-card">
-                <div class="stat-label">Records</div>
-                <div class="stat-value">{{ salaryApproval.totalRecords }}</div>
-                <div class="stat-sub">staff members</div>
-              </div>
-              <div class="stat-card">
-                <div class="stat-label">Total Gross</div>
-                <div class="stat-value" style="font-size:18px;">{{ formatMoney(salaryApproval.currency, salaryApproval.totalGross) }}</div>
-              </div>
-              <div class="stat-card">
-                <div class="stat-label">Total Tax</div>
-                <div class="stat-value" style="font-size:18px;color:#ef4444;">-{{ formatMoney(salaryApproval.currency, salaryApproval.totalTax) }}</div>
-              </div>
-              <div class="stat-card" style="border-color:#16a34a44 !important;">
-                <div class="stat-label">Total Net</div>
-                <div class="stat-value" style="font-size:18px;color:#22c55e;">{{ formatMoney(salaryApproval.currency, salaryApproval.totalNet) }}</div>
-              </div>
-            </div>
-            <div style="display:flex;gap:8px;justify-content:flex-end;flex-shrink:0;">
-              <button (click)="rejectSalaryBatch()" [disabled]="salaryActing"
-                      style="padding:9px 20px;border-radius:9px;border:1px solid rgba(239,68,68,0.3);background:rgba(239,68,68,0.08);color:#ef4444;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;"
-                      [style.opacity]="salaryActing?'0.5':'1'">✕ Reject All</button>
-              <button (click)="approveSalaryBatch()" [disabled]="salaryActing"
-                      style="padding:9px 24px;border-radius:9px;border:none;background:linear-gradient(135deg,#14532d,#16a34a);color:white;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;"
-                      [style.opacity]="salaryActing?'0.5':'1'">
-                {{ salaryActing ? 'Processing...' : '✓ Approve All (' + salaryApproval.totalRecords + ')' }}
-              </button>
-            </div>
-            <div class="card" style="padding:0;overflow:hidden;flex-shrink:0;">
-              <div style="display:grid;grid-template-columns:34px 2fr 1fr 1fr 1fr 0.8fr 0.5fr;gap:8px;padding:10px 16px;border-bottom:1px solid rgba(148,163,184,0.1);">
-                <span></span>
-                <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.45;">Staff</span>
-                <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.45;text-align:right;">Gross</span>
-                <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.45;text-align:right;">Tax</span>
-                <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.45;text-align:right;">Net</span>
-                <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.45;text-align:center;">Status</span>
-                <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.45;text-align:center;">View</span>
-              </div>
-              <div *ngFor="let r of salaryApproval.rows; let last=last"
-                   [style.border-bottom]="last?'none':'1px solid rgba(148,163,184,0.06)'"
-                   style="display:grid;grid-template-columns:34px 2fr 1fr 1fr 1fr 0.8fr 0.5fr;gap:8px;padding:10px 16px;align-items:center;">
-                <div style="width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:white;" [style.background]="r.userColor">{{ r.userInitial }}</div>
-                <div>
-                  <div style="font-size:11px;font-weight:600;">{{ r.userName }}</div>
-                  <div style="font-size:9px;font-weight:600;margin-top:1px;" [style.color]="r.roleColor||'#94a3b8'">{{ r.roleName }}</div>
+          <div *ngIf="loadingHistory" style="text-align:center;padding:40px;font-size:12px;opacity:0.4;">Loading...</div>
+          <div *ngIf="!loadingHistory && sortedLeave.length===0" style="text-align:center;padding:40px;font-size:12px;opacity:0.4;">No records</div>
+          <ng-container *ngIf="!loadingHistory && sortedLeave.length>0">
+            <div *ngFor="let r of sortedLeave" style="border-radius:10px;border:1px solid;padding:13px 16px;" [style.borderColor]="r.status==='PENDING'?'rgba(245,158,11,0.35)':r.status==='APPROVED'&&isActiveLeave(r)?'rgba(34,197,94,0.3)':(isDark?'#1e2d4a':'#e2e8f0')" [style.background]="r.status==='PENDING'?'rgba(245,158,11,0.04)':r.status==='APPROVED'&&isActiveLeave(r)?'rgba(34,197,94,0.04)':(isDark?'#0d1424':'white')">
+              <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+                <div style="width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:white;flex-shrink:0;" [style.background]="r.userColor||'#64748b'">{{ r.userInitial||'?' }}</div>
+                <div style="flex:1;min-width:0;"><div style="font-size:12px;font-weight:600;">{{ r.userName }}</div><div style="font-size:10px;opacity:0.5;">{{ r.userRole }}</div></div>
+                <span style="font-size:10px;font-weight:700;padding:3px 10px;border-radius:20px;flex-shrink:0;" [style.background]="r.status==='APPROVED'?'rgba(34,197,94,0.15)':r.status==='REJECTED'?'rgba(239,68,68,0.15)':'rgba(245,158,11,0.15)'" [style.color]="r.status==='APPROVED'?'#22c55e':r.status==='REJECTED'?'#ef4444':'#f59e0b'">{{ r.status }}</span>
+                <div *ngIf="r.status==='PENDING'" style="display:flex;gap:6px;flex-shrink:0;">
+                  <button (click)="approveLeaveItem(r)" style="font-size:11px;padding:5px 14px;background:#16a34a;color:white;border:none;border-radius:6px;cursor:pointer;font-weight:700;">✓ Approve</button>
+                  <button (click)="rejectLeaveItem(r)" style="font-size:11px;padding:5px 12px;background:transparent;color:currentColor;border:1px solid rgba(148,163,184,0.25);border-radius:6px;cursor:pointer;opacity:0.7;">✕</button>
                 </div>
-                <div style="text-align:right;font-size:11px;">{{ formatMoney(r.currency, r.grossSalary) }}</div>
-                <div style="text-align:right;font-size:11px;color:#ef4444;">-{{ formatMoney(r.currency, r.taxAmount) }}</div>
-                <div style="text-align:right;font-size:11px;font-weight:700;color:#22c55e;">{{ formatMoney(r.currency, r.netSalary) }}</div>
-                <div style="text-align:center;">
-                  <span style="font-size:8px;font-weight:700;padding:2px 7px;border-radius:20px;background:rgba(59,130,246,0.15);color:#60a5fa;">PENDING</span>
-                </div>
-                <div style="text-align:center;">
-                  <button (click)="openPayslip(r.id)" style="background:transparent;border:1px solid rgba(148,163,184,0.2);border-radius:6px;padding:4px 8px;cursor:pointer;font-size:12px;opacity:0.7;" title="View payslip">📄</button>
-                </div>
+              </div>
+              <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+                <span style="font-size:10px;font-weight:600;padding:2px 8px;border-radius:20px;" [style.background]="r.leaveType==='ANNUAL'?'rgba(96,165,250,0.15)':r.leaveType==='SICK'?'rgba(248,113,113,0.15)':'rgba(167,139,250,0.15)'" [style.color]="r.leaveType==='ANNUAL'?'#60a5fa':r.leaveType==='SICK'?'#f87171':'#a78bfa'">{{ r.leaveType==='ANNUAL'?'🏖 Annual':r.leaveType==='SICK'?'🤒 Sick':'💼 Unpaid' }}</span>
+                <span style="font-size:11px;font-weight:500;">{{ r.startDate | date:'MMM d, yyyy' }} → {{ r.endDate | date:'MMM d, yyyy' }}</span>
+                <span style="font-size:10px;padding:2px 7px;border-radius:20px;background:rgba(148,163,184,0.1);font-weight:600;">{{ r.totalDays }} day{{ r.totalDays > 1 ? 's' : '' }}</span>
+                <span *ngIf="r.reason" style="font-size:10px;opacity:0.6;">· {{ r.reason }}</span>
               </div>
             </div>
           </ng-container>
         </div>
 
-        <!-- ── LEAVE HISTORY VIEW ── -->
-        <div *ngIf="activeView==='view-leave'"
-             style="padding:16px;display:flex;flex-direction:column;gap:12px;overflow-y:auto;height:100%;">
+        <!-- ════ OT VIEW ════ -->
+        <div *ngIf="activeView==='view-ot'" style="padding:16px;display:flex;flex-direction:column;gap:12px;overflow-y:auto;height:100%;">
           <div style="display:flex;align-items:center;gap:10px;flex-shrink:0;flex-wrap:wrap;">
-            <button (click)="setView('dashboard')" style="background:transparent;border:none;cursor:pointer;font-size:16px;opacity:0.5;padding:0;color:inherit;">←</button>
-            <div style="font-size:14px;font-weight:700;">🗓 Leave Requests</div>
-            <!-- Pay period nav -->
-            <div *ngIf="!useCustom" style="display:flex;align-items:center;gap:4px;">
-              <button (click)="shiftPayPeriod(-1)" style="background:transparent;border:1px solid rgba(148,163,184,0.2);border-radius:6px;padding:3px 8px;cursor:pointer;color:inherit;font-size:11px;">◀</button>
-              <span style="font-size:11px;font-weight:600;padding:3px 10px;border-radius:6px;background:rgba(59,130,246,0.12);color:#60a5fa;">{{ periodLabel }}</span>
-              <button (click)="shiftPayPeriod(1)"  style="background:transparent;border:1px solid rgba(148,163,184,0.2);border-radius:6px;padding:3px 8px;cursor:pointer;color:inherit;font-size:11px;">▶</button>
-            </div>
-            <!-- Custom range -->
-            <div style="display:flex;align-items:center;gap:5px;">
-              <label style="font-size:10px;opacity:0.5;display:flex;align-items:center;gap:3px;cursor:pointer;">
-                <input type="checkbox" [(ngModel)]="useCustom" (change)="reloadHistory()"/> Custom
-              </label>
-              <ng-container *ngIf="useCustom">
-                <input type="date" [(ngModel)]="customFrom" style="font-size:10px;padding:3px 6px;border-radius:6px;border:1px solid rgba(148,163,184,0.2);background:transparent;color:inherit;"/>
-                <span style="opacity:0.4;">→</span>
-                <input type="date" [(ngModel)]="customTo"   style="font-size:10px;padding:3px 6px;border-radius:6px;border:1px solid rgba(148,163,184,0.2);background:transparent;color:inherit;"/>
-                <button (click)="loadHistoryLeave()" style="font-size:10px;padding:4px 10px;border-radius:6px;border:none;background:linear-gradient(135deg,#14532d,#16a34a);color:white;cursor:pointer;">Search</button>
-              </ng-container>
-            </div>
-            <!-- Status -->
-            <div style="display:flex;gap:4px;margin-left:auto;">
-              <button *ngFor="let s of ['ALL','PENDING','APPROVED','REJECTED']"
-                      (click)="historyFilter=s; loadHistoryLeave()"
-                      style="font-size:10px;padding:4px 10px;border-radius:20px;cursor:pointer;font-family:inherit;"
-                      [style.background]="historyFilter===s?'linear-gradient(135deg,#14532d,#16a34a)':'transparent'"
-                      [style.color]="historyFilter===s?'white':'currentColor'"
-                      [style.border]="historyFilter===s?'none':'1px solid rgba(148,163,184,0.2)'"
-                      [style.opacity]="historyFilter===s?'1':'0.55'">{{ s }}</button>
-            </div>
-          </div>
-          <div *ngIf="loadingHistory" style="text-align:center;padding:40px;font-size:12px;opacity:0.4;">Loading...</div>
-          <div *ngIf="!loadingHistory && historyLeave.length===0" style="text-align:center;padding:40px;font-size:12px;opacity:0.4;">No records</div>
-          <div class="card" *ngIf="!loadingHistory && historyLeave.length>0" style="padding:0;overflow:hidden;">
-            <div style="display:grid;grid-template-columns:30px 1.5fr 1fr 1fr 0.8fr 0.7fr auto;gap:8px;padding:9px 14px;border-bottom:1px solid rgba(148,163,184,0.1);">
-              <span></span>
-              <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.45;">Staff</span>
-              <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.45;">Type</span>
-              <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.45;">Dates</span>
-              <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.45;">Days</span>
-              <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.45;">Status</span>
-              <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.45;">Action</span>
-            </div>
-            <div *ngFor="let r of historyLeave; let last=last"
-                 [style.border-bottom]="last?'none':'1px solid rgba(148,163,184,0.06)'"
-                 style="display:grid;grid-template-columns:30px 1.5fr 1fr 1fr 0.8fr 0.7fr auto;gap:8px;padding:9px 14px;align-items:center;">
-              <div style="width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:white;" [style.background]="r.userColor||'#64748b'">{{ r.userInitial||'?' }}</div>
-              <div>
-                <div style="font-size:11px;font-weight:600;">{{ r.userName }}</div>
-                <div style="font-size:9px;opacity:0.5;">{{ r.userRole }}</div>
-              </div>
-              <div style="font-size:10px;">{{ r.leaveType }}</div>
-              <div style="font-size:10px;">{{ r.startDate | date:'MMM d' }} — {{ r.endDate | date:'MMM d' }}</div>
-              <div style="font-size:10px;">{{ r.totalDays }}d</div>
-              <div>
-                <span style="font-size:9px;font-weight:700;padding:2px 7px;border-radius:20px;"
-                      [style.background]="r.status==='APPROVED'?'rgba(34,197,94,0.15)':r.status==='REJECTED'?'rgba(239,68,68,0.15)':'rgba(245,158,11,0.15)'"
-                      [style.color]="r.status==='APPROVED'?'#22c55e':r.status==='REJECTED'?'#ef4444':'#f59e0b'">
-                  {{ r.status }}
-                </span>
-              </div>
-              <div *ngIf="r.status==='PENDING'" style="display:flex;gap:4px;">
-                <button (click)="approveLeaveItem(r)" style="font-size:10px;padding:4px 10px;background:#16a34a;color:white;border:none;border-radius:4px;cursor:pointer;font-weight:600;">✓</button>
-                <button (click)="rejectLeaveItem(r)" style="font-size:10px;padding:4px 8px;background:transparent;color:currentColor;border:1px solid rgba(148,163,184,0.2);border-radius:4px;cursor:pointer;opacity:0.7;">✕</button>
-              </div>
-              <div *ngIf="r.status!=='PENDING'" style="font-size:9px;opacity:0.35;">—</div>
-            </div>
-          </div>
-        </div>
-
-        <!-- ── OT HISTORY VIEW ── -->
-        <div *ngIf="activeView==='view-ot'"
-             style="padding:16px;display:flex;flex-direction:column;gap:12px;overflow-y:auto;height:100%;">
-          <div style="display:flex;align-items:center;gap:10px;flex-shrink:0;flex-wrap:wrap;">
-            <button (click)="setView('dashboard')" style="background:transparent;border:none;cursor:pointer;font-size:16px;opacity:0.5;padding:0;color:inherit;">←</button>
             <div style="font-size:14px;font-weight:700;">⏰ OT Requests</div>
-            <!-- Pay period nav -->
-            <div *ngIf="!useCustom" style="display:flex;align-items:center;gap:4px;">
-              <button (click)="shiftPayPeriod(-1)" style="background:transparent;border:1px solid rgba(148,163,184,0.2);border-radius:6px;padding:3px 8px;cursor:pointer;color:inherit;font-size:11px;">◀</button>
-              <span style="font-size:11px;font-weight:600;padding:3px 10px;border-radius:6px;background:rgba(59,130,246,0.12);color:#60a5fa;">{{ periodLabel }}</span>
-              <button (click)="shiftPayPeriod(1)"  style="background:transparent;border:1px solid rgba(148,163,184,0.2);border-radius:6px;padding:3px 8px;cursor:pointer;color:inherit;font-size:11px;">▶</button>
-            </div>
-            <!-- Custom range -->
-            <div style="display:flex;align-items:center;gap:5px;">
-              <label style="font-size:10px;opacity:0.5;display:flex;align-items:center;gap:3px;cursor:pointer;">
-                <input type="checkbox" [(ngModel)]="useCustom" (change)="reloadHistory()"/> Custom
-              </label>
-              <ng-container *ngIf="useCustom">
-                <input type="date" [(ngModel)]="customFrom" style="font-size:10px;padding:3px 6px;border-radius:6px;border:1px solid rgba(148,163,184,0.2);background:transparent;color:inherit;"/>
-                <span style="opacity:0.4;">→</span>
-                <input type="date" [(ngModel)]="customTo"   style="font-size:10px;padding:3px 6px;border-radius:6px;border:1px solid rgba(148,163,184,0.2);background:transparent;color:inherit;"/>
-                <button (click)="loadHistoryOt()" style="font-size:10px;padding:4px 10px;border-radius:6px;border:none;background:linear-gradient(135deg,#14532d,#16a34a);color:white;cursor:pointer;">Search</button>
-              </ng-container>
-            </div>
-            <!-- Status -->
+            <span style="font-size:10px;opacity:0.4;">{{ sortedOt.length }} records</span>
             <div style="display:flex;gap:4px;margin-left:auto;">
-              <button *ngFor="let s of ['ALL','PENDING','APPROVED','REJECTED']"
-                      (click)="historyFilter=s; loadHistoryOt()"
-                      style="font-size:10px;padding:4px 10px;border-radius:20px;cursor:pointer;font-family:inherit;"
-                      [style.background]="historyFilter===s?'linear-gradient(135deg,#14532d,#16a34a)':'transparent'"
-                      [style.color]="historyFilter===s?'white':'currentColor'"
-                      [style.border]="historyFilter===s?'none':'1px solid rgba(148,163,184,0.2)'"
-                      [style.opacity]="historyFilter===s?'1':'0.55'">{{ s }}</button>
+              <button *ngFor="let s of ['ALL','PENDING','APPROVED','REJECTED']" (click)="historyFilter=s; loadHistoryOt()" style="font-size:10px;padding:4px 10px;border-radius:20px;cursor:pointer;font-family:inherit;" [style.background]="historyFilter===s?'linear-gradient(135deg,#14532d,#16a34a)':'transparent'" [style.color]="historyFilter===s?'white':'currentColor'" [style.border]="historyFilter===s?'none':'1px solid rgba(148,163,184,0.2)'" [style.opacity]="historyFilter===s?'1':'0.55'">{{ s }}</button>
             </div>
           </div>
           <div *ngIf="loadingHistory" style="text-align:center;padding:40px;font-size:12px;opacity:0.4;">Loading...</div>
-          <div *ngIf="!loadingHistory && historyOt.length===0" style="text-align:center;padding:40px;font-size:12px;opacity:0.4;">No records</div>
-          <div class="card" *ngIf="!loadingHistory && historyOt.length>0" style="padding:0;overflow:hidden;">
-            <div style="display:grid;grid-template-columns:30px 1.5fr 1fr 1fr 0.8fr 0.7fr auto;gap:8px;padding:9px 14px;border-bottom:1px solid rgba(148,163,184,0.1);">
-              <span></span>
-              <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.45;">Staff</span>
-              <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.45;">Work Date</span>
-              <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.45;">Project</span>
-              <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.45;">Hours</span>
-              <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.45;">Status</span>
-              <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.45;">Action</span>
+          <div *ngIf="!loadingHistory && sortedOt.length===0" style="text-align:center;padding:40px;font-size:12px;opacity:0.4;">No records</div>
+          <ng-container *ngIf="!loadingHistory && sortedOt.length>0">
+            <div *ngFor="let r of sortedOt" style="border-radius:10px;border:1px solid;padding:13px 16px;" [style.borderColor]="r.status==='PENDING'?'rgba(245,158,11,0.35)':r.status==='APPROVED'&&isActiveOt(r)?'rgba(34,197,94,0.3)':(isDark?'#1e2d4a':'#e2e8f0')" [style.background]="r.status==='PENDING'?'rgba(245,158,11,0.04)':r.status==='APPROVED'&&isActiveOt(r)?'rgba(34,197,94,0.04)':(isDark?'#0d1424':'white')">
+              <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+                <div style="width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:white;flex-shrink:0;" [style.background]="r.userColor||'#64748b'">{{ r.userInitial||'?' }}</div>
+                <div style="flex:1;min-width:0;"><div style="font-size:12px;font-weight:600;">{{ r.userName }}</div><div style="font-size:10px;opacity:0.5;">{{ r.userRole }}</div></div>
+                <span style="font-size:10px;font-weight:700;padding:3px 10px;border-radius:20px;flex-shrink:0;" [style.background]="r.status==='APPROVED'?'rgba(34,197,94,0.15)':r.status==='REJECTED'?'rgba(239,68,68,0.15)':'rgba(245,158,11,0.15)'" [style.color]="r.status==='APPROVED'?'#22c55e':r.status==='REJECTED'?'#ef4444':'#f59e0b'">{{ r.status }}</span>
+                <div *ngIf="r.status==='PENDING'" style="display:flex;gap:6px;flex-shrink:0;">
+                  <button (click)="approveOtItem(r)" style="font-size:11px;padding:5px 14px;background:#16a34a;color:white;border:none;border-radius:6px;cursor:pointer;font-weight:700;">✓ Approve</button>
+                  <button (click)="rejectOtItem(r)" style="font-size:11px;padding:5px 12px;background:transparent;color:currentColor;border:1px solid rgba(148,163,184,0.25);border-radius:6px;cursor:pointer;opacity:0.7;">✕</button>
+                </div>
+              </div>
+              <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+                <span style="font-size:11px;font-weight:500;">📅 {{ r.workDate | date:'MMM d, yyyy' }}</span>
+                <span *ngIf="r.dayType" style="font-size:9px;font-weight:600;padding:2px 7px;border-radius:20px;" [style.background]="r.dayType==='WEEKDAY'?'rgba(100,116,139,0.15)':r.dayType==='SATURDAY'?'rgba(139,92,246,0.15)':r.dayType==='SUNDAY'?'rgba(239,68,68,0.15)':'rgba(245,158,11,0.15)'" [style.color]="r.dayType==='WEEKDAY'?'#94a3b8':r.dayType==='SATURDAY'?'#a78bfa':r.dayType==='SUNDAY'?'#f87171':'#fbbf24'">{{ r.dayType }}</span>
+                <span style="font-size:10px;padding:2px 7px;border-radius:20px;background:rgba(148,163,184,0.1);font-weight:600;">⏱ {{ r.otHours }}h</span>
+                <span *ngIf="r.projectName" style="font-size:10px;opacity:0.65;">📁 {{ r.projectName }}</span>
+                <span *ngIf="r.reason" style="font-size:10px;opacity:0.6;">· {{ r.reason }}</span>
+              </div>
             </div>
-            <div *ngFor="let r of historyOt; let last=last"
-                 [style.border-bottom]="last?'none':'1px solid rgba(148,163,184,0.06)'"
-                 style="display:grid;grid-template-columns:30px 1.5fr 1fr 1fr 0.8fr 0.7fr auto;gap:8px;padding:9px 14px;align-items:center;">
-              <div style="width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:white;" [style.background]="r.userColor||'#64748b'">{{ r.userInitial||'?' }}</div>
-              <div>
-                <div style="font-size:11px;font-weight:600;">{{ r.userName }}</div>
-                <div style="font-size:9px;opacity:0.5;">{{ r.userRole }}</div>
-              </div>
-              <div style="font-size:10px;">{{ r.workDate | date:'MMM d, yyyy' }}</div>
-              <div style="font-size:10px;opacity:0.7;">{{ r.projectName || '—' }}</div>
-              <div style="font-size:10px;">{{ r.otHours }}h</div>
-              <div>
-                <span style="font-size:9px;font-weight:700;padding:2px 7px;border-radius:20px;"
-                      [style.background]="r.status==='APPROVED'?'rgba(34,197,94,0.15)':r.status==='REJECTED'?'rgba(239,68,68,0.15)':'rgba(245,158,11,0.15)'"
-                      [style.color]="r.status==='APPROVED'?'#22c55e':r.status==='REJECTED'?'#ef4444':'#f59e0b'">
-                  {{ r.status }}
-                </span>
-              </div>
-              <div *ngIf="r.status==='PENDING'" style="display:flex;gap:4px;">
-                <button (click)="approveOtItem(r)" style="font-size:10px;padding:4px 10px;background:#16a34a;color:white;border:none;border-radius:4px;cursor:pointer;font-weight:600;">✓</button>
-                <button (click)="rejectOtItem(r)" style="font-size:10px;padding:4px 8px;background:transparent;color:currentColor;border:1px solid rgba(148,163,184,0.2);border-radius:4px;cursor:pointer;opacity:0.7;">✕</button>
-              </div>
-              <div *ngIf="r.status!=='PENDING'" style="font-size:9px;opacity:0.35;">—</div>
-            </div>
-          </div>
+          </ng-container>
         </div>
 
-        <!-- ── EXPENSE HISTORY VIEW ── -->
-        <div *ngIf="activeView==='view-expense'"
-             style="padding:16px;display:flex;flex-direction:column;gap:12px;overflow-y:auto;height:100%;">
+        <!-- ════ EXPENSE VIEW ════ -->
+        <div *ngIf="activeView==='view-expense'" style="padding:16px;display:flex;flex-direction:column;gap:12px;overflow-y:auto;height:100%;">
           <div style="display:flex;align-items:center;gap:10px;flex-shrink:0;">
-            <button (click)="setView('dashboard')" style="background:transparent;border:none;cursor:pointer;font-size:16px;opacity:0.5;padding:0;color:inherit;">←</button>
             <div style="font-size:14px;font-weight:700;">🧾 Expense Requests</div>
             <div style="display:flex;gap:4px;margin-left:auto;">
-              <button *ngFor="let s of ['ALL','PENDING','APPROVED','REJECTED']"
-                      (click)="historyFilter=s; loadHistoryExpense()"
-                      style="font-size:10px;padding:4px 10px;border-radius:20px;cursor:pointer;font-family:inherit;"
-                      [style.background]="historyFilter===s?'linear-gradient(135deg,#14532d,#16a34a)':'transparent'"
-                      [style.color]="historyFilter===s?'white':'currentColor'"
-                      [style.border]="historyFilter===s?'none':'1px solid rgba(148,163,184,0.2)'"
-                      [style.opacity]="historyFilter===s?'1':'0.55'">{{ s }}</button>
+              <button *ngFor="let s of ['ALL','PENDING','APPROVED','REJECTED']" (click)="historyFilter=s; loadHistoryExpense()" style="font-size:10px;padding:4px 10px;border-radius:20px;cursor:pointer;font-family:inherit;" [style.background]="historyFilter===s?'linear-gradient(135deg,#14532d,#16a34a)':'transparent'" [style.color]="historyFilter===s?'white':'currentColor'" [style.border]="historyFilter===s?'none':'1px solid rgba(148,163,184,0.2)'" [style.opacity]="historyFilter===s?'1':'0.55'">{{ s }}</button>
             </div>
           </div>
           <div *ngIf="loadingHistory" style="text-align:center;padding:40px;font-size:12px;opacity:0.4;">Loading...</div>
           <div *ngIf="!loadingHistory && historyExpense.length===0" style="text-align:center;padding:40px;font-size:12px;opacity:0.4;">No records</div>
-          <div class="card" *ngIf="!loadingHistory && historyExpense.length>0" style="padding:0;overflow:hidden;">
-            <div style="display:grid;grid-template-columns:1.5fr 1fr 1fr 0.8fr auto;gap:8px;padding:9px 14px;border-bottom:1px solid rgba(148,163,184,0.1);">
+          <div class="card" *ngIf="!loadingHistory && historyExpense.length>0" style="padding:0;">
+            <div style="display:grid;grid-template-columns:1.5fr 1fr 1fr 0.8fr 80px;gap:8px;padding:9px 14px;border-bottom:1px solid rgba(148,163,184,0.1);">
               <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.45;">Description</span>
               <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.45;">Amount</span>
               <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.45;">Date</span>
               <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.45;">Status</span>
               <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.45;">Action</span>
             </div>
-            <div *ngFor="let r of historyExpense; let last=last"
-                 [style.border-bottom]="last?'none':'1px solid rgba(148,163,184,0.06)'"
-                 style="display:grid;grid-template-columns:1.5fr 1fr 1fr 0.8fr auto;gap:8px;padding:9px 14px;align-items:center;">
+            <div *ngFor="let r of historyExpense; let last=last" [style.border-bottom]="last?'none':'1px solid rgba(148,163,184,0.06)'" style="display:grid;grid-template-columns:1.5fr 1fr 1fr 0.8fr 80px;gap:8px;padding:9px 14px;align-items:center;">
               <div style="font-size:11px;">{{ r.description || '—' }}</div>
               <div style="font-size:11px;font-weight:600;">{{ formatMoney(r.currency, r.amount) }}</div>
               <div style="font-size:10px;opacity:0.7;">{{ r.date | date:'MMM d, yyyy' }}</div>
-              <div>
-                <span style="font-size:9px;font-weight:700;padding:2px 7px;border-radius:20px;"
-                      [style.background]="r.status==='APPROVED'?'rgba(34,197,94,0.15)':r.status==='REJECTED'?'rgba(239,68,68,0.15)':'rgba(245,158,11,0.15)'"
-                      [style.color]="r.status==='APPROVED'?'#22c55e':r.status==='REJECTED'?'#ef4444':'#f59e0b'">
-                  {{ r.status }}
-                </span>
-              </div>
+              <div><span style="font-size:9px;font-weight:700;padding:2px 7px;border-radius:20px;" [style.background]="r.status==='APPROVED'?'rgba(34,197,94,0.15)':r.status==='REJECTED'?'rgba(239,68,68,0.15)':'rgba(245,158,11,0.15)'" [style.color]="r.status==='APPROVED'?'#22c55e':r.status==='REJECTED'?'#ef4444':'#f59e0b'">{{ r.status }}</span></div>
               <div *ngIf="r.status==='PENDING'" style="display:flex;gap:4px;">
-                <button (click)="approveExpenseItem(r)" style="font-size:10px;padding:4px 10px;background:#16a34a;color:white;border:none;border-radius:4px;cursor:pointer;font-weight:600;">✓</button>
-                <button (click)="rejectExpenseItem(r)" style="font-size:10px;padding:4px 8px;background:transparent;color:currentColor;border:1px solid rgba(148,163,184,0.2);border-radius:4px;cursor:pointer;opacity:0.7;">✕</button>
+                <button (click)="approveExpenseItem(r)" style="font-size:10px;padding:4px 9px;background:#16a34a;color:white;border:none;border-radius:4px;cursor:pointer;font-weight:600;">✓</button>
+                <button (click)="rejectExpenseItem(r)" style="font-size:10px;padding:4px 7px;background:transparent;color:currentColor;border:1px solid rgba(148,163,184,0.2);border-radius:4px;cursor:pointer;opacity:0.7;">✕</button>
               </div>
-              <div *ngIf="r.status!=='PENDING'" style="font-size:9px;opacity:0.35;">—</div>
+              <div *ngIf="r.status!=='PENDING'" style="font-size:9px;opacity:0.2;text-align:center;">—</div>
             </div>
           </div>
         </div>
 
-        <!-- ── ANNOUNCEMENTS VIEW ── -->
+        <!-- ════ ANNOUNCEMENTS ════ -->
         <div *ngIf="activeView==='announcements'" style="padding:16px;">
-          <div style="display:flex;align-items:center;margin-bottom:16px;">
-            <div style="font-size:14px;font-weight:700;">📢 Announcements</div>
-            <span style="margin-left:8px;font-size:10px;opacity:0.45;">{{ allAnnouncements.length }} total</span>
-          </div>
-          <div *ngFor="let a of allAnnouncements"
-               style="border-radius:10px;border:1px solid;padding:14px 16px;margin-bottom:10px;"
-               [style.borderColor]="isDark?'#1e2d4a':'#e2e8f0'"
-               [style.background]="isDark?'#0d1424':'white'">
+          <div style="display:flex;align-items:center;margin-bottom:16px;"><div style="font-size:14px;font-weight:700;">📢 Announcements</div><span style="margin-left:8px;font-size:10px;opacity:0.45;">{{ allAnnouncements.length }} total</span></div>
+          <div *ngFor="let a of allAnnouncements" style="border-radius:10px;border:1px solid;padding:14px 16px;margin-bottom:10px;" [style.borderColor]="isDark?'#1e2d4a':'#e2e8f0'" [style.background]="isDark?'#0d1424':'white'">
             <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap;">
-              <span style="font-size:9px;font-weight:700;padding:2px 8px;border-radius:20px;"
-                    [style.background]="a.tagColor+'22'" [style.color]="a.tagColor">{{ a.tag }}</span>
+              <span style="font-size:9px;font-weight:700;padding:2px 8px;border-radius:20px;" [style.background]="a.tagColor+'22'" [style.color]="a.tagColor">{{ a.tag }}</span>
               <span *ngIf="a.priority==='IMPORTANT'" style="font-size:9px;font-weight:700;padding:2px 7px;border-radius:20px;background:rgba(249,115,22,0.15);color:#f97316;">IMPORTANT</span>
               <span *ngIf="a.priority==='URGENT'" style="font-size:9px;font-weight:700;padding:2px 7px;border-radius:20px;background:rgba(239,68,68,0.15);color:#ef4444;">URGENT</span>
               <span *ngIf="a.priority==='EXPIRED'" style="font-size:9px;font-weight:700;padding:2px 7px;border-radius:20px;background:rgba(100,116,139,0.2);color:#64748b;">EXPIRED</span>
@@ -478,110 +282,213 @@
           <div *ngIf="allAnnouncements.length===0" style="text-align:center;padding:40px 0;font-size:12px;opacity:0.4;">No announcements</div>
         </div>
 
-        <!-- ── DEFAULT DASHBOARD VIEW ── -->
+        <!-- ════════════════════════════════
+             DEFAULT DASHBOARD VIEW
+        ════════════════════════════════ -->
         <ng-container *ngIf="activeView==='dashboard'">
+
           <div class="stats-grid">
-            <div class="stat-card">
-              <div class="stat-label">Active Projects</div>
-              <div class="stat-value">{{ stats.activeProjects }}</div>
-              <div class="stat-sub">↑ 2 this month</div>
-            </div>
-            <div class="stat-card">
-              <div class="stat-label">Total Staff</div>
-              <div class="stat-value">{{ stats.totalStaff }}</div>
-              <div class="stat-sub" style="color:#22c55e">● Active</div>
-            </div>
-            <div class="stat-card">
-              <div class="stat-label">Pending Approvals</div>
-              <div class="stat-value" style="color:#ef4444">{{ stats.pendingApprovals }}</div>
-              <div class="stat-sub" style="color:#f59e0b">⚠ Action required</div>
-            </div>
-            <div class="stat-card">
-              <div class="stat-label">OT Hours (Month)</div>
-              <div class="stat-value">{{ stats.monthlyOTHours }}</div>
-              <div class="stat-sub">hrs this month</div>
-            </div>
+            <div class="stat-card"><div class="stat-label">Active Projects</div><div class="stat-value">{{ stats.activeProjects }}</div><div class="stat-sub">↑ 2 this month</div></div>
+            <div class="stat-card"><div class="stat-label">Total Staff</div><div class="stat-value">{{ stats.totalStaff }}</div><div class="stat-sub" style="color:#22c55e">● Active</div></div>
+            <div class="stat-card"><div class="stat-label">Pending Approvals</div><div class="stat-value" style="color:#ef4444">{{ stats.pendingApprovals }}</div><div class="stat-sub" style="color:#f59e0b">⚠ Action required</div></div>
+            <div class="stat-card"><div class="stat-label">OT Hours (Month)</div><div class="stat-value">{{ stats.monthlyOTHours }}</div><div class="stat-sub">hrs this month</div></div>
           </div>
 
-          <!-- Pending Approvals Card -->
-          <div class="card" style="padding:14px;margin-bottom:10px;">
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
-              <div class="card-title" style="margin-bottom:0;font-size:12px;display:flex;align-items:center;gap:6px;">
-                ⚡ Pending Approvals
-                <span style="background:rgba(239,68,68,0.15);color:#ef4444;font-size:9px;font-weight:700;padding:2px 7px;border-radius:20px;">{{ totalPendingCount }}</span>
+          <!-- ════ OT CARD ════ -->
+          <div class="card" style="padding:0;margin-bottom:10px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px;">
+              <div style="display:flex;align-items:center;gap:10px;">
+                <div style="width:34px;height:34px;border-radius:10px;background:rgba(249,115,22,0.12);display:flex;align-items:center;justify-content:center;font-size:16px;">⏰</div>
+                <div><div style="font-size:13px;font-weight:700;">OT Requests</div><div style="font-size:10px;opacity:0.5;margin-top:1px;">Overtime approval queue</div></div>
+                <span style="font-size:10px;padding:3px 9px;border-radius:20px;font-weight:700;margin-left:4px;" [style.background]="otApprovals.length>0?'rgba(239,68,68,0.15)':'rgba(100,116,139,0.12)'" [style.color]="otApprovals.length>0?'#ef4444':'#64748b'">{{ otApprovals.length }} pending</span>
               </div>
-              <div style="display:flex;gap:4px;">
-                <button *ngFor="let tab of approvalTabs"
-                        (click)="setApprovalTab(tab.key)"
-                        [style.background]="activeApprovalTab===tab.key?'linear-gradient(90deg,#14532d,#16a34a)':'transparent'"
-                        [style.color]="activeApprovalTab===tab.key?'white':'currentColor'"
-                        [style.opacity]="activeApprovalTab===tab.key?'1':'0.55'"
-                        [style.border]="activeApprovalTab===tab.key?'none':'1px solid rgba(148,163,184,0.2)'"
-                        style="font-size:10px;padding:4px 12px;border-radius:20px;cursor:pointer;font-weight:600;">
-                  {{ tab.label }} {{ approvalCounts[tab.key] }}
-                </button>
+              <button (click)="setView('view-ot')" style="font-size:10px;padding:5px 14px;border-radius:20px;background:transparent;border:1px solid rgba(148,163,184,0.2);color:currentColor;cursor:pointer;opacity:0.6;font-family:inherit;">View all →</button>
+            </div>
+            <div *ngIf="otApprovals.length===0" style="text-align:center;padding:20px 18px;font-size:11px;opacity:0.3;border-top:1px solid rgba(148,163,184,0.07);">No pending OT requests</div>
+            <ng-container *ngIf="otApprovals.length>0">
+              <div style="display:grid;grid-template-columns:36px 2fr 1fr 1.5fr auto;gap:10px;padding:8px 18px;border-top:1px solid rgba(148,163,184,0.07);border-bottom:1px solid rgba(148,163,184,0.07);">
+                <span></span>
+                <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.4;">Staff</span>
+                <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.4;">Work Date</span>
+                <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.4;">Details</span>
+                <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.4;">Action</span>
               </div>
-            </div>
-
-            <div style="display:grid;grid-template-columns:30px 1.3fr 1.2fr 0.9fr auto;gap:10px;padding:0 6px 7px;border-bottom:1px solid rgba(148,163,184,0.1);">
-              <span></span>
-              <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.45;">Staff</span>
-              <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.45;">Type / Reason</span>
-              <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.45;">Dates</span>
-              <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.45;text-align:right;padding-right:4px;">Action</span>
-            </div>
-
-            <ng-container *ngIf="activeApprovalTab!=='SALARY'">
-              <div *ngFor="let a of filteredPendingApprovals; let last=last"
-                   [style.border-bottom]="last?'none':'1px solid rgba(148,163,184,0.06)'"
-                   style="display:grid;grid-template-columns:30px 1.3fr 1.2fr 0.9fr auto;gap:10px;padding:10px 6px;align-items:center;">
-                <div style="width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:white;" [style.background]="a.avatarColor">{{ a.staffInitial }}</div>
-                <div>
-                  <div style="font-size:11px;font-weight:600;">{{ a.staffName }}</div>
-                  <div style="font-size:9px;opacity:0.5;">{{ a.subtitle }}</div>
-                </div>
-                <div>
-                  <div style="font-size:11px;">{{ a.reason }}</div>
-                  <div style="font-size:9px;opacity:0.5;">{{ a.priority==='urgent'?'🔴 Urgent':a.priority==='soon'?'🟡 Soon':'🟢 Normal' }}</div>
-                </div>
-                <div style="font-size:10px;">{{ a.dueText }}</div>
-                <div style="display:flex;gap:4px;">
-                  <button (click)="approveApproval(a)" style="font-size:10px;padding:5px 12px;background:#16a34a;color:white;border:none;border-radius:4px;cursor:pointer;font-weight:600;">✓ Approve</button>
-                  <button (click)="rejectApproval(a)" style="font-size:10px;padding:5px 12px;background:transparent;color:currentColor;border:1px solid rgba(148,163,184,0.2);border-radius:4px;cursor:pointer;opacity:0.7;">Reject</button>
+              <div *ngFor="let a of otApprovals; let last=last"
+                   [style.border-bottom]="last?'none':'1px solid rgba(148,163,184,0.05)'"
+                   style="display:grid;grid-template-columns:36px 2fr 1fr 1.5fr auto;gap:10px;padding:11px 18px;align-items:center;">
+                <div style="width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:white;" [style.background]="a.avatarColor">{{ a.staffInitial }}</div>
+                <div><div style="font-size:11px;font-weight:600;">{{ a.staffName }}</div><div style="font-size:9px;opacity:0.45;">{{ a.subtitle }}</div></div>
+                <div style="font-size:10px;opacity:0.7;">{{ a.dueText }}</div>
+                <div style="font-size:10px;opacity:0.65;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ a.reason }}</div>
+                <div style="display:flex;gap:6px;">
+                  <button (click)="approveApproval(a)" style="font-size:10px;padding:5px 14px;background:linear-gradient(135deg,#14532d,#16a34a);color:white;border:none;border-radius:6px;cursor:pointer;font-weight:700;font-family:inherit;">✓ Approve</button>
+                  <button (click)="rejectApproval(a)" style="font-size:10px;padding:5px 12px;background:transparent;color:currentColor;border:1px solid rgba(148,163,184,0.2);border-radius:6px;cursor:pointer;opacity:0.7;font-family:inherit;">✕ Reject</button>
                 </div>
               </div>
             </ng-container>
-
-            <div *ngIf="activeApprovalTab!=='SALARY' && filteredPendingApprovals.length===0"
-                 style="text-align:center;padding:24px 0;font-size:11px;opacity:0.4;">
-              No pending {{ activeApprovalTab.toLowerCase() }} requests
-            </div>
-
-            <!-- SALARY summary bar -->
-            <div *ngIf="activeApprovalTab==='SALARY' && salaryApproval?.totalRecords"
-                 style="padding:10px 6px 4px;">
-              <div style="display:flex;align-items:center;gap:16px;padding:10px 14px;border-radius:10px;background:rgba(34,197,94,0.06);border:1px solid rgba(34,197,94,0.15);margin-bottom:10px;">
-                <span style="font-size:11px;font-weight:700;color:#22c55e;">{{ salaryApproval.totalRecords }} staff</span>
-                <span style="font-size:10px;padding:2px 8px;border-radius:20px;background:rgba(59,130,246,0.15);color:#60a5fa;font-weight:600;">{{ formatPeriodLabel(salaryApproval.payPeriod) }}</span>
-                <span style="font-size:10px;opacity:0.6;">Gross: {{ formatMoney(salaryApproval.currency, salaryApproval.totalGross) }}</span>
-                <span style="font-size:10px;color:#ef4444;">Tax: -{{ formatMoney(salaryApproval.currency, salaryApproval.totalTax) }}</span>
-                <span style="font-size:11px;font-weight:700;color:#22c55e;">Net: {{ formatMoney(salaryApproval.currency, salaryApproval.totalNet) }}</span>
-                <div style="margin-left:auto;display:flex;gap:6px;">
-                  <button (click)="rejectSalaryBatch()" [disabled]="salaryActing" style="font-size:10px;padding:5px 12px;background:transparent;border:1px solid rgba(239,68,68,0.3);color:#ef4444;border-radius:4px;cursor:pointer;">✕ Reject</button>
-                  <button (click)="approveSalaryBatch()" [disabled]="salaryActing"
-                          style="font-size:10px;padding:5px 14px;background:#16a34a;color:white;border:none;border-radius:4px;cursor:pointer;font-weight:700;"
-                          [style.opacity]="salaryActing?'0.5':'1'">{{ salaryActing ? '...' : '✓ Approve All' }}</button>
-                  <button (click)="setView('salary-approvals')" style="font-size:10px;padding:5px 12px;background:transparent;border:1px solid rgba(148,163,184,0.2);color:currentColor;border-radius:4px;cursor:pointer;opacity:0.7;">Detail →</button>
-                </div>
-              </div>
-            </div>
-            <div *ngIf="activeApprovalTab==='SALARY' && !salaryApproval?.totalRecords && !loadingSalary"
-                 style="text-align:center;padding:24px 0;font-size:11px;opacity:0.4;">
-              No pending salary requests
-            </div>
           </div>
 
-          <!-- Branch Projects -->
+          <!-- ════ LEAVE CARD ════ -->
+          <div class="card" style="padding:0;margin-bottom:10px;">
+
+            <!-- Header -->
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px;">
+              <div style="display:flex;align-items:center;gap:10px;">
+                <div style="width:34px;height:34px;border-radius:10px;background:rgba(239,68,68,0.12);display:flex;align-items:center;justify-content:center;font-size:16px;">🗓</div>
+                <div>
+                  <div style="font-size:13px;font-weight:700;">Leave Requests</div>
+                  <div style="font-size:10px;opacity:0.5;margin-top:1px;">Leave approval queue</div>
+                </div>
+                <span style="font-size:10px;padding:3px 9px;border-radius:20px;font-weight:700;margin-left:4px;"
+                      [style.background]="leaveApprovals.length>0?'rgba(239,68,68,0.15)':'rgba(100,116,139,0.12)'"
+                      [style.color]="leaveApprovals.length>0?'#ef4444':'#64748b'">
+                  {{ leaveApprovals.length }} pending
+                </span>
+              </div>
+              <button (click)="setView('view-leave')" style="font-size:10px;padding:5px 14px;border-radius:20px;background:transparent;border:1px solid rgba(148,163,184,0.2);color:currentColor;cursor:pointer;opacity:0.6;font-family:inherit;">View all →</button>
+            </div>
+
+            <!-- Empty -->
+            <div *ngIf="leaveApprovals.length===0" style="text-align:center;padding:20px 18px;font-size:11px;opacity:0.3;border-top:1px solid rgba(148,163,184,0.07);">
+              No pending leave requests
+            </div>
+
+            <ng-container *ngIf="leaveApprovals.length>0">
+
+              <!-- ── Table Header ── -->
+              <div style="display:grid;grid-template-columns:170px 90px 130px 70px 1fr 90px 200px;gap:0;align-items:center;padding:8px 18px;border-top:1px solid rgba(148,163,184,0.07);border-bottom:1px solid rgba(148,163,184,0.1);">
+                <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.4;">Staff</span>
+                <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.4;">Type</span>
+                <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.4;">Dates</span>
+                <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.4;">Days</span>
+                <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.4;">Reason</span>
+                <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.4;">Status</span>
+                <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.4;">Action</span>
+              </div>
+
+              <!-- ── Table Rows ── -->
+              <div *ngFor="let a of leaveApprovals; let last=last"
+                   [style.border-bottom]="last?'none':'1px solid rgba(148,163,184,0.05)'"
+                   style="display:grid;grid-template-columns:170px 90px 130px 70px 1fr 90px 200px;gap:0;align-items:center;padding:12px 18px;">
+
+                <!-- Staff name -->
+                <div style="font-size:11px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ a.staffName }}</div>
+
+                <!-- Type badge -->
+                <div>
+                  <span style="font-size:9px;padding:3px 9px;border-radius:20px;font-weight:700;text-transform:uppercase;white-space:nowrap;"
+                        [style.background]="a.subtitle.includes('Annual')?'rgba(34,197,94,0.15)':a.subtitle.includes('Sick')?'rgba(248,113,113,0.15)':'rgba(167,139,250,0.15)'"
+                        [style.color]="a.subtitle.includes('Annual')?'#22c55e':a.subtitle.includes('Sick')?'#f87171':'#a78bfa'">
+                    {{ a.subtitle.includes('Annual') ? 'ANNUAL' : a.subtitle.includes('Sick') ? 'SICK' : 'UNPAID' }}
+                  </span>
+                </div>
+
+                <!-- Dates -->
+                <div style="font-size:10px;opacity:0.75;white-space:nowrap;">{{ a.dueText }}</div>
+
+                <!-- Days -->
+                <div style="font-size:10px;font-weight:600;opacity:0.85;">
+                  {{ a.subtitle.includes('·') ? (a.subtitle.split('·')[1]?.trim()) : '—' }}
+                </div>
+
+                <!-- Reason -->
+                <div style="font-size:10px;opacity:0.6;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ a.reason }}</div>
+
+                <!-- Status -->
+                <div>
+                  <span style="font-size:9px;padding:3px 10px;border-radius:20px;font-weight:700;background:rgba(245,158,11,0.15);color:#f59e0b;white-space:nowrap;">Pending</span>
+                </div>
+
+                <!-- Actions -->
+                <div style="display:flex;gap:6px;flex-shrink:0;padding-left:8px;">
+                  <button (click)="approveApproval(a)"
+                          style="font-size:10px;padding:5px 16px;background:linear-gradient(135deg,#14532d,#16a34a);color:white;border:none;border-radius:7px;cursor:pointer;font-weight:700;font-family:inherit;white-space:nowrap;">
+                    ✓ Approve
+                  </button>
+                  <button (click)="rejectApproval(a)"
+                          style="font-size:10px;padding:5px 12px;background:transparent;color:currentColor;border:1px solid rgba(148,163,184,0.25);border-radius:7px;cursor:pointer;opacity:0.7;font-family:inherit;white-space:nowrap;">
+                    ✕ Reject
+                  </button>
+                </div>
+
+              </div>
+            </ng-container>
+          </div>
+          <!-- ════ END LEAVE CARD ════ -->
+
+          <!-- ════ SALARY CARD ════ -->
+          <div class="card" style="padding:0;margin-bottom:10px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px;">
+              <div style="display:flex;align-items:center;gap:10px;">
+                <div style="width:34px;height:34px;border-radius:10px;background:rgba(245,158,11,0.12);display:flex;align-items:center;justify-content:center;font-size:16px;">💵</div>
+                <div><div style="font-size:13px;font-weight:700;">Salary Approvals</div><div style="font-size:10px;opacity:0.5;margin-top:1px;">Monthly payroll approval</div></div>
+                <span style="font-size:10px;padding:3px 9px;border-radius:20px;font-weight:700;margin-left:4px;" [style.background]="salaryPeriods.length>0?'rgba(245,158,11,0.15)':'rgba(100,116,139,0.12)'" [style.color]="salaryPeriods.length>0?'#f59e0b':'#64748b'">{{ salaryPeriods.length }} pending</span>
+              </div>
+              <button (click)="setView('salary-approvals')" style="font-size:10px;padding:5px 14px;border-radius:20px;background:transparent;border:1px solid rgba(148,163,184,0.2);color:currentColor;cursor:pointer;opacity:0.6;font-family:inherit;">View all →</button>
+            </div>
+            <div *ngIf="salaryPeriods.length===0" style="text-align:center;padding:20px 18px;font-size:11px;opacity:0.3;border-top:1px solid rgba(148,163,184,0.07);">No pending salary approvals</div>
+            <ng-container *ngIf="salaryPeriods.length>0">
+              <div style="display:grid;grid-template-columns:160px 90px 140px 130px 140px 90px 180px;gap:0;padding:8px 18px;border-top:1px solid rgba(148,163,184,0.07);border-bottom:1px solid rgba(148,163,184,0.07);align-items:center;">
+                <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.4;">Pay Period</span>
+                <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.4;">Staff</span>
+                <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.4;">Gross</span>
+                <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.4;">Tax</span>
+                <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.4;">Net</span>
+                <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.4;">Status</span>
+                <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.4;">Action</span>
+              </div>
+              <div *ngFor="let p of salaryPeriods; let last=last"
+                   [style.border-bottom]="last?'none':'1px solid rgba(148,163,184,0.05)'"
+                   style="display:grid;grid-template-columns:160px 90px 140px 130px 140px 90px 180px;gap:0;padding:11px 18px;align-items:center;">
+                <div style="font-size:11px;font-weight:700;">{{ formatPeriodLabel(p.payPeriod) }}</div>
+                <div style="font-size:11px;font-weight:600;color:#60a5fa;">{{ p.staffCount }} staff</div>
+                <div style="font-size:11px;">{{ formatMoney(p.currency, p.totalGross) }}</div>
+                <div style="font-size:11px;font-weight:600;color:#ef4444;">-{{ formatMoney(p.currency, p.totalTax) }}</div>
+                <div style="font-size:11px;font-weight:700;color:#22c55e;">{{ formatMoney(p.currency, p.totalNet) }}</div>
+                <div>
+                  <span style="font-size:9px;font-weight:700;padding:3px 10px;border-radius:20px;background:rgba(245,158,11,0.15);color:#f59e0b;white-space:nowrap;">Pending</span>
+                </div>
+                <div style="display:flex;gap:6px;">
+                  <button (click)="approveSalaryPeriod(p)" [disabled]="salaryActing[p.payPeriod]" [style.opacity]="salaryActing[p.payPeriod]?'0.5':'1'" style="font-size:10px;padding:5px 14px;background:linear-gradient(135deg,#14532d,#16a34a);color:white;border:none;border-radius:6px;cursor:pointer;font-weight:700;font-family:inherit;white-space:nowrap;">{{ salaryActing[p.payPeriod] ? '...' : '✓ Approve' }}</button>
+                  <button (click)="rejectSalaryPeriod(p)" [disabled]="salaryActing[p.payPeriod]" style="font-size:10px;padding:5px 12px;background:transparent;color:currentColor;border:1px solid rgba(148,163,184,0.2);border-radius:6px;cursor:pointer;opacity:0.7;font-family:inherit;white-space:nowrap;">✕ Reject</button>
+                </div>
+              </div>
+            </ng-container>
+          </div>
+
+          <!-- ════ EXPENSE CARD ════ -->
+          <div class="card" style="padding:0;margin-bottom:10px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px;">
+              <div style="display:flex;align-items:center;gap:10px;">
+                <div style="width:34px;height:34px;border-radius:10px;background:rgba(139,92,246,0.12);display:flex;align-items:center;justify-content:center;font-size:16px;">🧾</div>
+                <div><div style="font-size:13px;font-weight:700;">Expense Approvals</div><div style="font-size:10px;opacity:0.5;margin-top:1px;">Branch expense approval queue</div></div>
+                <span style="font-size:10px;padding:3px 9px;border-radius:20px;font-weight:700;margin-left:4px;" [style.background]="expenseApprovals.length>0?'rgba(239,68,68,0.15)':'rgba(100,116,139,0.12)'" [style.color]="expenseApprovals.length>0?'#ef4444':'#64748b'">{{ expenseApprovals.length }} pending</span>
+              </div>
+              <button (click)="setView('view-expense')" style="font-size:10px;padding:5px 14px;border-radius:20px;background:transparent;border:1px solid rgba(148,163,184,0.2);color:currentColor;cursor:pointer;opacity:0.6;font-family:inherit;">View all →</button>
+            </div>
+            <div *ngIf="expenseApprovals.length===0" style="text-align:center;padding:20px 18px;font-size:11px;opacity:0.3;border-top:1px solid rgba(148,163,184,0.07);">No pending expense approvals</div>
+            <ng-container *ngIf="expenseApprovals.length>0">
+              <div style="display:grid;grid-template-columns:2fr 1fr 1fr auto;gap:10px;padding:8px 18px;border-top:1px solid rgba(148,163,184,0.07);border-bottom:1px solid rgba(148,163,184,0.07);">
+                <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.4;">Description</span>
+                <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.4;">Amount</span>
+                <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.4;">Date</span>
+                <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.4;">Action</span>
+              </div>
+              <div *ngFor="let a of expenseApprovals; let last=last"
+                   [style.border-bottom]="last?'none':'1px solid rgba(148,163,184,0.05)'"
+                   style="display:grid;grid-template-columns:2fr 1fr 1fr auto;gap:10px;padding:11px 18px;align-items:center;">
+                <div style="font-size:11px;font-weight:600;">{{ a.staffName }}</div>
+                <div style="font-size:11px;">{{ a.subtitle }}</div>
+                <div style="font-size:10px;opacity:0.7;">{{ a.dueText }}</div>
+                <div style="display:flex;gap:6px;">
+                  <button (click)="approveApproval(a)" style="font-size:10px;padding:5px 14px;background:linear-gradient(135deg,#14532d,#16a34a);color:white;border:none;border-radius:6px;cursor:pointer;font-weight:700;font-family:inherit;">✓ Approve</button>
+                  <button (click)="rejectApproval(a)" style="font-size:10px;padding:5px 12px;background:transparent;color:currentColor;border:1px solid rgba(148,163,184,0.2);border-radius:6px;cursor:pointer;opacity:0.7;font-family:inherit;">✕ Reject</button>
+                </div>
+              </div>
+            </ng-container>
+          </div>
+
+          <!-- ════ BRANCH PROJECTS ════ -->
           <div class="card" style="padding:14px;margin-bottom:10px;">
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
               <div class="card-title" style="margin-bottom:0;font-size:12px;">Branch Projects</div>
@@ -595,30 +502,16 @@
               <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.45;">Due Date</span>
               <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.45;">Health</span>
             </div>
-            <div *ngFor="let p of branchProjects; let last=last"
-                 [style.border-bottom]="last?'none':'1px solid rgba(255,255,255,0.04)'"
-                 style="display:grid;grid-template-columns:2fr 1fr 1.5fr 1fr 1fr 1fr;gap:8px;padding:8px 6px;align-items:center;">
+            <div *ngFor="let p of branchProjects; let last=last" [style.border-bottom]="last?'none':'1px solid rgba(255,255,255,0.04)'" style="display:grid;grid-template-columns:2fr 1fr 1.5fr 1fr 1fr 1fr;gap:8px;padding:8px 6px;align-items:center;">
               <span style="font-size:11px;font-weight:600;">{{ p.name }}</span>
-              <div style="display:flex;align-items:center;gap:4px;">
-                <div style="width:6px;height:6px;border-radius:50%;flex-shrink:0;" [style.background]="getStatusColor(p.status)"></div>
-                <span style="font-size:10px;font-weight:600;" [style.color]="getStatusColor(p.status)">{{ p.status }}</span>
-              </div>
-              <div style="display:flex;align-items:center;gap:5px;">
-                <div style="flex:1;height:5px;border-radius:3px;overflow:hidden;background:rgba(148,163,184,0.15);">
-                  <div [style.width.%]="p.progress" [style.background]="getProgressGradient(p.status)" style="height:100%;border-radius:3px;"></div>
-                </div>
-                <span style="font-size:9px;opacity:0.6;min-width:25px;text-align:right;">{{ p.progress }}%</span>
-              </div>
-              <div style="display:flex;align-items:center;gap:4px;">
-                <div style="width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;color:white;flex-shrink:0;" [style.background]="p.ownerColor">{{ p.ownerInitial }}</div>
-                <span style="font-size:10px;">{{ p.ownerName }}</span>
-              </div>
+              <div style="display:flex;align-items:center;gap:4px;"><div style="width:6px;height:6px;border-radius:50%;" [style.background]="getStatusColor(p.status)"></div><span style="font-size:10px;font-weight:600;" [style.color]="getStatusColor(p.status)">{{ p.status }}</span></div>
+              <div style="display:flex;align-items:center;gap:5px;"><div style="flex:1;height:5px;border-radius:3px;overflow:hidden;background:rgba(148,163,184,0.15);"><div [style.width.%]="p.progress" [style.background]="getProgressGradient(p.status)" style="height:100%;border-radius:3px;"></div></div><span style="font-size:9px;opacity:0.6;min-width:25px;text-align:right;">{{ p.progress }}%</span></div>
+              <div style="display:flex;align-items:center;gap:4px;"><div style="width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;color:white;" [style.background]="p.ownerColor">{{ p.ownerInitial }}</div><span style="font-size:10px;">{{ p.ownerName }}</span></div>
               <span style="font-size:10px;opacity:0.7;">{{ p.dueDate }}</span>
-              <div style="display:flex;gap:2px;">
-                <span *ngFor="let i of getHealthDots(p.health)" style="width:6px;height:6px;border-radius:50%;" [style.background]="getHealthDotColor(i,p.health)"></span>
-              </div>
+              <div style="display:flex;gap:2px;"><span *ngFor="let i of getHealthDots(p.health)" style="width:6px;height:6px;border-radius:50%;" [style.background]="getHealthDotColor(i,p.health)"></span></div>
             </div>
           </div>
+
         </ng-container>
       </main>
 
@@ -631,10 +524,7 @@
           </div>
           <div class="members-list">
             <div *ngFor="let m of teamMembers" class="member-card" style="cursor:pointer;" (click)="openMemberPopup(m)">
-              <div class="member-avatar" [style.background]="m.color">
-                {{ m.initial }}
-                <div *ngIf="m.online" class="member-online"></div>
-              </div>
+              <div class="member-avatar" [style.background]="m.color">{{ m.initial }}<div *ngIf="m.online" class="member-online"></div></div>
               <div class="member-info-wrap">
                 <div class="member-name">{{ m.name }}</div>
                 <div class="member-info">

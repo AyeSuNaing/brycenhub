@@ -1,151 +1,261 @@
-/* ═══════════════════════════════════════════════
-   VP DASHBOARD — Component Styles
-   Follows member-dashboard.scss pattern exactly
-═══════════════════════════════════════════════ */
+/* ══════════════════════════════════════════════════════
+   LEAVE CARD  —  VP Dashboard
+   Add these styles to your vp-dashboard.component.scss
+   (or wherever the VP dashboard SCSS lives)
+══════════════════════════════════════════════════════ */
 
-/* ── APP SHELL ─────────────────────────────── */
-.app-shell {
-  display: flex;
-  flex-direction: column;
-  height: 100vh;
-  overflow: hidden;
-  font-family: 'Inter', sans-serif;
+/* ── Grid definition (shared between header + rows) ── */
+$leave-cols: 44px 1.7fr 0.9fr 1.2fr 0.5fr 1fr 0.8fr auto;
+$leave-gap:  0;
+$leave-px:   18px;
+
+/* ── Card wrapper ────────────────────────────────────── */
+.leave-card {
+  /* inherits .card from parent; no extra overrides needed */
 }
 
-/* ── TOPBAR ────────────────────────────────── */
-.topbar {
-  width: 100%;
-  height: 56px;
+/* ── Header row ──────────────────────────────────────── */
+.leave-card__header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 18px;
-  flex-shrink: 0;
-  gap: 10px;
-  z-index: 100;
+  padding: 14px $leave-px;
 }
-.logo-wrap {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-.logo-img {
-  width: 36px;
-  height: 36px;
-  object-fit: contain;
-  border-radius: 8px;
-  background: white;
-  padding: 2px;
-}
-.logo-text {
-  font-size: 13px;
-  font-weight: 800;
-  letter-spacing: 0.3px;
-}
-.logo-slogan {
-  font-size: 9px;
-  font-weight: 600;
-  letter-spacing: 0.3px;
-  font-style: italic;
-  background: linear-gradient(90deg, #a855f7, #22c55e);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-.topbar-spacer { flex: 1; }
 
-.search-box {
+.leave-card__title-group {
   display: flex;
   align-items: center;
-  gap: 6px;
-  border-radius: 9px;
-  padding: 6px 12px;
-  width: 200px;
-  input {
-    background: transparent;
-    border: none;
-    outline: none;
-    font-size: 11px;
-    width: 100%;
-    color: inherit;
-    &::placeholder { color: #64748b; }
-  }
+  gap: 10px;
 }
-.lang-btn {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  border-radius: 9px;
-  padding: 6px 10px;
-  cursor: pointer;
-  font-size: 11px;
-}
-.icon-btn {
+
+.leave-card__icon {
   width: 34px;
   height: 34px;
-  border-radius: 9px;
+  border-radius: 10px;
+  background: rgba(239, 68, 68, 0.12);
   display: flex;
   align-items: center;
   justify-content: center;
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.leave-card__title   { font-size: 13px; font-weight: 700; }
+.leave-card__subtitle {
+  font-size: 10px;
+  opacity: 0.5;
+  margin-top: 1px;
+}
+
+/* Pending count badge */
+.leave-card__badge {
+  font-size: 10px;
+  padding: 3px 9px;
+  border-radius: 20px;
+  font-weight: 700;
+  margin-left: 4px;
+  background: rgba(100, 116, 139, 0.12);
+  color: #64748b;
+
+  &--has {
+    background: rgba(239, 68, 68, 0.15);
+    color: #ef4444;
+  }
+}
+
+/* "View all →" button */
+.leave-card__view-btn {
+  font-size: 10px;
+  padding: 5px 14px;
+  border-radius: 20px;
+  background: transparent;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  color: currentColor;
   cursor: pointer;
+  opacity: 0.6;
+  font-family: inherit;
+  transition: opacity 0.15s;
+
+  &:hover { opacity: 1; }
+}
+
+/* ── Empty state ─────────────────────────────────────── */
+.leave-card__empty {
+  text-align: center;
+  padding: 20px $leave-px;
+  font-size: 11px;
+  opacity: 0.3;
+  border-top: 1px solid rgba(148, 163, 184, 0.07);
+}
+
+/* ── Table header row ────────────────────────────────── */
+.leave-table__header {
+  display: grid;
+  grid-template-columns: $leave-cols;
+  gap: $leave-gap;
+  padding: 8px $leave-px;
+  border-top: 1px solid rgba(148, 163, 184, 0.07);
+  border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+}
+
+.leave-table__col-label {
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  opacity: 0.4;
+}
+
+/* ── Table data row ──────────────────────────────────── */
+.leave-table__row {
+  display: grid;
+  grid-template-columns: $leave-cols;
+  gap: $leave-gap;
+  padding: 12px $leave-px;
+  align-items: center;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.05);
+  transition: background 0.12s;
+
+  &:hover { background: rgba(148, 163, 184, 0.03); }
+
+  &--last { border-bottom: none; }
+}
+
+/* Avatar circle */
+.leave-table__avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: white;
   flex-shrink: 0;
 }
 
-/* ── MAIN ROW ───────────────────────────────── */
-.main-row {
-  flex: 1;
-  display: flex;
+/* Staff name */
+.leave-table__staff-name {
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
   overflow: hidden;
-  min-height: 0;
+  text-overflow: ellipsis;
 }
 
-/* ── LEFT SIDEBAR ───────────────────────────── */
-.left-sidebar {
-  width: 210px;
-  border-right: 1px solid;
+/* Dates  e.g. "Feb 18 — Feb 19" */
+.leave-table__dates {
+  font-size: 10px;
+  opacity: 0.75;
+  white-space: nowrap;
+}
+
+/* Days  e.g. "2 days" */
+.leave-table__days {
+  font-size: 10px;
+  font-weight: 600;
+  opacity: 0.85;
+}
+
+/* Reason */
+.leave-table__reason {
+  font-size: 10px;
+  opacity: 0.6;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ── Leave-type badge ────────────────────────────────── */
+.leave-type-badge {
+  font-size: 9px;
+  padding: 3px 9px;
+  border-radius: 20px;
+  font-weight: 700;
+  text-transform: uppercase;
+
+  /* default (unpaid) */
+  background: rgba(167, 139, 250, 0.15);
+  color: #a78bfa;
+
+  &--annual {
+    background: rgba(34, 197, 94, 0.15);
+    color: #22c55e;
+  }
+
+  &--sick {
+    background: rgba(248, 113, 113, 0.15);
+    color: #f87171;
+  }
+
+  &--unpaid {
+    background: rgba(167, 139, 250, 0.15);
+    color: #a78bfa;
+  }
+}
+
+/* ── Status pill ─────────────────────────────────────── */
+.leave-status-pill {
+  font-size: 9px;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-weight: 700;
+
+  &--pending  { background: rgba(245, 158, 11, 0.15); color: #f59e0b; }
+  &--approved { background: rgba(34,  197, 94, 0.15); color: #22c55e; }
+  &--rejected { background: rgba(239, 68,  68, 0.15); color: #ef4444; }
+}
+
+/* ── Action buttons ──────────────────────────────────── */
+.leave-table__actions {
   display: flex;
-  flex-direction: column;
+  gap: 6px;
   flex-shrink: 0;
-  overflow: hidden;
-}
-.sidebar-scroll {
-  flex: 1;
-  overflow-y: auto;
-  min-height: 0;
-  padding-bottom: 4px;
+  padding-left: 8px;
 }
 
-/* Active approval item highlight */
-.active-proj {
-  background: #16a34a22 !important;
-  border-left: 2px solid #22c55e;
-  border-radius: 7px !important;
+.btn-approve {
+  font-size: 10px;
+  padding: 5px 16px;
+  background: linear-gradient(135deg, #14532d, #16a34a);
+  color: white;
+  border: none;
+  border-radius: 7px;
+  cursor: pointer;
+  font-weight: 700;
+  font-family: inherit;
+  white-space: nowrap;
+  transition: opacity 0.15s, transform 0.1s;
+
+  &:hover  { opacity: 0.9; transform: translateY(-1px); }
+  &:active { transform: translateY(0); }
 }
 
-/* Dropdown animation */
-@keyframes dropIn {
-  from { opacity: 0; transform: translateY(-4px); }
-  to   { opacity: 1; transform: translateY(0);    }
+.btn-reject {
+  font-size: 10px;
+  padding: 5px 12px;
+  background: transparent;
+  color: currentColor;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  border-radius: 7px;
+  cursor: pointer;
+  opacity: 0.7;
+  font-family: inherit;
+  white-space: nowrap;
+  transition: opacity 0.15s, border-color 0.15s;
+
+  &:hover { opacity: 1; border-color: rgba(239, 68, 68, 0.4); color: #ef4444; }
 }
 
-/* ── DARK MODE ─────────────────────────────── */
+/* ── Dark mode overrides ─────────────────────────────── */
 .dark {
-  .app-shell     { background: #0a0f1e; color: #e2e8f0; }
-  .topbar        { background: #0d1424; border-bottom: 1px solid #1e2d4a; }
-  .search-box    { background: #131929; border: 1px solid #1e2d4a; }
-  .lang-btn      { background: #131929; border: 1px solid #1e2d4a; color: #8896b3; }
-  .icon-btn      { background: #131929; border: 1px solid #1e2d4a; color: #8896b3;
-    &:hover { background: #1a2540; color: white; }
-  }
+  .leave-card__header    { border-color: #1e2d4a; }
+  .leave-table__header   { border-color: #1e2d4a; }
+  .leave-table__row:hover { background: rgba(30, 45, 74, 0.35); }
 }
 
-/* ── LIGHT MODE ────────────────────────────── */
+/* ── Light mode overrides ────────────────────────────── */
 .light {
-  .app-shell     { background: #f1f5f9; color: #1e293b; }
-  .topbar        { background: white; border-bottom: 1px solid #e2e8f0; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
-  .search-box    { background: #f8fafc; border: 1px solid #e2e8f0; }
-  .lang-btn      { background: #f8fafc; border: 1px solid #e2e8f0; color: #64748b; }
-  .icon-btn      { background: white; border: 1px solid #e2e8f0; color: #64748b;
-    &:hover { background: #f1f5f9; color: #1e293b; }
-  }
+  .leave-table__row:hover { background: rgba(241, 245, 249, 0.8); }
 }
