@@ -31,7 +31,6 @@ public class ChatController {
 
     // =============================================
     // SEND MESSAGE — POST /api/chat/send
-    // ✅ ChatMessage return (send မှာ senderName မလို)
     // =============================================
     @PostMapping("/send")
     public ResponseEntity<?> sendMessage(
@@ -45,7 +44,6 @@ public class ChatController {
                     request.getContent(),
                     request.getOriginalLanguage());
 
-            // ✅ send response မှာ senderName ထည့်ပေး
             ChatMessageDto dto = ChatMessageDto.from(message, user.getName());
             return ResponseEntity.ok(dto);
         } catch (Exception e) {
@@ -55,30 +53,26 @@ public class ChatController {
     }
 
     // =============================================
-    // GET MESSAGES — DTO return (senderName ပါတယ်)
+    // GET MESSAGES
     // =============================================
 
-    // GET /api/chat/global
     @GetMapping("/global")
     public ResponseEntity<List<ChatMessageDto>> getGlobalMessages() {
         return ResponseEntity.ok(chatService.getGlobalMessages());
     }
 
-    // GET /api/chat/country/{countryId}
     @GetMapping("/country/{countryId}")
     public ResponseEntity<List<ChatMessageDto>> getCountryMessages(
             @PathVariable Long countryId) {
         return ResponseEntity.ok(chatService.getCountryMessages(countryId));
     }
 
-    // GET /api/chat/project/{projectId}
     @GetMapping("/project/{projectId}")
     public ResponseEntity<List<ChatMessageDto>> getProjectMessages(
             @PathVariable Long projectId) {
         return ResponseEntity.ok(chatService.getProjectMessages(projectId));
     }
 
-    // GET /api/chat/direct/{otherUserId}
     @GetMapping("/direct/{otherUserId}")
     public ResponseEntity<List<ChatMessageDto>> getDirectMessages(
             @PathVariable Long otherUserId,
@@ -88,7 +82,7 @@ public class ChatController {
     }
 
     // =============================================
-    // READ STATUS (ပြောင်းမလို)
+    // READ STATUS
     // =============================================
 
     @PutMapping("/read/{messageId}")
@@ -120,5 +114,18 @@ public class ChatController {
                 "channelType", type,
                 "channelId", channelId,
                 "unreadCount", count));
+    }
+
+    // =============================================
+    // ✅ NEW — Unread DMs grouped by sender
+    // GET /api/chat/direct-unread-by-sender?userId={myId}
+    // Returns: [{ senderId, unreadCount }]
+    // DIRECT channel_id = receiver userId
+    // =============================================
+    @GetMapping("/direct-unread-by-sender")
+    public ResponseEntity<List<Map<String, Object>>> getDirectUnreadBySender(
+            @RequestParam Long userId,
+            @AuthenticationPrincipal User user) {
+        return ResponseEntity.ok(chatService.getDirectUnreadBySender(userId));
     }
 }

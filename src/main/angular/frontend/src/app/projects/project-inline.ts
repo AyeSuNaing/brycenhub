@@ -13,6 +13,7 @@ import { Router } from '@angular/router';
 import { forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { ChatPopupComponent, ChatMember } from '../shared/chat-popup/chat-popup.component';
+import { NavigationStateService } from '../services/navigation-state.service';
 
 import {
   setupLabel, SetupI18nKey,
@@ -192,6 +193,7 @@ export class ProjectInlineComponent implements OnInit, OnChanges {
     private cdr: ChangeDetectorRef,
     private router: Router,
     private sanitizer: DomSanitizer,
+    private navState: NavigationStateService,
   ) { }
 
   ngOnInit() {
@@ -1004,7 +1006,6 @@ export class ProjectInlineComponent implements OnInit, OnChanges {
     return pm?.userName || pm?.name || `PM #${this.project.pmId}`;
   }
 
-  openDesign(): void { this.router.navigate(['/design', this.project?.id]); }
   getPmInitial(): string { const name = this.getPmName(); return name.startsWith('PM #') ? 'P' : (name[0]?.toUpperCase() || 'P'); }
   formatBudget(b: any): string { return b ? '$' + Number(b).toLocaleString() : '—'; }
 
@@ -1144,6 +1145,20 @@ export class ProjectInlineComponent implements OnInit, OnChanges {
   // CHAT
   // ══════════════════════════════════════════════════════════════════
 
+  // ✅ Save project state then navigate — back button restores project inline
+  private saveAndNavigate(route: any[]): void {
+    const role = this.auth.getUser()?.role || '';
+    const managerRoles = ['VICE_PRESIDENT', 'COUNTRY_DIRECTOR', 'BOSS', 'ADMIN'];
+    const dashboard = managerRoles.includes(role) ? 'vp' : 'member';
+    this.navState.saveProjectState(this.projectId, dashboard);
+    this.router.navigate(route);
+  }
+
+  openBoard(): void     { this.saveAndNavigate(['/kanban',   this.projectId]); }
+  openDesign(): void    { this.saveAndNavigate(['/design',   this.projectId]); }
+  openApiDocs(): void   { this.saveAndNavigate(['/projects', this.projectId, 'api-docs']); }
+  openDbSchema(): void  { this.saveAndNavigate(['/projects', this.projectId, 'db-schema']); }
+  openActivity(): void  { this.saveAndNavigate(['/projects', this.projectId, 'activity']); }
   openMemberChat(m: any) {
     this.selectedChatMember = {
       id: m.userId || m.id,

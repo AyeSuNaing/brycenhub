@@ -12,6 +12,8 @@ import {
 } from '@angular/cdk/drag-drop';
 import { AuthService } from '../services/auth.service';
 import { environment } from '../../environments/environment';
+import { NavigationStateService } from '../services/navigation-state.service';
+
 
 const BASE = environment.apiBaseUrl;
 
@@ -106,6 +108,7 @@ export class Kanban implements OnInit {
     private route: ActivatedRoute,
     public router: Router,
     private cdr: ChangeDetectorRef,
+    private navState: NavigationStateService,
   ) { }
 
   ngOnInit() {
@@ -377,7 +380,8 @@ export class Kanban implements OnInit {
     const isPm = Number(this.project?.pmId) === Number(this.auth.getUser()?.userId);
     return projectOk || isPm;
   }
-  goBack() { this.router.navigate(['/dashboard/member'], { queryParams: { projectId: this.projectId } }); }
+  
+  goBack(): void { history.back(); }
 
   // ── TASK EDIT / DELETE ────────────────────────────
   openEditTask() {

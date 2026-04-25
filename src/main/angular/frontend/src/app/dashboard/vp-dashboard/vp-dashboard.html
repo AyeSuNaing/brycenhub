@@ -557,30 +557,119 @@
 
       </div><!-- /.main-center -->
 
-      <!-- RIGHT SIDEBAR — always visible -->
-      <aside class="right-sidebar" style="width:260px;">
-        <div class="members-section" style="padding-top:14px;">
-          <div class="rs-section-header">
-            <span style="font-size:11px;font-weight:700;">Team Members</span>
-            <span class="rs-badge-red" style="background:rgba(100,116,139,0.2);color:#94a3b8;">{{ teamMembers.length }}</span>
-          </div>
-          <div class="members-list">
-            <div *ngFor="let m of teamMembers" class="member-card" style="cursor:pointer;" (click)="openMemberPopup(m)">
-              <div class="member-avatar" [style.background]="m.color">{{ m.initial }}<div *ngIf="m.online" class="member-online"></div></div>
-              <div class="member-info-wrap">
-                <div class="member-name">{{ m.name }}</div>
-                <div class="member-info">
-                  <span [style]="getRoleBadgeStyle(m.role)" style="padding:1px 5px;border-radius:20px;font-size:7px;font-weight:700;">{{ m.role }}</span>
-                  <span style="margin-left:3px;">· <span class="member-tasks">{{ m.taskCount }} tasks</span></span>
+      <!-- RIGHT SIDEBAR — single scroll: Management → Group → Team -->
+      <aside class="right-sidebar" style="width:260px;overflow-y:auto;overflow-x:hidden;display:flex;flex-direction:column;">
+
+        <!-- ══ 1. MANAGEMENT (BOSS / CD / VP) — cross-branch ══ -->
+        <ng-container *ngIf="getManagementMembers().length > 0">
+          <div style="padding:14px 10px 8px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+              <span style="font-size:10px;font-weight:700;letter-spacing:0.5px;" [style.color]="isDark ? '#a855f7' : '#7c3aed'">MANAGEMENT</span>
+              <span style="font-size:9px;padding:1px 7px;border-radius:20px;background:rgba(168,85,247,0.12);color:#a855f7;font-weight:700;border:1px solid rgba(168,85,247,0.25);">{{ getManagementMembers().length }}</span>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:4px;">
+              <div *ngFor="let m of getManagementMembers()" class="member-card" style="cursor:pointer;border-left:2px solid #a855f733;"
+                [style.background]="isDark ? '' : '#f8fafc'"
+                (click)="openMemberPopup(m)">
+                <div class="member-avatar" [style.background]="m.color">{{ m.initial }}</div>
+                <div class="member-info-wrap">
+                  <div class="member-name" [style.color]="isDark ? '#e2e8f0' : '#1e293b'">{{ m.name }}</div>
+                  <div class="member-info">
+                    <span style="padding:1px 5px;border-radius:20px;font-size:7px;font-weight:700;background:rgba(168,85,247,0.15);color:#a855f7;">{{ m.role }}</span>
+                  </div>
+                </div>
+                <span *ngIf="memberUnreadCounts[m.id] > 0"
+                  style="flex-shrink:0;min-width:16px;height:16px;border-radius:20px;background:#ef4444;color:white;font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center;padding:0 4px;">
+                  {{ memberUnreadCounts[m.id] > 99 ? '99+' : memberUnreadCounts[m.id] }}
+                </span>
+                <div style="width:10px;height:10px;border-radius:50%;flex-shrink:0;margin-left:2px;"
+                  [style.background]="m.online ? '#22c55e' : '#334155'"
+                  [style.boxShadow]="m.online ? '0 0 5px #22c55e88' : 'none'" [style.border]="isDark ? 'none' : '1.5px solid #cbd5e1'">
                 </div>
               </div>
             </div>
           </div>
+          <div style="height:1px;background:rgba(255,255,255,0.06);margin:0 10px;"></div>
+        </ng-container>
+
+        <!-- ══ 2. GROUP CHATS — Branch Projects ══ -->
+        <div style="padding:10px 10px 8px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+            <span style="font-size:10px;font-weight:700;letter-spacing:0.5px;" [style.color]="isDark ? '#22c55e' : '#16a34a'">💬 GROUP CHATS</span>
+            <span style="font-size:9px;padding:1px 7px;border-radius:20px;background:rgba(34,197,94,0.12);color:#22c55e;font-weight:700;border:1px solid rgba(34,197,94,0.25);">{{ branchProjects.length }}</span>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:4px;">
+            <div *ngFor="let p of branchProjects"
+              (click)="openProjectGroupChat(p)"
+              style="display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:9px;cursor:pointer;border:1px solid;transition:all 0.15s;"
+              [style.background]="isDark ? 'rgba(22,163,74,0.06)' : '#f0fdf4'"
+              [style.borderColor]="isDark ? 'rgba(34,197,94,0.2)' : '#86efac66'"
+              (mouseenter)="$any($event.currentTarget).style.background = isDark ? 'rgba(22,163,74,0.14)' : '#dcfce7'"
+              (mouseleave)="$any($event.currentTarget).style.background = isDark ? 'rgba(22,163,74,0.06)' : '#f0fdf4'">
+              <div style="width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,#14532d,#16a34a);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:white;flex-shrink:0;">
+                {{ p.name[0]?.toUpperCase() }}
+              </div>
+              <div style="flex:1;min-width:0;">
+                <div style="display:flex;align-items:center;gap:5px;">
+                  <div style="font-size:11px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1;min-width:0;" [style.color]="isDark ? '#e2e8f0' : '#1e293b'">{{ p.name }}</div>
+                  <!-- ✅ Unread badge -->
+                  <span *ngIf="projectUnreadCounts[p.id] > 0"
+                    style="flex-shrink:0;min-width:16px;height:16px;border-radius:20px;background:#ef4444;color:white;font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center;padding:0 4px;">
+                    {{ projectUnreadCounts[p.id] > 99 ? '99+' : projectUnreadCounts[p.id] }}
+                  </span>
+                </div>
+                <div style="display:flex;align-items:center;gap:4px;margin-top:1px;">
+                  <span style="font-size:9px;font-weight:700;"
+                    [style.color]="p.status === 'On Track' ? '#22c55e' : p.status === 'At Risk' ? '#f59e0b' : '#ef4444'">
+                    ● {{ p.status }}
+                  </span>
+                  <span style="font-size:9px;" [style.color]="isDark ? 'rgba(255,255,255,0.4)' : '#94a3b8'">· {{ p.progress }}%</span>
+                </div>
+              </div>
+
+            </div>
+            <div *ngIf="branchProjects.length === 0" style="text-align:center;padding:10px;font-size:10px;opacity:0.35;">No active projects</div>
+          </div>
         </div>
+
+        <div style="height:1px;background:rgba(255,255,255,0.06);margin:0 10px;"></div>
+
+        <!-- ══ 3. TEAM (PM / Leader / Dev / UI_UX / QA) ══ -->
+        <ng-container *ngIf="getTeamMembers().length > 0">
+          <div style="padding:10px 10px 14px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+              <span style="font-size:10px;font-weight:700;letter-spacing:0.5px;" [style.color]="isDark ? '#64748b' : '#475569'">TEAM</span>
+              <span style="font-size:9px;padding:1px 7px;border-radius:20px;background:rgba(100,116,139,0.15);color:#94a3b8;font-weight:700;border:1px solid rgba(100,116,139,0.25);">{{ getTeamMembers().length }}</span>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:4px;">
+              <div *ngFor="let m of getTeamMembers()" class="member-card" style="cursor:pointer;"
+                [style.background]="isDark ? '' : '#f8fafc'"
+                (click)="openMemberPopup(m)">
+                <div class="member-avatar" [style.background]="m.color">{{ m.initial }}</div>
+                <div class="member-info-wrap">
+                  <div class="member-name" [style.color]="isDark ? '#e2e8f0' : '#1e293b'">{{ m.name }}</div>
+                  <div class="member-info">
+                    <span [style]="getRoleBadgeStyle(m.role)" style="padding:1px 5px;border-radius:20px;font-size:7px;font-weight:700;">{{ m.role }}</span>
+                    <span style="margin-left:3px;">· <span class="member-tasks" [style.color]="isDark ? '' : '#64748b'">{{ m.taskCount }} tasks</span></span>
+                  </div>
+                </div>
+                <span *ngIf="memberUnreadCounts[m.id] > 0"
+                  style="flex-shrink:0;min-width:16px;height:16px;border-radius:20px;background:#ef4444;color:white;font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center;padding:0 4px;">
+                  {{ memberUnreadCounts[m.id] > 99 ? '99+' : memberUnreadCounts[m.id] }}
+                </span>
+                <div style="width:10px;height:10px;border-radius:50%;flex-shrink:0;margin-left:2px;"
+                  [style.background]="m.online ? '#22c55e' : '#334155'"
+                  [style.boxShadow]="m.online ? '0 0 5px #22c55e88' : 'none'" [style.border]="isDark ? 'none' : '1.5px solid #cbd5e1'">
+                </div>
+              </div>
+            </div>
+          </div>
+        </ng-container>
+
       </aside>
     </div>
   </div>
 
-  <app-chat-popup *ngIf="activeChatMember" [member]="activeChatMember" [isGroup]="false" (close)="closeMemberPopup()"></app-chat-popup>
+  <app-chat-popup *ngIf="activeChatMember" [member]="activeChatMember" [isGroup]="isGroupChat" (close)="closeMemberPopup()"></app-chat-popup>
   <app-payslip-modal [isOpen]="payslipOpen" [recordId]="payslipRecordId" (close)="closePayslip()" (actionSuccess)="loadSalaryApprovals()"></app-payslip-modal>
 </div>

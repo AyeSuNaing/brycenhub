@@ -1,7 +1,7 @@
-import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef, NgZone } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterModule } from '@angular/router';
+import { Router, RouterModule, ActivatedRoute } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { of, Subscription } from 'rxjs';
 import { catchError } from 'rxjs/operators';
@@ -14,6 +14,7 @@ import { ChatPopupComponent, ChatMember } from '../../shared/chat-popup/chat-pop
 import { PayslipModalComponent } from '../../shared/payslip-modal.component';
 import { AuthService } from '../../services/auth.service';
 import { RefreshService } from '../../services/refresh.service';
+import { NavigationStateService } from '../../services/navigation-state.service';
 import { environment } from '../../../environments/environment';
 
 const BASE = environment.apiBaseUrl;
@@ -36,8 +37,9 @@ export interface BranchProject {
 }
 
 export interface BranchMemberItem {
-  id: number; name: string; role: string;
+  id: number; name: string; role: string; rawRole: string;
   initial: string; color: string; taskCount: number; online: boolean;
+  management: boolean;  // true = BOSS/CD/VP (cross-branch)
 }
 
 export interface DepartmentItem {
@@ -103,6 +105,9 @@ export class VpDashboardComponent implements OnInit, OnDestroy {
   salaryApprovals: PendingApproval[] = [];
   branchProjects: BranchProject[] = [];
   teamMembers: BranchMemberItem[] = [];
+  projectUnreadCounts: Record<number, number> = {};  // projectId → unread count
+  memberUnreadCounts: Record<number, number> = {};   // userId → unread count
+  private _unreadPollTimer: any = null;
   allAnnouncements: any[] = [];
 
   // ── Salary approvals — period list ─────────────────────────────
@@ -218,9 +223,12 @@ export class VpDashboardComponent implements OnInit, OnDestroy {
   constructor(
     private http: HttpClient,
     private router: Router,
+    private route: ActivatedRoute,
     private auth: AuthService,
     private cdr: ChangeDetectorRef,
     private refreshService: RefreshService,
+    private navState: NavigationStateService,
+    private ngZone: NgZone,
   ) { }
 
   // ══════════════════════════════════════════════════════════════
@@ -228,12 +236,22 @@ export class VpDashboardComponent implements OnInit, OnDestroy {
   // ══════════════════════════════════════════════════════════════
 
   ngOnInit(): void {
-    const saved = localStorage.getItem('brycen-theme');
-    this.setTheme(saved !== 'light');
+    const theme = localStorage.getItem('brycen-theme');
+    this.setTheme(theme !== 'light');
     this.currentUser = this.auth.getUser();
     this.currentLangObj = this.langs.find(l => l.code === (this.currentUser?.preferredLanguage || 'en')) || this.langs[0];
     this.loadAll();
     this.updateMyTasksHeight();
+
+    // ✅ Restore navigation state (e.g. back from Board/Design/API/Activity page)
+    const navSaved = this.navState.restoreProjectState();
+    if (navSaved.showProject && navSaved.projectId && navSaved.dashboard === 'vp') {
+      setTimeout(() => {
+        this.openProject(navSaved.projectId!);
+        this.navState.clearProjectState();
+      }, 300);
+    }
+
     this._refreshSub = this.refreshService.refresh$.subscribe(() => {
       this.loadStats();
       this.loadLeaveRequests();
@@ -242,7 +260,10 @@ export class VpDashboardComponent implements OnInit, OnDestroy {
     });
   }
 
-  ngOnDestroy(): void { this._refreshSub?.unsubscribe(); }
+  ngOnDestroy(): void {
+    this._refreshSub?.unsubscribe();
+    this.stopUnreadPolling();
+  }
 
   private get headers() { return this.auth.getHeaders(); }
 
@@ -612,14 +633,70 @@ export class VpDashboardComponent implements OnInit, OnDestroy {
         this.branchProjects    = (list || []).map(p => this.normalizeProject(p));
         this.loading.projects  = false;
         this.cdr.detectChanges();
+        this.loadProjectUnreadCounts();
+        this.startUnreadPolling();
       });
+  }
+
+  // ✅ Poll unread counts every 5 seconds (outside Angular zone — no extra CD cycles)
+  startUnreadPolling(): void {
+    this.stopUnreadPolling();
+    this.ngZone.runOutsideAngular(() => {
+      this._unreadPollTimer = setInterval(() => {
+        this.ngZone.run(() => this.loadProjectUnreadCounts());
+      }, 5000);
+    });
+  }
+
+  stopUnreadPolling(): void {
+    if (this._unreadPollTimer) {
+      clearInterval(this._unreadPollTimer);
+      this._unreadPollTimer = null;
+    }
+  }
+
+  // ✅ Fetch unread count per project for group chat badges
+  loadProjectUnreadCounts(): void {
+    this.loadMemberUnreadCounts();
+    this.branchProjects.forEach(p => {
+      this.http.get<any>(
+        `${BASE}/chat/unread?type=PROJECT&channelId=${p.id}`,
+        { headers: this.headers }
+      ).pipe(catchError(() => of({ unreadCount: 0 }))).subscribe(res => {
+        this.projectUnreadCounts[p.id] = res?.unreadCount || 0;
+        this.cdr.detectChanges();
+      });
+    });
+  }
+
+  // ✅ Fetch unread DM count per member
+  // DIRECT channel_id = VP ကိုယ်တိုင်ရဲ့ userId (receiver)
+  // sender filter — messages where sender_id = m.id AND channel_id = myId
+  loadMemberUnreadCounts(): void {
+    const myId = this.currentUser?.id || this.currentUser?.userId;
+    if (!myId) return;
+    // Fetch all unread for my DIRECT channel (channelId = myId)
+    // then group by sender_id
+    this.http.get<any[]>(
+      `${BASE}/chat/direct-unread-by-sender?userId=${myId}`,
+      { headers: this.headers }
+    ).pipe(catchError(() => of([]))).subscribe(res => {
+      // res = [{ senderId, unreadCount }]
+      this.memberUnreadCounts = {};
+      (res || []).forEach((r: any) => {
+        this.memberUnreadCounts[r.senderId] = r.unreadCount;
+      });
+      this.cdr.detectChanges();
+    });
   }
 
   loadBranchMembers(): void {
     this.http.get<any[]>(`${VP_BASE}/branch-members`, { headers: this.headers })
       .pipe(catchError(() => of([])))
       .subscribe(list => {
-        this.teamMembers      = (list || []).map(m => this.normalizeMember(m));
+        const mapped = (list || []).map(m => this.normalizeMember(m));
+        this.teamMembers = mapped.sort((a, b) => this.getMemberRoleOrder(a.rawRole) - this.getMemberRoleOrder(b.rawRole));
+        this.loadMemberUnreadCounts();
         this.loading.members  = false;
         this.cdr.detectChanges();
       });
@@ -681,9 +758,12 @@ export class VpDashboardComponent implements OnInit, OnDestroy {
 
   private normalizeMember(m: any): BranchMemberItem {
     return {
-      id: m.id, name: m.name || 'Unknown', role: this.shortRole(m.role || ''),
+      id: m.id, name: m.name || 'Unknown',
+      role: m.role || 'Staff',
+      rawRole: m.rawRole || '',
       initial: m.initial || '?', color: m.color || '#64748b',
       taskCount: m.taskCount || 0, online: m.online === true,
+      management: m.management === true,
     };
   }
 
@@ -832,11 +912,60 @@ export class VpDashboardComponent implements OnInit, OnDestroy {
     return new Date(Number(y), Number(m) - 1, 1).toLocaleString('en-US', { month: 'long', year: 'numeric' });
   }
 
+  isGroupChat = false;
+
+  // ✅ Split teamMembers — use backend management flag
+  getManagementMembers(): BranchMemberItem[] {
+    return this.teamMembers.filter(m => m.management === true);
+  }
+
+  getTeamMembers(): BranchMemberItem[] {
+    return this.teamMembers.filter(m => m.management !== true);
+  }
+
+  // ✅ Management roles float to top
+  private getMemberRoleOrder(role: string): number {
+    const order: Record<string, number> = {
+      'BOSS': 1, 'COUNTRY_DIRECTOR': 2, 'VICE_PRESIDENT': 3,
+      'ADMIN': 4, 'PROJECT_MANAGER': 5, 'LEADER': 6,
+      'UI_UX': 7, 'DEVELOPER': 8, 'QA': 9,
+    };
+    return order[role?.toUpperCase()] ?? 99;
+  }
+
   openMemberPopup(m: BranchMemberItem): void {
+    this.isGroupChat = false;
     this.activeChatMember = { id: m.id, name: m.name, role: m.role, color: m.color, initial: m.initial, online: m.online };
+    // Mark DM as read + clear badge (channelId = myId as receiver)
+    const myId = this.currentUser?.id || this.currentUser?.userId;
+    this.http.put(`${BASE}/chat/read-channel?type=DIRECT&channelId=${myId}`, {},
+      { headers: this.headers }).pipe(catchError(() => of(null))).subscribe(() => {
+      this.memberUnreadCounts[m.id] = 0;
+      this.cdr.detectChanges();
+    });
     this.cdr.detectChanges();
   }
-  closeMemberPopup(): void { this.activeChatMember = null; this.cdr.detectChanges(); }
+
+  // ✅ Open group chat for a branch project
+  openProjectGroupChat(p: BranchProject): void {
+    this.isGroupChat = true;
+    this.activeChatMember = {
+      id: p.id,
+      name: p.name,
+      projectId: p.id,
+      projectName: p.name,
+      color: '#16a34a',
+    };
+    // Mark as read + clear badge
+    this.http.put(`${BASE}/chat/read-channel?type=PROJECT&channelId=${p.id}`, {},
+      { headers: this.headers }).pipe(catchError(() => of(null))).subscribe(() => {
+      this.projectUnreadCounts[p.id] = 0;
+      this.cdr.detectChanges();
+    });
+    this.cdr.detectChanges();
+  }
+
+  closeMemberPopup(): void { this.activeChatMember = null; this.isGroupChat = false; this.cdr.detectChanges(); }
 
   private formatLeaveType(t: string): string {
     return ({ ANNUAL: '🏖 Annual leave', SICK: '🤒 Sick leave', UNPAID: '💼 Unpaid leave' } as any)[t] || t || 'Leave';
@@ -877,12 +1006,15 @@ export class VpDashboardComponent implements OnInit, OnDestroy {
   openProject(id: number): void {
     this.selectedProjectId = id;
     this.showProjectDetail = true;
+    // ✅ Save state — design page back can restore
+    this.navState.saveProjectState(id, 'vp');
     this.cdr.detectChanges();
   }
 
   closeProject(): void {
     this.showProjectDetail = false;
     this.selectedProjectId = null;
+    this.navState.clearProjectState();
     this.cdr.detectChanges();
   }
 

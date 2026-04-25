@@ -16,6 +16,7 @@ import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.function.BiFunction;
 
 @RestController
 @RequestMapping("/api/vp/dashboard")
@@ -31,7 +32,7 @@ public class VpDashboardController {
     @Autowired private ProjectRepository       projectRepository;
     @Autowired private TaskRepository          taskRepository;
     @Autowired private SalaryHistoryRepository salaryHistoryRepository;
-    @Autowired private DepartmentRepository    departmentRepository;   // ✅ added
+    @Autowired private DepartmentRepository    departmentRepository;
 
     // ── Helpers ──────────────────────────────────────────────────
     private String getInitial(String name) {
@@ -51,6 +52,23 @@ public class VpDashboardController {
         return vp.getBranchId() != null && vp.getBranchId().equals(exp.getBranchId());
     }
 
+    // ✅ Role sort order — Management ကို အပေါ်ဆုံး
+    private int getRoleOrder(String rawRole) {
+        if (rawRole == null) return 99;
+        switch (rawRole.toUpperCase()) {
+            case "BOSS":             return 1;
+            case "COUNTRY_DIRECTOR": return 2;
+            case "VICE_PRESIDENT":   return 3;
+            case "ADMIN":            return 4;
+            case "PROJECT_MANAGER":  return 5;
+            case "LEADER":           return 6;
+            case "UI_UX":            return 7;
+            case "DEVELOPER":        return 8;
+            case "QA":               return 9;
+            default:                 return 99;
+        }
+    }
+
     // ── Shared helper: group SalaryHistory list → SalaryPeriodSummary list ──
     private List<SalaryPeriodSummary> groupToPeriodSummary(
             List<SalaryHistory> rows, Long branchId) {
@@ -63,7 +81,6 @@ public class VpDashboardController {
             List<SalaryHistory> periodRows = entry.getValue();
             String currency = periodRows.get(0).getCurrency() != null
                 ? periodRows.get(0).getCurrency() : "USD";
-            // status: use the status of the first row in this period
             String status   = periodRows.get(0).getStatus() != null
                 ? periodRows.get(0).getStatus() : "UNKNOWN";
 
@@ -109,7 +126,6 @@ public class VpDashboardController {
         r.setPendingLeave(leaveRequestRepository.countByBranchIdAndStatus(branchId, "PENDING"));
         r.setPendingOT(otRequestRepository.countByBranchIdAndStatus(branchId, "PENDING"));
 
-        // Badge = distinct PENDING_APPROVAL pay_period count
         long pendingSalaryPeriods = salaryHistoryRepository.findAll().stream()
             .filter(s -> branchId.equals(s.getBranchId()))
             .filter(s -> "PENDING_APPROVAL".equals(s.getStatus()))
@@ -455,47 +471,33 @@ public class VpDashboardController {
     }
 
     // ============================================================
-    // ⑧ SALARY APPROVALS — Dashboard card
-    // ✅ PENDING_APPROVAL only → dashboard pending card
-    // GET /api/vp/dashboard/salary-approvals
+    // ⑧ SALARY APPROVALS
     // ============================================================
     @GetMapping("/salary-approvals")
     public ResponseEntity<List<SalaryPeriodSummary>> getSalaryApprovals(
             @AuthenticationPrincipal User vp) {
-
         Long branchId = vp.getBranchId();
         if (branchId == null) return ResponseEntity.ok(Collections.emptyList());
-
-        // PENDING_APPROVAL only
         List<SalaryHistory> pending = salaryHistoryRepository.findAll().stream()
             .filter(s -> branchId.equals(s.getBranchId()))
             .filter(s -> "PENDING_APPROVAL".equals(s.getStatus()))
             .collect(Collectors.toList());
-
         if (pending.isEmpty()) return ResponseEntity.ok(Collections.emptyList());
-
         return ResponseEntity.ok(groupToPeriodSummary(pending, branchId));
     }
 
     // ============================================================
-    // ⑨ SALARY HISTORY — Sidebar salary view
-    // ✅ ALL periods, ORDER BY pay_period DESC
-    // GET /api/vp/dashboard/salary-history
+    // ⑨ SALARY HISTORY
     // ============================================================
     @GetMapping("/salary-history")
     public ResponseEntity<List<SalaryPeriodSummary>> getSalaryHistory(
             @AuthenticationPrincipal User vp) {
-
         Long branchId = vp.getBranchId();
         if (branchId == null) return ResponseEntity.ok(Collections.emptyList());
-
-        // ALL statuses — no filter
         List<SalaryHistory> all = salaryHistoryRepository.findAll().stream()
             .filter(s -> branchId.equals(s.getBranchId()))
             .collect(Collectors.toList());
-
         if (all.isEmpty()) return ResponseEntity.ok(Collections.emptyList());
-
         return ResponseEntity.ok(groupToPeriodSummary(all, branchId));
     }
 
@@ -506,7 +508,6 @@ public class VpDashboardController {
     public ResponseEntity<List<ProjectRow>> getBranchProjects(@AuthenticationPrincipal User vp) {
         Long branchId = vp.getBranchId();
         if (branchId == null) return ResponseEntity.ok(Collections.emptyList());
-
         Map<Long, User> uCache = new HashMap<>();
         List<ProjectRow> result = projectRepository.findByBranchId(branchId).stream()
             .filter(p -> "ACTIVE".equals(p.getStatus()) || "PLANNING".equals(p.getStatus()))
@@ -528,48 +529,91 @@ public class VpDashboardController {
                 row.setColor(p.getColor());
                 return row;
             }).collect(Collectors.toList());
-
         return ResponseEntity.ok(result);
     }
 
     // ============================================================
     // ⑪ BRANCH MEMBERS
+    // ✅ Management (BOSS/CD/VP) — company-wide (all branches)
+    // ✅ Team — same branch only
     // ============================================================
     @GetMapping("/branch-members")
     public ResponseEntity<List<MemberRow>> getBranchMembers(@AuthenticationPrincipal User vp) {
         Long branchId = vp.getBranchId();
         if (branchId == null) return ResponseEntity.ok(Collections.emptyList());
 
+        Set<String> mgmtRoleNames = new HashSet<>(Arrays.asList("BOSS", "COUNTRY_DIRECTOR", "VICE_PRESIDENT"));
         Map<Long, UserRole> rCache = new HashMap<>();
-        List<MemberRow> result = userRepository.findStaffByBranchIdAndRoleIdNot(branchId, 10L).stream()
+
+        // ── Helper: User → MemberRow ─────────────────────────
+        BiFunction<User, Boolean, MemberRow> toRow = (u, isMgmt) -> {
+            String roleName    = "Staff";
+            String rawRoleName = "";
+            if (u.getRoleId() != null) {
+                UserRole ur = rCache.computeIfAbsent(u.getRoleId(),
+                        id -> userRoleRepository.findById(id).orElse(null));
+                if (ur != null) {
+                    roleName    = ur.getDisplayName();
+                    rawRoleName = ur.getName() != null ? ur.getName().toUpperCase() : "";
+                }
+            }
+            long taskCount = taskRepository.findByAssigneeId(u.getId()).stream()
+                    .filter(t -> !"DONE".equals(t.getStatus())).count();
+            boolean online = u.getLastSeen() != null
+                    && ChronoUnit.MINUTES.between(u.getLastSeen(), LocalDateTime.now()) <= 5;
+            MemberRow row = new MemberRow();
+            row.setId(u.getId());
+            row.setName(u.getName());
+            row.setEmail(u.getEmail());
+            row.setInitial(getInitial(u.getName()));
+            row.setRole(roleName);
+            row.setRawRole(rawRoleName);
+            row.setRoleId(u.getRoleId());
+            row.setColor(getAvatarColor(u.getId()));
+            row.setTaskCount(taskCount);
+            row.setOnline(online);
+            row.setManagement(isMgmt);
+            row.setLastSeen(u.getLastSeen());
+            return row;
+        };
+
+        // ── 1. Management — company-wide (all branches) ───────
+        List<MemberRow> mgmtRows = userRepository.findAll().stream()
                 .filter(u -> Boolean.TRUE.equals(u.getIsActive()))
                 .filter(u -> !u.getId().equals(vp.getId()))
-                .map(u -> {
-                    String roleName = "Staff";
-                    if (u.getRoleId() != null) {
-                        UserRole ur = rCache.computeIfAbsent(u.getRoleId(),
-                                id -> userRoleRepository.findById(id).orElse(null));
-                        if (ur != null) roleName = ur.getDisplayName();
-                    }
-                    long taskCount = taskRepository.findByAssigneeId(u.getId()).stream()
-                            .filter(t -> !"DONE".equals(t.getStatus())).count();
-                    boolean online = u.getLastSeen() != null
-                            && ChronoUnit.MINUTES.between(u.getLastSeen(), LocalDateTime.now()) <= 5;
-                    MemberRow row = new MemberRow();
-                    row.setId(u.getId());
-                    row.setName(u.getName());
-                    row.setEmail(u.getEmail());
-                    row.setInitial(getInitial(u.getName()));
-                    row.setRole(roleName);
-                    row.setRoleId(u.getRoleId());
-                    row.setColor(getAvatarColor(u.getId()));
-                    row.setTaskCount(taskCount);
-                    row.setOnline(online);
-                    row.setLastSeen(u.getLastSeen());
-                    return row;
+                .filter(u -> {
+                    if (u.getRoleId() == null) return false;
+                    UserRole ur = rCache.computeIfAbsent(u.getRoleId(),
+                            id -> userRoleRepository.findById(id).orElse(null));
+                    return ur != null && mgmtRoleNames.contains(ur.getName().toUpperCase());
                 })
-                .sorted((a, b) -> Long.compare(b.getTaskCount(), a.getTaskCount()))
+                .map(u -> toRow.apply(u, true))
+                .sorted(Comparator.comparingInt(r -> getRoleOrder(r.getRawRole())))
                 .collect(Collectors.toList());
+
+        // ── 2. Team — same branch, exclude management roles ───
+        List<MemberRow> teamRows = userRepository.findStaffByBranchIdAndRoleIdNot(branchId, 10L).stream()
+                .filter(u -> Boolean.TRUE.equals(u.getIsActive()))
+                .filter(u -> !u.getId().equals(vp.getId()))
+                .filter(u -> {
+                    if (u.getRoleId() == null) return true;
+                    UserRole ur = rCache.computeIfAbsent(u.getRoleId(),
+                            id -> userRoleRepository.findById(id).orElse(null));
+                    return ur == null || !mgmtRoleNames.contains(ur.getName().toUpperCase());
+                })
+                .map(u -> toRow.apply(u, false))
+                .sorted((a, b) -> {
+                    int ra = getRoleOrder(a.getRawRole());
+                    int rb = getRoleOrder(b.getRawRole());
+                    if (ra != rb) return Integer.compare(ra, rb);
+                    return Long.compare(b.getTaskCount(), a.getTaskCount());
+                })
+                .collect(Collectors.toList());
+
+        // ── Combine: Management first, then Team ──────────────
+        List<MemberRow> result = new ArrayList<>();
+        result.addAll(mgmtRows);
+        result.addAll(teamRows);
 
         return ResponseEntity.ok(result);
     }
@@ -581,8 +625,76 @@ public class VpDashboardController {
     public ResponseEntity<List<DepartmentRow>> getDepartments(@AuthenticationPrincipal User vp) {
         Long branchId = vp.getBranchId();
         if (branchId == null) return ResponseEntity.ok(Collections.emptyList());
-        // Assumes DepartmentRepository exists — adjust if needed
         return ResponseEntity.ok(Collections.emptyList());
+    }
+
+    // ============================================================
+    // ⑬ SALARY DETAIL
+    // ============================================================
+    @GetMapping("/salary-detail")
+    public ResponseEntity<List<SalaryDetailRow>> getSalaryDetail(
+            @AuthenticationPrincipal User vp,
+            @RequestParam String payPeriod) {
+
+        Long branchId = vp.getBranchId();
+        if (branchId == null || payPeriod == null || payPeriod.isEmpty())
+            return ResponseEntity.ok(Collections.emptyList());
+
+        List<SalaryHistory> rows = salaryHistoryRepository.findAll().stream()
+            .filter(s -> branchId.equals(s.getBranchId()))
+            .filter(s -> payPeriod.equals(s.getPayPeriod()))
+            .collect(Collectors.toList());
+
+        if (rows.isEmpty()) return ResponseEntity.ok(Collections.emptyList());
+
+        Map<Long, User>       uCache = new HashMap<>();
+        Map<Long, UserRole>   rCache = new HashMap<>();
+        Map<Long, Department> dCache = new HashMap<>();
+
+        List<SalaryDetailRow> result = rows.stream().map(s -> {
+            User u = s.getUserId() != null
+                ? uCache.computeIfAbsent(s.getUserId(), id -> userRepository.findById(id).orElse(null))
+                : null;
+            String roleName = "Staff";
+            String deptName = "—";
+            if (u != null && u.getRoleId() != null) {
+                UserRole ur = rCache.computeIfAbsent(u.getRoleId(),
+                    id -> userRoleRepository.findById(id).orElse(null));
+                if (ur != null) roleName = ur.getDisplayName();
+            }
+            if (u != null && u.getDepartmentId() != null) {
+                Department dept = dCache.computeIfAbsent(u.getDepartmentId(),
+                    id -> departmentRepository.findById(id).orElse(null));
+                if (dept != null) deptName = dept.getName();
+            }
+            SalaryDetailRow r = new SalaryDetailRow();
+            r.setId(s.getId());
+            r.setUserId(s.getUserId());
+            r.setUserName(u != null ? u.getName() : "Unknown");
+            r.setUserInitial(u != null ? getInitial(u.getName()) : "?");
+            r.setUserColor(u != null ? getAvatarColor(u.getId()) : "#64748b");
+            r.setRole(roleName);
+            r.setDepartment(deptName);
+            r.setPayPeriod(s.getPayPeriod());
+            r.setBaseSalary(s.getBaseSalary());
+            r.setWorkingDays(s.getWorkingDays());
+            r.setActualDays(s.getActualDays());
+            r.setEarnedSalary(s.getEarnedSalary());
+            r.setOtAmount(s.getOtAmount());
+            r.setBonuses(s.getBonuses());
+            r.setDeductions(s.getDeductions());
+            r.setGrossSalary(s.getGrossSalary());
+            r.setTaxAmount(s.getTaxAmount());
+            r.setNetSalary(s.getNetSalary());
+            r.setCurrency(s.getCurrency());
+            r.setStatus(s.getStatus());
+            return r;
+        })
+        .sorted(Comparator.comparing((SalaryDetailRow r) -> r.getDepartment() == null ? "zzz" : r.getDepartment())
+                          .thenComparing(SalaryDetailRow::getUserName))
+        .collect(Collectors.toList());
+
+        return ResponseEntity.ok(result);
     }
 
     // ============================================================
@@ -626,9 +738,10 @@ public class VpDashboardController {
     }
     @Data public static class MemberRow {
         private Long id, roleId;
-        private String name, email, initial, role, color;
+        private String name, email, initial, role, rawRole, color;
         private long taskCount;
         private boolean online;
+        private boolean management;
         private LocalDateTime lastSeen;
     }
     @Data public static class DepartmentRow {
@@ -637,89 +750,13 @@ public class VpDashboardController {
     }
     @Data public static class RejectBody { private String reason; }
 
-    // ✅ Period-level summary — used by both endpoints
     @Data public static class SalaryPeriodSummary {
         private Long branchId;
-        private String payPeriod, currency, status;   // ← status field ထည့်ပြီ
+        private String payPeriod, currency, status;
         private int staffCount;
         private BigDecimal totalGross = BigDecimal.ZERO;
         private BigDecimal totalTax   = BigDecimal.ZERO;
         private BigDecimal totalNet   = BigDecimal.ZERO;
-    }
-
-    // ============================================================
-    // ⑫ SALARY DETAIL — staff breakdown per period
-    // GET /api/vp/dashboard/salary-detail?payPeriod=2026-03
-    // ============================================================
-    @GetMapping("/salary-detail")
-    public ResponseEntity<List<SalaryDetailRow>> getSalaryDetail(
-            @AuthenticationPrincipal User vp,
-            @RequestParam String payPeriod) {
-
-        Long branchId = vp.getBranchId();
-        if (branchId == null || payPeriod == null || payPeriod.isEmpty())
-            return ResponseEntity.ok(Collections.emptyList());
-
-        List<SalaryHistory> rows = salaryHistoryRepository.findAll().stream()
-            .filter(s -> branchId.equals(s.getBranchId()))
-            .filter(s -> payPeriod.equals(s.getPayPeriod()))
-            .collect(Collectors.toList());
-
-        if (rows.isEmpty()) return ResponseEntity.ok(Collections.emptyList());
-
-        Map<Long, User>         uCache = new HashMap<>();
-        Map<Long, UserRole>     rCache = new HashMap<>();
-        Map<Long, Department>   dCache = new HashMap<>();   // ✅ dept cache
-
-        List<SalaryDetailRow> result = rows.stream().map(s -> {
-            User u = s.getUserId() != null
-                ? uCache.computeIfAbsent(s.getUserId(), id -> userRepository.findById(id).orElse(null))
-                : null;
-
-            String roleName = "Staff";
-            String deptName = "—";
-
-            if (u != null && u.getRoleId() != null) {
-                UserRole ur = rCache.computeIfAbsent(u.getRoleId(),
-                    id -> userRoleRepository.findById(id).orElse(null));
-                if (ur != null) roleName = ur.getDisplayName();
-            }
-
-            // ✅ Lookup department: users.department_id → departments.name
-            if (u != null && u.getDepartmentId() != null) {
-                Department dept = dCache.computeIfAbsent(u.getDepartmentId(),
-                    id -> departmentRepository.findById(id).orElse(null));
-                if (dept != null) deptName = dept.getName();
-            }
-
-            SalaryDetailRow r = new SalaryDetailRow();
-            r.setId(s.getId());
-            r.setUserId(s.getUserId());
-            r.setUserName(u != null ? u.getName() : "Unknown");
-            r.setUserInitial(u != null ? getInitial(u.getName()) : "?");
-            r.setUserColor(u != null ? getAvatarColor(u.getId()) : "#64748b");
-            r.setRole(roleName);
-            r.setDepartment(deptName);
-            r.setPayPeriod(s.getPayPeriod());
-            r.setBaseSalary(s.getBaseSalary());
-            r.setWorkingDays(s.getWorkingDays());
-            r.setActualDays(s.getActualDays());
-            r.setEarnedSalary(s.getEarnedSalary());
-            r.setOtAmount(s.getOtAmount());
-            r.setBonuses(s.getBonuses());
-            r.setDeductions(s.getDeductions());
-            r.setGrossSalary(s.getGrossSalary());
-            r.setTaxAmount(s.getTaxAmount());
-            r.setNetSalary(s.getNetSalary());
-            r.setCurrency(s.getCurrency());
-            r.setStatus(s.getStatus());
-            return r;
-        })
-        .sorted(Comparator.comparing((SalaryDetailRow r) -> r.getDepartment() == null ? "zzz" : r.getDepartment())
-                          .thenComparing(SalaryDetailRow::getUserName))
-        .collect(Collectors.toList());
-
-        return ResponseEntity.ok(result);
     }
 
     @Data public static class SalaryDetailRow {
@@ -727,14 +764,13 @@ public class VpDashboardController {
         private String userName, userInitial, userColor;
         private String role, department, payPeriod, currency, status;
         private Integer workingDays, actualDays;
-        private BigDecimal baseSalary  = BigDecimal.ZERO;
+        private BigDecimal baseSalary   = BigDecimal.ZERO;
         private BigDecimal earnedSalary = BigDecimal.ZERO;
-        private BigDecimal otAmount    = BigDecimal.ZERO;
-        private BigDecimal bonuses     = BigDecimal.ZERO;
-        private BigDecimal deductions  = BigDecimal.ZERO;
-        private BigDecimal grossSalary = BigDecimal.ZERO;
-        private BigDecimal taxAmount   = BigDecimal.ZERO;
-        private BigDecimal netSalary   = BigDecimal.ZERO;
+        private BigDecimal otAmount     = BigDecimal.ZERO;
+        private BigDecimal bonuses      = BigDecimal.ZERO;
+        private BigDecimal deductions   = BigDecimal.ZERO;
+        private BigDecimal grossSalary  = BigDecimal.ZERO;
+        private BigDecimal taxAmount    = BigDecimal.ZERO;
+        private BigDecimal netSalary    = BigDecimal.ZERO;
     }
-
 }

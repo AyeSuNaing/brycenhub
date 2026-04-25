@@ -143,4 +143,32 @@ public class ChatService {
                         .findByMessageIdAndUserId(m.getId(), userId).isEmpty())
                 .count();
     }
+    
+ // ✅ Unread DMs grouped by sender
+    // DIRECT channel_id = receiver's userId
+    public List<Map<String, Object>> getDirectUnreadBySender(Long receiverId) {
+        // All DIRECT messages sent TO this user (channel_id = receiverId)
+        List<ChatMessage> messages = chatMessageRepository
+                .findByChannelTypeAndChannelIdOrderByCreatedAtAsc("DIRECT", receiverId);
+
+        // Count unread per sender
+        Map<Long, Long> unreadBySender = new HashMap<>();
+        for (ChatMessage msg : messages) {
+            boolean isRead = !chatReadStatusRepository
+                    .findByMessageIdAndUserId(msg.getId(), receiverId).isEmpty();
+            if (!isRead) {
+                unreadBySender.merge(msg.getSenderId(), 1L, Long::sum);
+            }
+        }
+
+        // Convert to list of { senderId, unreadCount }
+        List<Map<String, Object>> result = new ArrayList<>();
+        unreadBySender.forEach((senderId, count) -> {
+            Map<String, Object> row = new HashMap<>();
+            row.put("senderId", senderId);
+            row.put("unreadCount", count);
+            result.add(row);
+        });
+        return result;
+    }
 }

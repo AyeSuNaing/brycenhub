@@ -7,6 +7,7 @@ import { forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { AuthService } from '../services/auth.service';
 import { environment } from '../../environments/environment';
+import { NavigationStateService } from '../services/navigation-state.service';
 
 const BASE = environment.apiBaseUrl;
 
@@ -172,11 +173,7 @@ export class ActivityLogPageComponent implements OnInit {
     this.applyFilters();
   }
 
-  goBack() {
-    this.router.navigate(['/dashboard/member'], {
-      queryParams: { projectId: this.projectId }
-    });
-  }
+  goBack(): void { history.back(); }
 
   // ── Helpers ──
   getActionText(action: string): string {

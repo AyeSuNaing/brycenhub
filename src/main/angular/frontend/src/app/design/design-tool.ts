@@ -8,6 +8,7 @@ import { HttpClient } from '@angular/common/http';
 import { Router, ActivatedRoute } from '@angular/router';
 import { AuthService } from '../services/auth.service';
 import { environment } from '../../environments/environment';
+import { NavigationStateService } from '../services/navigation-state.service';
 
 @Component({
   selector: 'app-design-tool',
