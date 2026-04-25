@@ -7,6 +7,7 @@ import { of, Subscription } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 
 import { AnnouncementBarComponent } from '../../shared/announcement-bar.component';
+import { ProjectInlineComponent } from '../../projects/project-inline';
 import { BellNotificationComponent } from '../../shared/bell-notification.component';
 import { ApprovalInboxInline } from '../../shared/approval-inbox-inline';
 import { ChatPopupComponent, ChatMember } from '../../shared/chat-popup/chat-popup.component';
@@ -18,7 +19,7 @@ import { environment } from '../../../environments/environment';
 const BASE = environment.apiBaseUrl;
 const VP_BASE = `${BASE}/vp/dashboard`;
 
-export type ApprovalTab = 'LEAVE' | 'OT' | 'SALARY' | 'EXPENSE';
+export type ApprovalTab = 'LEAVE' | 'OT' | 'SALARY';
 
 export interface PendingApproval {
   id: number; type: ApprovalTab;
@@ -49,7 +50,7 @@ export interface DepartmentItem {
   standalone: true,
   imports: [
     CommonModule, FormsModule, RouterModule,
-    AnnouncementBarComponent, BellNotificationComponent,
+    AnnouncementBarComponent, BellNotificationComponent, ProjectInlineComponent,
     ApprovalInboxInline, ChatPopupComponent, PayslipModalComponent,
   ],
   templateUrl: './vp-dashboard.html',
@@ -63,6 +64,10 @@ export class VpDashboardComponent implements OnInit, OnDestroy {
   activeView = 'dashboard';
 
   activeChatMember: ChatMember | null = null;
+
+  // ── Project Inline ────────────────────────────────────────────
+  showProjectDetail = false;
+  selectedProjectId: number | null = null;
 
   langs = [
     { code: 'en', display: 'EN', name: 'English', flag: '🇺🇸' },
@@ -84,7 +89,6 @@ export class VpDashboardComponent implements OnInit, OnDestroy {
     { key: 'LEAVE', label: 'Leave' },
     { key: 'OT', label: 'OT' },
     { key: 'SALARY', label: 'Salary' },
-    { key: 'EXPENSE', label: 'Expense' },
   ];
 
   loading = { stats: true, approvals: true, projects: true, members: true };
@@ -92,12 +96,11 @@ export class VpDashboardComponent implements OnInit, OnDestroy {
     activeProjects: 0, totalStaff: 0, pendingApprovals: 0,
     monthlyOTHours: 0, monthlySpend: 0, onLeaveToday: 0,
   };
-  approvalCounts: Record<ApprovalTab, number> = { LEAVE: 0, OT: 0, SALARY: 0, EXPENSE: 0 };
+  approvalCounts: Record<ApprovalTab, number> = { LEAVE: 0, OT: 0, SALARY: 0 };
 
   leaveApprovals: PendingApproval[] = [];
   otApprovals: PendingApproval[] = [];
   salaryApprovals: PendingApproval[] = [];
-  expenseApprovals: PendingApproval[] = [];
   branchProjects: BranchProject[] = [];
   teamMembers: BranchMemberItem[] = [];
   allAnnouncements: any[] = [];
@@ -112,7 +115,7 @@ export class VpDashboardComponent implements OnInit, OnDestroy {
   selectedSalaryPeriod: any = null;
   salaryDetailRows: any[] = [];
   loadingSalaryDetail = false;
-  hoveredRow: number | null = null;
+  hoveredRow: number | string | null = null;
 
   // ✅ After — all periods combined summary
   get salaryApproval(): any {
@@ -156,7 +159,6 @@ export class VpDashboardComponent implements OnInit, OnDestroy {
   loadingHistory = false;
   historyLeave: any[] = [];
   historyOt: any[] = [];
-  historyExpense: any[] = [];
 
   // ── Pay period ───────────────────────────────────────────────
   periodFrom = '';
@@ -236,8 +238,7 @@ export class VpDashboardComponent implements OnInit, OnDestroy {
       this.loadStats();
       this.loadLeaveRequests();
       this.loadOtRequests();
-      this.loadExpenseApprovals('EXPENSE');
-      this.cdr.detectChanges();
+        this.cdr.detectChanges();
     });
   }
 
@@ -289,11 +290,6 @@ export class VpDashboardComponent implements OnInit, OnDestroy {
       this.periodLabel = p.label;
       this.loadDepartments();
       this.loadHistoryOt();
-    }
-
-    if (view === 'view-expense') {
-      this.historyFilter = 'ALL';
-      this.loadHistoryExpense();
     }
 
     this.cdr.detectChanges();
@@ -359,7 +355,6 @@ export class VpDashboardComponent implements OnInit, OnDestroy {
   reloadHistory(): void {
     if (this.activeView === 'view-leave')   this.loadHistoryLeave();
     if (this.activeView === 'view-ot')      this.loadHistoryOt();
-    if (this.activeView === 'view-expense') this.loadHistoryExpense();
   }
 
   fmtDate(d: Date): string {
@@ -421,23 +416,7 @@ export class VpDashboardComponent implements OnInit, OnDestroy {
         this.loadingHistory = false;
         this.cdr.detectChanges();
       });
-  }
-
-  loadHistoryExpense(): void {
-    this.loadingHistory = true;
-    const param = this.historyFilter === 'ALL'
-      ? `?type=EXPENSE`
-      : `?status=${this.historyFilter}&type=EXPENSE`;
-    this.http.get<any[]>(`${VP_BASE}/branch-expenses${param}`, { headers: this.headers })
-      .pipe(catchError(() => of([])))
-      .subscribe(list => {
-        this.historyExpense  = list || [];
-        this.loadingHistory  = false;
-        this.cdr.detectChanges();
-      });
-  }
-
-  // ── History item actions ─────────────────────────────────────
+  }// ── History item actions ─────────────────────────────────────
   approveLeaveItem(r: any): void {
     this.http.patch(`${VP_BASE}/leave-requests/${r.id}/approve`, {}, { headers: this.headers })
       .pipe(catchError(() => of(null)))
@@ -458,17 +437,6 @@ export class VpDashboardComponent implements OnInit, OnDestroy {
       .pipe(catchError(() => of(null)))
       .subscribe(res => { if (res !== null) { this.loadHistoryOt(); this.loadStats(); } });
   }
-  approveExpenseItem(r: any): void {
-    this.http.patch(`${VP_BASE}/branch-expenses/${r.id}/approve`, {}, { headers: this.headers })
-      .pipe(catchError(() => of(null)))
-      .subscribe(res => { if (res !== null) { this.loadHistoryExpense(); this.loadStats(); } });
-  }
-  rejectExpenseItem(r: any): void {
-    this.http.patch(`${VP_BASE}/branch-expenses/${r.id}/reject`, { reason: 'Rejected by VP' }, { headers: this.headers })
-      .pipe(catchError(() => of(null)))
-      .subscribe(res => { if (res !== null) { this.loadHistoryExpense(); this.loadStats(); } });
-  }
-
   openPayrollApprovals(): void  { this.activeView = 'payroll-approvals'; this.cdr.detectChanges(); }
   closePayrollApprovals(): void { this.activeView = 'dashboard';          this.cdr.detectChanges(); }
 
@@ -589,7 +557,6 @@ export class VpDashboardComponent implements OnInit, OnDestroy {
     this.loadStats();
     this.loadLeaveRequests();
     this.loadOtRequests();
-    this.loadExpenseApprovals('EXPENSE');
     this.loadSalaryDashboard();   // ✅ dashboard card အတွက် — loadingSalary မသုံး
     this.loadBranchProjects();
     this.loadBranchMembers();
@@ -610,7 +577,6 @@ export class VpDashboardComponent implements OnInit, OnDestroy {
           this.approvalCounts.LEAVE   = Number(s.pendingLeave   ?? 0);
           this.approvalCounts.OT      = Number(s.pendingOT      ?? 0);
           this.approvalCounts.SALARY  = Number(s.pendingSalary  ?? 0);
-          this.approvalCounts.EXPENSE = Number(s.pendingExpense ?? 0);
           this.recomputeTotalPending();
         }
         this.loading.stats = false; this.cdr.detectChanges();
@@ -639,21 +605,6 @@ export class VpDashboardComponent implements OnInit, OnDestroy {
         this.cdr.detectChanges();
       });
   }
-
-  loadExpenseApprovals(type: 'SALARY' | 'EXPENSE'): void {
-    this.http.get<any[]>(`${VP_BASE}/branch-expenses?status=PENDING&type=${type}`, { headers: this.headers })
-      .pipe(catchError(() => of([])))
-      .subscribe(list => {
-        const rows = (list || []).map(e => this.normalizeExpense(e, type));
-        if (type === 'EXPENSE') {
-          this.expenseApprovals       = rows;
-          this.approvalCounts.EXPENSE = rows.length;
-        }
-        this.recomputeTotalPending();
-        this.cdr.detectChanges();
-      });
-  }
-
   loadBranchProjects(): void {
     this.http.get<any[]>(`${VP_BASE}/branch-projects`, { headers: this.headers })
       .pipe(catchError(() => of([])))
@@ -710,22 +661,6 @@ export class VpDashboardComponent implements OnInit, OnDestroy {
     };
   }
 
-  private normalizeExpense(e: any, type: 'SALARY' | 'EXPENSE'): PendingApproval {
-    const dt    = e.date ? new Date(e.date) : null;
-    const title = type === 'SALARY'
-      ? (e.description?.slice(0, 40) || 'Monthly Payroll')
-      : (e.description?.slice(0, 40) || 'Expense');
-    return {
-      id: e.id, type, staffName: title,
-      staffInitial: type === 'SALARY' ? '$' : 'E',
-      avatarColor:  type === 'SALARY' ? '#22c55e' : '#f59e0b',
-      subtitle: `${type === 'SALARY' ? 'Salary' : 'Expense'} · ${e.currency || 'USD'} ${Number(e.amount || 0).toLocaleString()}`,
-      reason:   e.createdByName ? `Submitted by ${e.createdByName}` : '—',
-      dueText:  dt ? this.formatDate(dt) : '—',
-      priority: (dt && dt.getTime() < Date.now()) ? 'urgent' : 'soon',
-    };
-  }
-
   private normalizeProject(p: any): BranchProject {
     const prog = Number(p.progress ?? 0);
     const ed   = p.endDate ? new Date(p.endDate) : null;
@@ -774,7 +709,6 @@ export class VpDashboardComponent implements OnInit, OnDestroy {
     switch (a.type) {
       case 'LEAVE':   return `${VP_BASE}/leave-requests/${a.id}/approve`;
       case 'OT':      return `${VP_BASE}/ot-requests/${a.id}/approve`;
-      case 'EXPENSE': return `${VP_BASE}/branch-expenses/${a.id}/approve`;
       default:        return null;
     }
   }
@@ -783,7 +717,6 @@ export class VpDashboardComponent implements OnInit, OnDestroy {
     switch (a.type) {
       case 'LEAVE':   return `${VP_BASE}/leave-requests/${a.id}/reject`;
       case 'OT':      return `${VP_BASE}/ot-requests/${a.id}/reject`;
-      case 'EXPENSE': return `${VP_BASE}/branch-expenses/${a.id}/reject`;
       default:        return null;
     }
   }
@@ -802,7 +735,6 @@ export class VpDashboardComponent implements OnInit, OnDestroy {
       case 'LEAVE':   return this.leaveApprovals;
       case 'OT':      return this.otApprovals;
       case 'SALARY':  return this.salaryApprovals;
-      case 'EXPENSE': return this.expenseApprovals;
       default:        return [];
     }
   }
@@ -819,7 +751,7 @@ export class VpDashboardComponent implements OnInit, OnDestroy {
   private recomputeTotalPending(): void {
     this.stats.pendingApprovals =
       this.approvalCounts.LEAVE  + this.approvalCounts.OT +
-      this.approvalCounts.SALARY + this.approvalCounts.EXPENSE;
+      this.approvalCounts.SALARY;
   }
 
   get totalPendingCount(): number { return this.stats.pendingApprovals; }
@@ -933,6 +865,18 @@ export class VpDashboardComponent implements OnInit, OnDestroy {
   }
   private updateMyTasksHeight(): void {
     setTimeout(() => { this.myTasksMaxH = Math.floor(window.innerHeight * 0.42); this.cdr.detectChanges(); }, 0);
+  }
+
+  openProject(id: number): void {
+    this.selectedProjectId = id;
+    this.showProjectDetail = true;
+    this.cdr.detectChanges();
+  }
+
+  closeProject(): void {
+    this.showProjectDetail = false;
+    this.selectedProjectId = null;
+    this.cdr.detectChanges();
   }
 
   signOut(): void { this.auth.logout(); this.router.navigate(['/login']); }

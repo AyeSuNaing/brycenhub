@@ -87,9 +87,6 @@
           <div class="proj-item-v2" (click)="setView('salary-approvals')" [class.active-proj]="activeView==='salary-approvals'">
             <div class="proj-item-top"><div class="proj-item-left"><span class="proj-dot-sq" style="background:#f59e0b"></span><span class="proj-name" style="font-size:10px;">💵 Salary</span></div><span *ngIf="approvalCounts.SALARY>0" class="rs-badge-red" style="font-size:9px;background:rgba(245,158,11,.2);color:#f59e0b;">{{ approvalCounts.SALARY }}</span></div>
           </div>
-          <div class="proj-item-v2" (click)="setView('view-expense')" [class.active-proj]="activeView==='view-expense'">
-            <div class="proj-item-top"><div class="proj-item-left"><span class="proj-dot-sq" style="background:#f59e0b"></span><span class="proj-name" style="font-size:10px;">🧾 Expense</span></div><span class="rs-badge-red" style="font-size:9px;background:rgba(245,158,11,.2);color:#f59e0b;">{{ approvalCounts.EXPENSE }}</span></div>
-          </div>
         </div>
       </div>
       <div class="sidebar-bottom">
@@ -106,7 +103,8 @@
 
     <!-- ════════ MAIN + RIGHT ════════ -->
     <div class="main-with-panel">
-      <main class="main-content">
+      <div class="main-center" style="flex:1;min-width:0;display:flex;flex-direction:column;overflow:hidden;">
+      <main *ngIf="!showProjectDetail" class="main-content">
 
         <app-approval-inbox-inline *ngIf="activeView==='payroll-approvals-legacy'" (back)="setView('dashboard')"></app-approval-inbox-inline>
 
@@ -328,39 +326,6 @@
             </div>
           </ng-container>
         </div>
-
-        <!-- ════ EXPENSE VIEW ════ -->
-        <div *ngIf="activeView==='view-expense'" style="padding:16px;display:flex;flex-direction:column;gap:12px;overflow-y:auto;height:100%;">
-          <div style="display:flex;align-items:center;gap:10px;flex-shrink:0;">
-            <div style="font-size:14px;font-weight:700;">🧾 Expense Requests</div>
-            <div style="display:flex;gap:4px;margin-left:auto;">
-              <button *ngFor="let s of ['ALL','PENDING','APPROVED','REJECTED']" (click)="historyFilter=s; loadHistoryExpense()" style="font-size:10px;padding:4px 10px;border-radius:20px;cursor:pointer;font-family:inherit;" [style.background]="historyFilter===s?'linear-gradient(135deg,#14532d,#16a34a)':'transparent'" [style.color]="historyFilter===s?'white':'currentColor'" [style.border]="historyFilter===s?'none':'1px solid rgba(148,163,184,0.2)'" [style.opacity]="historyFilter===s?'1':'0.55'">{{ s }}</button>
-            </div>
-          </div>
-          <div *ngIf="loadingHistory" style="text-align:center;padding:40px;font-size:12px;opacity:0.4;">Loading...</div>
-          <div *ngIf="!loadingHistory && historyExpense.length===0" style="text-align:center;padding:40px;font-size:12px;opacity:0.4;">No records</div>
-          <div class="card" *ngIf="!loadingHistory && historyExpense.length>0" style="padding:0;">
-            <div style="display:grid;grid-template-columns:1.5fr 1fr 1fr 0.8fr 80px;gap:8px;padding:9px 14px;border-bottom:1px solid rgba(148,163,184,0.1);">
-              <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.45;">Description</span>
-              <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.45;">Amount</span>
-              <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.45;">Date</span>
-              <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.45;">Status</span>
-              <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.45;">Action</span>
-            </div>
-            <div *ngFor="let r of historyExpense; let last=last" [style.border-bottom]="last?'none':'1px solid rgba(148,163,184,0.06)'" style="display:grid;grid-template-columns:1.5fr 1fr 1fr 0.8fr 80px;gap:8px;padding:9px 14px;align-items:center;">
-              <div style="font-size:11px;">{{ r.description || '—' }}</div>
-              <div style="font-size:11px;font-weight:600;">{{ formatMoney(r.currency, r.amount) }}</div>
-              <div style="font-size:10px;opacity:0.7;">{{ r.date | date:'MMM d, yyyy' }}</div>
-              <div><span style="font-size:9px;font-weight:700;padding:2px 7px;border-radius:20px;" [style.background]="r.status==='APPROVED'?'rgba(34,197,94,0.15)':r.status==='REJECTED'?'rgba(239,68,68,0.15)':'rgba(245,158,11,0.15)'" [style.color]="r.status==='APPROVED'?'#22c55e':r.status==='REJECTED'?'#ef4444':'#f59e0b'">{{ r.status }}</span></div>
-              <div *ngIf="r.status==='PENDING'" style="display:flex;gap:4px;">
-                <button (click)="approveExpenseItem(r)" style="font-size:10px;padding:4px 9px;background:#16a34a;color:white;border:none;border-radius:4px;cursor:pointer;font-weight:600;">✓</button>
-                <button (click)="rejectExpenseItem(r)" style="font-size:10px;padding:4px 7px;background:transparent;color:currentColor;border:1px solid rgba(148,163,184,0.2);border-radius:4px;cursor:pointer;opacity:0.7;">✕</button>
-              </div>
-              <div *ngIf="r.status!=='PENDING'" style="font-size:9px;opacity:0.2;text-align:center;">—</div>
-            </div>
-          </div>
-        </div>
-
         <!-- ════ ANNOUNCEMENTS ════ -->
         <div *ngIf="activeView==='announcements'" style="padding:16px;">
           <div style="display:flex;align-items:center;margin-bottom:16px;"><div style="font-size:14px;font-weight:700;">📢 Announcements</div><span style="margin-left:8px;font-size:10px;opacity:0.45;">{{ allAnnouncements.length }} total</span></div>
@@ -382,7 +347,7 @@
         <!-- ════════════════════════════════
              DEFAULT DASHBOARD VIEW
         ════════════════════════════════ -->
-        <ng-container *ngIf="activeView==='dashboard'">
+        <ng-container *ngIf="activeView==='dashboard' && !showProjectDetail">
 
           <div class="stats-grid">
             <div class="stat-card"><div class="stat-label">Active Projects</div><div class="stat-value">{{ stats.activeProjects }}</div><div class="stat-sub">↑ 2 this month</div></div>
@@ -552,39 +517,6 @@
               </div>
             </ng-container>
           </div>
-
-          <!-- ════ EXPENSE CARD ════ -->
-          <div class="card" style="padding:0;margin-bottom:10px;">
-            <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px;">
-              <div style="display:flex;align-items:center;gap:10px;">
-                <div style="width:34px;height:34px;border-radius:10px;background:rgba(139,92,246,0.12);display:flex;align-items:center;justify-content:center;font-size:16px;">🧾</div>
-                <div><div style="font-size:13px;font-weight:700;">Expense Approvals</div><div style="font-size:10px;opacity:0.5;margin-top:1px;">Branch expense approval queue</div></div>
-                <span style="font-size:10px;padding:3px 9px;border-radius:20px;font-weight:700;margin-left:4px;" [style.background]="expenseApprovals.length>0?'rgba(239,68,68,0.15)':'rgba(100,116,139,0.12)'" [style.color]="expenseApprovals.length>0?'#ef4444':'#64748b'">{{ expenseApprovals.length }} pending</span>
-              </div>
-              <button (click)="setView('view-expense')" style="font-size:10px;padding:5px 14px;border-radius:20px;background:transparent;border:1px solid rgba(148,163,184,0.2);color:currentColor;cursor:pointer;opacity:0.6;font-family:inherit;">View all →</button>
-            </div>
-            <div *ngIf="expenseApprovals.length===0" style="text-align:center;padding:20px 18px;font-size:11px;opacity:0.3;border-top:1px solid rgba(148,163,184,0.07);">No pending expense approvals</div>
-            <ng-container *ngIf="expenseApprovals.length>0">
-              <div style="display:grid;grid-template-columns:2fr 1fr 1fr auto;gap:10px;padding:8px 18px;border-top:1px solid rgba(148,163,184,0.07);border-bottom:1px solid rgba(148,163,184,0.07);">
-                <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.4;">Description</span>
-                <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.4;">Amount</span>
-                <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.4;">Date</span>
-                <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.4;">Action</span>
-              </div>
-              <div *ngFor="let a of expenseApprovals; let last=last"
-                   [style.border-bottom]="last?'none':'1px solid rgba(148,163,184,0.05)'"
-                   style="display:grid;grid-template-columns:2fr 1fr 1fr auto;gap:10px;padding:11px 18px;align-items:center;">
-                <div style="font-size:11px;font-weight:600;">{{ a.staffName }}</div>
-                <div style="font-size:11px;">{{ a.subtitle }}</div>
-                <div style="font-size:10px;opacity:0.7;">{{ a.dueText }}</div>
-                <div style="display:flex;gap:6px;">
-                  <button (click)="approveApproval(a)" style="font-size:10px;padding:5px 14px;background:linear-gradient(135deg,#14532d,#16a34a);color:white;border:none;border-radius:6px;cursor:pointer;font-weight:700;font-family:inherit;">✓ Approve</button>
-                  <button (click)="rejectApproval(a)" style="font-size:10px;padding:5px 12px;background:transparent;color:currentColor;border:1px solid rgba(148,163,184,0.2);border-radius:6px;cursor:pointer;opacity:0.7;font-family:inherit;">✕ Reject</button>
-                </div>
-              </div>
-            </ng-container>
-          </div>
-
           <!-- ════ BRANCH PROJECTS ════ -->
           <div class="card" style="padding:14px;margin-bottom:10px;">
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
@@ -599,7 +531,7 @@
               <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.45;">Due Date</span>
               <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.45;">Health</span>
             </div>
-            <div *ngFor="let p of branchProjects; let last=last" [style.border-bottom]="last?'none':'1px solid rgba(255,255,255,0.04)'" style="display:grid;grid-template-columns:2fr 1fr 1.5fr 1fr 1fr 1fr;gap:8px;padding:8px 6px;align-items:center;">
+            <div *ngFor="let p of branchProjects; let last=last" [style.border-bottom]="last?'none':'1px solid rgba(255,255,255,0.04)'" (click)="openProject(p.id)" style="display:grid;grid-template-columns:2fr 1fr 1.5fr 1fr 1fr 1fr;gap:8px;padding:8px 6px;align-items:center;cursor:pointer;border-radius:6px;transition:background 0.12s;" [style.background]="hoveredRow===('proj-'+p.id)?'rgba(148,163,184,0.06)':'transparent'" (mouseenter)="hoveredRow='proj-'+p.id" (mouseleave)="hoveredRow=null">
               <span style="font-size:11px;font-weight:600;">{{ p.name }}</span>
               <div style="display:flex;align-items:center;gap:4px;"><div style="width:6px;height:6px;border-radius:50%;" [style.background]="getStatusColor(p.status)"></div><span style="font-size:10px;font-weight:600;" [style.color]="getStatusColor(p.status)">{{ p.status }}</span></div>
               <div style="display:flex;align-items:center;gap:5px;"><div style="flex:1;height:5px;border-radius:3px;overflow:hidden;background:rgba(148,163,184,0.15);"><div [style.width.%]="p.progress" [style.background]="getProgressGradient(p.status)" style="height:100%;border-radius:3px;"></div></div><span style="font-size:9px;opacity:0.6;min-width:25px;text-align:right;">{{ p.progress }}%</span></div>
@@ -612,7 +544,19 @@
         </ng-container>
       </main>
 
-      <!-- RIGHT SIDEBAR -->
+      <!-- ════ PROJECT INLINE ════ -->
+      <div *ngIf="showProjectDetail && selectedProjectId"
+           style="flex:1;min-width:0;display:flex;overflow:hidden;height:100%;">
+        <app-project-inline
+          [projectId]="selectedProjectId!"
+          (close)="closeProject()"
+          style="flex:1;min-width:0;width:100%;overflow:hidden;height:100%;">
+        </app-project-inline>
+      </div>
+
+      </div><!-- /.main-center -->
+
+      <!-- RIGHT SIDEBAR — always visible -->
       <aside class="right-sidebar" style="width:260px;">
         <div class="members-section" style="padding-top:14px;">
           <div class="rs-section-header">
