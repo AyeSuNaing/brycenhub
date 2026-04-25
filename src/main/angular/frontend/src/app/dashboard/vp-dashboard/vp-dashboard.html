@@ -549,6 +549,7 @@
            style="flex:1;min-width:0;display:flex;overflow:hidden;height:100%;">
         <app-project-inline
           [projectId]="selectedProjectId!"
+          [hidePanel]="shouldHideProjectPanel"
           (close)="closeProject()"
           style="flex:1;min-width:0;width:100%;overflow:hidden;height:100%;">
         </app-project-inline>

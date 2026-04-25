@@ -867,6 +867,13 @@ export class VpDashboardComponent implements OnInit, OnDestroy {
     setTimeout(() => { this.myTasksMaxH = Math.floor(window.innerHeight * 0.42); this.cdr.detectChanges(); }, 0);
   }
 
+  // ✅ VP, COUNTRY_DIRECTOR, BOSS → hidePanel=true (project inline right panel hide)
+  // Member roles → hidePanel=false (project inline right panel ပြ)
+  get shouldHideProjectPanel(): boolean {
+    const role = this.currentUser?.role || '';
+    return ['VICE_PRESIDENT', 'COUNTRY_DIRECTOR', 'BOSS', 'ADMIN'].includes(role);
+  }
+
   openProject(id: number): void {
     this.selectedProjectId = id;
     this.showProjectDetail = true;

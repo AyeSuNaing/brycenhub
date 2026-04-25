@@ -42,6 +42,7 @@ const MAX_FIX_ATTEMPTS = 5;
 export class ProjectInlineComponent implements OnInit, OnChanges {
 
   @Input() projectId!: number;
+  @Input() hidePanel = false;   // ✅ VP/CD/BOSS → true, Member → false
   @Output() close = new EventEmitter<void>();
 
   project: any = null;

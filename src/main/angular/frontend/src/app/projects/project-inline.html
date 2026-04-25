@@ -1283,7 +1283,8 @@
 </main>
 
 <!-- ════════ RIGHT SIDEBAR ════════ -->
-<aside class="right-sidebar">
+
+<aside *ngIf="!hidePanel" class="right-sidebar">
   <div class="my-tasks-section">
     <div class="rs-section-header">
       <span>My Tasks</span>
