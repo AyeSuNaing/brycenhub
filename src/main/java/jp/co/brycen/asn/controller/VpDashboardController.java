@@ -31,6 +31,7 @@ public class VpDashboardController {
     @Autowired private ProjectRepository       projectRepository;
     @Autowired private TaskRepository          taskRepository;
     @Autowired private SalaryHistoryRepository salaryHistoryRepository;
+    @Autowired private DepartmentRepository    departmentRepository;   // ✅ added
 
     // ── Helpers ──────────────────────────────────────────────────
     private String getInitial(String name) {
@@ -468,7 +469,7 @@ public class VpDashboardController {
         // PENDING_APPROVAL only
         List<SalaryHistory> pending = salaryHistoryRepository.findAll().stream()
             .filter(s -> branchId.equals(s.getBranchId()))
-//            .filter(s -> "PENDING_APPROVAL".equals(s.getStatus()))
+            .filter(s -> "PENDING_APPROVAL".equals(s.getStatus()))
             .collect(Collectors.toList());
 
         if (pending.isEmpty()) return ResponseEntity.ok(Collections.emptyList());
@@ -645,4 +646,95 @@ public class VpDashboardController {
         private BigDecimal totalTax   = BigDecimal.ZERO;
         private BigDecimal totalNet   = BigDecimal.ZERO;
     }
+
+    // ============================================================
+    // ⑫ SALARY DETAIL — staff breakdown per period
+    // GET /api/vp/dashboard/salary-detail?payPeriod=2026-03
+    // ============================================================
+    @GetMapping("/salary-detail")
+    public ResponseEntity<List<SalaryDetailRow>> getSalaryDetail(
+            @AuthenticationPrincipal User vp,
+            @RequestParam String payPeriod) {
+
+        Long branchId = vp.getBranchId();
+        if (branchId == null || payPeriod == null || payPeriod.isEmpty())
+            return ResponseEntity.ok(Collections.emptyList());
+
+        List<SalaryHistory> rows = salaryHistoryRepository.findAll().stream()
+            .filter(s -> branchId.equals(s.getBranchId()))
+            .filter(s -> payPeriod.equals(s.getPayPeriod()))
+            .collect(Collectors.toList());
+
+        if (rows.isEmpty()) return ResponseEntity.ok(Collections.emptyList());
+
+        Map<Long, User>         uCache = new HashMap<>();
+        Map<Long, UserRole>     rCache = new HashMap<>();
+        Map<Long, Department>   dCache = new HashMap<>();   // ✅ dept cache
+
+        List<SalaryDetailRow> result = rows.stream().map(s -> {
+            User u = s.getUserId() != null
+                ? uCache.computeIfAbsent(s.getUserId(), id -> userRepository.findById(id).orElse(null))
+                : null;
+
+            String roleName = "Staff";
+            String deptName = "—";
+
+            if (u != null && u.getRoleId() != null) {
+                UserRole ur = rCache.computeIfAbsent(u.getRoleId(),
+                    id -> userRoleRepository.findById(id).orElse(null));
+                if (ur != null) roleName = ur.getDisplayName();
+            }
+
+            // ✅ Lookup department: users.department_id → departments.name
+            if (u != null && u.getDepartmentId() != null) {
+                Department dept = dCache.computeIfAbsent(u.getDepartmentId(),
+                    id -> departmentRepository.findById(id).orElse(null));
+                if (dept != null) deptName = dept.getName();
+            }
+
+            SalaryDetailRow r = new SalaryDetailRow();
+            r.setId(s.getId());
+            r.setUserId(s.getUserId());
+            r.setUserName(u != null ? u.getName() : "Unknown");
+            r.setUserInitial(u != null ? getInitial(u.getName()) : "?");
+            r.setUserColor(u != null ? getAvatarColor(u.getId()) : "#64748b");
+            r.setRole(roleName);
+            r.setDepartment(deptName);
+            r.setPayPeriod(s.getPayPeriod());
+            r.setBaseSalary(s.getBaseSalary());
+            r.setWorkingDays(s.getWorkingDays());
+            r.setActualDays(s.getActualDays());
+            r.setEarnedSalary(s.getEarnedSalary());
+            r.setOtAmount(s.getOtAmount());
+            r.setBonuses(s.getBonuses());
+            r.setDeductions(s.getDeductions());
+            r.setGrossSalary(s.getGrossSalary());
+            r.setTaxAmount(s.getTaxAmount());
+            r.setNetSalary(s.getNetSalary());
+            r.setCurrency(s.getCurrency());
+            r.setStatus(s.getStatus());
+            return r;
+        })
+        .sorted(Comparator.comparing((SalaryDetailRow r) -> r.getDepartment() == null ? "zzz" : r.getDepartment())
+                          .thenComparing(SalaryDetailRow::getUserName))
+        .collect(Collectors.toList());
+
+        return ResponseEntity.ok(result);
+    }
+
+    @Data public static class SalaryDetailRow {
+        private Long id, userId;
+        private String userName, userInitial, userColor;
+        private String role, department, payPeriod, currency, status;
+        private Integer workingDays, actualDays;
+        private BigDecimal baseSalary  = BigDecimal.ZERO;
+        private BigDecimal earnedSalary = BigDecimal.ZERO;
+        private BigDecimal otAmount    = BigDecimal.ZERO;
+        private BigDecimal bonuses     = BigDecimal.ZERO;
+        private BigDecimal deductions  = BigDecimal.ZERO;
+        private BigDecimal grossSalary = BigDecimal.ZERO;
+        private BigDecimal taxAmount   = BigDecimal.ZERO;
+        private BigDecimal netSalary   = BigDecimal.ZERO;
+    }
+
 }

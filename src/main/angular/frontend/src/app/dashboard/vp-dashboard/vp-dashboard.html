@@ -116,17 +116,18 @@
           <!-- Header -->
           <div style="display:flex;align-items:center;gap:10px;flex-shrink:0;margin-bottom:4px;">
             <div style="font-size:14px;font-weight:700;">💵 Salary History</div>
-            <span style="font-size:10px;opacity:0.4;">{{ salaryPeriods.length }} periods</span>
+            <span style="font-size:10px;opacity:0.4;">{{ salaryHistoryPeriods.length }} periods</span>
           </div>
 
           <!-- Loading / Empty -->
           <div *ngIf="loadingSalary" style="text-align:center;padding:48px;font-size:12px;opacity:0.4;">Loading...</div>
-          <div *ngIf="!loadingSalary && salaryPeriods.length===0" style="text-align:center;padding:48px;font-size:12px;opacity:0.4;">📭 No salary records</div>
+          <div *ngIf="!loadingSalary && salaryHistoryPeriods.length===0" style="text-align:center;padding:48px;font-size:12px;opacity:0.4;">📭 No salary records</div>
 
-          <!-- Cards -->
-          <ng-container *ngIf="!loadingSalary && salaryPeriods.length>0">
-            <div *ngFor="let p of salaryPeriods" class="card"
-                 style="padding:0;flex-shrink:0;"
+          <!-- Cards — click to view staff detail -->
+          <ng-container *ngIf="!loadingSalary && salaryHistoryPeriods.length>0">
+            <div *ngFor="let p of salaryHistoryPeriods" class="card"
+                 (click)="openSalaryDetail(p)"
+                 style="padding:0;flex-shrink:0;cursor:pointer;transition:opacity 0.15s;"
                  [style.borderColor]="p.status==='PENDING_APPROVAL'?'rgba(245,158,11,0.3)':p.status==='CONFIRMED'?'rgba(96,165,250,0.25)':p.status==='PAID'?'rgba(34,197,94,0.25)':'rgba(148,163,184,0.15)'"
                  [style.background]="p.status==='PENDING_APPROVAL'?'rgba(245,158,11,0.03)':p.status==='PAID'?'rgba(34,197,94,0.03)':'transparent'">
 
@@ -139,7 +140,7 @@
                       [style.color]="p.status==='PENDING_APPROVAL'?'#f59e0b':p.status==='CONFIRMED'?'#60a5fa':p.status==='PAID'?'#22c55e':'#94a3b8'">
                   {{ p.status==='PENDING_APPROVAL' ? 'PENDING' : p.status==='CONFIRMED' ? 'CONFIRMED' : p.status==='PAID' ? 'PAID' : p.status }}
                 </span>
-                <div *ngIf="p.status==='PENDING_APPROVAL'" style="margin-left:auto;display:flex;gap:6px;">
+                <div *ngIf="p.status==='PENDING_APPROVAL'" (click)="$event.stopPropagation()" style="margin-left:auto;display:flex;gap:6px;">
                   <button (click)="rejectSalaryPeriod(p)" [disabled]="salaryActing[p.payPeriod]" [style.opacity]="salaryActing[p.payPeriod]?'0.5':'1'"
                           style="padding:4px 12px;border-radius:6px;border:1px solid rgba(239,68,68,0.3);background:rgba(239,68,68,0.08);color:#ef4444;font-size:10px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap;">✕ Reject</button>
                   <button (click)="approveSalaryPeriod(p)" [disabled]="salaryActing[p.payPeriod]" [style.opacity]="salaryActing[p.payPeriod]?'0.5':'1'"
@@ -165,6 +166,102 @@
 
             </div>
           </ng-container>
+        </div>
+
+        <!-- ════ SALARY DETAIL VIEW ════ -->
+        <div *ngIf="activeView==='salary-detail'" style="padding:16px;display:flex;flex-direction:column;gap:10px;overflow-y:auto;height:100%;">
+
+          <!-- Header with back button -->
+          <div style="display:flex;align-items:center;gap:10px;flex-shrink:0;margin-bottom:4px;">
+            <button (click)="setView('salary-approvals')"
+                    style="font-size:11px;padding:5px 12px;border-radius:7px;background:transparent;border:1px solid rgba(148,163,184,0.2);color:currentColor;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:5px;">
+              ← Back
+            </button>
+            <div style="font-size:14px;font-weight:700;">💵 {{ formatPeriodLabel(selectedSalaryPeriod?.payPeriod) }}</div>
+            <span style="font-size:10px;padding:2px 9px;border-radius:20px;background:rgba(96,165,250,0.15);color:#60a5fa;font-weight:600;">{{ selectedSalaryPeriod?.staffCount }} staff</span>
+            <span style="font-size:9px;font-weight:700;padding:2px 9px;border-radius:20px;white-space:nowrap;"
+                  [style.background]="selectedSalaryPeriod?.status==='PENDING_APPROVAL'?'rgba(245,158,11,0.15)':selectedSalaryPeriod?.status==='CONFIRMED'?'rgba(96,165,250,0.15)':'rgba(34,197,94,0.15)'"
+                  [style.color]="selectedSalaryPeriod?.status==='PENDING_APPROVAL'?'#f59e0b':selectedSalaryPeriod?.status==='CONFIRMED'?'#60a5fa':'#22c55e'">
+              {{ selectedSalaryPeriod?.status==='PENDING_APPROVAL' ? 'PENDING' : selectedSalaryPeriod?.status==='CONFIRMED' ? 'CONFIRMED' : 'PAID' }}
+            </span>
+          </div>
+
+          <!-- Summary bar -->
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;flex-shrink:0;">
+            <div style="background:rgba(148,163,184,0.06);border-radius:8px;padding:10px 14px;border:1px solid rgba(148,163,184,0.1);">
+              <div style="font-size:8px;opacity:0.4;text-transform:uppercase;letter-spacing:0.7px;margin-bottom:3px;">Total Gross</div>
+              <div style="font-size:14px;font-weight:700;">{{ formatMoney(selectedSalaryPeriod?.currency, selectedSalaryPeriod?.totalGross) }}</div>
+            </div>
+            <div style="background:rgba(148,163,184,0.06);border-radius:8px;padding:10px 14px;border:1px solid rgba(148,163,184,0.1);">
+              <div style="font-size:8px;opacity:0.4;text-transform:uppercase;letter-spacing:0.7px;margin-bottom:3px;">Total Tax</div>
+              <div style="font-size:14px;font-weight:700;color:#ef4444;">-{{ formatMoney(selectedSalaryPeriod?.currency, selectedSalaryPeriod?.totalTax) }}</div>
+            </div>
+            <div style="background:rgba(148,163,184,0.06);border-radius:8px;padding:10px 14px;border:1px solid rgba(148,163,184,0.1);">
+              <div style="font-size:8px;opacity:0.4;text-transform:uppercase;letter-spacing:0.7px;margin-bottom:3px;">Total Net</div>
+              <div style="font-size:14px;font-weight:700;">{{ formatMoney(selectedSalaryPeriod?.currency, selectedSalaryPeriod?.totalNet) }}</div>
+            </div>
+          </div>
+
+          <!-- Staff table -->
+          <div *ngIf="loadingSalaryDetail" style="text-align:center;padding:40px;font-size:12px;opacity:0.4;">Loading...</div>
+          <div *ngIf="!loadingSalaryDetail && salaryDetailRows.length===0" style="text-align:center;padding:40px;font-size:12px;opacity:0.4;">No records</div>
+
+          <div *ngIf="!loadingSalaryDetail && salaryDetailRows.length>0" class="card" style="padding:0;flex-shrink:0;">
+            <!-- Table Header -->
+            <div style="display:grid;grid-template-columns:170px 100px 110px 110px 90px 90px 100px 100px 110px;gap:0;padding:8px 16px;border-bottom:1px solid rgba(148,163,184,0.1);align-items:center;">
+              <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.4;">Name</span>
+              <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.4;">Department</span>
+              <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.4;">Gross</span>
+              <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.4;">Tax</span>
+              <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.4;">Net</span>
+              <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.4;">Work Days</span>
+              <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.4;">OT</span>
+              <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.4;">Deductions</span>
+              <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.4;">Bonuses</span>
+            </div>
+            <!-- Table Rows -->
+            <div *ngFor="let r of salaryDetailRows; let last=last"
+                 [style.border-bottom]="last?'none':'1px solid rgba(148,163,184,0.05)'"
+                 (click)="openPayslip(r.id)"
+                 style="display:grid;grid-template-columns:170px 100px 110px 110px 90px 90px 100px 100px 110px;gap:0;padding:10px 16px;align-items:center;cursor:pointer;border-radius:0;"
+                 [style.background]="hoveredRow===r.id?'rgba(148,163,184,0.06)':'transparent'"
+                 (mouseenter)="hoveredRow=r.id"
+                 (mouseleave)="hoveredRow=null">
+              <!-- Name -->
+              <div style="display:flex;align-items:center;gap:8px;">
+                <div style="width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:white;flex-shrink:0;"
+                     [style.background]="r.userColor">{{ r.userInitial }}</div>
+                <div>
+                  <div style="font-size:11px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:130px;">{{ r.userName }}</div>
+                  <div style="font-size:9px;opacity:0.45;">{{ r.role }}</div>
+                </div>
+              </div>
+              <!-- Department -->
+              <div style="font-size:10px;opacity:0.7;">{{ r.department || '—' }}</div>
+              <!-- Gross -->
+              <div style="font-size:11px;font-weight:600;">{{ formatMoney(r.currency, r.grossSalary) }}</div>
+              <!-- Tax -->
+              <div style="font-size:11px;color:#ef4444;">-{{ formatMoney(r.currency, r.taxAmount) }}</div>
+              <!-- Net -->
+              <div style="font-size:11px;font-weight:700;">{{ formatMoney(r.currency, r.netSalary) }}</div>
+              <!-- Working Days -->
+              <div style="font-size:11px;opacity:0.8;">
+                {{ r.actualDays }}<span style="opacity:0.4;font-size:9px;">/{{ r.workingDays }}</span>
+              </div>
+              <!-- OT -->
+              <div style="font-size:11px;" [style.color]="r.otAmount>0?'#60a5fa':''">
+                {{ r.otAmount > 0 ? formatMoney(r.currency, r.otAmount) : '—' }}
+              </div>
+              <!-- Deductions -->
+              <div style="font-size:11px;" [style.color]="r.deductions>0?'#ef4444':''">
+                {{ r.deductions > 0 ? '-'+formatMoney(r.currency, r.deductions) : '—' }}
+              </div>
+              <!-- Bonuses -->
+              <div style="font-size:11px;" [style.color]="r.bonuses>0?'#22c55e':''">
+                {{ r.bonuses > 0 ? '+'+formatMoney(r.currency, r.bonuses) : '—' }}
+              </div>
+            </div>
+          </div>
         </div>
 
         <!-- ════ LEAVE VIEW ════ -->

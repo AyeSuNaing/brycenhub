@@ -23,9 +23,6 @@ import org.springframework.web.bind.annotation.*;
 import javax.validation.Valid;
 import java.util.Optional;
 
-/**
- * Payroll REST endpoints — Phase 1 (preview/save) + Phase 2 (payslip) + Phase 3 (batch approval).
- */
 @Slf4j
 @RestController
 @RequestMapping("/api/payroll")
@@ -69,6 +66,7 @@ public class PayrollController {
 
     // ═══════════════════════════════════════════════════════════
     // ③ PAYSLIP VIEW
+    // ✅ FIX: ADMIN + VP + COUNTRY_DIRECTOR + BOSS (same branch) access allowed
     // ═══════════════════════════════════════════════════════════
     @GetMapping("/payslip/{id}")
     public ResponseEntity<?> getPayslip(
@@ -81,8 +79,9 @@ public class PayrollController {
             boolean global  = isGlobalAdmin(caller);
             boolean sameBr  = caller.getBranchId() != null
                            && caller.getBranchId().equals(res.getBranchId());
-            boolean adminR  = isAdminRole(caller);
-            if (!(self || global || (adminR && sameBr))) return forbidden();
+            // ✅ ADMIN + VP + COUNTRY_DIRECTOR + BOSS — same branch ရင် ကြည့်ခွင့်ရ
+            boolean managerR = isManagerRole(caller);
+            if (!(self || global || (managerR && sameBr))) return forbidden();
             return ResponseEntity.ok(res);
         } catch (IllegalArgumentException e) { return badRequest(e.getMessage()); }
           catch (Exception e) { log.error("[Payroll] payslip", e); return serverError(e.getMessage()); }
@@ -105,7 +104,7 @@ public class PayrollController {
     }
 
     // ═══════════════════════════════════════════════════════════
-    // ⑤ BATCH STATUS — for History page header
+    // ⑤ BATCH STATUS
     // ═══════════════════════════════════════════════════════════
     @GetMapping("/batch-status")
     @PreAuthorize("hasAnyRole('ADMIN', 'VICE_PRESIDENT', 'COUNTRY_DIRECTOR', 'BOSS')")
@@ -190,7 +189,6 @@ public class PayrollController {
     @PreAuthorize("hasAnyRole('VICE_PRESIDENT', 'COUNTRY_DIRECTOR', 'BOSS')")
     public ResponseEntity<?> getPendingBatches(@AuthenticationPrincipal User approver) {
         try {
-            // VP = own branch only; Director/Boss = global (null = all)
             Long scope = isGlobalAdmin(approver) ? null : approver.getBranchId();
             return ResponseEntity.ok(payrollService.getPendingBatches(scope));
         } catch (Exception e) { log.error("[Payroll] pending-batches", e); return serverError(e.getMessage()); }
@@ -213,6 +211,20 @@ public class PayrollController {
         if (u == null || u.getRoleId() == null) return false;
         return userRoleRepo.findById(u.getRoleId())
                 .map(r -> "ADMIN".equals(r.getName()))
+                .orElse(false);
+    }
+
+    // ✅ NEW — ADMIN + VP + COUNTRY_DIRECTOR + BOSS 全部 access allowed
+    private boolean isManagerRole(User u) {
+        if (u == null || u.getRoleId() == null) return false;
+        return userRoleRepo.findById(u.getRoleId())
+                .map(r -> {
+                    String n = r.getName();
+                    return "ADMIN".equals(n)
+                        || "VICE_PRESIDENT".equals(n)
+                        || "COUNTRY_DIRECTOR".equals(n)
+                        || "BOSS".equals(n);
+                })
                 .orElse(false);
     }
 

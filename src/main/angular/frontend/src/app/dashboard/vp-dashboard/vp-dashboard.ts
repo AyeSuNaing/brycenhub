@@ -102,10 +102,17 @@ export class VpDashboardComponent implements OnInit, OnDestroy {
   teamMembers: BranchMemberItem[] = [];
   allAnnouncements: any[] = [];
 
-  // ── Salary approvals — period list ───────────────────────────
-  salaryPeriods: any[] = [];
+  // ── Salary approvals — period list ─────────────────────────────
+  salaryPeriods: any[]        = [];   // dashboard card (PENDING only)
+  salaryHistoryPeriods: any[] = [];   // sidebar view (ALL periods)
   salaryActing: { [period: string]: boolean } = {};
   loadingSalary = false;
+
+  // ── Salary Detail ─────────────────────────────────────────────
+  selectedSalaryPeriod: any = null;
+  salaryDetailRows: any[] = [];
+  loadingSalaryDetail = false;
+  hoveredRow: number | null = null;
 
   // ✅ After — all periods combined summary
   get salaryApproval(): any {
@@ -253,6 +260,11 @@ export class VpDashboardComponent implements OnInit, OnDestroy {
       this.loadingSalary = true;
       // ✅ salaryPeriods မ clear မလုပ်ဘဲ — reload ပြီးမှ replace ဖြစ်မည်
       this.loadSalaryApprovals();
+    }
+
+    if (view === 'salary-detail') {
+      // selectedSalaryPeriod ကို openSalaryDetail() မှာ သတ်မှတ်ပြီးပြီ
+      this.loadSalaryDetail();
     }
 
     if (view === 'view-leave') {
@@ -466,6 +478,7 @@ export class VpDashboardComponent implements OnInit, OnDestroy {
 
   // ✅ Dashboard card — PENDING_APPROVAL only, no spinner
   //    GET /api/vp/dashboard/salary-approvals
+  // Dashboard card — PENDING_APPROVAL only → salaryPeriods
   loadSalaryDashboard(): void {
     this.http.get<any[]>(`${VP_BASE}/salary-approvals`, { headers: this.headers })
       .pipe(catchError(() => of([])))
@@ -477,17 +490,14 @@ export class VpDashboardComponent implements OnInit, OnDestroy {
       });
   }
 
-  // ✅ Sidebar salary view — ALL periods ordered by pay_period DESC, with spinner
-  //    GET /api/vp/dashboard/salary-history
+  // Sidebar view — ALL periods → salaryHistoryPeriods (badge မပြောင်း)
   loadSalaryApprovals(): void {
     this.loadingSalary = true;
     this.http.get<any[]>(`${VP_BASE}/salary-history`, { headers: this.headers })
       .pipe(catchError(() => of([])))
       .subscribe(data => {
-        this.salaryPeriods          = data || [];
-        this.loadingSalary          = false;           // ✅ always false after response
-        this.approvalCounts.SALARY  = this.salaryPeriods.length;
-        this.recomputeTotalPending();
+        this.salaryHistoryPeriods = data || [];
+        this.loadingSalary        = false;
         this.cdr.detectChanges();
       });
   }
@@ -506,8 +516,8 @@ export class VpDashboardComponent implements OnInit, OnDestroy {
         this.salaryActing[p.payPeriod] = false;
         this.cdr.detectChanges();
         if (r !== null) {
-          this.loadSalaryDashboard();    // dashboard card (PENDING only)
-          this.loadSalaryApprovals();    // sidebar view (ALL history)
+          this.loadSalaryDashboard();    // dashboard card — PENDING only
+          this.loadSalaryApprovals();    // sidebar view — ALL history
           this.loadStats();
         }
       });
@@ -532,6 +542,27 @@ export class VpDashboardComponent implements OnInit, OnDestroy {
           this.loadSalaryApprovals();
           this.loadStats();
         }
+      });
+  }
+
+  // ✅ Open salary detail for a period
+  openSalaryDetail(p: any): void {
+    this.selectedSalaryPeriod = p;
+    this.setView('salary-detail');
+  }
+
+  // ✅ Load staff breakdown for selected period
+  loadSalaryDetail(): void {
+    if (!this.selectedSalaryPeriod) return;
+    this.loadingSalaryDetail = true;
+    this.salaryDetailRows = [];
+    const period = this.selectedSalaryPeriod.payPeriod;
+    this.http.get<any[]>(`${VP_BASE}/salary-detail?payPeriod=${period}`, { headers: this.headers })
+      .pipe(catchError(() => of([])))
+      .subscribe(data => {
+        this.salaryDetailRows = data || [];
+        this.loadingSalaryDetail = false;
+        this.cdr.detectChanges();
       });
   }
 
