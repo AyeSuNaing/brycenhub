@@ -10,6 +10,8 @@ import { ViewChild } from '@angular/core';
 import { ProjectInlineComponent } from '../projects/project-inline';
 import { ActivatedRoute } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
+import { catchError } from 'rxjs/operators';
+import { of } from 'rxjs';
 import { API } from '../constants/api-endpoints';
 import { ProjectNewInline } from '../projects/project-new-inline';
 import { ChatPopupComponent, ChatMember } from '../shared/chat-popup/chat-popup.component';
@@ -21,6 +23,10 @@ import {
   Announcement, Notification, ActiveProject, PortfolioProject,
   TeamMember, MyTask, OverdueTask, Activity, Deadline
 } from '../models/dashboard.models';
+
+import { environment } from '../../environments/environment';
+const BASE = environment.apiBaseUrl;
+
 
 const LOGO_SVG = `data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIHZpZXdCb3g9IjAgMCAzMiAzMiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIHJ4PSI4IiBmaWxsPSIjMTY1MzM0Ii8+PHRleHQgeD0iNiIgeT0iMjIiIGZvbnQtc2l6ZT0iMTgiIGZpbGw9IiM4NmVmYWMiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC13ZWlnaHQ9ImJvbGQiPkI8L3RleHQ+PC9zdmc+`;
 
@@ -72,6 +78,12 @@ export class MemberDashboard implements OnInit, AfterViewInit, OnDestroy {
   myTasksMaxH = 300;
   currentUser: any = null;
   activeView = 'dashboard';
+
+  // ── Chat Unread Badge ──
+  memberUnreadCounts: Record<number, number> = {};
+  projectUnreadCounts: Record<number, number> = {};
+  branchUnreadCount = 0;
+  private _unreadPollTimer: any = null;
 
 
   setView(v: string): void {
@@ -161,6 +173,7 @@ export class MemberDashboard implements OnInit, AfterViewInit, OnDestroy {
     });
 
     this.loadAll();
+    this.startUnreadPolling();
   }
 
   ngAfterViewInit() {
@@ -174,7 +187,9 @@ export class MemberDashboard implements OnInit, AfterViewInit, OnDestroy {
     });
   }
 
-  ngOnDestroy() { }
+  ngOnDestroy() {
+    this.stopUnreadPolling();
+  }
 
   loadAll() {
     this.dataService.getStats().subscribe({
@@ -336,6 +351,39 @@ export class MemberDashboard implements OnInit, AfterViewInit, OnDestroy {
       online: m.online,
     };
     this.isGroupChat = false;
+    // Clear unread badge
+    const myId = this.currentUser?.id || this.currentUser?.userId;
+    if (myId) {
+      this.http.put(
+        `${BASE}/chat/read-channel?type=DIRECT&channelId=${myId}`, {},
+        { headers: this.authService.getHeaders() }
+      ).pipe(catchError(() => of(null))).subscribe(() => {
+        const memberId = m.userId || m.id;
+        this.memberUnreadCounts[memberId] = 0;
+        this.cdr.detectChanges();
+      });
+    }
+  }
+
+  openBranchChat(): void {
+    const branchId = this.currentUser?.branchId;
+    this.selectedChatMember = {
+      id: branchId,
+      name: 'Branch Chat',
+      projectId: branchId,
+      projectName: 'Branch Chat',
+      color: '#3b82f6',
+    };
+    this.isGroupChat = true;
+    // Clear badge
+    this.http.put(
+      `${BASE}/chat/read-channel?type=BRANCH&channelId=${branchId}`, {},
+      { headers: this.authService.getHeaders() }
+    ).pipe(catchError(() => of(null))).subscribe(() => {
+      this.branchUnreadCount = 0;
+      this.cdr.detectChanges();
+    });
+    this.cdr.detectChanges();
   }
 
   openProjectChat(p: any) {
@@ -347,6 +395,14 @@ export class MemberDashboard implements OnInit, AfterViewInit, OnDestroy {
       color: p.color || '#16a34a',
     };
     this.isGroupChat = true;
+    // Clear project unread badge
+    this.http.put(
+      `${BASE}/chat/read-channel?type=PROJECT&channelId=${p.id}`, {},
+      { headers: this.authService.getHeaders() }
+    ).pipe(catchError(() => of(null))).subscribe(() => {
+      this.projectUnreadCounts[p.id] = 0;
+      this.cdr.detectChanges();
+    });
   }
 
   closeChatPopup() {
@@ -367,6 +423,65 @@ export class MemberDashboard implements OnInit, AfterViewInit, OnDestroy {
       m.role !== 'Vice President' &&
       m.role !== 'Admin'
     ).length;
+  }
+
+  // ── Chat Unread Polling ──────────────────────────────────────────
+
+  startUnreadPolling(): void {
+    this.stopUnreadPolling();
+    this.ngZone.runOutsideAngular(() => {
+      this._unreadPollTimer = setInterval(() => {
+        this.ngZone.run(() => {
+          this.loadMemberUnreadCounts();
+          this.loadProjectUnreadCounts();
+        });
+      }, 10000);
+    });
+  }
+
+  stopUnreadPolling(): void {
+    if (this._unreadPollTimer) {
+      clearInterval(this._unreadPollTimer);
+      this._unreadPollTimer = null;
+    }
+  }
+
+  loadMemberUnreadCounts(): void {
+    const myId = this.currentUser?.id || this.currentUser?.userId;
+    if (!myId) return;
+    this.http.get<any[]>(
+      `${BASE}/chat/direct-unread-by-sender?userId=${myId}`,
+      { headers: this.authService.getHeaders() }
+    ).pipe(catchError(() => of([]))).subscribe(res => {
+      this.memberUnreadCounts = {};
+      (res || []).forEach((r: any) => {
+        this.memberUnreadCounts[r.senderId] = r.unreadCount;
+      });
+      this.cdr.detectChanges();
+    });
+    // ✅ Branch Chat unread
+    const branchId = this.currentUser?.branchId;
+    if (branchId) {
+      this.http.get<any>(
+        `${BASE}/chat/unread?type=BRANCH&channelId=${branchId}`,
+        { headers: this.authService.getHeaders() }
+      ).pipe(catchError(() => of({ unreadCount: 0 }))).subscribe(res => {
+        this.branchUnreadCount = res?.unreadCount || 0;
+        this.cdr.detectChanges();
+      });
+    }
+  }
+
+  loadProjectUnreadCounts(): void {
+    this.activeProjects.forEach(p => {
+      this.http.get<any>(
+        `${BASE}/chat/unread?type=PROJECT&channelId=${p.id}`,
+        { headers: this.authService.getHeaders() }
+      ).pipe(catchError(() => of({ unreadCount: 0 }))).subscribe(res => {
+        this.projectUnreadCounts[p.id] = res?.unreadCount || 0;
+        this.cdr.detectChanges();
+      });
+    });
   }
 
 }

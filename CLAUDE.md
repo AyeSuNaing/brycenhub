@@ -3839,3 +3839,172 @@ leave_requests:  1 row  — APPROVED (id=1, AyeSuNaing)
 ot_requests:     3 rows — PENDING (branch_id null, user_id=44)
 branch_expenses: empty
 ```
+
+# BRYCEN HUB PMS — Session Handover
+# Date: 2026-04-26 (2:30 AM session)
+# Focus: VP Dashboard Chat/Online Status + Navigation Stack
+
+---
+
+## ✅ COMPLETED THIS SESSION
+
+### 1. project-inline — Navigation State (Back Button Fix)
+- `NavigationStateService` — new singleton service
+  - Path: `src/app/services/navigation-state.service.ts`
+  - `saveProjectState(id, 'vp'|'member')`, `restoreProjectState()`, `clearProjectState()`
+- `project-inline.ts` — `@Input() hidePanel = false` ထည့်ပြီ
+- `project-inline.ts` — `saveAndNavigate()` + `openBoard/Design/ApiDocs/DbSchema/Activity()` ထည့်ပြီ
+- `project-inline.html` — `<aside *ngIf="!hidePanel">` + routerLink → (click) ပြောင်းပြီ
+- `kanban.ts` — `goBack(): void { history.back(); }` ပြောင်းပြီ
+- `vp-dashboard.ts` — `navState.restoreProjectState()` + duplicate `const saved` bug fix ပြီ
+
+### 2. VP Dashboard Right Sidebar — Full Redesign
+**Layout: Management → Group Chats → Team**
+
+#### Management Section (BOSS/CD/VP — cross-branch)
+- Backend: `VpDashboardController.getBranchMembers()` — company-wide management fetch
+- `MemberRow` DTO — `rawRole`, `management` fields ထည့်ပြီ
+- Sort: BOSS(1) → CD(2) → VP(3) → Admin(4) → PM(5) → ...
+- Purple left border + purple role badge
+
+#### Group Chats Section
+- Branch projects တွေ group chat အဖြစ် ပြ
+- Click → `openProjectGroupChat(p)` → ChatPopup (isGroup=true)
+- Unread badge 🔴 per project (5s polling)
+
+#### Team Section (same branch only)
+- Online/Offline dot (right side of card)
+- Unread badge 🔴 per member (DM)
+
+### 3. Unread Chat Badge System
+**Backend (NEW endpoints):**
+- `GET /api/chat/direct-unread-by-sender?userId={myId}`
+  → `[{ senderId, unreadCount }]`
+  - Files: `ChatController.java` (ထုတ်ပြီ), `ChatService.java` (PATCH ထုတ်ပြီ)
+
+**Frontend VP Dashboard:**
+- `projectUnreadCounts: Record<number, number>` — group unread
+- `memberUnreadCounts: Record<number, number>` — DM unread
+- `loadProjectUnreadCounts()` + `loadMemberUnreadCounts()`
+- `startUnreadPolling()` — NgZone.runOutsideAngular, 5s interval
+- Click → `markChannelAsRead` → badge clear
+
+### 4. Online/Offline Status
+**Backend:**
+- `PUT /api/auth/heartbeat` — `userService.updateLastSeen(userId)`
+- File: `AuthController.java` (ထုတ်ပြီ)
+
+**Frontend:**
+- `RefreshService.ts` — `HttpClient` inject + 60s heartbeat ping
+- VP Dashboard — online dot inline style (10px, glow effect)
+- online = `lastSeen within 5 minutes` (existing VpDashboardController logic)
+
+### 5. Light Mode Fixes
+- Group chat text colors — `isDark` conditional
+- Member name — `isDark ? '#e2e8f0' : '#1e293b'`
+- Hover fix — `$any($event.currentTarget).style.background`
+
+---
+
+## 📁 Output Files (All Ready)
+
+| File | Status |
+|------|--------|
+| `navigation-state.service.ts` | ✅ NEW |
+| `vp-dashboard.ts` | ✅ Updated |
+| `vp-dashboard.html` | ✅ Updated |
+| `VpDashboardController.java` | ✅ Full file |
+| `ChatController.java` | ✅ Full file |
+| `ChatService.PATCH.md` | ✅ Patch |
+| `AuthController.java` | ✅ Full file |
+| `refresh.service.ts` | ✅ Full file |
+| `project-inline-navstate.PATCH.md` | ✅ Patch |
+| `all-pages-navstate.PATCH.md` | ✅ Patch |
+| `member-dashboard-chat-badge.PATCH.md` | ✅ Patch |
+| `member-dashboard-html-badge.PATCH.md` | ✅ Patch |
+| `kanban-goback.PATCH.md` | ✅ Patch |
+
+---
+
+## ⏳ PENDING / NEXT SESSION
+
+### 1. Member Dashboard — Chat Badge (မထည့်ရသေးဘူး)
+Apply: `member-dashboard-chat-badge.PATCH.md` + `member-dashboard-html-badge.PATCH.md`
+- `memberUnreadCounts` + `projectUnreadCounts` ထည့်
+- 5s polling ထည့်
+- Team + VP/CD member rows မှာ badge ပြ
+
+### 2. ChatService.java — getDirectUnreadBySender()
+Apply: `ChatService.PATCH.md`
+```java
+public List<Map<String, Object>> getDirectUnreadBySender(Long receiverId)
+```
+
+### 3. activity-log-page.ts — goBack() Fix
+```typescript
+// CHANGE FROM
+goBack() { this.router.navigate(['/dashboard/member'], { queryParams: { projectId: ... } }); }
+// CHANGE TO
+goBack(): void { history.back(); }
+```
+
+### 4. api-docs.ts / db-schema.ts — goBack() 추가
+```typescript
+goBack(): void { history.back(); }
+```
+
+### 5. Boss Dashboard (Phase 13)
+- New dashboard for BOSS role
+- Country-level overview (all branches)
+- Similar to VP dashboard structure
+
+---
+
+## 🔑 Key Architecture Notes
+
+### Navigation Stack Pattern
+```
+openProject(id) → navState.save(id, 'vp'|'member')
+Open any page (Board/Design/API/Activity) → saveAndNavigate()
+Back button → history.back() → dashboard ngOnInit
+→ navState.restore() → project inline auto-open ✅
+```
+
+### Online Status
+```
+online = lastSeen within 5 minutes (VpDashboardController)
+Heartbeat every 60s (RefreshService) → PUT /auth/heartbeat
+→ updateLastSeen() → users.last_seen = NOW()
+```
+
+### DM Unread Count Logic
+```
+DIRECT message: channel_id = receiver's userId (NOT sender)
+GET /chat/direct-unread-by-sender?userId=VP_ID
+→ groups by sender_id → badge per member ✅
+```
+
+### VP Right Sidebar Data Flow
+```
+loadBranchMembers() → management (findAll + filter BOSS/CD/VP)
+                    → team (findStaffByBranchId - management)
+loadBranchProjects() → group chats
+loadProjectUnreadCounts() → 5s poll
+loadMemberUnreadCounts() → 5s poll (via loadProjectUnreadCounts)
+```
+
+---
+
+## 🗄️ DB Schema Key Facts
+- `users.last_seen` → online detection (5 min threshold)
+- `chat_messages.channel_id` — DIRECT = receiver_userId, PROJECT = projectId
+- `chat_read_status` — message read tracking
+- `user_roles`: BOSS=1, CD=2, VP=3, ADMIN=4, PM=5, LEADER=6, DEV=7
+
+## 🏗️ Tech Stack
+- Backend: Spring Boot 2.7.18 / Java 17, port 8080
+- Frontend: Angular 21 Standalone, port 4200
+- DB: MySQL `asn_db`
+- Chat: Zego ZIM + REST API hybrid
+
+*Last updated: 2026-04-26 02:30 AM*

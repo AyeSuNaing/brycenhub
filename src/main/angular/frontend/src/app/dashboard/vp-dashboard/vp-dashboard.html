@@ -599,6 +599,28 @@
             <span style="font-size:9px;padding:1px 7px;border-radius:20px;background:rgba(34,197,94,0.12);color:#22c55e;font-weight:700;border:1px solid rgba(34,197,94,0.25);">{{ branchProjects.length }}</span>
           </div>
           <div style="display:flex;flex-direction:column;gap:4px;">
+
+            <!-- ✅ Branch Chat — default -->
+            <div (click)="openBranchChat()"
+              style="display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:9px;cursor:pointer;border:1px solid;transition:all 0.15s;"
+              [style.background]="isDark ? 'rgba(59,130,246,0.08)' : '#eff6ff'"
+              [style.borderColor]="isDark ? 'rgba(59,130,246,0.3)' : '#93c5fd66'"
+              (mouseenter)="$any($event.currentTarget).style.background = isDark ? 'rgba(59,130,246,0.16)' : '#dbeafe'"
+              (mouseleave)="$any($event.currentTarget).style.background = isDark ? 'rgba(59,130,246,0.08)' : '#eff6ff'">
+              <div style="width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,#1d4ed8,#3b82f6);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;">
+                🏢
+              </div>
+              <div style="flex:1;min-width:0;">
+                <div style="font-size:11px;font-weight:700;" [style.color]="isDark ? '#93c5fd' : '#1d4ed8'">Branch Chat</div>
+                <div style="font-size:9px;opacity:0.55;" [style.color]="isDark ? '#94a3b8' : '#64748b'">All branch members</div>
+              </div>
+              <!-- ✅ Unread badge -->
+              <span *ngIf="branchUnreadCount > 0"
+                style="flex-shrink:0;min-width:16px;height:16px;border-radius:20px;background:#ef4444;color:white;font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center;padding:0 4px;">
+                {{ branchUnreadCount > 99 ? '99+' : branchUnreadCount }}
+              </span>
+            </div>
+
             <div *ngFor="let p of branchProjects"
               (click)="openProjectGroupChat(p)"
               style="display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:9px;cursor:pointer;border:1px solid;transition:all 0.15s;"

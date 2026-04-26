@@ -427,8 +427,9 @@
     </app-my-ot-request>
 
     <!-- RIGHT SIDEBAR -->
-<aside *ngIf="!showProjectDetail && !showNewProject && (activeView==='dashboard' || activeView==='leave' || activeView==='ot' || activeView==='announce')" class="right-sidebar">
 
+    <aside *ngIf="!showProjectDetail && !showNewProject && (activeView==='dashboard' || activeView==='leave' || activeView==='ot' || activeView==='announce')" class="right-sidebar" style="width:260px;min-width:260px;max-width:260px;">
+      
       <div class="my-tasks-section">
         <div class="rs-section-header">
           <span style="font-size:11px;font-weight:700;">My Tasks</span>
@@ -451,19 +452,60 @@
         <div class="members-list">
 
           <!-- ════ PROJECT GROUPS ════ -->
-          <div class="rs-section-header" style="margin-bottom:4px;">
-            <span style="font-size:11px;font-weight:700;">👥 Project Groups</span>
-            <span style="font-size:9px;opacity:0.4">{{ activeProjects.length }}</span>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+            <span style="font-size:10px;font-weight:700;letter-spacing:0.5px;" [style.color]="isDark ? '#22c55e' : '#16a34a'">💬 GROUP CHATS</span>
+            <span style="font-size:9px;padding:1px 7px;border-radius:20px;background:rgba(34,197,94,0.12);color:#22c55e;font-weight:700;border:1px solid rgba(34,197,94,0.25);">{{ activeProjects.length }}</span>
           </div>
 
-          <div *ngFor="let p of activeProjects" class="member-card"
-            (click)="openProjectChat(p)" style="cursor:pointer;justify-content:space-between;">
-            <div style="display:flex;align-items:center;gap:6px;min-width:0;flex:1;">
-              <div style="width:8px;height:8px;border-radius:2px;flex-shrink:0;"
-                [style.background]="p.color || '#16a34a'"></div>
-              <span class="member-name" style="font-size:10px;">{{ p.name }}</span>
+          <!-- ✅ Branch Chat — default -->
+          <div (click)="openBranchChat()"
+            style="display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:9px;cursor:pointer;border:1px solid;transition:all 0.15s;margin-bottom:4px;"
+            [style.background]="isDark ? 'rgba(59,130,246,0.08)' : '#eff6ff'"
+            [style.borderColor]="isDark ? 'rgba(59,130,246,0.3)' : '#93c5fd66'"
+            (mouseenter)="$any($event.currentTarget).style.background = isDark ? 'rgba(59,130,246,0.16)' : '#dbeafe'"
+            (mouseleave)="$any($event.currentTarget).style.background = isDark ? 'rgba(59,130,246,0.08)' : '#eff6ff'">
+            <div style="width:32px;height:32px;border-radius:9px;background:linear-gradient(135deg,#1d4ed8,#3b82f6);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;">
+              🏢
             </div>
-            <span style="font-size:12px;flex-shrink:0;opacity:0.6;">💬</span>
+            <div style="flex:1;min-width:0;">
+              <div style="font-size:11px;font-weight:700;" [style.color]="isDark ? '#93c5fd' : '#1d4ed8'">Branch Chat</div>
+              <div style="font-size:9px;opacity:0.55;" [style.color]="isDark ? '#94a3b8' : '#64748b'">All branch members</div>
+            </div>
+            <span *ngIf="branchUnreadCount > 0"
+              style="flex-shrink:0;min-width:16px;height:16px;border-radius:20px;background:#ef4444;color:white;font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center;padding:0 4px;">
+              {{ branchUnreadCount > 99 ? '99+' : branchUnreadCount }}
+            </span>
+          </div>
+
+          <div *ngFor="let p of activeProjects"
+            (click)="openProjectChat(p)"
+            style="display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:9px;cursor:pointer;border:1px solid;transition:all 0.15s;margin-bottom:4px;"
+            [style.background]="isDark ? 'rgba(22,163,74,0.06)' : '#f0fdf4'"
+            [style.borderColor]="isDark ? 'rgba(34,197,94,0.2)' : '#86efac66'"
+            (mouseenter)="$any($event.currentTarget).style.background = isDark ? 'rgba(22,163,74,0.14)' : '#dcfce7'"
+            (mouseleave)="$any($event.currentTarget).style.background = isDark ? 'rgba(22,163,74,0.06)' : '#f0fdf4'">
+            <!-- Avatar -->
+            <div style="width:32px;height:32px;border-radius:9px;background:linear-gradient(135deg,#14532d,#16a34a);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:white;flex-shrink:0;">
+              {{ p.name[0]?.toUpperCase() }}
+            </div>
+            <!-- Name + Status -->
+            <div style="flex:1;min-width:0;">
+              <div style="display:flex;align-items:center;gap:5px;">
+                <div style="font-size:11px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1;min-width:0;"
+                  [style.color]="isDark ? '#e2e8f0' : '#1e293b'">{{ p.name }}</div>
+                <!-- Unread badge -->
+                <span *ngIf="projectUnreadCounts[p.id] > 0"
+                  style="flex-shrink:0;min-width:16px;height:16px;border-radius:20px;background:#ef4444;color:white;font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center;padding:0 4px;">
+                  {{ projectUnreadCounts[p.id] > 99 ? '99+' : projectUnreadCounts[p.id] }}
+                </span>
+              </div>
+              <div style="display:flex;align-items:center;gap:4px;margin-top:1px;">
+                <div style="width:5px;height:5px;border-radius:50%;flex-shrink:0;"
+                  [style.background]="p.progress > 0 ? '#22c55e' : '#475569'"></div>
+                <span style="font-size:9px;opacity:0.55;"
+                  [style.color]="isDark ? '#94a3b8' : '#64748b'">{{ p.progress }}%</span>
+              </div>
+            </div>
           </div>
 
           <!-- ════ MANAGEMENT — DR / VP / Admin ════ -->
@@ -493,6 +535,13 @@
                   </span>
                 </div>
               </div>
+              <!-- Unread DM badge -->
+              <span *ngIf="memberUnreadCounts[$any(m).userId || $any(m).id] > 0"
+                style="flex-shrink:0;min-width:16px;height:16px;border-radius:20px;
+                  background:#ef4444;color:white;font-size:9px;font-weight:700;
+                  display:flex;align-items:center;justify-content:center;padding:0 4px;">
+                {{ memberUnreadCounts[$any(m).userId || $any(m).id] > 99 ? '99+' : memberUnreadCounts[$any(m).userId || $any(m).id] }}
+              </span>
               <div class="member-status-dot" [style.background]="m.online ? '#22c55e' : '#475569'"></div>
             </div>
           </ng-container>
@@ -526,6 +575,13 @@
                   <span *ngIf="m.tasks && m.tasks > 0" class="member-tasks"> · {{ m.tasks }} tasks</span>
                 </div>
               </div>
+              <!-- Unread DM badge -->
+              <span *ngIf="memberUnreadCounts[$any(m).userId || $any(m).id] > 0"
+                style="flex-shrink:0;min-width:16px;height:16px;border-radius:20px;
+                  background:#ef4444;color:white;font-size:9px;font-weight:700;
+                  display:flex;align-items:center;justify-content:center;padding:0 4px;">
+                {{ memberUnreadCounts[$any(m).userId || $any(m).id] > 99 ? '99+' : memberUnreadCounts[$any(m).userId || $any(m).id] }}
+              </span>
               <div class="member-status-dot" [style.background]="m.online ? '#22c55e' : '#475569'"></div>
             </div>
           </ng-container>

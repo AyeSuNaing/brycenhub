@@ -50,6 +50,9 @@ export class ChatPopupComponent implements OnInit, OnDestroy {
 
   private currentUser: any = null;
   private roomID = '';
+  private _pollTimer: any = null;
+  private _lastMessageId = '';
+
 
   constructor(
     private zegoService: ZegoService,
@@ -61,6 +64,10 @@ export class ChatPopupComponent implements OnInit, OnDestroy {
   ngOnInit() {
     this.currentUser = this.authService.getUser();
 
+    if (!this.currentUser.id && this.currentUser.userId) {
+      this.currentUser.id = this.currentUser.userId;
+    }
+
     if (this.isGroup && this.member.projectId) {
       this.roomID = this.zegoService.getProjectRoomId(this.member.projectId);
     } else {
@@ -70,14 +77,22 @@ export class ChatPopupComponent implements OnInit, OnDestroy {
     }
 
     this.loadChatHistory();
+    this.startPolling();
   }
 
-  ngOnDestroy() {}
+  ngOnDestroy() {
+    this.stopPolling();
+  }
 
   loadChatHistory() {
-    const url = this.isGroup
-      ? `${environment.apiBaseUrl}/chat/project/${this.member.projectId}`
-      : `${environment.apiBaseUrl}/chat/direct/${this.member.id}`;
+    let url: string;
+    if (!this.isGroup) {
+      url = `${environment.apiBaseUrl}/chat/direct/${this.member.id}`;
+    } else if (this.member.projectName === 'Branch Chat') {
+      url = `${environment.apiBaseUrl}/chat/branch/${this.member.projectId}`;
+    } else {
+      url = `${environment.apiBaseUrl}/chat/project/${this.member.projectId}`;
+    }
 
     this.http.get<any[]>(url, {
       headers: this.authService.getHeaders()
@@ -89,7 +104,7 @@ export class ChatPopupComponent implements OnInit, OnDestroy {
           senderName: m.senderName || 'User',
           content: m.content,
           time: this.formatTime(m.createdAt),
-          isMine: m.senderId === this.currentUser.id
+          isMine: Number(m.senderId) === Number(this.currentUser.id || this.currentUser.userId)
         }));
         this.cdr.detectChanges();
         this.scrollToBottom();
@@ -106,7 +121,9 @@ export class ChatPopupComponent implements OnInit, OnDestroy {
     this.http.post<any>(
       `${environment.apiBaseUrl}/chat/send`,
       {
-        channelType: this.isGroup ? 'PROJECT' : 'DIRECT',
+        channelType: this.isGroup
+          ? (this.member.projectName === 'Branch Chat' ? 'BRANCH' : 'PROJECT')
+          : 'DIRECT',
         channelId: this.isGroup ? this.member.projectId : this.member.id,
         content: content,
         originalLanguage: this.currentUser?.preferredLanguage || 'en'
@@ -176,6 +193,57 @@ export class ChatPopupComponent implements OnInit, OnDestroy {
         el.scrollTop = el.scrollHeight;
       }
     }, 50);
+  }
+
+  startPolling(): void {
+    this.stopPolling();
+    this._pollTimer = setInterval(() => {
+      this.pollNewMessages();
+    }, 3000);
+  }
+
+  stopPolling(): void {
+    if (this._pollTimer) {
+      clearInterval(this._pollTimer);
+      this._pollTimer = null;
+    }
+  }
+
+  pollNewMessages(): void {
+    let url: string;
+    if (!this.isGroup) {
+      url = `${environment.apiBaseUrl}/chat/direct/${this.member.id}`;
+    } else if (this.member.projectName === 'Branch Chat') {
+      url = `${environment.apiBaseUrl}/chat/branch/${this.member.projectId}`;
+    } else {
+      url = `${environment.apiBaseUrl}/chat/project/${this.member.projectId}`;
+    }
+
+    this.http.get<any[]>(url, {
+      headers: this.authService.getHeaders()
+    }).subscribe({
+      next: (msgs) => {
+        if (!msgs || msgs.length === 0) return;
+        const myId = this.currentUser?.id || this.currentUser?.userId;
+        const newMessages = msgs.map(m => ({
+          id: String(m.id),
+          senderId: String(m.senderId),
+          senderName: m.senderName || 'User',
+          content: m.content,
+          time: this.formatTime(m.createdAt),
+          isMine: Number(m.senderId) === Number(myId)
+        }));
+        // ✅ Message အသစ်တွေ ပေါင်းထည့် — existing IDs တွေ skip
+        const existingIds = new Set(this.messages.map(m => m.id));
+        const added = newMessages.filter(m => !existingIds.has(m.id));
+        if (added.length > 0) {
+          this.messages = [...this.messages, ...added];
+          this.cdr.detectChanges();
+          this.scrollToBottom();
+        }
+      },
+      error: () => {}
+    });
   }
 
   formatTime(isoString: string): string {

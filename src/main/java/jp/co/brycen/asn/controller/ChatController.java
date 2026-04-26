@@ -10,7 +10,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -127,5 +128,31 @@ public class ChatController {
             @RequestParam Long userId,
             @AuthenticationPrincipal User user) {
         return ResponseEntity.ok(chatService.getDirectUnreadBySender(userId));
+    }
+    
+    // GET /api/chat/unread-batch?type=PROJECT&channelIds=5,6,7,8
+    @GetMapping("/unread-batch")
+    public ResponseEntity<List<Map<String, Object>>> getUnreadBatch(
+            @RequestParam String type,
+            @RequestParam String channelIds,
+            @AuthenticationPrincipal User user) {
+        List<Map<String, Object>> result = new ArrayList<>();
+        for (String idStr : channelIds.split(",")) {
+            try {
+                Long channelId = Long.parseLong(idStr.trim());
+                long count = chatService.getUnreadCount(type, channelId, user.getId());
+                Map<String, Object> row = new HashMap<>();
+                row.put("channelId", channelId);
+                row.put("unreadCount", count);
+                result.add(row);
+            } catch (NumberFormatException ignored) {}
+        }
+        return ResponseEntity.ok(result);
+    }
+    
+    @GetMapping("/branch/{branchId}")
+    public ResponseEntity<List<ChatMessageDto>> getBranchMessages(
+            @PathVariable Long branchId) {
+        return ResponseEntity.ok(chatService.getBranchMessages(branchId));
     }
 }

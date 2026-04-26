@@ -42,6 +42,7 @@ export interface PortfolioProject {
 
 export interface TeamMember {
   id?: number;
+  userId?: number;
   initial: string;
   name: string;
   role: string;

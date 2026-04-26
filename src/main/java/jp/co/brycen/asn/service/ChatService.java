@@ -171,4 +171,13 @@ public class ChatService {
         });
         return result;
     }
+    
+    public List<ChatMessageDto> getBranchMessages(Long branchId) {
+        List<ChatMessage> msgs = chatMessageRepository
+                .findByChannelTypeAndChannelIdOrderByCreatedAtAsc("BRANCH", branchId);
+        Map<Long, String> nameMap = buildSenderNameMap(msgs);
+        return msgs.stream()
+                .map(m -> ChatMessageDto.from(m, nameMap.get(m.getSenderId())))
+                .collect(Collectors.toList());
+    }
 }

@@ -84,6 +84,7 @@ export class VpDashboardComponent implements OnInit, OnDestroy {
   settingsOpen = false;
   searchQuery = '';
   myTasksMaxH = 300;
+  branchUnreadCount = 0;
 
   // ── Approval tabs ────────────────────────────────────────────
   activeApprovalTab: ApprovalTab = 'LEAVE';
@@ -644,7 +645,7 @@ export class VpDashboardComponent implements OnInit, OnDestroy {
     this.ngZone.runOutsideAngular(() => {
       this._unreadPollTimer = setInterval(() => {
         this.ngZone.run(() => this.loadProjectUnreadCounts());
-      }, 5000);
+      }, 10000);
     });
   }
 
@@ -658,14 +659,28 @@ export class VpDashboardComponent implements OnInit, OnDestroy {
   // ✅ Fetch unread count per project for group chat badges
   loadProjectUnreadCounts(): void {
     this.loadMemberUnreadCounts();
-    this.branchProjects.forEach(p => {
+    // ✅ Branch Chat unread
+    const branchId = this.currentUser?.branchId;
+    if (branchId) {
       this.http.get<any>(
-        `${BASE}/chat/unread?type=PROJECT&channelId=${p.id}`,
+        `${BASE}/chat/unread?type=BRANCH&channelId=${branchId}`,
         { headers: this.headers }
       ).pipe(catchError(() => of({ unreadCount: 0 }))).subscribe(res => {
-        this.projectUnreadCounts[p.id] = res?.unreadCount || 0;
+        this.branchUnreadCount = res?.unreadCount || 0;
         this.cdr.detectChanges();
       });
+    }
+    // ✅ Batch — project တစ်ခုချင်းစီ call မလုပ်ဘဲ တစ်ကြိမ်တည်း
+    if (this.branchProjects.length === 0) return;
+    const ids = this.branchProjects.map(p => p.id).join(',');
+    this.http.get<any[]>(
+      `${BASE}/chat/unread-batch?type=PROJECT&channelIds=${ids}`,
+      { headers: this.headers }
+    ).pipe(catchError(() => of([]))).subscribe(res => {
+      (res || []).forEach((r: any) => {
+        this.projectUnreadCounts[r.channelId] = r.unreadCount || 0;
+      });
+      this.cdr.detectChanges();
     });
   }
 
@@ -945,6 +960,28 @@ export class VpDashboardComponent implements OnInit, OnDestroy {
     });
     this.cdr.detectChanges();
   }
+
+  openBranchChat(): void {
+    const branchId = this.currentUser?.branchId;
+    this.isGroupChat = true;
+    this.activeChatMember = {
+      id: branchId,
+      name: 'Branch Chat',
+      projectId: branchId,
+      projectName: 'Branch Chat',
+      color: '#3b82f6',
+    };
+    // Clear badge
+    this.http.put(
+      `${BASE}/chat/read-channel?type=BRANCH&channelId=${branchId}`, {},
+      { headers: this.headers }
+    ).pipe(catchError(() => of(null))).subscribe(() => {
+      this.branchUnreadCount = 0;
+      this.cdr.detectChanges();
+    });
+    this.cdr.detectChanges();
+  }
+
 
   // ✅ Open group chat for a branch project
   openProjectGroupChat(p: BranchProject): void {
