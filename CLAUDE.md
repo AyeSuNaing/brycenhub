@@ -4008,3 +4008,277 @@ loadMemberUnreadCounts() → 5s poll (via loadProjectUnreadCounts)
 - Chat: Zego ZIM + REST API hybrid
 
 *Last updated: 2026-04-26 02:30 AM*
+
+# BRYCEN HUB PMS — CLAUDE.md
+# Brycen AI Development Contest 2026
+# ⚠️ READ THIS FIRST IN EVERY NEW CHAT
+# Last Updated: 2026-04-26
+
+---
+
+## 🚨 HOW TO START A NEW CHAT
+
+### Step 1 — GitHub Latest Code Sync (အရေးကြီး!)
+Project Knowledge panel မှာ GitHub repo sync လုပ်ပါ:
+- Repo: `AyeSuNaing/brycenhub` (main branch)
+- Sync ပြီးမှ ဆက်လုပ်ပါ
+
+### Step 2 — Read This File
+CLAUDE.md ကို အပြည့်အစုံ ဖတ်ပြီးမှ respond ပါ
+
+### Step 3 — Language
+**Always reply in Myanmar (Burmese) language**
+
+---
+
+## 🏆 Contest Info
+- **Prize:** 1,000,000 yen
+- **Deadline:** May 18, 2026
+- **Team:** Brycen Cambodia
+
+---
+
+## 🏗️ Tech Stack
+- **Backend:** Spring Boot 2.7.18 / Java 17, port 8080
+- **Frontend:** Angular 21 Standalone, port 4200
+- **DB:** MySQL `asn_db`
+- **Chat:** Zego ZIM + REST API hybrid
+- **Project path:** `/Users/brycen_cambodia_2/Documents/1ASNworkspace/welcome/`
+
+---
+
+## 👥 User Roles & Dashboards
+
+| Role | Dashboard Route | Status |
+|------|----------------|--------|
+| BOSS | `/dashboard/boss` | ⏳ Phase 13 — TODO |
+| COUNTRY_DIRECTOR | `/dashboard/vp` (reuse) | ✅ |
+| VICE_PRESIDENT | `/dashboard/vp` | ✅ |
+| ADMIN | `/dashboard/admin` | ✅ |
+| PROJECT_MANAGER | `/dashboard/member` | ✅ |
+| LEADER | `/dashboard/member` | ✅ |
+| DEVELOPER | `/dashboard/member` | ✅ |
+| UI_UX | `/dashboard/member` | ✅ |
+| QA | `/dashboard/member` | ✅ |
+
+---
+
+## ✅ COMPLETED PHASES
+
+### Phase 1-6 — Core Backend ✅
+- Auth, Users, Projects, Tasks, Comments, Sprints
+- Kanban board, Activity logs, Notifications
+- File attachments, Translations (6 languages)
+
+### Phase 7 — Chat System ✅
+- Zego ZIM integration (voice/video call)
+- REST polling fallback (3s for messages, 10s for unread)
+- Channel types: GLOBAL / COUNTRY / BRANCH / PROJECT / DIRECT
+- `chat_messages` table: `channel_type` ENUM includes BRANCH ✅
+
+### Phase 8 — VP Dashboard ✅
+- Stats, Leave/OT/Salary approvals
+- Right sidebar: Management → Group Chats → Team
+- Branch Chat (same branch members)
+- Unread badge system (batch polling)
+- Online/Offline status (heartbeat 60s)
+
+### Phase 9 — Member Dashboard ✅
+- Stats, Projects Overview, Portfolio
+- Right sidebar: My Tasks + Group Chats + Management + Team
+- Branch Chat card (blue)
+- Chat popup with real-time polling
+- Unread badge per member + project
+
+### Phase 10 — Admin Dashboard ✅
+- Payroll wizard (draft → pending → confirmed → paid)
+- Staff management, Leave/OT approval
+
+### Phase 11 — Project Inline ✅
+- Board preview, UI/UX Design preview
+- API docs, DB schema, Members tab
+- Navigation state service (back button fix)
+
+### Phase 12 — Chat Features ✅ (2026-04-26)
+- Chat bubble left/right fix (Number() cast + userId fallback)
+- Real-time polling (3s interval)
+- Branch Chat (VP + Member dashboard)
+- Branch Chat unread badge
+- Batch unread polling (N+1 → 1 request)
+- Member Dashboard unread badge system
+
+---
+
+## ⏳ NEXT PHASE
+
+### Phase 13 — Boss Dashboard
+- Route: `/dashboard/boss`
+- Country-level overview (all branches)
+- Stats: total staff, active projects, all countries
+- Left sidebar: Dashboard, All Projects, Countries, Finance, Announcements
+- Right sidebar: Management members + Branch Chats per country
+- Main content: Country cards with branch breakdown
+
+---
+
+## 🔑 Key Architecture Notes
+
+### Chat Channel Types
+```
+GLOBAL   → company-wide
+COUNTRY  → country-level (legacy, not used for branch)
+BRANCH   → branch-level (NEW — channel_id = branchId)
+PROJECT  → project group chat (channel_id = projectId)
+DIRECT   → 1-on-1 (channel_id = receiver's userId)
+```
+
+### Chat Popup — isMine Logic
+```typescript
+// Always use Number() cast — localStorage stores userId (not id)
+isMine: Number(m.senderId) === Number(this.currentUser.id || this.currentUser.userId)
+
+// ngOnInit userId fallback
+if (!this.currentUser.id && this.currentUser.userId) {
+  this.currentUser.id = this.currentUser.userId;
+}
+```
+
+### Branch Chat URL Pattern
+```typescript
+// loadChatHistory + pollNewMessages + sendMessage
+if (member.projectName === 'Branch Chat') {
+  url = `${BASE}/chat/branch/${member.projectId}`
+  channelType = 'BRANCH'
+} else {
+  url = `${BASE}/chat/project/${member.projectId}`
+  channelType = 'PROJECT'
+}
+```
+
+### Unread Polling (VP Dashboard)
+```typescript
+// Batch endpoint — 8 requests → 1 request
+GET /api/chat/unread-batch?type=PROJECT&channelIds=5,6,7,8,9,10,11,12
+// interval: 10000ms (10s)
+```
+
+### Online Status
+```
+online = lastSeen within 5 minutes (backend threshold)
+Heartbeat every 60s (RefreshService) → PUT /auth/heartbeat
+```
+
+### Navigation Stack Pattern
+```
+openProject(id) → navState.save(id, 'vp'|'member')
+Back button → history.back() → dashboard ngOnInit → navState.restore()
+```
+
+### localStorage Key Note
+```
+VP/Member user object: key = 'user'
+Fields: userId (NOT id!), name, role, branchId, token, ...
+Always use: currentUser?.id || currentUser?.userId
+```
+
+---
+
+## 🗄️ DB Schema Key Facts
+- `users.last_seen` → online detection (5 min threshold)
+- `chat_messages.channel_id` — DIRECT = receiver_userId, PROJECT/BRANCH = id
+- `chat_messages.channel_type` ENUM: GLOBAL|COUNTRY|BRANCH|PROJECT|DIRECT
+- `chat_read_status` — message read tracking
+- `user_roles`: BOSS=1, CD=2, VP=3, ADMIN=4, PM=5, LEADER=6, DEV=7
+
+---
+
+## 📁 Key File Paths
+
+### Frontend
+```
+src/main/angular/frontend/src/app/
+├── dashboard/
+│   ├── member-dashboard.ts / .html / .scss
+│   ├── vp-dashboard/
+│   │   ├── vp-dashboard.ts / .html / .scss
+│   └── boss-dashboard.ts              ← Phase 13 (TODO)
+├── shared/
+│   ├── chat-popup/
+│   │   ├── chat-popup.component.ts    ← isMine fix, polling, Branch Chat
+│   │   └── chat-popup.component.html
+│   └── announcement-bar.component.ts
+├── services/
+│   ├── navigation-state.service.ts
+│   └── refresh.service.ts             ← heartbeat 60s
+└── models/
+    └── dashboard.models.ts            ← TeamMember: id?, userId?
+```
+
+### Backend
+```
+src/main/java/jp/co/brycen/asn/
+├── controller/
+│   ├── ChatController.java            ← /branch/{id}, /unread-batch
+│   ├── AuthController.java            ← /heartbeat
+│   └── VpDashboardController.java
+├── service/
+│   ├── ChatService.java               ← getBranchMessages(), getDirectUnreadBySender()
+│   └── UserService.java
+└── repository/
+    └── ChatMessageRepository.java
+```
+
+---
+
+## 🐛 Known Issues / TODO
+
+| # | Issue | Priority |
+|---|-------|----------|
+| 1 | Member Dashboard loadProjectUnreadCounts — N+1 (batch 미적용) | Medium |
+| 2 | Boss Dashboard (Phase 13) — not built yet | High |
+| 3 | payroll-wizard-inline.html NG8107 warning | Low |
+
+---
+
+## 📋 Session History
+
+### 2026-04-26 Session (This Session)
+**Completed:**
+- ✅ Member Dashboard chat badge (.ts + .html)
+- ✅ ChatService.java `getDirectUnreadBySender()`
+- ✅ `dashboard.models.ts` TeamMember `id?` / `userId?` fix
+- ✅ `$any()` cast for strict TypeScript template check
+- ✅ Right sidebar single scroll (removed double scroll)
+- ✅ Group Chat cards VP style (member dashboard)
+- ✅ Project-inline right panel width 260px
+- ✅ Chat popup `isMine` fix (`Number()` cast)
+- ✅ VP `currentUser.userId` fallback
+- ✅ Chat popup real-time polling (3s)
+- ✅ Unread batch endpoint (`/unread-batch`)
+- ✅ Polling interval 10s
+- ✅ `BRANCH` channel type (DB migration + backend)
+- ✅ Branch Chat card (VP + Member dashboard)
+- ✅ Branch Chat unread badge
+- ✅ `ChatController.java` ArrayList/HashMap imports
+
+### 2026-04-26 Early Session
+**Completed:**
+- ✅ Navigation State Service (back button fix)
+- ✅ VP Dashboard Right Sidebar redesign
+- ✅ VP Unread Chat Badge System
+- ✅ Online/Offline status + heartbeat
+
+---
+
+## 🚀 Next Session Start Command
+
+```
+Hi Claude, continuing Brycen Hub PMS development.
+
+Project: /Users/brycen_cambodia_2/Documents/1ASNworkspace/welcome/
+Stack: Spring Boot 2.7.18 + Angular 21 + MySQL asn_db
+Contest: Brycen AI Contest 2026 — Deadline May 18, 2026
+Language: Reply in Myanmar (Burmese)
+
+Read CLAUDE.md first. Current focus: Boss Dashboard (Phase 13).
+```

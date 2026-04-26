@@ -12,6 +12,9 @@ import { BellNotificationComponent } from '../../shared/bell-notification.compon
 import { ApprovalInboxInline } from '../../shared/approval-inbox-inline';
 import { ChatPopupComponent, ChatMember } from '../../shared/chat-popup/chat-popup.component';
 import { PayslipModalComponent } from '../../shared/payslip-modal.component';
+import { StaffListInline } from '../../admin/staff-list-inline';
+import { StaffProfileInline } from '../../admin/staff-profile-inline';
+import { StaffPanelComponent } from '../../shared/staff-panel/staff-panel.component';
 import { AuthService } from '../../services/auth.service';
 import { RefreshService } from '../../services/refresh.service';
 import { NavigationStateService } from '../../services/navigation-state.service';
@@ -54,6 +57,7 @@ export interface DepartmentItem {
     CommonModule, FormsModule, RouterModule,
     AnnouncementBarComponent, BellNotificationComponent, ProjectInlineComponent,
     ApprovalInboxInline, ChatPopupComponent, PayslipModalComponent,
+    StaffListInline, StaffProfileInline, StaffPanelComponent,
   ],
   templateUrl: './vp-dashboard.html',
   styleUrl: './vp-dashboard.scss'
@@ -66,6 +70,7 @@ export class VpDashboardComponent implements OnInit, OnDestroy {
   activeView = 'dashboard';
 
   activeChatMember: ChatMember | null = null;
+  selectedStaffId = 0;
 
   // ── Project Inline ────────────────────────────────────────────
   showProjectDetail = false;
@@ -276,6 +281,7 @@ export class VpDashboardComponent implements OnInit, OnDestroy {
     this.activeView = view;
 
     if (view === 'announcements') { this.loadAnnouncements(); }
+    if (view === 'members') { /* staff-list-inline loads itself */ }
 
     // ✅ FIX: salary-approvals view ဝင်တဲ့အချိန်မှသာ load လုပ်
     //         loadingSalary ကို explicit reset လုပ်ပြီး ဟောင်းတဲ့ data clear
@@ -1055,5 +1061,11 @@ export class VpDashboardComponent implements OnInit, OnDestroy {
     this.cdr.detectChanges();
   }
 
+  onViewProfile(staff: any): void {
+    this.selectedStaffId = staff.id;
+    this.activeView = 'member-profile';
+  }
+
   signOut(): void { this.auth.logout(); this.router.navigate(['/login']); }
+  
 }

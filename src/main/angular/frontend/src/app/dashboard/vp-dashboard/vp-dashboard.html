@@ -71,7 +71,9 @@
           <div class="proj-section-label">MAIN</div>
           <div class="sidebar-item" [class.active]="activeView==='dashboard'" (click)="setView('dashboard')"><span class="nav-icon">📊</span><span>Dashboard</span></div>
           <div class="sidebar-item" [routerLink]="['/projects']"><span class="nav-icon">📁</span><span>Branch Projects</span></div>
-          <div class="sidebar-item"><span class="nav-icon">👥</span><span>Members</span></div>
+          <div class="sidebar-item" [class.active]="activeView==='members' || activeView==='member-profile'" (click)="setView('members')">
+            <span class="nav-icon">👥</span><span>Members</span>
+          </div>
           <div class="sidebar-item"><span class="nav-icon">💰</span><span>Finance</span></div>
           <div class="sidebar-item" [class.active]="activeView==='announcements'" (click)="setView('announcements')"><span class="nav-icon">📢</span><span>Announcements</span></div>
           <hr class="section-divider"/>
@@ -261,6 +263,22 @@
             </div>
           </div>
         </div>
+
+        <!-- ════ MEMBERS VIEW ════ -->
+        <app-staff-list-inline
+          *ngIf="activeView==='members'"
+          (viewProfile)="onViewProfile($event)"
+          (addStaff)="setView('members')"
+          (back)="setView('dashboard')">
+        </app-staff-list-inline>
+
+        <!-- ════ MEMBER PROFILE VIEW ════ -->
+        <app-staff-profile-inline
+          *ngIf="activeView==='member-profile'"
+          [staffId]="selectedStaffId"
+          (back)="setView('members')">
+        </app-staff-profile-inline>
+
 
         <!-- ════ LEAVE VIEW ════ -->
         <div *ngIf="activeView==='view-leave'" style="padding:16px;display:flex;flex-direction:column;gap:12px;overflow-y:auto;height:100%;">

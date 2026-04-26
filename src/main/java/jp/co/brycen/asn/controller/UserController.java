@@ -32,7 +32,7 @@ public class UserController {
 	// BOSS + COUNTRY_DIRECTOR + ADMIN
 	// ============================================================
 	@GetMapping
-	@PreAuthorize("hasAnyRole('BOSS', 'COUNTRY_DIRECTOR', 'ADMIN')")
+	@PreAuthorize("hasAnyRole('BOSS', 'COUNTRY_DIRECTOR', 'ADMIN', 'VICE_PRESIDENT')")
 	public ResponseEntity<List<User>> getAllUsers() {
 		return ResponseEntity.ok(userService.getAllUsers());
 	}
@@ -41,7 +41,7 @@ public class UserController {
 	// GET /api/users/by-branch/{branchId}
 	// ============================================================
 	@GetMapping("/by-branch/{branchId}")
-	@PreAuthorize("hasAnyRole('BOSS', 'COUNTRY_DIRECTOR', 'ADMIN')")
+	@PreAuthorize("hasAnyRole('BOSS', 'COUNTRY_DIRECTOR', 'ADMIN', 'VICE_PRESIDENT')")
 	public ResponseEntity<List<User>> getUsersByBranch(@PathVariable Long branchId) {
 		return ResponseEntity.ok(userService.getUsersByBranch(branchId));
 	}
@@ -92,7 +92,7 @@ public class UserController {
 	// BOSS + COUNTRY_DIRECTOR + ADMIN
 	// ============================================================
 	@PostMapping
-	@PreAuthorize("hasAnyRole('BOSS', 'COUNTRY_DIRECTOR', 'ADMIN')")
+	@PreAuthorize("hasAnyRole('BOSS', 'COUNTRY_DIRECTOR', 'ADMIN', 'VICE_PRESIDENT')")
 	public ResponseEntity<?> createUser(@Valid @RequestBody UserDto.CreateUserRequest request) {
 		try {
 			User user = userService.createUser(request);
@@ -106,7 +106,7 @@ public class UserController {
 	// PUT /api/users/{id}
 	// ============================================================
 	@PutMapping("/{id}")
-	@PreAuthorize("hasAnyRole('BOSS', 'COUNTRY_DIRECTOR', 'ADMIN')")
+	@PreAuthorize("hasAnyRole('BOSS', 'COUNTRY_DIRECTOR', 'ADMIN', 'VICE_PRESIDENT')")
 	public ResponseEntity<?> updateUser(@PathVariable Long id, @RequestBody UserDto.UpdateUserRequest request) {
 		try {
 			return ResponseEntity.ok(userService.updateUser(id, request));
@@ -119,7 +119,7 @@ public class UserController {
 	// PUT /api/users/{id}/activate
 	// ============================================================
 	@PutMapping("/{id}/activate")
-	@PreAuthorize("hasAnyRole('BOSS', 'COUNTRY_DIRECTOR', 'ADMIN')")
+	@PreAuthorize("hasAnyRole('BOSS', 'COUNTRY_DIRECTOR', 'ADMIN', 'VICE_PRESIDENT')")
 	public ResponseEntity<?> activateUser(@PathVariable Long id) {
 		try {
 			userService.activateUser(id);
@@ -133,7 +133,7 @@ public class UserController {
 	// PUT /api/users/{id}/deactivate
 	// ============================================================
 	@PutMapping("/{id}/deactivate")
-	@PreAuthorize("hasAnyRole('BOSS', 'COUNTRY_DIRECTOR', 'ADMIN')")
+	@PreAuthorize("hasAnyRole('BOSS', 'COUNTRY_DIRECTOR', 'ADMIN', 'VICE_PRESIDENT')")
 	public ResponseEntity<?> deactivateUser(@PathVariable Long id) {
 		try {
 			userService.deactivateUser(id);
@@ -179,7 +179,7 @@ public class UserController {
 	// Email duplicate check — Add Staff form blur event
 	// ============================================================
 	@GetMapping("/check-email")
-	@PreAuthorize("hasAnyRole('BOSS', 'COUNTRY_DIRECTOR', 'ADMIN')")
+	@PreAuthorize("hasAnyRole('BOSS', 'COUNTRY_DIRECTOR', 'ADMIN', 'VICE_PRESIDENT')")
 	public ResponseEntity<?> checkEmail(@RequestParam String email) {
 		boolean exists = userService.existsByEmail(email);
 		return ResponseEntity.ok(java.util.Map.of("exists", exists));
@@ -206,7 +206,7 @@ public class UserController {
 	// lang param: en(default) / ja / my / km / vi / ko
 	// ============================================================
 	@GetMapping("/{id}/full-profile")
-	@PreAuthorize("hasAnyRole('BOSS', 'COUNTRY_DIRECTOR', 'ADMIN')")
+	@PreAuthorize("hasAnyRole('BOSS', 'COUNTRY_DIRECTOR', 'ADMIN', 'VICE_PRESIDENT')")
 	public ResponseEntity<?> getFullProfile(@PathVariable Long id,
 			@RequestParam(value = "lang", defaultValue = "en") String lang) {
 		try {

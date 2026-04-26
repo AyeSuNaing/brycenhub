@@ -16,7 +16,7 @@
           {{ filteredList.length }} members
         </span>
       </div>
-      <div style="font-size:10px;opacity:0.35;margin-top:1px;">Manage your team</div>
+      <div style="font-size:10px;opacity:0.35;margin-top:1px;">Click a row to view profile</div>
     </div>
   </div>
 
@@ -32,46 +32,41 @@
         placeholder="Search name or email..."
         style="width:100%;padding:8px 12px 8px 32px;border-radius:9px;
           font-size:11px;border:1px solid var(--color-border);
-          background:var(--input-bg);color:var(--input-text);
-          outline:none;box-sizing:border-box;font-family:inherit;
-          transition:border-color 0.2s;"
-        (focus)="$event.target.style.borderColor='#16a34a'"
-        (blur)="$event.target.style.borderColor='var(--color-border)'" />
+          background:var(--input-bg);color:var(--color-text);
+          outline:none;transition:border-color 0.15s;box-sizing:border-box;"
+        />
     </div>
 
     <!-- Department filter -->
     <select [(ngModel)]="filterDept"
-      style="border-radius:9px;padding:8px 10px;font-size:11px;
-        border:1px solid var(--color-border);cursor:pointer;
-        background:var(--input-bg);color:var(--input-text);
-        outline:none;font-family:inherit;">
+      style="padding:8px 10px;border-radius:9px;font-size:11px;
+        border:1px solid var(--color-border);background:var(--input-bg);
+        color:var(--color-text);cursor:pointer;outline:none;">
       <option value="">All Departments</option>
       <option *ngFor="let d of departments" [value]="d.id">{{ d.name }}</option>
     </select>
 
     <!-- Role filter -->
     <select [(ngModel)]="filterRole"
-      style="border-radius:9px;padding:8px 10px;font-size:11px;
-        border:1px solid var(--color-border);cursor:pointer;
-        background:var(--input-bg);color:var(--input-text);
-        outline:none;font-family:inherit;">
+      style="padding:8px 10px;border-radius:9px;font-size:11px;
+        border:1px solid var(--color-border);background:var(--input-bg);
+        color:var(--color-text);cursor:pointer;outline:none;min-width:120px;">
       <option value="">All Roles</option>
-      <option *ngFor="let r of roles" [value]="r.id">{{ r.displayName }}</option>
+      <option *ngFor="let r of roles" [value]="r.id">{{ r.displayName || r.name }}</option>
     </select>
 
     <!-- Status filter -->
     <select [(ngModel)]="filterStatus"
-      style="border-radius:9px;padding:8px 10px;font-size:11px;
-        border:1px solid var(--color-border);cursor:pointer;
-        background:var(--input-bg);color:var(--input-text);
-        outline:none;font-family:inherit;">
+      style="padding:8px 10px;border-radius:9px;font-size:11px;
+        border:1px solid var(--color-border);background:var(--input-bg);
+        color:var(--color-text);cursor:pointer;outline:none;">
       <option value="">All Status</option>
       <option value="active">Active</option>
       <option value="inactive">Inactive</option>
     </select>
 
-    <!-- Add Staff -->
-    <button class="btn-primary" (click)="addStaff.emit()"
+    <!-- Add Staff — Admin only -->
+    <button *ngIf="showAddBtn" class="btn-primary" (click)="addStaff.emit()"
       style="white-space:nowrap;padding:8px 16px;font-size:11px;">
       + Add Staff
     </button>
@@ -82,7 +77,7 @@
   <div class="card" style="padding:0;overflow:hidden;">
     <div *ngIf="isLoading" class="loading-txt" style="padding:32px;">Loading staff...</div>
     <div *ngIf="!isLoading" style="overflow-x:auto;">
-      <table class="data-table" style="min-width:900px;">
+      <table class="data-table" style="min-width:800px;">
         <thead>
           <tr>
             <th style="padding-left:16px;">Name</th>
@@ -91,8 +86,7 @@
             <th>Email</th>
             <th>Phone</th>
             <th>Status</th>
-            <th>Skills</th>
-            <th style="text-align:right;padding-right:16px;">Action</th>
+            <th style="text-align:right;padding-right:16px;"></th>
           </tr>
         </thead>
         <tbody>
@@ -102,48 +96,50 @@
             onmouseenter="this.style.background='var(--row-hover, rgba(22,163,74,0.04))'"
             onmouseleave="this.style.background='transparent'">
 
-            <!-- Name (no avatar) -->
+            <!-- Name -->
             <td style="padding-left:16px;">
-              <div style="font-size:12px;font-weight:600;">{{ s.name }}</div>
-              <div style="font-size:10px;opacity:0.4;margin-top:1px;">
-                ID #{{ s.id }}
+              <div style="display:flex;align-items:center;gap:8px;">
+                <div style="width:28px;height:28px;border-radius:50%;flex-shrink:0;
+                  display:flex;align-items:center;justify-content:center;
+                  font-size:11px;font-weight:700;color:white;"
+                  [style.background]="getAvatarColor(s.name)">
+                  {{ getInitial(s.name) }}
+                </div>
+                <div>
+                  <div style="font-size:12px;font-weight:600;">{{ s.name }}</div>
+                  <div style="font-size:10px;opacity:0.4;margin-top:1px;">ID #{{ s.id }}</div>
+                </div>
               </div>
             </td>
 
-            <!-- Role badge -->
+            <!-- Role -->
             <td>
-              <span style="font-size:9px;font-weight:700;padding:3px 9px;
-                border-radius:20px;white-space:nowrap;"
+              <span *ngIf="s.roleDisplayName || s.roleName"
+                style="font-size:9px;padding:2px 8px;border-radius:20px;font-weight:700;"
                 [style.background]="(s.roleColor || '#64748b') + '22'"
                 [style.color]="s.roleColor || '#94a3b8'"
-                [style.border]="'1px solid ' + (s.roleColor || '#64748b') + '44'">
-                {{ s.roleDisplayName || '—' }}
+                [style.border]="'1px solid ' + (s.roleColor || '#64748b') + '33'">
+                {{ s.roleDisplayName || s.roleName }}
               </span>
             </td>
 
             <!-- Department -->
-            <td>
-              <span *ngIf="s.departmentName; else noDept"
-                style="font-size:9px;padding:2px 8px;border-radius:20px;
-                  background:rgba(129,140,248,0.1);color:#818cf8;
-                  font-weight:600;border:1px solid rgba(129,140,248,0.2);">
-                {{ s.departmentName }}
-              </span>
-              <ng-template #noDept>
-                <span style="opacity:0.3;font-size:11px;">—</span>
-              </ng-template>
-            </td>
+            <td style="font-size:11px;opacity:0.7;">{{ s.departmentName || '—' }}</td>
 
             <!-- Email -->
-            <td style="font-size:11px;opacity:0.6;">{{ s.email }}</td>
+            <td style="font-size:11px;opacity:0.7;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+              {{ s.email || '—' }}
+            </td>
 
             <!-- Phone -->
-            <td style="font-size:11px;opacity:0.6;">{{ s.phone || '—' }}</td>
+            <td style="font-size:11px;opacity:0.7;white-space:nowrap;">
+              {{ s.phone || '—' }}
+            </td>
 
             <!-- Status -->
             <td>
               <div style="display:flex;align-items:center;gap:5px;">
-                <span style="width:6px;height:6px;border-radius:50%;flex-shrink:0;"
+                <span style="width:6px;height:6px;border-radius:50%;display:inline-block;flex-shrink:0;"
                   [style.background]="s.isActive ? '#22c55e' : '#ef4444'">
                 </span>
                 <span style="font-size:11px;font-weight:600;"
@@ -153,54 +149,16 @@
               </div>
             </td>
 
-            <!-- Skills — tags or upload prompt -->
-            <td>
-              <div *ngIf="s.skills?.length; else noSkills"
-                style="display:flex;flex-wrap:wrap;gap:4px;max-width:200px;">
-                <span *ngFor="let sk of s.skills"
-                  style="font-size:9px;padding:2px 7px;border-radius:20px;
-                    font-weight:600;white-space:nowrap;
-                    background:rgba(99,102,241,0.1);
-                    color:#818cf8;
-                    border:1px solid rgba(99,102,241,0.2);">
-                  {{ sk }}
-                </span>
-              </div>
-              <ng-template #noSkills>
-                <span style="font-size:9px;opacity:0.3;font-style:italic;">
-                  No skills
-                </span>
-              </ng-template>
-            </td>
-
-            <!-- Actions -->
-            <td style="text-align:right;padding-right:16px;white-space:nowrap;">
-              <button (click)="$event.stopPropagation(); editStaff.emit(s)"
-                style="font-size:10px;padding:4px 10px;border-radius:7px;
-                  border:1px solid var(--color-border);background:transparent;
-                  cursor:pointer;color:inherit;font-weight:600;
-                  transition:all 0.15s;margin-right:4px;"
-                onmouseenter="this.style.borderColor='#16a34a';this.style.color='#16a34a'"
-                onmouseleave="this.style.borderColor='var(--color-border)';this.style.color='inherit'">
-                ✏️ Edit
-              </button>
-              <button (click)="$event.stopPropagation(); toggleActivation(s)"
-                (mouseenter)="$any($event.currentTarget).style.background = s.isActive ? 'rgba(239,68,68,0.08)' : 'rgba(34,197,94,0.08)'"
-                (mouseleave)="$any($event.currentTarget).style.background = 'transparent'"
-                style="font-size:10px;padding:4px 10px;border-radius:7px;
-                  border:1px solid;background:transparent;
-                  cursor:pointer;font-weight:600;transition:all 0.15s;"
-                [style.borderColor]="s.isActive ? 'rgba(239,68,68,0.3)' : 'rgba(34,197,94,0.3)'"
-                [style.color]="s.isActive ? '#ef4444' : '#22c55e'">
-                {{ s.isActive ? 'Deactivate' : 'Activate' }}
-              </button>
+            <!-- View arrow -->
+            <td style="text-align:right;padding-right:16px;">
+              <span style="font-size:14px;opacity:0.25;">→</span>
             </td>
 
           </tr>
 
           <!-- Empty state -->
           <tr *ngIf="filteredList.length === 0">
-            <td colspan="8"
+            <td colspan="7"
               style="text-align:center;padding:40px;opacity:0.3;font-size:12px;">
               <div style="font-size:24px;margin-bottom:8px;">👥</div>
               No staff found

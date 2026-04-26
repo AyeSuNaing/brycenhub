@@ -1,5 +1,5 @@
 import {
-  Component, OnInit, Output, EventEmitter, ChangeDetectorRef
+  Component, OnInit, Input, Output, EventEmitter, ChangeDetectorRef
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -18,10 +18,13 @@ const BASE = environment.apiBaseUrl;
 })
 export class StaffListInline implements OnInit {
 
-  @Output() addStaff     = new EventEmitter<void>();
-  @Output() editStaff    = new EventEmitter<any>();
-  @Output() viewProfile  = new EventEmitter<any>();  // ← row click
-  @Output() back         = new EventEmitter<void>();
+  /** Admin=true (show + Add Staff button), VP/CD/Boss=false */
+  @Input() showAddBtn = true;
+
+  @Output() addStaff    = new EventEmitter<void>();
+  @Output() editStaff   = new EventEmitter<any>();
+  @Output() viewProfile = new EventEmitter<any>();
+  @Output() back        = new EventEmitter<void>();
 
   staffList:   any[] = [];
   departments: any[] = [];
@@ -91,23 +94,11 @@ export class StaffListInline implements OnInit {
     });
   }
 
-  toggleActivation(staff: any) {
-    const url = staff.isActive
-      ? `${BASE}/users/${staff.id}/deactivate`
-      : `${BASE}/users/${staff.id}/activate`;
-    this.http.put(url, {}, { headers: this.auth.getHeaders() })
-      .subscribe({
-        next: () => {
-          staff.isActive = !staff.isActive;
-          this.cdr.detectChanges();
-        },
-        error: () => {}
-      });
-  }
-
   getAvatarColor(name: string): string {
-    const c = ['#16a34a','#0284c7','#7c3aed','#db2777','#ea580c','#0891b2'];
-    return c[(name?.charCodeAt(0) || 0) % c.length];
+    const colors = ['#16a34a','#3b82f6','#8b5cf6','#f59e0b','#ef4444','#06b6d4','#ec4899','#14b8a6'];
+    let hash = 0;
+    for (let i = 0; i < (name?.length || 0); i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+    return colors[Math.abs(hash) % colors.length];
   }
 
   getInitial(name: string): string {
