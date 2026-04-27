@@ -26,6 +26,12 @@ export class AnnouncementInline implements OnInit {
   isLoading     = true;
   filter        = 'ALL';
 
+  // Translation
+  translatingId: number | null = null;
+  translatedCache: Record<number, { title: string; content: string }> = {};
+  currentLang = 'en';
+
+  // Form
   showForm  = false;
   editingId: number | null = null;
   saving    = false;
@@ -47,9 +53,9 @@ export class AnnouncementInline implements OnInit {
   ];
 
   readonly SCOPES = [
-    { key: 'BRANCH',  label: '🏢 Branch',  desc: 'This branch only' },
-    { key: 'COUNTRY', label: '🌏 Country', desc: 'All branches in country' },
-    { key: 'GLOBAL',  label: '🌐 Global',  desc: 'Company-wide' },
+    { key: 'BRANCH',  label: '🏢 Branch',  desc: 'Branch members only' },
+    { key: 'COUNTRY', label: '🌏 Country', desc: 'VP + all branches' },
+    { key: 'GLOBAL',  label: '🌐 Global',  desc: 'Boss + all branches' },
   ];
 
   readonly EXPIRE_OPTIONS = [
@@ -67,6 +73,7 @@ export class AnnouncementInline implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    this.currentLang = this.auth.getUser()?.preferredLanguage || 'en';
     this.loadAnnouncements();
   }
 
@@ -84,23 +91,45 @@ export class AnnouncementInline implements OnInit {
   get filtered(): any[] {
     const now = new Date();
     switch (this.filter) {
-      case 'ACTIVE':
-        return this.announcements.filter(a =>
-          !a.expiresAt || new Date(a.expiresAt) > now);
-      case 'EXPIRED':
-        return this.announcements.filter(a =>
-          a.expiresAt && new Date(a.expiresAt) <= now);
-      case 'PINNED':
-        return this.announcements.filter(a => a.isPinned === 1);
-      default:
-        return this.announcements;
+      case 'ACTIVE':  return this.announcements.filter(a => !a.expiresAt || new Date(a.expiresAt) > now);
+      case 'EXPIRED': return this.announcements.filter(a => a.expiresAt && new Date(a.expiresAt) <= now);
+      case 'PINNED':  return this.announcements.filter(a => a.isPinned === 1);
+      default:        return this.announcements;
     }
   }
 
+  // ── Translation ──────────────────────────────────────────────
+  canTranslate(): boolean {
+    return this.currentLang !== 'en';
+  }
+
+  translate(a: any): void {
+    if (!this.canTranslate()) return;
+    if (this.translatedCache[a.id]) {
+      delete this.translatedCache[a.id];
+      this.cdr.detectChanges();
+      return;
+    }
+    this.translatingId = a.id;
+    this.http.get<any>(
+      `${BASE}/announcements/${a.id}/translate?lang=${this.currentLang}`,
+      { headers: this.auth.getHeaders() }
+    ).pipe(catchError(() => of(null)))
+     .subscribe(res => {
+       if (res) this.translatedCache[a.id] = { title: res.title, content: res.content };
+       this.translatingId = null;
+       this.cdr.detectChanges();
+     });
+  }
+
+  getTitle(a: any): string   { return this.translatedCache[a.id]?.title   || a.title;   }
+  getContent(a: any): string { return this.translatedCache[a.id]?.content || a.content; }
+  isTranslated(a: any): boolean { return !!this.translatedCache[a.id]; }
+
+  // ── Permissions ──────────────────────────────────────────────
   canCreate(): boolean {
     const role = this.auth.getUser()?.role || '';
-    return ['BOSS','COUNTRY_DIRECTOR','VICE_PRESIDENT','ADMIN','PROJECT_MANAGER']
-      .includes(role);
+    return ['BOSS','COUNTRY_DIRECTOR','VICE_PRESIDENT','ADMIN','PROJECT_MANAGER'].includes(role);
   }
 
   canEdit(a: any): boolean {
@@ -118,6 +147,7 @@ export class AnnouncementInline implements OnInit {
     return 'BRANCH';
   }
 
+  // ── Form ─────────────────────────────────────────────────────
   openCreate(): void {
     this.editingId = null;
     this.form = {
@@ -155,14 +185,11 @@ export class AnnouncementInline implements OnInit {
   save(): void {
     if (!this.form.title.trim())   { this.formError = 'Title is required';   return; }
     if (!this.form.content.trim()) { this.formError = 'Content is required'; return; }
-    this.saving    = true;
-    this.formError = '';
+    this.saving = true; this.formError = '';
     const h = { headers: this.auth.getHeaders() };
-
     const req$ = this.editingId
       ? this.http.put<any>(`${BASE}/announcements/${this.editingId}`, this.form, h)
       : this.http.post<any>(`${BASE}/announcements`, this.form, h);
-
     req$.subscribe({
       next: (saved) => {
         if (this.editingId) {
@@ -171,74 +198,39 @@ export class AnnouncementInline implements OnInit {
         } else {
           this.announcements.unshift(saved);
         }
-        this.saving    = false;
-        this.showForm  = false;
-        this.editingId = null;
+        this.saving = false; this.showForm = false; this.editingId = null;
         this.cdr.detectChanges();
       },
-      error: () => {
-        this.formError = 'Failed to save';
-        this.saving = false;
-        this.cdr.detectChanges();
-      }
+      error: () => { this.formError = 'Failed to save'; this.saving = false; this.cdr.detectChanges(); }
     });
   }
 
   delete(a: any): void {
     if (!confirm(`Delete "${a.title}"?`)) return;
-    this.http.delete(`${BASE}/announcements/${a.id}`,
-      { headers: this.auth.getHeaders() })
-      .subscribe({
-        next: () => {
-          this.announcements = this.announcements.filter(x => x.id !== a.id);
-          this.cdr.detectChanges();
-        }
-      });
+    this.http.delete(`${BASE}/announcements/${a.id}`, { headers: this.auth.getHeaders() })
+      .subscribe({ next: () => { this.announcements = this.announcements.filter(x => x.id !== a.id); this.cdr.detectChanges(); } });
   }
 
   togglePin(a: any): void {
-    this.http.patch<any>(`${BASE}/announcements/${a.id}/pin`, {},
-      { headers: this.auth.getHeaders() })
-      .subscribe({
-        next: (updated) => {
-          const idx = this.announcements.findIndex(x => x.id === a.id);
-          if (idx > -1) this.announcements[idx] = updated;
-          this.cdr.detectChanges();
-        }
-      });
+    this.http.patch<any>(`${BASE}/announcements/${a.id}/pin`, {}, { headers: this.auth.getHeaders() })
+      .subscribe({ next: (updated) => { const idx = this.announcements.findIndex(x => x.id === a.id); if (idx > -1) this.announcements[idx] = updated; this.cdr.detectChanges(); } });
   }
 
-  getPriorityColor(p: string): string {
-    return p === 'URGENT' ? '#ef4444' : p === 'IMPORTANT' ? '#f97316' : '#94a3b8';
-  }
+  // ── Helpers ──────────────────────────────────────────────────
+  getPriorityColor(p: string): string { return p==='URGENT'?'#ef4444':p==='IMPORTANT'?'#f97316':'#94a3b8'; }
+  getPriorityBg(p: string): string    { return p==='URGENT'?'rgba(239,68,68,0.12)':p==='IMPORTANT'?'rgba(249,115,22,0.12)':'rgba(148,163,184,0.1)'; }
+  getScopeColor(s: string): string    { return s==='GLOBAL'?'#a855f7':s==='COUNTRY'?'#3b82f6':'#22c55e'; }
+  getScopeBg(s: string): string       { return s==='GLOBAL'?'rgba(168,85,247,0.12)':s==='COUNTRY'?'rgba(59,130,246,0.12)':'rgba(34,197,94,0.1)'; }
 
-  getPriorityBg(p: string): string {
-    return p === 'URGENT'    ? 'rgba(239,68,68,0.12)'
-         : p === 'IMPORTANT' ? 'rgba(249,115,22,0.12)'
-         : 'rgba(148,163,184,0.1)';
-  }
-
-  getScopeColor(s: string): string {
-    return s === 'GLOBAL' ? '#a855f7' : s === 'COUNTRY' ? '#3b82f6' : '#22c55e';
-  }
-
-  getScopeBg(s: string): string {
-    return s === 'GLOBAL'  ? 'rgba(168,85,247,0.12)'
-         : s === 'COUNTRY' ? 'rgba(59,130,246,0.12)'
-         : 'rgba(34,197,94,0.1)';
-  }
-
-  isExpired(a: any): boolean {
-    return !!a.expiresAt && new Date(a.expiresAt) <= new Date();
-  }
+  isExpired(a: any): boolean { return !!a.expiresAt && new Date(a.expiresAt) <= new Date(); }
 
   timeAgo(dateStr: string): string {
     if (!dateStr) return '';
     const diff = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000);
     if (diff < 60)    return 'just now';
-    if (diff < 3600)  return Math.floor(diff / 60)   + 'm ago';
-    if (diff < 86400) return Math.floor(diff / 3600)  + 'h ago';
-    return Math.floor(diff / 86400) + 'd ago';
+    if (diff < 3600)  return Math.floor(diff/60)   + 'm ago';
+    if (diff < 86400) return Math.floor(diff/3600)  + 'h ago';
+    return Math.floor(diff/86400) + 'd ago';
   }
 
   get filterCounts(): Record<string, number> {

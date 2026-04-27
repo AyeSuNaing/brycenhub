@@ -1,5 +1,4 @@
-<div style="padding:16px;display:flex;flex-direction:column;gap:12px;
-  overflow-y:auto;height:100%;min-height:0;">
+<div style="padding:16px;display:flex;flex-direction:column;gap:12px;overflow-y:auto;height:100%;min-height:0;">
 
   <!-- Header -->
   <div style="display:flex;align-items:center;justify-content:space-between;flex-shrink:0;">
@@ -9,16 +8,15 @@
     </div>
     <button *ngIf="canCreate()" (click)="openCreate()"
       style="font-size:11px;padding:7px 16px;border-radius:9px;border:none;cursor:pointer;
-        font-family:inherit;font-weight:700;color:white;
-        background:linear-gradient(135deg,#1d4ed8,#3b82f6);">+ New</button>
+        font-family:inherit;font-weight:700;color:white;background:linear-gradient(135deg,#1d4ed8,#3b82f6);">
+      + New
+    </button>
   </div>
 
   <!-- Filter tabs -->
   <div style="display:flex;gap:6px;flex-shrink:0;">
-    <button *ngFor="let f of ['ALL','ACTIVE','EXPIRED','PINNED']"
-      (click)="filter = f"
-      style="font-size:10px;padding:4px 12px;border-radius:20px;cursor:pointer;
-        font-family:inherit;transition:all 0.15s;border:1px solid;"
+    <button *ngFor="let f of ['ALL','ACTIVE','EXPIRED','PINNED']" (click)="filter = f"
+      style="font-size:10px;padding:4px 12px;border-radius:20px;cursor:pointer;font-family:inherit;transition:all 0.15s;border:1px solid;"
       [style.background]="filter===f?'rgba(59,130,246,0.15)':'transparent'"
       [style.borderColor]="filter===f?'rgba(59,130,246,0.5)':'rgba(148,163,184,0.2)'"
       [style.color]="filter===f?'#60a5fa':'#94a3b8'">
@@ -33,26 +31,44 @@
     <div style="font-size:12px;">No announcements</div>
   </div>
 
-  <div *ngIf="!isLoading && filtered.length > 0"
-    style="display:flex;flex-direction:column;gap:8px;flex-shrink:0;">
-
+  <div *ngIf="!isLoading && filtered.length > 0" style="display:flex;flex-direction:column;gap:8px;flex-shrink:0;">
     <div *ngFor="let a of filtered"
       style="border-radius:12px;border:1px solid;padding:14px 16px;transition:all 0.15s;"
       [style.borderColor]="isExpired(a)?'rgba(100,116,139,0.2)':a.isPinned===1?'rgba(245,158,11,0.25)':a.priority==='URGENT'?'rgba(239,68,68,0.25)':a.priority==='IMPORTANT'?'rgba(249,115,22,0.2)':'rgba(148,163,184,0.12)'"
       [style.background]="isExpired(a)?'rgba(100,116,139,0.03)':a.isPinned===1?'rgba(245,158,11,0.03)':a.priority==='URGENT'?'rgba(239,68,68,0.03)':a.priority==='IMPORTANT'?'rgba(249,115,22,0.03)':'transparent'"
       [style.opacity]="isExpired(a)?'0.6':'1'">
 
+      <!-- Card header -->
       <div style="display:flex;align-items:flex-start;gap:8px;margin-bottom:8px;">
         <span *ngIf="a.isPinned===1" style="font-size:12px;flex-shrink:0;margin-top:1px;">📌</span>
         <span style="font-size:9px;padding:2px 8px;border-radius:20px;font-weight:700;flex-shrink:0;margin-top:1px;"
-          [style.background]="getPriorityBg(a.priority)"
-          [style.color]="getPriorityColor(a.priority)">{{ a.priority || 'NORMAL' }}</span>
-        <div style="font-size:12px;font-weight:700;flex:1;line-height:1.4;">{{ a.title }}</div>
+          [style.background]="getPriorityBg(a.priority)" [style.color]="getPriorityColor(a.priority)">
+          {{ a.priority || 'NORMAL' }}
+        </span>
+        <div style="font-size:12px;font-weight:700;flex:1;line-height:1.4;">{{ getTitle(a) }}</div>
+        <span *ngIf="isTranslated(a)"
+          style="font-size:8px;padding:1px 6px;border-radius:20px;background:rgba(99,102,241,0.15);color:#818cf8;flex-shrink:0;">
+          🌐 translated
+        </span>
         <span *ngIf="isExpired(a)"
-          style="font-size:8px;padding:1px 6px;border-radius:20px;background:rgba(100,116,139,0.15);color:#64748b;flex-shrink:0;">EXPIRED</span>
+          style="font-size:8px;padding:1px 6px;border-radius:20px;background:rgba(100,116,139,0.15);color:#64748b;flex-shrink:0;">
+          EXPIRED
+        </span>
+        <!-- Actions -->
         <div style="display:flex;gap:4px;flex-shrink:0;">
+          <!-- Translate button — show if lang != en -->
+          <button *ngIf="canTranslate()" (click)="translate(a)"
+            style="font-size:10px;padding:3px 8px;border-radius:7px;cursor:pointer;font-family:inherit;border:1px solid;transition:all 0.15s;"
+            [style.borderColor]="isTranslated(a)?'rgba(99,102,241,0.4)':'rgba(99,102,241,0.2)'"
+            [style.background]="isTranslated(a)?'rgba(99,102,241,0.15)':'rgba(99,102,241,0.05)'"
+            [style.color]="'#818cf8'"
+            [title]="isTranslated(a)?'Show original':'Translate'">
+            {{ translatingId===a.id ? '...' : isTranslated(a) ? '🔤' : '🌐' }}
+          </button>
           <button *ngIf="canEdit(a)" (click)="togglePin(a)"
-            style="font-size:10px;padding:3px 8px;border-radius:7px;border:1px solid rgba(245,158,11,0.25);background:rgba(245,158,11,0.06);color:#f59e0b;cursor:pointer;font-family:inherit;">{{ a.isPinned===1 ? '📌' : '📍' }}</button>
+            style="font-size:10px;padding:3px 8px;border-radius:7px;border:1px solid rgba(245,158,11,0.25);background:rgba(245,158,11,0.06);color:#f59e0b;cursor:pointer;font-family:inherit;">
+            {{ a.isPinned===1 ? '📌' : '📍' }}
+          </button>
           <button *ngIf="canEdit(a)" (click)="openEdit(a)"
             style="font-size:10px;padding:3px 8px;border-radius:7px;border:1px solid rgba(99,102,241,0.25);background:rgba(99,102,241,0.06);color:#818cf8;cursor:pointer;font-family:inherit;">✏️</button>
           <button *ngIf="canEdit(a)" (click)="delete(a)"
@@ -60,13 +76,14 @@
         </div>
       </div>
 
-      <div style="font-size:11px;line-height:1.7;opacity:0.75;margin-bottom:8px;">{{ a.content }}</div>
+      <!-- Content -->
+      <div style="font-size:11px;line-height:1.7;opacity:0.75;margin-bottom:8px;">{{ getContent(a) }}</div>
 
+      <!-- Footer -->
       <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
         <span style="font-size:9px;opacity:0.4;">{{ timeAgo(a.createdAt) }}</span>
         <span style="font-size:9px;padding:1px 7px;border-radius:20px;font-weight:600;"
-          [style.background]="getScopeBg(a.targetScope)"
-          [style.color]="getScopeColor(a.targetScope)">
+          [style.background]="getScopeBg(a.targetScope)" [style.color]="getScopeColor(a.targetScope)">
           {{ a.targetScope==='GLOBAL' ? '🌐 Global' : a.targetScope==='COUNTRY' ? '🌏 Country' : '🏢 Branch' }}
         </span>
         <span *ngIf="a.expiresAt && !isExpired(a)"
@@ -88,19 +105,13 @@
       background:#0d1424;border:1px solid rgba(148,163,184,0.2);
       box-shadow:0 25px 60px rgba(0,0,0,0.6);">
 
-    <div style="padding:14px 18px;border-bottom:1px solid rgba(148,163,184,0.1);
-      display:flex;align-items:center;gap:10px;">
-      <div style="width:32px;height:32px;border-radius:9px;background:rgba(59,130,246,0.12);
-        border:1px solid rgba(59,130,246,0.2);display:flex;align-items:center;
-        justify-content:center;font-size:14px;">📢</div>
+    <div style="padding:14px 18px;border-bottom:1px solid rgba(148,163,184,0.1);display:flex;align-items:center;gap:10px;">
+      <div style="width:32px;height:32px;border-radius:9px;background:rgba(59,130,246,0.12);border:1px solid rgba(59,130,246,0.2);display:flex;align-items:center;justify-content:center;font-size:14px;">📢</div>
       <div style="font-size:13px;font-weight:700;">{{ editingId ? 'Edit Announcement' : 'New Announcement' }}</div>
-      <button (click)="closeForm()"
-        style="margin-left:auto;background:rgba(148,163,184,0.1);border:none;
-          color:#94a3b8;cursor:pointer;font-size:12px;padding:5px 9px;border-radius:7px;">✕</button>
+      <button (click)="closeForm()" style="margin-left:auto;background:rgba(148,163,184,0.1);border:none;color:#94a3b8;cursor:pointer;font-size:12px;padding:5px 9px;border-radius:7px;">✕</button>
     </div>
 
-    <div style="padding:16px 18px;display:flex;flex-direction:column;gap:12px;
-      max-height:75vh;overflow-y:auto;">
+    <div style="padding:16px 18px;display:flex;flex-direction:column;gap:12px;max-height:75vh;overflow-y:auto;">
 
       <!-- Title -->
       <div>
@@ -120,10 +131,8 @@
       <div>
         <label style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.4;display:block;margin-bottom:5px;">Visibility</label>
         <div style="display:flex;gap:6px;">
-          <button *ngFor="let s of SCOPES"
-            (click)="form.targetScope = s.key"
-            style="flex:1;padding:8px 6px;border-radius:9px;font-size:10px;font-weight:700;
-              cursor:pointer;font-family:inherit;border:1px solid;transition:all 0.15s;text-align:center;"
+          <button *ngFor="let s of SCOPES" (click)="form.targetScope = s.key"
+            style="flex:1;padding:8px 6px;border-radius:9px;font-size:10px;font-weight:700;cursor:pointer;font-family:inherit;border:1px solid;transition:all 0.15s;text-align:center;"
             [style.background]="form.targetScope===s.key?getScopeBg(s.key):'transparent'"
             [style.borderColor]="form.targetScope===s.key?getScopeColor(s.key):'rgba(148,163,184,0.2)'"
             [style.color]="form.targetScope===s.key?getScopeColor(s.key):'#94a3b8'">
@@ -137,10 +146,8 @@
       <div>
         <label style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.4;display:block;margin-bottom:5px;">Priority</label>
         <div style="display:flex;gap:6px;">
-          <button *ngFor="let p of PRIORITIES"
-            (click)="form.priority = p.key"
-            style="flex:1;padding:7px;border-radius:9px;font-size:10px;font-weight:700;
-              cursor:pointer;font-family:inherit;border:1px solid;transition:all 0.15s;"
+          <button *ngFor="let p of PRIORITIES" (click)="form.priority = p.key"
+            style="flex:1;padding:7px;border-radius:9px;font-size:10px;font-weight:700;cursor:pointer;font-family:inherit;border:1px solid;transition:all 0.15s;"
             [style.background]="form.priority===p.key?getPriorityBg(p.key):'transparent'"
             [style.borderColor]="form.priority===p.key?getPriorityColor(p.key):'rgba(148,163,184,0.2)'"
             [style.color]="form.priority===p.key?getPriorityColor(p.key):'#94a3b8'">
@@ -153,10 +160,8 @@
       <div>
         <label style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.4;display:block;margin-bottom:5px;">Expires After</label>
         <div style="display:flex;gap:6px;flex-wrap:wrap;">
-          <button *ngFor="let e of EXPIRE_OPTIONS"
-            (click)="form.expireDays = e.value"
-            style="padding:5px 12px;border-radius:20px;font-size:10px;cursor:pointer;
-              font-family:inherit;border:1px solid;transition:all 0.15s;"
+          <button *ngFor="let e of EXPIRE_OPTIONS" (click)="form.expireDays = e.value"
+            style="padding:5px 12px;border-radius:20px;font-size:10px;cursor:pointer;font-family:inherit;border:1px solid;transition:all 0.15s;"
             [style.background]="form.expireDays===e.value?'rgba(99,102,241,0.15)':'transparent'"
             [style.borderColor]="form.expireDays===e.value?'rgba(99,102,241,0.4)':'rgba(148,163,184,0.2)'"
             [style.color]="form.expireDays===e.value?'#818cf8':'#94a3b8'">
@@ -165,23 +170,12 @@
         </div>
       </div>
 
-      <!-- Error -->
-      <div *ngIf="formError"
-        style="font-size:11px;color:#ef4444;padding:8px 12px;border-radius:8px;
-          background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);">
-        {{ formError }}
-      </div>
+      <div *ngIf="formError" style="font-size:11px;color:#ef4444;padding:8px 12px;border-radius:8px;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);">{{ formError }}</div>
 
-      <!-- Actions -->
       <div style="display:flex;gap:8px;margin-top:4px;">
-        <button (click)="closeForm()"
-          style="flex:1;padding:9px;border-radius:9px;border:1px solid rgba(148,163,184,0.2);
-            background:transparent;color:inherit;cursor:pointer;font-size:11px;
-            font-family:inherit;opacity:0.7;">Cancel</button>
+        <button (click)="closeForm()" style="flex:1;padding:9px;border-radius:9px;border:1px solid rgba(148,163,184,0.2);background:transparent;color:inherit;cursor:pointer;font-size:11px;font-family:inherit;opacity:0.7;">Cancel</button>
         <button (click)="save()" [disabled]="saving"
-          style="flex:2;padding:9px;border-radius:9px;border:none;
-            background:linear-gradient(135deg,#1d4ed8,#3b82f6);color:white;
-            cursor:pointer;font-size:11px;font-weight:700;font-family:inherit;"
+          style="flex:2;padding:9px;border-radius:9px;border:none;background:linear-gradient(135deg,#1d4ed8,#3b82f6);color:white;cursor:pointer;font-size:11px;font-weight:700;font-family:inherit;"
           [style.opacity]="saving?'0.6':'1'">
           {{ saving ? 'Saving...' : (editingId ? '✓ Update' : '✓ Publish') }}
         </button>
