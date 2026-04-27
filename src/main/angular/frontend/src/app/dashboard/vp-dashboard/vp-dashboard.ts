@@ -19,6 +19,8 @@ import { AuthService } from '../../services/auth.service';
 import { RefreshService } from '../../services/refresh.service';
 import { NavigationStateService } from '../../services/navigation-state.service';
 import { environment } from '../../../environments/environment';
+import { BranchProjectsInline } from '../../shared/branch-projects-inline';
+import { AnnouncementInline } from '../../shared/announcement-inline';
 
 const BASE = environment.apiBaseUrl;
 const VP_BASE = `${BASE}/vp/dashboard`;
@@ -57,7 +59,7 @@ export interface DepartmentItem {
     CommonModule, FormsModule, RouterModule,
     AnnouncementBarComponent, BellNotificationComponent, ProjectInlineComponent,
     ApprovalInboxInline, ChatPopupComponent, PayslipModalComponent,
-    StaffListInline, StaffProfileInline, StaffPanelComponent,
+    StaffListInline, StaffProfileInline, BranchProjectsInline, AnnouncementInline,
   ],
   templateUrl: './vp-dashboard.html',
   styleUrl: './vp-dashboard.scss'

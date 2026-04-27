@@ -70,11 +70,13 @@
         <div style="margin-top:6px;">
           <div class="proj-section-label">MAIN</div>
           <div class="sidebar-item" [class.active]="activeView==='dashboard'" (click)="setView('dashboard')"><span class="nav-icon">📊</span><span>Dashboard</span></div>
-          <div class="sidebar-item" [routerLink]="['/projects']"><span class="nav-icon">📁</span><span>Branch Projects</span></div>
+          <div class="sidebar-item" [class.active]="activeView==='branch-projects'"
+            (click)="setView('branch-projects')">
+            <span class="nav-icon">📁</span><span>Branch Projects</span>
+          </div>
           <div class="sidebar-item" [class.active]="activeView==='members' || activeView==='member-profile'" (click)="setView('members')">
             <span class="nav-icon">👥</span><span>Members</span>
           </div>
-          <div class="sidebar-item"><span class="nav-icon">💰</span><span>Finance</span></div>
           <div class="sidebar-item" [class.active]="activeView==='announcements'" (click)="setView('announcements')"><span class="nav-icon">📢</span><span>Announcements</span></div>
           <hr class="section-divider"/>
         </div>
@@ -263,6 +265,17 @@
             </div>
           </div>
         </div>
+
+        <app-announcement-inline
+          *ngIf="activeView==='announcements'">
+        </app-announcement-inline>
+
+        <!-- ════ BRANCH PROJECTS VIEW ════ -->
+        <app-branch-projects-inline
+          *ngIf="activeView==='branch-projects'"
+          [hidePanel]="true"
+          (back)="setView('dashboard')">
+        </app-branch-projects-inline>
 
         <!-- ════ MEMBERS VIEW ════ -->
         <app-staff-list-inline
