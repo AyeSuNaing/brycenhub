@@ -318,7 +318,7 @@ export class ProjectInlineComponent implements OnInit, OnChanges {
       activities: this.http.get<any[]>(`${BASE}/activity-logs/by-project/${id}`, h).pipe(catchError(() => of([]))),
       clients: this.http.get<any[]>(`${BASE}/clients`, h).pipe(catchError(() => of([]))),
       apis: this.http.get<any[]>(`${BASE}/project-design/${id}/apis/latest?limit=5`, h).pipe(catchError(() => of([]))),
-      dbTables: this.http.get<any[]>(`${BASE}/project-design/${id}/db-tables/latest?limit=5`, h).pipe(catchError(() => of([]))),
+      dbTables: this.http.get<any[]>(`${BASE}/project-design/${id}/db-tables/latest?limit=6`, h).pipe(catchError(() => of([]))),
     }).subscribe({
       next: (res: any) => {
         this.project = res.project;
@@ -337,6 +337,12 @@ export class ProjectInlineComponent implements OnInit, OnChanges {
         if (this.pendingLang && this.project) {
           this.switchLang(this.pendingLang);
           this.pendingLang = '';
+        } else {
+          // ✅ auto translate on load
+          const userLang = this.auth.getUser()?.preferredLanguage || 'en';
+          if (userLang !== 'en' && this.tasks.length > 0) {
+            this.translateTasks(userLang);
+          }
         }
       },
       error: () => { this.isLoading = false; this.cdr.detectChanges(); }

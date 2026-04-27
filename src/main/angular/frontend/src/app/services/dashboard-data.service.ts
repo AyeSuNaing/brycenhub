@@ -29,9 +29,9 @@ export class DashboardDataService {
     return this.http.get<TeamMember[]>(API.DASHBOARD.TEAM);
   }
 
-  getMyTasks(): Observable<MyTask[]> {
-    return this.http.get<MyTask[]>(API.DASHBOARD.MY_TASKS);
-  }
+  getMyTasks(lang = 'en'): Observable<MyTask[]> {
+  return this.http.get<MyTask[]>(`${API.DASHBOARD.MY_TASKS}?lang=${lang}`);
+}
 
   getOverdueTasks(): Observable<OverdueTask[]> {
     return this.http.get<OverdueTask[]>(API.DASHBOARD.OVERDUE_TASKS);

@@ -52,6 +52,7 @@ export interface TeamMember {
 }
 
 export interface MyTask {
+  id?: number;  
   title: string;
   project: string;
   priority: 'red' | 'yellow' | 'blue' | 'green' | 'purple' | 'cyan' | 'orange';

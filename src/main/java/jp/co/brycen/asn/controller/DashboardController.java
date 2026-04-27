@@ -37,6 +37,7 @@ public class DashboardController {
 	@Autowired private ProjectService projectService;
 	@Autowired private BranchRepository branchRepository;
 	@Autowired private DirectorCountryRepository directorCountryRepository;
+	@Autowired private TaskTranslationRepository taskTranslationRepository;
 
 	private List<Long> getProjectIds(Long userId) {
 		return projectService.getMyActiveProjects(userId).stream()
@@ -269,58 +270,76 @@ public class DashboardController {
 
 	// ⑤ MY TASKS
 	@GetMapping("/my-tasks")
-	public ResponseEntity<List<MyTaskResponse>> getMyTasks(@AuthenticationPrincipal User user) {
-		List<Project> myProjects = projectService.getMyActiveProjects(user.getId());
-		Set<Long> activeProjectIds = myProjects.stream().filter(p -> "ACTIVE".equals(p.getStatus()))
-			.map(Project::getId).collect(Collectors.toSet());
-		if (activeProjectIds.isEmpty()) return ResponseEntity.ok(Collections.emptyList());
-		Map<Long, String> pNames = myProjects.stream().collect(Collectors.toMap(Project::getId, Project::getTitle));
-		LocalDate today = LocalDate.now();
-		List<MyTaskResponse> result = taskRepository.findByAssigneeId(user.getId()).stream()
-			.filter(t -> activeProjectIds.contains(t.getProjectId()))
-			.filter(t -> !"DONE".equals(t.getStatus()))
-			.map(t -> {
-				String projectName = pNames.getOrDefault(t.getProjectId(), "");
-				String dueStr = "-";
-				String status = t.getStatus() != null ? t.getStatus() : "TO_DO";
-				String statusColor = "#6366f1";
-				if (t.getDueDate() != null) {
-					long diff = ChronoUnit.DAYS.between(today, t.getDueDate());
-					if (diff < 0) {
-						long d = Math.abs(diff);
-						dueStr = d + " day" + (d > 1 ? "s" : "") + " overdue";
-						status = "Overdue";
-					} else if (diff == 0) {
-						dueStr = "Due Today";
-					} else {
-						dueStr = "Due " + t.getDueDate().format(DateTimeFormatter.ofPattern("MMM d"));
-					}
-				}
-				switch (status) {
-					case "Overdue":     statusColor = "#ef4444"; break;
-					case "IN_PROGRESS": statusColor = "#f59e0b"; status = "In Progress"; break;
-					case "IN_REVIEW":   statusColor = "#3b82f6"; status = "In Review"; break;
-					case "TO_DO":       statusColor = "#6366f1"; status = "To Do"; break;
-				}
-				String priorityColor = "blue";
-				if (t.getPriority() != null) {
-					switch (t.getPriority()) {
-						case "CRITICAL": case "HIGH": priorityColor = "red"; break;
-						case "MEDIUM": priorityColor = "yellow"; break;
-						case "LOW":    priorityColor = "green"; break;
-					}
-				}
-				MyTaskResponse r = new MyTaskResponse();
-				r.setTitle(t.getTitle());
-				r.setProject(projectName);
-				r.setPriority(priorityColor);
-				r.setDue(dueStr);
-				r.setStatus(status);
-				r.setStatusColor(statusColor);
-				r.setDone(false);
-				return r;
-			}).collect(Collectors.toList());
-		return ResponseEntity.ok(result);
+	public ResponseEntity<List<MyTaskResponse>> getMyTasks(
+	        @AuthenticationPrincipal User user,
+	        @RequestParam(defaultValue = "en") String lang) {
+
+	    List<Project> myProjects = projectService.getMyActiveProjects(user.getId());
+	    Set<Long> activeProjectIds = myProjects.stream()
+	        .filter(p -> "ACTIVE".equals(p.getStatus()))
+	        .map(Project::getId).collect(Collectors.toSet());
+	    if (activeProjectIds.isEmpty()) return ResponseEntity.ok(Collections.emptyList());
+
+	    Map<Long, String> pNames = myProjects.stream()
+	        .collect(Collectors.toMap(Project::getId, Project::getTitle));
+	    LocalDate today = LocalDate.now();
+
+	    List<MyTaskResponse> result = taskRepository.findByAssigneeId(user.getId()).stream()
+	        .filter(t -> activeProjectIds.contains(t.getProjectId()))
+	        .filter(t -> !"DONE".equals(t.getStatus()))
+	        .map(t -> {
+	            String projectName = pNames.getOrDefault(t.getProjectId(), "");
+	            String dueStr = "-";
+	            String status = t.getStatus() != null ? t.getStatus() : "TO_DO";
+	            String statusColor = "#6366f1";
+	            if (t.getDueDate() != null) {
+	                long diff = ChronoUnit.DAYS.between(today, t.getDueDate());
+	                if (diff < 0) {
+	                    long d = Math.abs(diff);
+	                    dueStr = d + " day" + (d > 1 ? "s" : "") + " overdue";
+	                    status = "Overdue";
+	                } else if (diff == 0) {
+	                    dueStr = "Due Today";
+	                } else {
+	                    dueStr = "Due " + t.getDueDate().format(DateTimeFormatter.ofPattern("MMM d"));
+	                }
+	            }
+	            switch (status) {
+	                case "Overdue":     statusColor = "#ef4444"; break;
+	                case "IN_PROGRESS": statusColor = "#f59e0b"; status = "In Progress"; break;
+	                case "IN_REVIEW":   statusColor = "#3b82f6"; status = "In Review"; break;
+	                case "TO_DO":       statusColor = "#6366f1"; status = "To Do"; break;
+	            }
+	            String priorityColor = "blue";
+	            if (t.getPriority() != null) {
+	                switch (t.getPriority()) {
+	                    case "CRITICAL": case "HIGH": priorityColor = "red"; break;
+	                    case "MEDIUM": priorityColor = "yellow"; break;
+	                    case "LOW":    priorityColor = "green"; break;
+	                }
+	            }
+
+	            // ✅ lang translation
+	            String title = t.getTitle();
+	            if (!"en".equals(lang)) {
+	                Optional<TaskTranslation> tr = taskTranslationRepository
+	                    .findByTaskIdAndLanguageCode(t.getId(), lang);
+	                if (tr.isPresent() && tr.get().getTranslatedTitle() != null) {
+	                    title = tr.get().getTranslatedTitle();
+	                }
+	            }
+
+	            MyTaskResponse r = new MyTaskResponse();
+	            r.setTitle(title);
+	            r.setProject(projectName);
+	            r.setPriority(priorityColor);
+	            r.setDue(dueStr);
+	            r.setStatus(status);
+	            r.setStatusColor(statusColor);
+	            r.setDone(false);
+	            return r;
+	        }).collect(Collectors.toList());
+	    return ResponseEntity.ok(result);
 	}
 
 	// ⑥ OVERDUE TASKS

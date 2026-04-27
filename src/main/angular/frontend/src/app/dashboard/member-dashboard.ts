@@ -27,7 +27,6 @@ import {
 import { environment } from '../../environments/environment';
 const BASE = environment.apiBaseUrl;
 
-
 const LOGO_SVG = `data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIHZpZXdCb3g9IjAgMCAzMiAzMiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIHJ4PSI4IiBmaWxsPSIjMTY1MzM0Ii8+PHRleHQgeD0iNiIgeT0iMjIiIGZvbnQtc2l6ZT0iMTgiIGZpbGw9IiM4NmVmYWMiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC13ZWlnaHQ9ImJvbGQiPkI8L3RleHQ+PC9zdmc+`;
 
 @Component({
@@ -42,10 +41,9 @@ const LOGO_SVG = `data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIiIGhlaWdodD0iMzIi
     ProjectNewInline,
     ChatPopupComponent,
     AnnouncementInline,
-    MyLeaveRequestComponent,   // ← ထည့်
-    MyOtRequestComponent,  
+    MyLeaveRequestComponent,
+    MyOtRequestComponent,
   ],
-
   templateUrl: './member-dashboard.html',
   styleUrl: './member-dashboard.scss'
 })
@@ -84,7 +82,6 @@ export class MemberDashboard implements OnInit, AfterViewInit, OnDestroy {
   projectUnreadCounts: Record<number, number> = {};
   branchUnreadCount = 0;
   private _unreadPollTimer: any = null;
-
 
   setView(v: string): void {
     this.activeView = v;
@@ -150,7 +147,6 @@ export class MemberDashboard implements OnInit, AfterViewInit, OnDestroy {
       next: () => { this.currentUser = this.authService.getUser(); this.cdr.detectChanges(); }
     });
 
-    // queryParams watch — URL မှ project ဖွင့်မည်
     this.route.queryParams.subscribe(params => {
       if (params['projectId']) {
         const id = Number(params['projectId']);
@@ -165,7 +161,6 @@ export class MemberDashboard implements OnInit, AfterViewInit, OnDestroy {
         };
         setTimeout(checkAndOpen, 200);
       } else {
-        // URL မှာ projectId မပါ → dashboard ပြ
         this.selectedProjectId = null;
         this.showProjectDetail = false;
         this.cdr.detectChanges();
@@ -178,7 +173,6 @@ export class MemberDashboard implements OnInit, AfterViewInit, OnDestroy {
       this.activeView = savedView;
       localStorage.removeItem('brycen-active-view');
     }
-
 
     this.loadAll();
     this.startUnreadPolling();
@@ -232,10 +226,18 @@ export class MemberDashboard implements OnInit, AfterViewInit, OnDestroy {
       next: data => { this.teamMembers = data; this.loading.team = false; this.cdr.detectChanges(); },
       error: () => { this.loading.team = false; this.cdr.detectChanges(); }
     });
-    this.dataService.getMyTasks().subscribe({
-      next: data => { this.myTasks = data; this.loading.tasks = false; this.cdr.detectChanges(); },
+
+    // ✅ My Tasks — backend က lang param နဲ့ translate ပြန်ပေးတယ်
+    const lang = this.authService.getUser()?.preferredLanguage || 'en';
+    this.dataService.getMyTasks(lang).subscribe({
+      next: data => {
+        this.myTasks = data;
+        this.loading.tasks = false;
+        this.cdr.detectChanges();
+      },
       error: () => { this.loading.tasks = false; this.cdr.detectChanges(); }
     });
+
     this.dataService.getOverdueTasks().subscribe({
       next: data => { this.overdueTasks = data; this.loading.overdue = false; this.cdr.detectChanges(); },
       error: () => { this.loading.overdue = false; this.cdr.detectChanges(); }
@@ -276,23 +278,21 @@ export class MemberDashboard implements OnInit, AfterViewInit, OnDestroy {
   toggleTheme() { this.setTheme(!this.isDark); }
 
   setLang(lang: any) {
-  this.currentLangObj = lang;
-  this.showLangMenu = false;
-  this.http.put(API.AUTH.LANGUAGE, { language: lang.code }, { headers: this.authService.getHeaders() })
-    .subscribe({
-      next: () => {
-        const user = this.authService.getUser();
-        if (user) {
-          user.preferredLanguage = lang.code;
-          localStorage.setItem('user', JSON.stringify(user));
+    this.currentLangObj = lang;
+    this.showLangMenu = false;
+    this.http.put(API.AUTH.LANGUAGE, { language: lang.code }, { headers: this.authService.getHeaders() })
+      .subscribe({
+        next: () => {
+          const user = this.authService.getUser();
+          if (user) {
+            user.preferredLanguage = lang.code;
+            localStorage.setItem('user', JSON.stringify(user));
+          }
+          localStorage.setItem('brycen-active-view', this.activeView);
+          window.location.reload();
         }
-        // ✅ active view သိမ်းပြီး reload
-        localStorage.setItem('brycen-active-view', this.activeView);
-        window.location.reload();
-      }
-    });
-}
-
+      });
+  }
 
   getTotalTasks(): number { return this.donutData.reduce((sum, d) => sum + d.count, 0); }
   signOut() { this.authService.logout(); window.location.href = '/login'; }
@@ -313,14 +313,13 @@ export class MemberDashboard implements OnInit, AfterViewInit, OnDestroy {
 
   getBarMaxVal(): number { return Math.max(...this.chartData.map(d => d.done + d.inProgress + d.todo)); }
 
-  // ✅ URL navigate
   openProject(id: number) {
     this.router.navigate(['/dashboard/member'], { queryParams: { projectId: id } });
   }
 
   closeProject() {
     this.router.navigate(['/dashboard/member']);
-     this.activeView = 'dashboard'; 
+    this.activeView = 'dashboard';
   }
 
   openNewProject() { this.showNewProject = true; this.showProjectDetail = false; }
@@ -365,7 +364,6 @@ export class MemberDashboard implements OnInit, AfterViewInit, OnDestroy {
       online: m.online,
     };
     this.isGroupChat = false;
-    // Clear unread badge
     const myId = this.currentUser?.id || this.currentUser?.userId;
     if (myId) {
       this.http.put(
@@ -389,7 +387,6 @@ export class MemberDashboard implements OnInit, AfterViewInit, OnDestroy {
       color: '#3b82f6',
     };
     this.isGroupChat = true;
-    // Clear badge
     this.http.put(
       `${BASE}/chat/read-channel?type=BRANCH&channelId=${branchId}`, {},
       { headers: this.authService.getHeaders() }
@@ -409,7 +406,6 @@ export class MemberDashboard implements OnInit, AfterViewInit, OnDestroy {
       color: p.color || '#16a34a',
     };
     this.isGroupChat = true;
-    // Clear project unread badge
     this.http.put(
       `${BASE}/chat/read-channel?type=PROJECT&channelId=${p.id}`, {},
       { headers: this.authService.getHeaders() }
@@ -438,8 +434,6 @@ export class MemberDashboard implements OnInit, AfterViewInit, OnDestroy {
       m.role !== 'Admin'
     ).length;
   }
-
-  // ── Chat Unread Polling ──────────────────────────────────────────
 
   startUnreadPolling(): void {
     this.stopUnreadPolling();
@@ -473,7 +467,6 @@ export class MemberDashboard implements OnInit, AfterViewInit, OnDestroy {
       });
       this.cdr.detectChanges();
     });
-    // ✅ Branch Chat unread
     const branchId = this.currentUser?.branchId;
     if (branchId) {
       this.http.get<any>(
@@ -497,5 +490,4 @@ export class MemberDashboard implements OnInit, AfterViewInit, OnDestroy {
       });
     });
   }
-
 }
