@@ -33,10 +33,13 @@
 
   <div *ngIf="!isLoading && filtered.length > 0" style="display:flex;flex-direction:column;gap:8px;flex-shrink:0;">
     <div *ngFor="let a of filtered"
-      style="border-radius:12px;border:1px solid;padding:14px 16px;transition:all 0.15s;"
-      [style.borderColor]="isExpired(a)?'rgba(100,116,139,0.2)':a.isPinned===1?'rgba(245,158,11,0.25)':a.priority==='URGENT'?'rgba(239,68,68,0.25)':a.priority==='IMPORTANT'?'rgba(249,115,22,0.2)':'rgba(148,163,184,0.12)'"
-      [style.background]="isExpired(a)?'rgba(100,116,139,0.03)':a.isPinned===1?'rgba(245,158,11,0.03)':a.priority==='URGENT'?'rgba(239,68,68,0.03)':a.priority==='IMPORTANT'?'rgba(249,115,22,0.03)':'transparent'"
-      [style.opacity]="isExpired(a)?'0.6':'1'">
+      style="border-radius:12px;padding:14px 16px;transition:all 0.15s;
+        border-top:1px solid;border-right:1px solid;border-bottom:1px solid;border-left:3px solid;"
+      [style.borderTopColor]="isExpired(a)?'rgba(100,116,139,0.2)':a.isPinned===1?'rgba(245,158,11,0.25)':a.priority==='URGENT'?'rgba(239,68,68,0.25)':a.priority==='IMPORTANT'?'rgba(249,115,22,0.2)':'rgba(148,163,184,0.12)'"
+      [style.borderRightColor]="isExpired(a)?'rgba(100,116,139,0.2)':a.isPinned===1?'rgba(245,158,11,0.25)':a.priority==='URGENT'?'rgba(239,68,68,0.25)':a.priority==='IMPORTANT'?'rgba(249,115,22,0.2)':'rgba(148,163,184,0.12)'"
+      [style.borderBottomColor]="isExpired(a)?'rgba(100,116,139,0.2)':a.isPinned===1?'rgba(245,158,11,0.25)':a.priority==='URGENT'?'rgba(239,68,68,0.25)':a.priority==='IMPORTANT'?'rgba(249,115,22,0.2)':'rgba(148,163,184,0.12)'"
+      [style.borderLeftColor]="isExpired(a)?'rgba(100,116,139,0.5)':a.isPinned===1?'#f59e0b':a.priority==='URGENT'?'#ef4444':a.priority==='IMPORTANT'?'#f97316':'#22c55e'"
+      [style.background]="isExpired(a)?'rgba(100,116,139,0.03)':a.isPinned===1?'rgba(245,158,11,0.03)':a.priority==='URGENT'?'rgba(239,68,68,0.03)':a.priority==='IMPORTANT'?'rgba(249,115,22,0.03)':'transparent'">
 
       <!-- Card header -->
       <div style="display:flex;align-items:flex-start;gap:8px;margin-bottom:8px;">
@@ -54,9 +57,7 @@
           style="font-size:8px;padding:1px 6px;border-radius:20px;background:rgba(100,116,139,0.15);color:#64748b;flex-shrink:0;">
           EXPIRED
         </span>
-        <!-- Actions -->
         <div style="display:flex;gap:4px;flex-shrink:0;">
-          <!-- Translate button — show if lang != en -->
           <button *ngIf="canTranslate()" (click)="translate(a)"
             style="font-size:10px;padding:3px 8px;border-radius:7px;cursor:pointer;font-family:inherit;border:1px solid;transition:all 0.15s;"
             [style.borderColor]="isTranslated(a)?'rgba(99,102,241,0.4)':'rgba(99,102,241,0.2)'"
@@ -113,21 +114,18 @@
 
     <div style="padding:16px 18px;display:flex;flex-direction:column;gap:12px;max-height:75vh;overflow-y:auto;">
 
-      <!-- Title -->
       <div>
         <label style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.4;display:block;margin-bottom:5px;">Title *</label>
         <input type="text" [(ngModel)]="form.title" placeholder="Announcement title..."
           style="width:100%;padding:8px 12px;border-radius:9px;font-size:12px;background:rgba(148,163,184,0.08);border:1px solid rgba(148,163,184,0.15);color:inherit;font-family:inherit;box-sizing:border-box;outline:none;"/>
       </div>
 
-      <!-- Content -->
       <div>
         <label style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.4;display:block;margin-bottom:5px;">Content *</label>
         <textarea [(ngModel)]="form.content" placeholder="Announcement content..." rows="4"
           style="width:100%;padding:8px 12px;border-radius:9px;font-size:12px;background:rgba(148,163,184,0.08);border:1px solid rgba(148,163,184,0.15);color:inherit;font-family:inherit;box-sizing:border-box;outline:none;resize:vertical;line-height:1.6;"></textarea>
       </div>
 
-      <!-- Visibility -->
       <div>
         <label style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.4;display:block;margin-bottom:5px;">Visibility</label>
         <div style="display:flex;gap:6px;">
@@ -142,7 +140,6 @@
         </div>
       </div>
 
-      <!-- Priority -->
       <div>
         <label style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.4;display:block;margin-bottom:5px;">Priority</label>
         <div style="display:flex;gap:6px;">
@@ -156,7 +153,6 @@
         </div>
       </div>
 
-      <!-- Expires -->
       <div>
         <label style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.4;display:block;margin-bottom:5px;">Expires After</label>
         <div style="display:flex;gap:6px;flex-wrap:wrap;">

@@ -14,10 +14,8 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 /**
- * AnnouncementController
- *
- * POST   /api/announcements          ← create (Admin/VP/Director/Boss)
- * GET    /api/announcements          ← list all (Admin/Boss)
+ * POST   /api/announcements          ← create
+ * GET    /api/announcements          ← list
  * PUT    /api/announcements/{id}     ← update
  * DELETE /api/announcements/{id}     ← delete
  * PATCH  /api/announcements/{id}/pin ← toggle pin
@@ -29,9 +27,7 @@ public class AnnouncementController {
 
     private final AnnouncementRepository announcementRepository;
 
-    // ──────────────────────────────────────────────────────────
-    // POST /api/announcements — create new announcement
-    // ──────────────────────────────────────────────────────────
+    // ── POST /api/announcements ──────────────────────────────
     @PostMapping
     public ResponseEntity<?> create(
             @RequestBody CreateRequest req,
@@ -45,27 +41,27 @@ public class AnnouncementController {
             a.setTargetId(req.getTargetId() != null ? req.getTargetId() : user.getBranchId());
             a.setPriority(req.getPriority() != null ? req.getPriority() : "NORMAL");
             a.setIsPinned(0);
-            a.setOriginalLanguage("en");
 
-            // expireDays: NULL = never | 1 | 7 | 30 | 90
+            // ✅ originalLanguage — use request value or user's preferredLanguage
+            String origLang = req.getOriginalLanguage() != null
+                ? req.getOriginalLanguage()
+                : (user.getPreferredLanguage() != null ? user.getPreferredLanguage() : "en");
+            a.setOriginalLanguage(origLang);
+
             if (req.getExpireDays() != null && req.getExpireDays() > 0) {
                 a.setExpiresAt(LocalDateTime.now().plusDays(req.getExpireDays()));
             } else {
-                a.setExpiresAt(null); // never expire
+                a.setExpiresAt(null);
             }
 
-            Announcement saved = announcementRepository.save(a);
-            return ResponseEntity.ok(saved);
-
+            return ResponseEntity.ok(announcementRepository.save(a));
         } catch (Exception e) {
             return ResponseEntity.badRequest()
                 .body(new AuthDto.MessageResponse("Failed: " + e.getMessage(), false));
         }
     }
 
-    // ──────────────────────────────────────────────────────────
-    // GET /api/announcements — list all (for admin management)
-    // ──────────────────────────────────────────────────────────
+    // ── GET /api/announcements ───────────────────────────────
     @GetMapping
     public ResponseEntity<List<Announcement>> getAll(
             @AuthenticationPrincipal User user) {
@@ -79,9 +75,7 @@ public class AnnouncementController {
                 "BRANCH", branchId));
     }
 
-    // ──────────────────────────────────────────────────────────
-    // PUT /api/announcements/{id} — update
-    // ──────────────────────────────────────────────────────────
+    // ── PUT /api/announcements/{id} ──────────────────────────
     @PutMapping("/{id}")
     public ResponseEntity<?> update(
             @PathVariable Long id,
@@ -91,9 +85,11 @@ public class AnnouncementController {
             Announcement a = announcementRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Announcement not found"));
 
-            if (req.getTitle()   != null) a.setTitle(req.getTitle());
-            if (req.getContent() != null) a.setContent(req.getContent());
-            if (req.getPriority()!= null) a.setPriority(req.getPriority());
+            if (req.getTitle()        != null) a.setTitle(req.getTitle());
+            if (req.getContent()      != null) a.setContent(req.getContent());
+            if (req.getPriority()     != null) a.setPriority(req.getPriority());
+            if (req.getTargetScope()  != null) a.setTargetScope(req.getTargetScope());
+            if (req.getOriginalLanguage() != null) a.setOriginalLanguage(req.getOriginalLanguage());
 
             if (req.getExpireDays() != null) {
                 a.setExpiresAt(req.getExpireDays() > 0
@@ -102,16 +98,13 @@ public class AnnouncementController {
             }
 
             return ResponseEntity.ok(announcementRepository.save(a));
-
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest()
                 .body(new AuthDto.MessageResponse(e.getMessage(), false));
         }
     }
 
-    // ──────────────────────────────────────────────────────────
-    // DELETE /api/announcements/{id}
-    // ──────────────────────────────────────────────────────────
+    // ── DELETE /api/announcements/{id} ──────────────────────
     @DeleteMapping("/{id}")
     public ResponseEntity<?> delete(
             @PathVariable Long id,
@@ -120,17 +113,14 @@ public class AnnouncementController {
             if (!announcementRepository.existsById(id))
                 throw new RuntimeException("Announcement not found");
             announcementRepository.deleteById(id);
-            return ResponseEntity.ok(
-                new AuthDto.MessageResponse("Deleted", true));
+            return ResponseEntity.ok(new AuthDto.MessageResponse("Deleted", true));
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest()
                 .body(new AuthDto.MessageResponse(e.getMessage(), false));
         }
     }
 
-    // ──────────────────────────────────────────────────────────
-    // PATCH /api/announcements/{id}/pin — toggle pin
-    // ──────────────────────────────────────────────────────────
+    // ── PATCH /api/announcements/{id}/pin ───────────────────
     @PatchMapping("/{id}/pin")
     public ResponseEntity<?> togglePin(@PathVariable Long id) {
         try {
@@ -144,16 +134,15 @@ public class AnnouncementController {
         }
     }
 
-    // ──────────────────────────────────────────────────────────
-    // Request DTO
-    // ──────────────────────────────────────────────────────────
+    // ── Request DTO ─────────────────────────────────────────
     @Data
     public static class CreateRequest {
         private String  title;
         private String  content;
-        private String  targetScope;  // GLOBAL | BRANCH | PROJECT
-        private Long    targetId;     // branchId or projectId
-        private String  priority;     // NORMAL | IMPORTANT | URGENT
-        private Integer expireDays;   // null=never | 1 | 7 | 30 | 90
+        private String  targetScope;
+        private Long    targetId;
+        private String  priority;
+        private Integer expireDays;
+        private String  originalLanguage;  // ✅ NEW — en/ja/my/km/vi/ko
     }
 }

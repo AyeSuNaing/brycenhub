@@ -1,7 +1,7 @@
 <div class="app-shell" [class.dark]="isDark" [class.light]="!isDark">
 
   <!-- ════════════ TOPBAR ════════════ -->
-  <header class="topbar">
+  <header class="topbar" style="overflow:visible;">
     <div class="logo-wrap">
       <img class="logo-img" src="brycen-logo.png" alt="Brycen"/>
       <div>
@@ -21,7 +21,7 @@
       <span style="font-weight:600">{{ currentLangObj.display }}</span>
       <span style="font-size:9px;opacity:0.6">▾</span>
       <div *ngIf="showLangMenu"
-        style="position:absolute;top:calc(100%+6px);right:0;min-width:130px;border-radius:10px;border:1px solid;z-index:999;padding:4px;"
+        style="position:absolute;top:calc(100% + 6px);right:0;min-width:180px;border-radius:10px;border:1px solid;z-index:9999;padding:4px;"
         (click)="$event.stopPropagation()"
         [style.background]="isDark?'#131929':'white'"
         [style.borderColor]="isDark?'#1e2d4a':'#e2e8f0'">

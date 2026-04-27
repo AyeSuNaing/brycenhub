@@ -247,8 +247,15 @@ export class VpDashboardComponent implements OnInit, OnDestroy {
     const theme = localStorage.getItem('brycen-theme');
     this.setTheme(theme !== 'light');
     this.currentUser = this.auth.getUser();
-    this.currentLangObj = this.langs.find(l => l.code === (this.currentUser?.preferredLanguage || 'en')) || this.langs[0];
+    const savedLang = this.currentUser?.preferredLanguage || 'en';
+    this.currentLangObj = this.langs.find(l => l.code === savedLang) || this.langs[0];
     this.loadAll();
+    // Restore active view after language change reload
+    const savedView = localStorage.getItem('brycen-active-view');
+    if (savedView) {
+      this.activeView = savedView;
+      localStorage.removeItem('brycen-active-view');
+    }
     this.updateMyTasksHeight();
 
     // ✅ Restore navigation state (e.g. back from Board/Design/API/Activity page)
@@ -726,10 +733,10 @@ export class VpDashboardComponent implements OnInit, OnDestroy {
   }
 
   loadAnnouncements(): void {
-    this.http.get<any[]>(`${BASE}/dashboard/pm/announcements/all`, { headers: this.headers })
-      .pipe(catchError(() => of([])))
-      .subscribe(list => { this.allAnnouncements = list || []; this.cdr.detectChanges(); });
-  }
+  this.http.get<any[]>(`${BASE}/announcements`, { headers: this.headers })
+    .pipe(catchError(() => of([])))
+    .subscribe(list => { this.allAnnouncements = list || []; this.cdr.detectChanges(); });
+}
 
   // ══════════════════════════════════════════════════════════════
   // NORMALIZERS
@@ -871,7 +878,34 @@ export class VpDashboardComponent implements OnInit, OnDestroy {
     localStorage.setItem('brycen-theme', dark ? 'dark' : 'light');
   }
   toggleTheme(): void { this.setTheme(!this.isDark); }
-  selectLang(lang: any): void { this.currentLangObj = lang; this.showLangMenu = false; }
+  selectLang(lang: any): void {
+    this.currentLangObj = lang;
+    this.showLangMenu = false;
+
+    // ① localStorage update
+    try {
+      const stored = localStorage.getItem('user');
+      if (stored) {
+        const u = JSON.parse(stored);
+        u.preferredLanguage = lang.code;
+        localStorage.setItem('user', JSON.stringify(u));
+      }
+    } catch(e) {}
+
+    // ② Backend save + reload
+    // ② Backend save → save view state → reload
+    this.http.put(`${BASE}/auth/language`, { language: lang.code },
+      { headers: this.headers }).subscribe({
+        next: () => {
+          localStorage.setItem('brycen-active-view', this.activeView);
+          window.location.reload();
+        },
+        error: () => {
+          localStorage.setItem('brycen-active-view', this.activeView);
+          window.location.reload();
+        },
+      });
+  }
   setApprovalTab(tab: ApprovalTab): void {
     this.activeApprovalTab = tab;
     if (tab === 'SALARY') this.loadSalaryApprovals();

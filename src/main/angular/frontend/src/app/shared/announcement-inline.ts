@@ -22,28 +22,38 @@ export class AnnouncementInline implements OnInit {
 
   @Input() branchId?: number;
 
+  @Input() set lang(val: string) {
+    if (val && val !== this.currentLang) {
+      this.currentLang     = val;
+      this.translatedCache = {};
+      if (this.announcements.length > 0 && val !== 'en') {
+        this.translateBatch();
+      }
+      this.cdr.detectChanges();
+    }
+  }
+
   announcements: any[] = [];
   isLoading     = true;
   filter        = 'ALL';
 
-  // Translation
   translatingId: number | null = null;
   translatedCache: Record<number, { title: string; content: string }> = {};
   currentLang = 'en';
 
-  // Form
   showForm  = false;
   editingId: number | null = null;
   saving    = false;
   formError = '';
 
   form = {
-    title:       '',
-    content:     '',
-    priority:    'NORMAL',
-    targetScope: 'BRANCH',
-    targetId:    null as number | null,
-    expireDays:  null as number | null,
+    title:            '',
+    content:          '',
+    priority:         'NORMAL',
+    targetScope:      'BRANCH',
+    targetId:         null as number | null,
+    expireDays:       null as number | null,
+    originalLanguage: 'en',
   };
 
   readonly PRIORITIES = [
@@ -85,7 +95,33 @@ export class AnnouncementInline implements OnInit {
         this.announcements = list || [];
         this.isLoading = false;
         this.cdr.detectChanges();
+        // Batch translate — 1 call for all
+        if (this.currentLang !== 'en' && this.announcements.length > 0) {
+          this.translateBatch();
+        }
       });
+  }
+
+  // ── Batch translate — 1 API call ────────────────────────
+  private translateBatch(): void {
+    // Only translate announcements whose originalLanguage != currentLang
+    const toTranslate = this.announcements.filter(a =>
+      (a.originalLanguage || 'en') !== this.currentLang
+    );
+    if (toTranslate.length === 0) return;
+
+    const ids = toTranslate.map(a => a.id);
+    this.http.post<any[]>(
+      `${BASE}/announcements/translate-batch`,
+      { ids, lang: this.currentLang },
+      { headers: this.auth.getHeaders() }
+    ).pipe(catchError(() => of([])))
+     .subscribe(res => {
+       (res || []).forEach((r: any) => {
+         if (r.id) this.translatedCache[r.id] = { title: r.title, content: r.content };
+       });
+       this.cdr.detectChanges();
+     });
   }
 
   get filtered(): any[] {
@@ -98,10 +134,7 @@ export class AnnouncementInline implements OnInit {
     }
   }
 
-  // ── Translation ──────────────────────────────────────────────
-  canTranslate(): boolean {
-    return this.currentLang !== 'en';
-  }
+  canTranslate(): boolean { return this.currentLang !== 'en'; }
 
   translate(a: any): void {
     if (!this.canTranslate()) return;
@@ -122,11 +155,10 @@ export class AnnouncementInline implements OnInit {
      });
   }
 
-  getTitle(a: any): string   { return this.translatedCache[a.id]?.title   || a.title;   }
-  getContent(a: any): string { return this.translatedCache[a.id]?.content || a.content; }
+  getTitle(a: any): string      { return this.translatedCache[a.id]?.title   || a.title;   }
+  getContent(a: any): string    { return this.translatedCache[a.id]?.content || a.content; }
   isTranslated(a: any): boolean { return !!this.translatedCache[a.id]; }
 
-  // ── Permissions ──────────────────────────────────────────────
   canCreate(): boolean {
     const role = this.auth.getUser()?.role || '';
     return ['BOSS','COUNTRY_DIRECTOR','VICE_PRESIDENT','ADMIN','PROJECT_MANAGER'].includes(role);
@@ -147,14 +179,14 @@ export class AnnouncementInline implements OnInit {
     return 'BRANCH';
   }
 
-  // ── Form ─────────────────────────────────────────────────────
   openCreate(): void {
     this.editingId = null;
     this.form = {
       title: '', content: '', priority: 'NORMAL',
-      targetScope: this.getDefaultScope(),
-      targetId: this.branchId || this.auth.getUser()?.branchId || null,
-      expireDays: null,
+      targetScope:      this.getDefaultScope(),
+      targetId:         this.branchId || this.auth.getUser()?.branchId || null,
+      expireDays:       null,
+      originalLanguage: this.auth.getUser()?.preferredLanguage || 'en', // ✅
     };
     this.formError = '';
     this.showForm  = true;
@@ -164,12 +196,13 @@ export class AnnouncementInline implements OnInit {
   openEdit(a: any): void {
     this.editingId = a.id;
     this.form = {
-      title:       a.title       || '',
-      content:     a.content     || '',
-      priority:    a.priority    || 'NORMAL',
-      targetScope: a.targetScope || 'BRANCH',
-      targetId:    a.targetId    || null,
-      expireDays:  null,
+      title:            a.title            || '',
+      content:          a.content          || '',
+      priority:         a.priority         || 'NORMAL',
+      targetScope:      a.targetScope      || 'BRANCH',
+      targetId:         a.targetId         || null,
+      expireDays:       null,
+      originalLanguage: a.originalLanguage || 'en',
     };
     this.formError = '';
     this.showForm  = true;
@@ -208,15 +241,21 @@ export class AnnouncementInline implements OnInit {
   delete(a: any): void {
     if (!confirm(`Delete "${a.title}"?`)) return;
     this.http.delete(`${BASE}/announcements/${a.id}`, { headers: this.auth.getHeaders() })
-      .subscribe({ next: () => { this.announcements = this.announcements.filter(x => x.id !== a.id); this.cdr.detectChanges(); } });
+      .subscribe({ next: () => {
+        this.announcements = this.announcements.filter(x => x.id !== a.id);
+        this.cdr.detectChanges();
+      }});
   }
 
   togglePin(a: any): void {
     this.http.patch<any>(`${BASE}/announcements/${a.id}/pin`, {}, { headers: this.auth.getHeaders() })
-      .subscribe({ next: (updated) => { const idx = this.announcements.findIndex(x => x.id === a.id); if (idx > -1) this.announcements[idx] = updated; this.cdr.detectChanges(); } });
+      .subscribe({ next: (updated) => {
+        const idx = this.announcements.findIndex(x => x.id === a.id);
+        if (idx > -1) this.announcements[idx] = updated;
+        this.cdr.detectChanges();
+      }});
   }
 
-  // ── Helpers ──────────────────────────────────────────────────
   getPriorityColor(p: string): string { return p==='URGENT'?'#ef4444':p==='IMPORTANT'?'#f97316':'#94a3b8'; }
   getPriorityBg(p: string): string    { return p==='URGENT'?'rgba(239,68,68,0.12)':p==='IMPORTANT'?'rgba(249,115,22,0.12)':'rgba(148,163,184,0.1)'; }
   getScopeColor(s: string): string    { return s==='GLOBAL'?'#a855f7':s==='COUNTRY'?'#3b82f6':'#22c55e'; }
