@@ -100,6 +100,9 @@ public class PayrollApprovalDto {
         private String     payPeriod;
         private LocalDate  periodStart;
         private LocalDate  periodEnd;
+        private BigDecimal baseSalary;
+        private BigDecimal otAmount;
+        private BigDecimal deductions;
         private BigDecimal grossSalary;
         private BigDecimal taxAmount;
         private BigDecimal netSalary;

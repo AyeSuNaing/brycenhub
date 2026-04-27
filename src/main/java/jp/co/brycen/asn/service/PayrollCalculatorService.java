@@ -310,6 +310,9 @@ public class PayrollCalculatorService {
             row.setPayPeriod(sh.getPayPeriod());
             row.setPeriodStart(sh.getPeriodStart());
             row.setPeriodEnd(sh.getPeriodEnd());
+            row.setBaseSalary(sh.getBaseSalary());
+            row.setOtAmount(sh.getOtAmount());
+            row.setDeductions(sh.getDeductions());
             row.setGrossSalary(sh.getGrossSalary());
             row.setTaxAmount(sh.getTaxAmount());
             row.setNetSalary(sh.getNetSalary());
