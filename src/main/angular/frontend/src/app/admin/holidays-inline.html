@@ -6,7 +6,7 @@
   <div class="holidays-main">
 
     <!-- ═══════════════════════════════════════
-         STATS ROW (member-dashboard style)
+         STATS ROW
     ═══════════════════════════════════════ -->
     <div class="stats-grid">
       <div class="stat-card">
@@ -50,7 +50,6 @@
                     [class.not-own]="!isViewingOwnCountry && !isGlobalAdmin"
                     (click)="toggleCountryMenu()">
               {{ countryFlag }} {{ countryName }}
-              <span *ngIf="!isViewingOwnCountry && !isGlobalAdmin" class="view-only-badge">👁️ View</span>
               <span class="dropdown-arrow">▾</span>
             </button>
 
@@ -97,6 +96,7 @@
             </button>
           </div>
 
+          <!-- ✅ ADMIN ပဲ Seed + Add ပြမယ် — View only badge မပြတော့ -->
           <ng-container *ngIf="canEdit">
             <button *ngIf="hasPresetForCountry"
                     class="btn-secondary"
@@ -108,10 +108,6 @@
               + Add Holiday
             </button>
           </ng-container>
-
-          <div *ngIf="!canEdit" class="readonly-hint">
-            👁️ View only
-          </div>
         </div>
       </div>
 
@@ -203,9 +199,6 @@
             <ng-container *ngIf="hasPresetForCountry && canEdit">
               Click "Seed {{ countryName }} {{ currentYear }}" for a quick start.
             </ng-container>
-            <ng-container *ngIf="!canEdit">
-              Switch to your country to add holidays.
-            </ng-container>
           </div>
         </div>
 
@@ -249,8 +242,6 @@
 
   </div>
   <!-- /.holidays-main -->
-
-
 
 </div>
 

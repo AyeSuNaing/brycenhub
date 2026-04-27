@@ -14,13 +14,14 @@ import { ChatPopupComponent, ChatMember } from '../../shared/chat-popup/chat-pop
 import { PayslipModalComponent } from '../../shared/payslip-modal.component';
 import { StaffListInline } from '../../admin/staff-list-inline';
 import { StaffProfileInline } from '../../admin/staff-profile-inline';
-import { StaffPanelComponent } from '../../shared/staff-panel/staff-panel.component';
 import { AuthService } from '../../services/auth.service';
 import { RefreshService } from '../../services/refresh.service';
 import { NavigationStateService } from '../../services/navigation-state.service';
 import { environment } from '../../../environments/environment';
 import { BranchProjectsInline } from '../../shared/branch-projects-inline';
 import { AnnouncementInline } from '../../shared/announcement-inline';
+import { HolidaysInline } from '../../admin/holidays-inline';
+import { TaxBracketsInline } from '../../admin/tax-brackets-inline';
 
 const BASE = environment.apiBaseUrl;
 const VP_BASE = `${BASE}/vp/dashboard`;
@@ -60,6 +61,8 @@ export interface DepartmentItem {
     AnnouncementBarComponent, BellNotificationComponent, ProjectInlineComponent,
     ApprovalInboxInline, ChatPopupComponent, PayslipModalComponent,
     StaffListInline, StaffProfileInline, BranchProjectsInline, AnnouncementInline,
+    HolidaysInline,
+    TaxBracketsInline,
   ],
   templateUrl: './vp-dashboard.html',
   styleUrl: './vp-dashboard.scss'

@@ -33,7 +33,6 @@ public class TaxBracketController {
     // HELPERS
     // ═══════════════════════════════════════════════════
 
-    /** Lookup role name from roleId */
     private String roleNameOf(User u) {
         if (u == null || u.getRoleId() == null) return "";
         return userRoleRepo.findById(u.getRoleId())
@@ -41,13 +40,11 @@ public class TaxBracketController {
                 .orElse("");
     }
 
-    /** BOSS + COUNTRY_DIRECTOR can manage any country */
     private boolean isGlobalAdmin(User u) {
         String r = roleNameOf(u);
         return "BOSS".equals(r) || "COUNTRY_DIRECTOR".equals(r);
     }
 
-    /** Resolve admin's country from branch */
     private Long resolveAdminCountryId(User u) {
         if (u == null || u.getBranchId() == null) return null;
         return branchRepo.findById(u.getBranchId())
@@ -55,7 +52,6 @@ public class TaxBracketController {
                 .orElse(null);
     }
 
-    /** Enforce that the admin can write for this country (BOSS/CD any, else must match) */
     private ResponseEntity<?> denyIfNotAllowed(User admin, Long targetCountryId) {
         if (isGlobalAdmin(admin)) return null;
         Long adminCountry = resolveAdminCountryId(admin);
@@ -68,34 +64,25 @@ public class TaxBracketController {
     }
 
     // ═══════════════════════════════════════════════════
-    // READ
+    // READ — ✅ isAuthenticated() = login ဝင်သူ အားလုံး ကြည့်လို့ရ
     // ═══════════════════════════════════════════════════
 
-    /**
-     * GET /api/tax-brackets
-     * Returns brackets for admin's own country.
-     */
     @GetMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'VP', 'COUNTRY_DIRECTOR', 'BOSS')")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<?> getMyCountryBrackets(@AuthenticationPrincipal User admin) {
         Long countryId = resolveAdminCountryId(admin);
         if (countryId == null) return ResponseEntity.ok(List.of());
         return ResponseEntity.ok(taxRepo.findByCountryIdOrderByMinSalaryAsc(countryId));
     }
 
-    /**
-     * GET /api/tax-brackets/by-country/{countryId}
-     * Returns brackets for a specific country (cross-country viewing).
-     */
     @GetMapping("/by-country/{countryId}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'VP', 'COUNTRY_DIRECTOR', 'BOSS')")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<?> getByCountry(@PathVariable Long countryId) {
         return ResponseEntity.ok(taxRepo.findByCountryIdOrderByMinSalaryAsc(countryId));
     }
 
-    /** GET /api/tax-brackets/{id} */
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'VP', 'COUNTRY_DIRECTOR', 'BOSS')")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<?> getById(@PathVariable Long id) {
         return taxRepo.findById(id)
                 .<ResponseEntity<?>>map(ResponseEntity::ok)
@@ -104,16 +91,15 @@ public class TaxBracketController {
     }
 
     // ═══════════════════════════════════════════════════
-    // CREATE
+    // CREATE — Admin / CD / Boss ပဲ ပြင်လို့ရ
     // ═══════════════════════════════════════════════════
 
     @PostMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'COUNTRY_DIRECTOR', 'BOSS')")
+    @PreAuthorize("hasAnyRole('ADMIN')")
     public ResponseEntity<?> create(
             @Valid @RequestBody TaxBracketDto.UpsertRequest req,
             @AuthenticationPrincipal User admin) {
 
-        // Resolve target country
         Long countryId = req.getCountryId() != null
                 ? req.getCountryId()
                 : resolveAdminCountryId(admin);
@@ -126,7 +112,6 @@ public class TaxBracketController {
         ResponseEntity<?> deny = denyIfNotAllowed(admin, countryId);
         if (deny != null) return deny;
 
-        // Validate: min < max (if max provided)
         if (req.getMaxSalary() != null && req.getMinSalary().compareTo(req.getMaxSalary()) >= 0) {
             return ResponseEntity.badRequest()
                     .body(new AuthDto.MessageResponse("min_salary must be less than max_salary", false));
@@ -147,7 +132,7 @@ public class TaxBracketController {
     // ═══════════════════════════════════════════════════
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'COUNTRY_DIRECTOR', 'BOSS')")
+    @PreAuthorize("hasAnyRole('ADMIN')")
     public ResponseEntity<?> update(
             @PathVariable Long id,
             @Valid @RequestBody TaxBracketDto.UpsertRequest req,
@@ -179,7 +164,7 @@ public class TaxBracketController {
     // ═══════════════════════════════════════════════════
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'COUNTRY_DIRECTOR', 'BOSS')")
+    @PreAuthorize("hasAnyRole('ADMIN')")
     public ResponseEntity<?> delete(
             @PathVariable Long id,
             @AuthenticationPrincipal User admin) {
@@ -198,11 +183,11 @@ public class TaxBracketController {
     }
 
     // ═══════════════════════════════════════════════════
-    // BULK SEED (replace all for country)
+    // BULK SEED
     // ═══════════════════════════════════════════════════
 
     @PostMapping("/bulk")
-    @PreAuthorize("hasAnyRole('ADMIN', 'COUNTRY_DIRECTOR', 'BOSS')")
+    @PreAuthorize("hasAnyRole('ADMIN')")
     @Transactional
     public ResponseEntity<?> bulkSeed(
             @Valid @RequestBody TaxBracketDto.BulkRequest req,
@@ -220,7 +205,6 @@ public class TaxBracketController {
         ResponseEntity<?> deny = denyIfNotAllowed(admin, countryId);
         if (deny != null) return deny;
 
-        // Replace — delete existing then insert all
         long existingCount = taxRepo.countByCountryId(countryId);
         taxRepo.deleteByCountryId(countryId);
 
@@ -244,16 +228,11 @@ public class TaxBracketController {
     }
 
     // ═══════════════════════════════════════════════════
-    // TAX CALCULATOR
+    // TAX CALCULATOR — ✅ isAuthenticated()
     // ═══════════════════════════════════════════════════
 
-    /**
-     * POST /api/tax-brackets/calculate
-     * Body: { countryId?, salary }
-     * Returns: progressive tax breakdown
-     */
     @PostMapping("/calculate")
-    @PreAuthorize("hasAnyRole('ADMIN', 'VP', 'COUNTRY_DIRECTOR', 'BOSS')")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<?> calculate(
             @Valid @RequestBody TaxBracketDto.CalcRequest req,
             @AuthenticationPrincipal User admin) {
@@ -274,17 +253,15 @@ public class TaxBracketController {
         }
 
         BigDecimal salary = req.getSalary();
-        BigDecimal remaining = salary;
         BigDecimal totalTax = BigDecimal.ZERO;
         List<TaxBracketDto.CalcBreakdown> breakdown = new ArrayList<>();
 
         for (TaxBracket b : brackets) {
             BigDecimal from = b.getMinSalary();
-            BigDecimal to = b.getMaxSalary();   // null = unlimited
+            BigDecimal to = b.getMaxSalary();
 
-            if (salary.compareTo(from) <= 0) break;   // salary below this bracket's floor
+            if (salary.compareTo(from) <= 0) break;
 
-            // Portion of salary in this bracket
             BigDecimal upper = (to == null) ? salary : to.min(salary);
             BigDecimal taxable = upper.subtract(from).max(BigDecimal.ZERO);
 

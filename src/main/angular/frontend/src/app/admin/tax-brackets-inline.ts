@@ -6,15 +6,12 @@ import { catchError, of } from 'rxjs';
 
 import { AuthService } from '../services/auth.service';
 
-const API_BASE     = 'http://localhost:8080/api';
-const TAX_BASE     = `${API_BASE}/tax-brackets`;
+const API_BASE      = 'http://localhost:8080/api';
+const TAX_BASE      = `${API_BASE}/tax-brackets`;
 const BRANCHES_BASE = `${API_BASE}/branches`;
 const COUNTRIES_BASE = `${API_BASE}/countries`;
-const USERS_BASE   = `${API_BASE}/users`;
+const USERS_BASE    = `${API_BASE}/users`;
 
-// ─────────────────────────────────────────────
-// Types
-// ─────────────────────────────────────────────
 interface TaxBracket {
   id?: number;
   countryId?: number;
@@ -66,7 +63,6 @@ interface StaffItem {
 export class TaxBracketsInline implements OnInit {
   @Output() back = new EventEmitter<void>();
 
-  // ── State ─────────────────────────────────
   currentUser: any = null;
   country: CountryInfo | null = null;
   viewingCountry: CountryInfo | null = null;
@@ -77,21 +73,17 @@ export class TaxBracketsInline implements OnInit {
   loading = false;
   saving = false;
 
-  // Form
   showForm = false;
   editMode = false;
   form: Partial<TaxBracket> = { minSalary: 0, maxSalary: null, taxRate: 0 };
   formError = '';
 
-  // Delete
   deleteTarget: TaxBracket | null = null;
 
-  // Calculator
   calcSalary: number = 4000;
   calcResult: CalcResponse | null = null;
   calculating = false;
 
-  // Staff panel
   staffList: StaffItem[] = [];
   staffSearchQuery = '';
   selectedRoleFilter = 'ALL';
@@ -107,10 +99,7 @@ export class TaxBracketsInline implements OnInit {
     { key: 'VP',              label: 'VP',     color: '#ef4444' },
   ];
 
-  // Country preset presets (USD-based for simplicity)
-  // Source: Official brackets (see user-provided Cambodia image)
   presets: { [code: string]: { minSalary: number; maxSalary: number | null; taxRate: number }[] } = {
-    // 🇰🇭 Cambodia — USD (Riel ÷ 4100 ≈ rounded to nearest $25)
     KH: [
       { minSalary:    0, maxSalary:   325, taxRate:  0 },
       { minSalary:  325, maxSalary:   500, taxRate:  5 },
@@ -118,7 +107,6 @@ export class TaxBracketsInline implements OnInit {
       { minSalary: 2125, maxSalary:  3125, taxRate: 15 },
       { minSalary: 3125, maxSalary:  null, taxRate: 20 },
     ],
-    // 🇲🇲 Myanmar — MMK
     MM: [
       { minSalary:        0, maxSalary:  2000000, taxRate:  0 },
       { minSalary:  2000000, maxSalary:  5000000, taxRate:  5 },
@@ -128,7 +116,6 @@ export class TaxBracketsInline implements OnInit {
       { minSalary: 30000000, maxSalary: 50000000, taxRate: 25 },
       { minSalary: 50000000, maxSalary:     null, taxRate: 25 },
     ],
-    // 🇯🇵 Japan — JPY (simplified annual → monthly approx ÷12)
     JP: [
       { minSalary:       0, maxSalary:   162500, taxRate:  5 },
       { minSalary:  162500, maxSalary:   275000, taxRate: 10 },
@@ -138,7 +125,6 @@ export class TaxBracketsInline implements OnInit {
       { minSalary: 1500000, maxSalary:  3333333, taxRate: 40 },
       { minSalary: 3333333, maxSalary:     null, taxRate: 45 },
     ],
-    // 🇻🇳 Vietnam — VND
     VN: [
       { minSalary:         0, maxSalary:    5000000, taxRate:  5 },
       { minSalary:   5000000, maxSalary:   10000000, taxRate: 10 },
@@ -148,7 +134,6 @@ export class TaxBracketsInline implements OnInit {
       { minSalary:  52000000, maxSalary:   80000000, taxRate: 30 },
       { minSalary:  80000000, maxSalary:       null, taxRate: 35 },
     ],
-    // 🇰🇷 Korea — KRW (annual → monthly approx)
     KR: [
       { minSalary:        0, maxSalary:  1166667, taxRate:  6 },
       { minSalary:  1166667, maxSalary:  4000000, taxRate: 15 },
@@ -158,7 +143,6 @@ export class TaxBracketsInline implements OnInit {
       { minSalary: 25000000, maxSalary: 41666667, taxRate: 40 },
       { minSalary: 41666667, maxSalary:     null, taxRate: 42 },
     ],
-    // 🇺🇸 USA — USD (federal annual → monthly approx single filer 2026)
     US: [
       { minSalary:     0, maxSalary:   970, taxRate: 10 },
       { minSalary:   970, maxSalary:  3946, taxRate: 12 },
@@ -170,7 +154,6 @@ export class TaxBracketsInline implements OnInit {
     ],
   };
 
-  // Flag fallback
   flagFallback: { [code: string]: string } = {
     JP: '🇯🇵', MM: '🇲🇲', KH: '🇰🇭', VN: '🇻🇳', KR: '🇰🇷', US: '🇺🇸',
   };
@@ -188,37 +171,22 @@ export class TaxBracketsInline implements OnInit {
     this.loadStaff();
   }
 
-  private get headers() {
-    return this.auth.getHeaders();
-  }
+  private get headers() { return this.auth.getHeaders(); }
 
-  // ─────────────────────────────────────────────
-  // COUNTRIES
-  // ─────────────────────────────────────────────
   private loadAllCountries(): void {
     this.http.get<CountryInfo[]>(COUNTRIES_BASE, { headers: this.headers })
       .pipe(catchError(err => { console.error('[countries]', err); return of([]); }))
-      .subscribe(list => {
-        this.allCountries = list || [];
-        this.cdr.detectChanges();
-      });
+      .subscribe(list => { this.allCountries = list || []; this.cdr.detectChanges(); });
   }
 
   private resolveCountryThenLoad(): void {
     const branchId = this.currentUser?.branchId;
-    if (!branchId) {
-      this.loadBrackets();
-      return;
-    }
+    if (!branchId) { this.loadBrackets(); return; }
 
     this.http.get<any>(`${BRANCHES_BASE}/${branchId}`, { headers: this.headers })
       .pipe(catchError(err => { console.error('[branch]', err); return of(null); }))
       .subscribe(branch => {
-        if (!branch?.countryId) {
-          this.loadBrackets();
-          return;
-        }
-
+        if (!branch?.countryId) { this.loadBrackets(); return; }
         this.http.get<CountryInfo>(`${COUNTRIES_BASE}/${branch.countryId}`, { headers: this.headers })
           .pipe(catchError(err => { console.error('[country]', err); return of(null); }))
           .subscribe(country => {
@@ -253,10 +221,10 @@ export class TaxBracketsInline implements OnInit {
     return r === 'BOSS' || r === 'COUNTRY_DIRECTOR';
   }
 
+  // ✅ ADMIN ပဲ edit/delete လုပ်လို့ရ
   get canEdit(): boolean {
     if (!this.viewingCountry) return false;
-    if (this.isGlobalAdmin) return true;
-    return this.isViewingOwnCountry;
+    return this.userRoleName === 'ADMIN';
   }
 
   get countryFlag(): string {
@@ -265,13 +233,8 @@ export class TaxBracketsInline implements OnInit {
     return c.flagEmoji || this.flagFallback[c.code] || '🌍';
   }
 
-  get countryName(): string {
-    return this.viewingCountry?.name || 'Global';
-  }
-
-  get currency(): string {
-    return this.viewingCountry?.currency || 'USD';
-  }
+  get countryName(): string { return this.viewingCountry?.name || 'Global'; }
+  get currency(): string { return this.viewingCountry?.currency || 'USD'; }
 
   getFlagFor(c: CountryInfo): string {
     return c.flagEmoji || this.flagFallback[c.code] || '🌍';
@@ -286,16 +249,9 @@ export class TaxBracketsInline implements OnInit {
     return `${this.countryFlag} Seed ${this.countryName}`;
   }
 
-  // ─────────────────────────────────────────────
-  // STATS
-  // ─────────────────────────────────────────────
-
-  /** Expose Math to template */
   Math = Math;
 
-  get statsTotal(): number {
-    return this.brackets.length;
-  }
+  get statsTotal(): number { return this.brackets.length; }
 
   get statsHighestRate(): number {
     if (!this.brackets.length) return 0;
@@ -308,15 +264,10 @@ export class TaxBracketsInline implements OnInit {
     return 0;
   }
 
-  // ─────────────────────────────────────────────
-  // LOAD
-  // ─────────────────────────────────────────────
   loadBrackets(): void {
     this.loading = true;
     const countryId = this.viewingCountry?.id;
-    const url = countryId
-      ? `${TAX_BASE}/by-country/${countryId}`
-      : TAX_BASE;
+    const url = countryId ? `${TAX_BASE}/by-country/${countryId}` : TAX_BASE;
 
     this.http.get<TaxBracket[]>(url, { headers: this.headers })
       .pipe(catchError(err => { console.error('[tax]', err); return of([]); }))
@@ -332,11 +283,7 @@ export class TaxBracketsInline implements OnInit {
       });
   }
 
-  // ─────────────────────────────────────────────
-  // CREATE / EDIT
-  // ─────────────────────────────────────────────
   openCreateForm(): void {
-    // Prefill: start min from last bracket's max
     const last = this.brackets[this.brackets.length - 1];
     const startMin = last?.maxSalary ?? 0;
     this.form = { minSalary: startMin, maxSalary: null, taxRate: 0 };
@@ -352,14 +299,10 @@ export class TaxBracketsInline implements OnInit {
     this.formError = '';
   }
 
-  closeForm(): void {
-    this.showForm = false;
-    this.formError = '';
-  }
+  closeForm(): void { this.showForm = false; this.formError = ''; }
 
   saveForm(): void {
     this.formError = '';
-
     const min = Number(this.form.minSalary ?? 0);
     const max = this.form.maxSalary == null || this.form.maxSalary === ('' as any)
       ? null : Number(this.form.maxSalary);
@@ -375,11 +318,7 @@ export class TaxBracketsInline implements OnInit {
       return;
     }
 
-    const payload: any = {
-      minSalary: min,
-      maxSalary: max,
-      taxRate: rate,
-    };
+    const payload: any = { minSalary: min, maxSalary: max, taxRate: rate };
     if (!this.editMode && this.viewingCountry?.id) {
       payload.countryId = this.viewingCountry.id;
     }
@@ -396,16 +335,10 @@ export class TaxBracketsInline implements OnInit {
       return of(null);
     })).subscribe(res => {
       this.saving = false;
-      if (res) {
-        this.closeForm();
-        this.loadBrackets();
-      }
+      if (res) { this.closeForm(); this.loadBrackets(); }
     });
   }
 
-  // ─────────────────────────────────────────────
-  // DELETE
-  // ─────────────────────────────────────────────
   confirmDelete(b: TaxBracket): void { this.deleteTarget = b; }
   cancelDelete(): void { this.deleteTarget = null; }
 
@@ -414,33 +347,16 @@ export class TaxBracketsInline implements OnInit {
     const id = this.deleteTarget.id;
     this.http.delete(`${TAX_BASE}/${id}`, { headers: this.headers })
       .pipe(catchError(err => { console.error('[del]', err); return of(null); }))
-      .subscribe(() => {
-        this.deleteTarget = null;
-        this.loadBrackets();
-      });
+      .subscribe(() => { this.deleteTarget = null; this.loadBrackets(); });
   }
 
-  // ─────────────────────────────────────────────
-  // SEED (bulk replace)
-  // ─────────────────────────────────────────────
   seedCountryPreset(): void {
-    if (!this.viewingCountry || !this.hasPresetForCountry) {
-      alert('No preset available');
-      return;
-    }
+    if (!this.viewingCountry || !this.hasPresetForCountry) { alert('No preset available'); return; }
     const preset = this.presets[this.viewingCountry.code];
-
-    if (!confirm(
-      `Seed ${preset.length} tax brackets for ${this.countryName}?\n\n` +
-      `⚠️ This will REPLACE all existing brackets for this country.`
-    )) return;
+    if (!confirm(`Seed ${preset.length} tax brackets for ${this.countryName}?\n\n⚠️ This will REPLACE all existing brackets for this country.`)) return;
 
     this.saving = true;
-    const payload = {
-      countryId: this.viewingCountry.id,
-      brackets: preset,
-    };
-
+    const payload = { countryId: this.viewingCountry.id, brackets: preset };
     this.http.post<any>(`${TAX_BASE}/bulk`, payload, { headers: this.headers })
       .pipe(catchError(err => {
         console.error('[bulk]', err);
@@ -450,27 +366,17 @@ export class TaxBracketsInline implements OnInit {
       }))
       .subscribe(res => {
         this.saving = false;
-        if (res) {
-          alert(res.message || `Seeded ${res.created} brackets`);
-          this.loadBrackets();
-        }
+        if (res) { alert(res.message || `Seeded ${res.created} brackets`); this.loadBrackets(); }
       });
   }
 
-  // ─────────────────────────────────────────────
-  // CALCULATOR
-  // ─────────────────────────────────────────────
   runCalculator(): void {
     if (!this.viewingCountry) return;
     const salary = Number(this.calcSalary);
-    if (isNaN(salary) || salary < 0) {
-      alert('Enter a valid salary');
-      return;
-    }
+    if (isNaN(salary) || salary < 0) { alert('Enter a valid salary'); return; }
 
     this.calculating = true;
     const payload = { countryId: this.viewingCountry.id, salary };
-
     this.http.post<CalcResponse>(`${TAX_BASE}/calculate`, payload, { headers: this.headers })
       .pipe(catchError(err => {
         console.error('[calc]', err);
@@ -478,18 +384,11 @@ export class TaxBracketsInline implements OnInit {
         this.calculating = false;
         return of(null);
       }))
-      .subscribe(res => {
-        this.calculating = false;
-        this.calcResult = res;
-        this.cdr.detectChanges();
-      });
+      .subscribe(res => { this.calculating = false; this.calcResult = res; this.cdr.detectChanges(); });
   }
 
   clearCalc(): void { this.calcResult = null; }
 
-  // ─────────────────────────────────────────────
-  // FORMAT HELPERS
-  // ─────────────────────────────────────────────
   formatMoney(n: number | null | undefined): string {
     if (n == null) return '—';
     const num = Number(n);
@@ -504,16 +403,13 @@ export class TaxBracketsInline implements OnInit {
   }
 
   tierColorFor(taxRate: number): string {
-    if (taxRate === 0)   return '#22c55e';
-    if (taxRate <= 10)   return '#84cc16';
-    if (taxRate <= 20)   return '#eab308';
-    if (taxRate <= 30)   return '#f97316';
+    if (taxRate === 0)  return '#22c55e';
+    if (taxRate <= 10)  return '#84cc16';
+    if (taxRate <= 20)  return '#eab308';
+    if (taxRate <= 30)  return '#f97316';
     return '#ef4444';
   }
 
-  // ─────────────────────────────────────────────
-  // STAFF PANEL (same pattern as holidays)
-  // ─────────────────────────────────────────────
   loadStaff(): void {
     this.loadingStaff = true;
     this.http.get<any[]>(`${USERS_BASE}/staff-list`, { headers: this.headers })
@@ -560,16 +456,12 @@ export class TaxBracketsInline implements OnInit {
     return colors[id % colors.length];
   }
 
-  getInitial(name: string): string {
-    return (name || '?').charAt(0).toUpperCase();
-  }
+  getInitial(name: string): string { return (name || '?').charAt(0).toUpperCase(); }
 
   toTitleCase(s: string): string {
     if (!s) return '';
     return s.toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
   }
 
-  onBack(): void {
-    this.back.emit();
-  }
+  onBack(): void { this.back.emit(); }
 }

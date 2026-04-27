@@ -3,7 +3,7 @@
   <!-- ════════════ TOPBAR ════════════ -->
   <header class="topbar" style="overflow:visible;">
     <div class="logo-wrap">
-      <img class="logo-img" src="brycen-logo.png" alt="Brycen"/>
+      <img class="logo-img" src="logo.jpg" alt="Brycen"/>
       <div>
         <div class="logo-text">Brycen Hub</div>
         <div class="logo-slogan">One Group. One Platform. Full Visibility.</div>
@@ -86,6 +86,20 @@
             <div class="proj-item-top"><div class="proj-item-left"><span class="proj-dot-sq" style="background:#f59e0b"></span><span class="proj-name" style="font-size:10px;">💵 Salary</span></div><span *ngIf="approvalCounts.SALARY>0" class="rs-badge-red" style="font-size:9px;background:rgba(245,158,11,.2);color:#f59e0b;">{{ approvalCounts.SALARY }}</span></div>
           </div>
         </div>
+        <!-- အသစ် — VP dashboard class သုံး -->
+        <hr class="section-divider"/>
+        <div style="margin-top:6px;">
+          <div class="proj-section-label">SETTINGS</div>
+          <div class="sidebar-item" [class.active]="activeView==='holidays'"
+            (click)="setView('holidays')">
+            <span class="nav-icon">🗓️</span><span>Public Holidays</span>
+          </div>
+          <div class="sidebar-item" [class.active]="activeView==='tax'"
+            (click)="setView('tax')">
+            <span class="nav-icon">🌏</span><span>Tax Brackets</span>
+          </div>
+        </div>
+
       </div>
       <div class="sidebar-bottom">
         <div class="settings-wrap">
@@ -233,6 +247,18 @@
           [staffId]="selectedStaffId"
           (back)="setView('members')">
         </app-staff-profile-inline>
+
+        <app-holidays-inline
+          *ngIf="activeView==='holidays'"
+          style="flex:1;min-width:0;">
+        </app-holidays-inline>
+
+        <app-tax-brackets-inline
+          *ngIf="activeView==='tax'"
+          style="flex:1;min-width:0;">
+        </app-tax-brackets-inline>
+
+        
 
         <!-- ════ LEAVE VIEW ════ -->
         <div *ngIf="activeView==='view-leave'" style="padding:16px;display:flex;flex-direction:column;gap:12px;overflow-y:auto;height:100%;">

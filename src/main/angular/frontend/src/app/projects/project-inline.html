@@ -175,11 +175,11 @@
             </button>
           </div>
 
-          <div *ngIf="!designFramesLoading && designFrames.length > 0" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:6px;">
+          <div *ngIf="!designFramesLoading && designFrames.length > 0" style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;">
             <div *ngFor="let frame of designFrames.slice(0, 3)" (click)="openDesign()"
               style="border-radius:8px;border:1px solid rgba(30,45,74,0.5);overflow:hidden;cursor:pointer;background:white;transition:all 0.15s;"
               onmouseenter="this.style.borderColor='#3b82f666'" onmouseleave="this.style.borderColor='rgba(30,45,74,0.5)'">
-              <div style="aspect-ratio:16/10;background:#f9fafb;display:flex;align-items:center;justify-content:center;overflow:hidden;" [innerHTML]="getFrameSvg(frame)"></div>
+              <div style="height:120px;background:#f9fafb;display:flex;align-items:center;justify-content:center;overflow:hidden;" [innerHTML]="getFrameSvg(frame)"></div>
               <div style="padding:4px 6px;border-top:1px solid rgba(30,45,74,0.3);display:flex;align-items:center;justify-content:space-between;background:#0d1424;">
                 <div style="font-size:9px;font-weight:600;color:#e2e8f0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ frame.name }}</div>
                 <div style="font-size:8px;color:#64748b;font-family:'DM Mono',monospace;flex-shrink:0;margin-left:4px;">{{ frame.w }}×{{ frame.h }}</div>
