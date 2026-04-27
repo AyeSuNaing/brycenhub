@@ -24,9 +24,8 @@ export class AnnouncementInline implements OnInit {
 
   announcements: any[] = [];
   isLoading     = true;
-  filter        = 'ALL'; // ALL | ACTIVE | EXPIRED | PINNED
+  filter        = 'ALL';
 
-  // Form
   showForm  = false;
   editingId: number | null = null;
   saving    = false;
@@ -47,6 +46,12 @@ export class AnnouncementInline implements OnInit {
     { key: 'URGENT',    label: 'Urgent',    color: '#ef4444' },
   ];
 
+  readonly SCOPES = [
+    { key: 'BRANCH',  label: '🏢 Branch',  desc: 'This branch only' },
+    { key: 'COUNTRY', label: '🌏 Country', desc: 'All branches in country' },
+    { key: 'GLOBAL',  label: '🌐 Global',  desc: 'Company-wide' },
+  ];
+
   readonly EXPIRE_OPTIONS = [
     { value: null, label: 'Never' },
     { value: 1,    label: '1 day' },
@@ -64,10 +69,6 @@ export class AnnouncementInline implements OnInit {
   ngOnInit(): void {
     this.loadAnnouncements();
   }
-
-  // ══════════════════════════════════════════════════════════════
-  // DATA
-  // ══════════════════════════════════════════════════════════════
 
   loadAnnouncements(): void {
     this.isLoading = true;
@@ -96,10 +97,6 @@ export class AnnouncementInline implements OnInit {
     }
   }
 
-  // ══════════════════════════════════════════════════════════════
-  // PERMISSIONS
-  // ══════════════════════════════════════════════════════════════
-
   canCreate(): boolean {
     const role = this.auth.getUser()?.role || '';
     return ['BOSS','COUNTRY_DIRECTOR','VICE_PRESIDENT','ADMIN','PROJECT_MANAGER']
@@ -114,20 +111,23 @@ export class AnnouncementInline implements OnInit {
     return Number(a.authorId) === Number(myId);
   }
 
-  // ══════════════════════════════════════════════════════════════
-  // FORM
-  // ══════════════════════════════════════════════════════════════
+  private getDefaultScope(): string {
+    const role = this.auth.getUser()?.role || '';
+    if (role === 'BOSS') return 'GLOBAL';
+    if (role === 'COUNTRY_DIRECTOR') return 'COUNTRY';
+    return 'BRANCH';
+  }
 
   openCreate(): void {
-    this.editingId  = null;
-    this.form       = {
+    this.editingId = null;
+    this.form = {
       title: '', content: '', priority: 'NORMAL',
-      targetScope: 'BRANCH',
+      targetScope: this.getDefaultScope(),
       targetId: this.branchId || this.auth.getUser()?.branchId || null,
       expireDays: null,
     };
-    this.formError  = '';
-    this.showForm   = true;
+    this.formError = '';
+    this.showForm  = true;
     this.cdr.detectChanges();
   }
 
@@ -157,10 +157,8 @@ export class AnnouncementInline implements OnInit {
     if (!this.form.content.trim()) { this.formError = 'Content is required'; return; }
     this.saving    = true;
     this.formError = '';
-
     const h = { headers: this.auth.getHeaders() };
 
-    // ── Fix: ternary instead of dynamic bracket ──────────────
     const req$ = this.editingId
       ? this.http.put<any>(`${BASE}/announcements/${this.editingId}`, this.form, h)
       : this.http.post<any>(`${BASE}/announcements`, this.form, h);
@@ -210,10 +208,6 @@ export class AnnouncementInline implements OnInit {
       });
   }
 
-  // ══════════════════════════════════════════════════════════════
-  // HELPERS
-  // ══════════════════════════════════════════════════════════════
-
   getPriorityColor(p: string): string {
     return p === 'URGENT' ? '#ef4444' : p === 'IMPORTANT' ? '#f97316' : '#94a3b8';
   }
@@ -222,6 +216,16 @@ export class AnnouncementInline implements OnInit {
     return p === 'URGENT'    ? 'rgba(239,68,68,0.12)'
          : p === 'IMPORTANT' ? 'rgba(249,115,22,0.12)'
          : 'rgba(148,163,184,0.1)';
+  }
+
+  getScopeColor(s: string): string {
+    return s === 'GLOBAL' ? '#a855f7' : s === 'COUNTRY' ? '#3b82f6' : '#22c55e';
+  }
+
+  getScopeBg(s: string): string {
+    return s === 'GLOBAL'  ? 'rgba(168,85,247,0.12)'
+         : s === 'COUNTRY' ? 'rgba(59,130,246,0.12)'
+         : 'rgba(34,197,94,0.1)';
   }
 
   isExpired(a: any): boolean {
