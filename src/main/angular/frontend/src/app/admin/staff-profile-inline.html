@@ -83,7 +83,7 @@
         <span *ngIf="currentProjects.length > 0 || currentTasks.length > 0"
           style="margin-left:4px;font-size:9px;background:rgba(59,130,246,0.2);
             padding:1px 5px;border-radius:20px;color:#60a5fa;">
-          {{ currentProjects.length + currentTasks.length }}
+          {{ currentTasks.length }}
         </span>
       </button>
       <button *ngIf="canViewSalary()" (click)="setTab('salary')"
