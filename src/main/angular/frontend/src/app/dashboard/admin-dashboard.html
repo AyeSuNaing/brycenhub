@@ -474,10 +474,10 @@
         </app-attendance-upload-inline>
 
         <!-- Announcements History -->
-        <app-announcement-history
+        <app-announcement-inline
           *ngIf="activeView === 'announce'"
-          [isDark]="isDark">
-        </app-announcement-history>
+          style="flex:1;display:flex;flex-direction:column;min-height:0;overflow:hidden;">
+        </app-announcement-inline>
 
         <!-- Monthly Payroll Wizard -->
         <app-payroll-wizard-inline *ngIf="activeView === 'payroll'"

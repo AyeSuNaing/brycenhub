@@ -1,5 +1,5 @@
 import {
-  Component, OnInit, Input, ChangeDetectorRef
+  Component, OnInit, OnDestroy, Input, ChangeDetectorRef
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -11,6 +11,9 @@ import { environment } from '../../environments/environment';
 
 const BASE = environment.apiBaseUrl;
 
+const CAN_CREATE_ROLES: string[]     = ['BOSS', 'COUNTRY_DIRECTOR', 'VICE_PRESIDENT', 'ADMIN'];
+const CAN_RETRANSLATE_ROLES: string[] = []; // empty = ဘယ် role မှ မမြင်ရ
+
 @Component({
   selector: 'app-announcement-inline',
   standalone: true,
@@ -18,42 +21,40 @@ const BASE = environment.apiBaseUrl;
   templateUrl: './announcement-inline.html',
   host: { style: 'display:contents' }
 })
-export class AnnouncementInline implements OnInit {
+export class AnnouncementInline implements OnInit, OnDestroy {
 
   @Input() branchId?: number;
 
-  @Input() set lang(val: string) {
-    if (val && val !== this.currentLang) {
-      this.currentLang     = val;
-      this.translatedCache = {};
-      if (this.announcements.length > 0 && val !== 'en') {
-        this.translateBatch();
-      }
-      this.cdr.detectChanges();
-    }
-  }
-
   announcements: any[] = [];
-  isLoading     = true;
-  filter        = 'ALL';
+  isLoading    = true;
+  filter       = 'ALL';
 
-  translatingId: number | null = null;
-  translatedCache: Record<number, { title: string; content: string }> = {};
-  currentLang = 'en';
+  // ── Date filter — default: 6 months ago → today ──────────
+  today    = new Date().toISOString().split('T')[0];
+  fromDate = this.getThreeMonthsAgo();
+  toDate   = this.today;
 
-  showForm  = false;
+  // ── Form state ───────────────────────────────────────────
+  showForm     = false;
   editingId: number | null = null;
-  saving    = false;
-  formError = '';
+  saving       = false;
+  translating  = false;
+  formError    = '';
+  private _translateTimer: any = null;
+
+  // ── Retranslate-all state ────────────────────────────────
+  retranslating     = false;
+  retranslateDone   = false;
+  retranslateResult = '';
+  retranslateError  = '';
 
   form = {
-    title:            '',
-    content:          '',
-    priority:         'NORMAL',
-    targetScope:      'BRANCH',
-    targetId:         null as number | null,
-    expireDays:       null as number | null,
-    originalLanguage: 'en',
+    title:       '',
+    content:     '',
+    priority:    'NORMAL',
+    targetScope: 'BRANCH',
+    targetId:    null as number | null,
+    expireDays:  null as number | null,
   };
 
   readonly PRIORITIES = [
@@ -64,14 +65,14 @@ export class AnnouncementInline implements OnInit {
 
   readonly SCOPES = [
     { key: 'BRANCH',  label: '🏢 Branch',  desc: 'Branch members only' },
-    { key: 'COUNTRY', label: '🌏 Country', desc: 'VP + all branches' },
+    { key: 'COUNTRY', label: '🌏 Country', desc: 'VP + all branches'   },
     { key: 'GLOBAL',  label: '🌐 Global',  desc: 'Boss + all branches' },
   ];
 
   readonly EXPIRE_OPTIONS = [
-    { value: null, label: 'Never' },
-    { value: 1,    label: '1 day' },
-    { value: 7,    label: '7 days' },
+    { value: null, label: 'Never'   },
+    { value: 1,    label: '1 day'   },
+    { value: 7,    label: '7 days'  },
     { value: 30,   label: '30 days' },
     { value: 90,   label: '90 days' },
   ];
@@ -82,159 +83,171 @@ export class AnnouncementInline implements OnInit {
     private cdr:  ChangeDetectorRef,
   ) {}
 
-  ngOnInit(): void {
-    this.currentLang = this.auth.getUser()?.preferredLanguage || 'en';
-    this.loadAnnouncements();
+  ngOnInit(): void { this.loadAnnouncements(); }
+
+  ngOnDestroy(): void {
+    if (this._translateTimer) clearTimeout(this._translateTimer);
   }
 
-  loadAnnouncements(): void {
-    this.isLoading = true;
-    this.http.get<any[]>(`${BASE}/announcements`, { headers: this.auth.getHeaders() })
-      .pipe(catchError(() => of([])))
-      .subscribe(list => {
-        this.announcements = list || [];
-        this.isLoading = false;
-        this.cdr.detectChanges();
-        // Batch translate — 1 call for all
-        if (this.currentLang !== 'en' && this.announcements.length > 0) {
-          this.translateBatch();
-        }
-      });
+  // ── Date helpers ─────────────────────────────────────────
+  private getThreeMonthsAgo(): string {
+    const d = new Date();
+    d.setMonth(d.getMonth() - 3);
+    return d.toISOString().split('T')[0];
   }
 
-  // ── Batch translate — 1 API call ────────────────────────
-  private translateBatch(): void {
-    // Only translate announcements whose originalLanguage != currentLang
-    const toTranslate = this.announcements.filter(a =>
-      (a.originalLanguage || 'en') !== this.currentLang
-    );
-    if (toTranslate.length === 0) return;
-
-    const ids = toTranslate.map(a => a.id);
-    this.http.post<any[]>(
-      `${BASE}/announcements/translate-batch`,
-      { ids, lang: this.currentLang },
-      { headers: this.auth.getHeaders() }
-    ).pipe(catchError(() => of([])))
-     .subscribe(res => {
-       (res || []).forEach((r: any) => {
-         if (r.id) this.translatedCache[r.id] = { title: r.title, content: r.content };
-       });
-       this.cdr.detectChanges();
-     });
+  // ── Role checks ─────────────────────────────────────────
+  get canCreate(): boolean {
+    return CAN_CREATE_ROLES.includes(this.auth.getRole());
+  }
+  get canRetranslate(): boolean {
+    return CAN_RETRANSLATE_ROLES.includes(this.auth.getRole());
   }
 
-  get filtered(): any[] {
-    const now = new Date();
-    switch (this.filter) {
-      case 'ACTIVE':  return this.announcements.filter(a => !a.expiresAt || new Date(a.expiresAt) > now);
-      case 'EXPIRED': return this.announcements.filter(a => a.expiresAt && new Date(a.expiresAt) <= now);
-      case 'PINNED':  return this.announcements.filter(a => a.isPinned === 1);
-      default:        return this.announcements;
-    }
-  }
-
-  canTranslate(): boolean { return this.currentLang !== 'en'; }
-
-  translate(a: any): void {
-    if (!this.canTranslate()) return;
-    if (this.translatedCache[a.id]) {
-      delete this.translatedCache[a.id];
-      this.cdr.detectChanges();
-      return;
-    }
-    this.translatingId = a.id;
-    this.http.get<any>(
-      `${BASE}/announcements/${a.id}/translate?lang=${this.currentLang}`,
-      { headers: this.auth.getHeaders() }
-    ).pipe(catchError(() => of(null)))
-     .subscribe(res => {
-       if (res) this.translatedCache[a.id] = { title: res.title, content: res.content };
-       this.translatingId = null;
-       this.cdr.detectChanges();
-     });
-  }
-
-  getTitle(a: any): string      { return this.translatedCache[a.id]?.title   || a.title;   }
-  getContent(a: any): string    { return this.translatedCache[a.id]?.content || a.content; }
-  isTranslated(a: any): boolean { return !!this.translatedCache[a.id]; }
-
-  canCreate(): boolean {
-    const role = this.auth.getUser()?.role || '';
-    return ['BOSS','COUNTRY_DIRECTOR','VICE_PRESIDENT','ADMIN','PROJECT_MANAGER'].includes(role);
-  }
-
-  canEdit(a: any): boolean {
+  // ── ကိုယ့် announcement မှပဲ edit/delete/pin ───────────
+  isMyAnnouncement(a: any): boolean {
     const user = this.auth.getUser();
-    const role = user?.role || '';
     const myId = user?.id || user?.userId;
-    if (['BOSS','COUNTRY_DIRECTOR'].includes(role)) return true;
     return Number(a.authorId) === Number(myId);
   }
 
-  private getDefaultScope(): string {
-    const role = this.auth.getUser()?.role || '';
-    if (role === 'BOSS') return 'GLOBAL';
-    if (role === 'COUNTRY_DIRECTOR') return 'COUNTRY';
-    return 'BRANCH';
+  // ── Load with date filter ────────────────────────────────
+  loadAnnouncements(): void {
+    this.isLoading = true;
+    const url = `${BASE}/announcements?from=${this.fromDate}&to=${this.toDate}`;
+    this.http.get<any[]>(url, { headers: this.auth.getHeaders() })
+      .pipe(catchError(() => of([])))
+      .subscribe(list => {
+        this.announcements = list || [];
+        this.isLoading     = false;
+        this.cdr.detectChanges();
+      });
   }
 
-  openCreate(): void {
-    this.editingId = null;
-    this.form = {
-      title: '', content: '', priority: 'NORMAL',
-      targetScope:      this.getDefaultScope(),
-      targetId:         this.branchId || this.auth.getUser()?.branchId || null,
-      expireDays:       null,
-      originalLanguage: this.auth.getUser()?.preferredLanguage || 'en', // ✅
+  // ── Search button ────────────────────────────────────────
+  search(): void {
+    this.announcements = [];
+    this.loadAnnouncements();
+  }
+
+  // ── Reset to default (6 months) ─────────────────────────
+  resetFilter(): void {
+    this.fromDate = this.getThreeMonthsAgo();
+    this.toDate   = this.today;
+    this.loadAnnouncements();
+  }
+
+  // ── Display ─────────────────────────────────────────────
+  getTitle(a: any): string   { return a.translatedTitle   || a.title;   }
+  getContent(a: any): string { return a.translatedContent || a.content; }
+
+  // ── Save button label ───────────────────────────────────
+  get saveLabel(): string {
+    if (this.translating) return 'Translating to 6 languages... 🌐';
+    if (this.saving)      return 'Saving...';
+    return this.editingId ? '✓ Update' : '✓ Publish';
+  }
+
+  // ── Filter + Sort (active အပေါ်၊ expired အောက်) ──────────
+  get filtered(): any[] {
+    const now = new Date();
+    let list: any[];
+    switch (this.filter) {
+      case 'ACTIVE':  list = this.announcements.filter(a => !a.expiresAt || new Date(a.expiresAt) > now); break;
+      case 'EXPIRED': list = this.announcements.filter(a =>  a.expiresAt && new Date(a.expiresAt) <= now); break;
+      case 'PINNED':  list = this.announcements.filter(a =>  a.isPinned === 1); break;
+      default:        list = [...this.announcements]; break;
+    }
+    return list.sort((a, b) => {
+      const aExp = !!(a.expiresAt && new Date(a.expiresAt) <= now);
+      const bExp = !!(b.expiresAt && new Date(b.expiresAt) <= now);
+      if (aExp && !bExp) return 1;
+      if (!aExp && bExp) return -1;
+      return 0;
+    });
+  }
+
+  get filterCounts(): Record<string, number> {
+    const now = new Date();
+    return {
+      ALL:     this.announcements.length,
+      ACTIVE:  this.announcements.filter(a => !a.expiresAt || new Date(a.expiresAt) > now).length,
+      EXPIRED: this.announcements.filter(a =>  a.expiresAt && new Date(a.expiresAt) <= now).length,
+      PINNED:  this.announcements.filter(a =>  a.isPinned === 1).length,
     };
-    this.formError = '';
-    this.showForm  = true;
-    this.cdr.detectChanges();
+  }
+
+  // ── Form ────────────────────────────────────────────────
+  openForm(): void {
+    this.editingId   = null;
+    this.form        = { title: '', content: '', priority: 'NORMAL', targetScope: 'BRANCH', targetId: null, expireDays: null };
+    this.formError   = '';
+    this.saving      = false;
+    this.translating = false;
+    this.showForm    = true;
   }
 
   openEdit(a: any): void {
-    this.editingId = a.id;
-    this.form = {
-      title:            a.title            || '',
-      content:          a.content          || '',
-      priority:         a.priority         || 'NORMAL',
-      targetScope:      a.targetScope      || 'BRANCH',
-      targetId:         a.targetId         || null,
-      expireDays:       null,
-      originalLanguage: a.originalLanguage || 'en',
-    };
-    this.formError = '';
-    this.showForm  = true;
-    this.cdr.detectChanges();
+    this.editingId   = a.id;
+    this.form        = { title: a.title || '', content: a.content || '', priority: a.priority || 'NORMAL', targetScope: a.targetScope || 'BRANCH', targetId: a.targetId ?? null, expireDays: null };
+    this.formError   = '';
+    this.saving      = false;
+    this.translating = false;
+    this.showForm    = true;
   }
 
   closeForm(): void {
+    if (this.saving || this.translating) return;
     this.showForm  = false;
     this.editingId = null;
-    this.cdr.detectChanges();
+    this.formError = '';
+    if (this._translateTimer) clearTimeout(this._translateTimer);
   }
 
   save(): void {
-    if (!this.form.title.trim())   { this.formError = 'Title is required';   return; }
-    if (!this.form.content.trim()) { this.formError = 'Content is required'; return; }
-    this.saving = true; this.formError = '';
-    const h = { headers: this.auth.getHeaders() };
+    if (!this.form.title.trim() || !this.form.content.trim()) {
+      this.formError = 'Title and Content are required';
+      return;
+    }
+    this.saving      = true;
+    this.translating = false;
+    this.formError   = '';
+
+    this._translateTimer = setTimeout(() => {
+      if (this.saving) {
+        this.saving      = false;
+        this.translating = true;
+        this.cdr.detectChanges();
+      }
+    }, 800);
+
+    const h    = { headers: this.auth.getHeaders() };
     const req$ = this.editingId
       ? this.http.put<any>(`${BASE}/announcements/${this.editingId}`, this.form, h)
       : this.http.post<any>(`${BASE}/announcements`, this.form, h);
+
     req$.subscribe({
       next: (saved) => {
+        clearTimeout(this._translateTimer);
+        this.saving      = false;
+        this.translating = false;
         if (this.editingId) {
           const idx = this.announcements.findIndex(a => a.id === this.editingId);
           if (idx > -1) this.announcements[idx] = saved;
         } else {
           this.announcements.unshift(saved);
         }
-        this.saving = false; this.showForm = false; this.editingId = null;
+        this.showForm  = false;
+        this.editingId = null;
         this.cdr.detectChanges();
       },
-      error: () => { this.formError = 'Failed to save'; this.saving = false; this.cdr.detectChanges(); }
+      error: () => {
+        clearTimeout(this._translateTimer);
+        this.saving      = false;
+        this.translating = false;
+        this.formError   = 'Failed to save. Please try again.';
+        this.cdr.detectChanges();
+      }
     });
   }
 
@@ -251,34 +264,61 @@ export class AnnouncementInline implements OnInit {
     this.http.patch<any>(`${BASE}/announcements/${a.id}/pin`, {}, { headers: this.auth.getHeaders() })
       .subscribe({ next: (updated) => {
         const idx = this.announcements.findIndex(x => x.id === a.id);
-        if (idx > -1) this.announcements[idx] = updated;
+        if (idx > -1) this.announcements[idx] = { ...this.announcements[idx], isPinned: updated.isPinned };
         this.cdr.detectChanges();
       }});
   }
 
-  getPriorityColor(p: string): string { return p==='URGENT'?'#ef4444':p==='IMPORTANT'?'#f97316':'#94a3b8'; }
-  getPriorityBg(p: string): string    { return p==='URGENT'?'rgba(239,68,68,0.12)':p==='IMPORTANT'?'rgba(249,115,22,0.12)':'rgba(148,163,184,0.1)'; }
-  getScopeColor(s: string): string    { return s==='GLOBAL'?'#a855f7':s==='COUNTRY'?'#3b82f6':'#22c55e'; }
-  getScopeBg(s: string): string       { return s==='GLOBAL'?'rgba(168,85,247,0.12)':s==='COUNTRY'?'rgba(59,130,246,0.12)':'rgba(34,197,94,0.1)'; }
+  retranslateAll(): void {
+    if (!confirm('Translate all existing announcements to 6 languages?\n\nThis may take 1-2 minutes.')) return;
+    this.retranslating    = true;
+    this.retranslateDone  = false;
+    this.retranslateResult = '';
+    this.retranslateError  = '';
+    this.cdr.detectChanges();
 
+    this.http.post<any>(
+      `${BASE}/announcements/admin/retranslate-all`, {},
+      { headers: this.auth.getHeaders() }
+    ).pipe(catchError(err => of({ error: err?.error?.message || 'Failed' })))
+     .subscribe(res => {
+       this.retranslating = false;
+       if (res.error) {
+         this.retranslateError = '❌ ' + res.error;
+       } else {
+         this.retranslateResult = `✅ Done: ${res.success}/${res.total} translated`;
+         this.retranslateDone   = true;
+         this.loadAnnouncements();
+       }
+       this.cdr.detectChanges();
+       setTimeout(() => {
+         this.retranslateResult = '';
+         this.retranslateError  = '';
+         this.cdr.detectChanges();
+       }, 5000);
+     });
+  }
+
+  // ── Style helpers ───────────────────────────────────────
+  getPriorityColor(p: string): string {
+    return p === 'URGENT' ? '#ef4444' : p === 'IMPORTANT' ? '#f97316' : '#94a3b8';
+  }
+  getPriorityBg(p: string): string {
+    return p === 'URGENT' ? 'rgba(239,68,68,0.12)' : p === 'IMPORTANT' ? 'rgba(249,115,22,0.12)' : 'rgba(148,163,184,0.1)';
+  }
+  getScopeColor(s: string): string {
+    return s === 'GLOBAL' ? '#a855f7' : s === 'COUNTRY' ? '#3b82f6' : '#22c55e';
+  }
+  getScopeBg(s: string): string {
+    return s === 'GLOBAL' ? 'rgba(168,85,247,0.12)' : s === 'COUNTRY' ? 'rgba(59,130,246,0.12)' : 'rgba(34,197,94,0.1)';
+  }
   isExpired(a: any): boolean { return !!a.expiresAt && new Date(a.expiresAt) <= new Date(); }
-
   timeAgo(dateStr: string): string {
     if (!dateStr) return '';
     const diff = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000);
     if (diff < 60)    return 'just now';
-    if (diff < 3600)  return Math.floor(diff/60)   + 'm ago';
-    if (diff < 86400) return Math.floor(diff/3600)  + 'h ago';
-    return Math.floor(diff/86400) + 'd ago';
-  }
-
-  get filterCounts(): Record<string, number> {
-    const now = new Date();
-    return {
-      ALL:     this.announcements.length,
-      ACTIVE:  this.announcements.filter(a => !a.expiresAt || new Date(a.expiresAt) > now).length,
-      EXPIRED: this.announcements.filter(a => a.expiresAt && new Date(a.expiresAt) <= now).length,
-      PINNED:  this.announcements.filter(a => a.isPinned === 1).length,
-    };
+    if (diff < 3600)  return Math.floor(diff / 60)   + 'm ago';
+    if (diff < 86400) return Math.floor(diff / 3600)  + 'h ago';
+    return Math.floor(diff / 86400) + 'd ago';
   }
 }

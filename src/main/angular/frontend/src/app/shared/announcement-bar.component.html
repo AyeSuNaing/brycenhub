@@ -1,20 +1,27 @@
 <!-- Slim Announcement Bar -->
 <div *ngIf="announcements.length > 0"
      class="ann-bar"
-     [class.pinned]="current.pinned"
+     [class.pinned]="current?.isPinned === 1"
      (click)="openModal(barIdx)">
 
-  <div class="ann-dot" [style.background]="current.tagColor"></div>
+  <div class="ann-dot" [style.background]="getTagColor(current)"></div>
 
   <span class="ann-tag"
-        [style.background]="current.tagColor + '22'"
-        [style.color]="current.tagColor">
-    {{ current.tag }}
+        [style.background]="getTagColor(current) + '22'"
+        [style.color]="getTagColor(current)">
+    {{ getTag(current) }}
   </span>
 
-  <span class="ann-text">{{ current.text }}</span>
+  <!-- ✅ translatedTitle first, fallback to title/text -->
+  <span class="ann-text">{{ getTitle(current) }}</span>
   <span class="ann-hint">Click to read more</span>
-  <span class="ann-meta">{{ current.meta }} · {{ current.time }}</span>
+
+  <!-- author · time -->
+  <span class="ann-meta">
+    {{ current?.authorName || current?.meta || '' }}
+    <ng-container *ngIf="current?.createdAt"> · {{ timeAgo(current.createdAt) }}</ng-container>
+    <ng-container *ngIf="current?.time"> · {{ current.time }}</ng-container>
+  </span>
 
   <!-- Prev / Next -->
   <div class="ann-nav" (click)="$event.stopPropagation()">
@@ -24,8 +31,8 @@
   </div>
 
   <!-- Pinned lock or Dismiss -->
-  <span *ngIf="current.pinned" class="ann-lock" title="Pinned">🔒</span>
-  <div *ngIf="!current.pinned"
+  <span *ngIf="current?.isPinned === 1" class="ann-lock" title="Pinned">🔒</span>
+  <div *ngIf="current?.isPinned !== 1"
        class="ann-close"
        title="Dismiss"
        (click)="dismiss(current.id); $event.stopPropagation()">✕</div>
@@ -40,22 +47,29 @@
       <div style="flex:1">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
           <span class="ann-tag"
-                [style.background]="modalAnn.tagColor + '22'"
-                [style.color]="modalAnn.tagColor"
+                [style.background]="getTagColor(modalAnn) + '22'"
+                [style.color]="getTagColor(modalAnn)"
                 style="font-size:9px">
-            {{ modalAnn.tag }}
+            {{ getTag(modalAnn) }}
           </span>
-          <span *ngIf="modalAnn.pinned" style="font-size:9px;opacity:0.4">🔒 Pinned</span>
+          <span *ngIf="modalAnn?.isPinned === 1" style="font-size:9px;opacity:0.4">🔒 Pinned</span>
         </div>
-        <p style="font-size:13px;font-weight:700;margin-bottom:2px">{{ modalAnn.title }}</p>
-        <p style="font-size:9px;opacity:0.45">{{ modalAnn.meta }} · {{ modalAnn.time }}</p>
+        <!-- ✅ translatedTitle -->
+        <p style="font-size:13px;font-weight:700;margin-bottom:2px">{{ getTitle(modalAnn) }}</p>
+        <p style="font-size:9px;opacity:0.45">
+          {{ modalAnn?.authorName || modalAnn?.meta || '' }}
+          <ng-container *ngIf="modalAnn?.createdAt"> · {{ timeAgo(modalAnn.createdAt) }}</ng-container>
+          <ng-container *ngIf="modalAnn?.time"> · {{ modalAnn.time }}</ng-container>
+        </p>
       </div>
       <span class="close-x" (click)="closeModal()">✕</span>
     </div>
 
-    <!-- Body -->
+    <!-- Body — ✅ translatedContent -->
     <div class="ann-modal-body">
-      <p style="font-size:12px;line-height:1.7;opacity:0.85">{{ modalAnn.text }}</p>
+      <p style="font-size:12px;line-height:1.7;opacity:0.85;white-space:pre-line;">
+        {{ getContent(modalAnn) }}
+      </p>
     </div>
 
     <!-- Footer -->
@@ -75,12 +89,12 @@
           Next &#8594;
         </button>
       </div>
-      <button *ngIf="!modalAnn.pinned"
+      <button *ngIf="modalAnn?.isPinned !== 1"
               class="dismiss-btn"
               (click)="dismiss(modalAnn.id); closeModal()">
         Dismiss
       </button>
-      <span *ngIf="modalAnn.pinned" style="font-size:9px;opacity:0.3">
+      <span *ngIf="modalAnn?.isPinned === 1" style="font-size:9px;opacity:0.3">
         🔒 Cannot dismiss
       </span>
     </div>

@@ -15,7 +15,7 @@ import { of } from 'rxjs';
 import { API } from '../constants/api-endpoints';
 import { ProjectNewInline } from '../projects/project-new-inline';
 import { ChatPopupComponent, ChatMember } from '../shared/chat-popup/chat-popup.component';
-import { AnnouncementHistoryComponent } from '../shared/announcement-history/announcement-history.component';
+import { AnnouncementInline } from '../shared/announcement-inline';
 import { MyLeaveRequestComponent } from '../shared/my-leave-request/my-leave-request.component';
 import { MyOtRequestComponent }    from '../shared/my-ot-request/my-ot-request.component';
 
@@ -41,7 +41,7 @@ const LOGO_SVG = `data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIiIGhlaWdodD0iMzIi
     ProjectInlineComponent,
     ProjectNewInline,
     ChatPopupComponent,
-    AnnouncementHistoryComponent,
+    AnnouncementInline,
     MyLeaveRequestComponent,   // ← ထည့်
     MyOtRequestComponent,  
   ],
@@ -172,6 +172,14 @@ export class MemberDashboard implements OnInit, AfterViewInit, OnDestroy {
       }
     });
 
+    // ✅ lang reload ပြီးရင် view ပြန်ရောက်
+    const savedView = localStorage.getItem('brycen-active-view');
+    if (savedView) {
+      this.activeView = savedView;
+      localStorage.removeItem('brycen-active-view');
+    }
+
+
     this.loadAll();
     this.startUnreadPolling();
   }
@@ -268,17 +276,23 @@ export class MemberDashboard implements OnInit, AfterViewInit, OnDestroy {
   toggleTheme() { this.setTheme(!this.isDark); }
 
   setLang(lang: any) {
-    this.currentLangObj = lang;
-    this.showLangMenu = false;
-    this.http.put(API.AUTH.LANGUAGE, { language: lang.code }, { headers: this.authService.getHeaders() })
-      .subscribe({
-        next: () => {
-          const user = this.authService.getUser();
-          if (user) { user.preferredLanguage = lang.code; localStorage.setItem('user', JSON.stringify(user)); }
-          if (this.projectInline) { this.projectInline.switchLang(lang.code); }
+  this.currentLangObj = lang;
+  this.showLangMenu = false;
+  this.http.put(API.AUTH.LANGUAGE, { language: lang.code }, { headers: this.authService.getHeaders() })
+    .subscribe({
+      next: () => {
+        const user = this.authService.getUser();
+        if (user) {
+          user.preferredLanguage = lang.code;
+          localStorage.setItem('user', JSON.stringify(user));
         }
-      });
-  }
+        // ✅ active view သိမ်းပြီး reload
+        localStorage.setItem('brycen-active-view', this.activeView);
+        window.location.reload();
+      }
+    });
+}
+
 
   getTotalTasks(): number { return this.donutData.reduce((sum, d) => sum + d.count, 0); }
   signOut() { this.authService.logout(); window.location.href = '/login'; }

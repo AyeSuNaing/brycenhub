@@ -4282,3 +4282,232 @@ Language: Reply in Myanmar (Burmese)
 
 Read CLAUDE.md first. Current focus: Boss Dashboard (Phase 13).
 ```
+
+# BRYCEN HUB PMS — CLAUDE.md
+# Session Handover: 2026-04-27 (Session 4 → Session 5)
+# ⚠️ READ THIS FIRST IN EVERY NEW CHAT
+
+---
+
+## 🚨 HOW TO START A NEW CHAT
+
+```
+Hi Claude, continuing Brycen Hub PMS development.
+Project: /Users/brycen_cambodia_2/Documents/1ASNworkspace/welcome/
+Stack: Spring Boot 2.7.18 + Angular 21 + MySQL asn_db
+Contest: Brycen AI Contest 2026 — Deadline May 18, 2026
+Language: Reply in Myanmar (Burmese)
+Read CLAUDE.md first.
+```
+
+---
+
+## 🏆 Contest Info
+- **Prize:** 1,000,000 yen
+- **Deadline:** May 18, 2026
+- **Team:** Brycen Cambodia
+
+---
+
+## 🏗️ Tech Stack
+- **Backend:** Spring Boot 2.7.18 / Java 17, port 8080
+- **Frontend:** Angular 21 Standalone, port 4200
+- **DB:** MySQL `asn_db`
+- **Project path:** `/Users/brycen_cambodia_2/Documents/1ASNworkspace/welcome/`
+
+---
+
+## ✅ COMPLETED THIS SESSION (2026-04-27 Session 4)
+
+### Branch Projects Inline
+- `GET /api/projects/by-branch/{branchId}/details` — NEW endpoint
+  - Returns: id, title, status, progress, startDate, endDate
+  - PM info: pmName, pmInitial, pmColor
+  - staffCount (ACTIVE members)
+  - totalTasks, doneTasks, inProgressTasks
+- `branch-projects-inline.ts` — URL updated to `/details`
+- `branch-projects-inline.html` — staffCount + task count column added
+- Table header row (PROJECT / STATUS / PROGRESS / OWNER / TEAM/TASKS / DUE / HEALTH)
+
+### Announcement System (Full)
+**Backend:**
+- `AnnouncementController.java` — `originalLanguage` fix
+  - create: user `preferredLanguage` → `originalLanguage`
+  - `CreateRequest` DTO: `originalLanguage` field ထည့်
+- `AnnouncementTranslation.java` — model
+- `AnnouncementTranslationRepository.java`
+- `AnnouncementTranslationController.java`
+  - `GET /api/announcements/{id}/translate?lang=ja`
+  - `POST /api/announcements/translate-batch` ← N+1 fix (20 calls → 1 call)
+
+**Frontend (`announcement-inline.ts/.html`):**
+- List + Filter (ALL/ACTIVE/EXPIRED/PINNED)
+- Create/Edit Modal
+- Visibility selector: 🏢 Branch / 🌏 Country / 🌐 Global
+- Priority: Normal / Important / Urgent
+- Expires After: Never / 1d / 7d / 30d / 90d
+- Pin 📌 / Edit ✏️ / Delete 🗑
+- **Auto batch translate** on load (lang != en)
+- **Left border color** per priority (URGENT=red, IMPORTANT=orange, NORMAL=green, EXPIRED=gray)
+- `originalLanguage` pass to backend on save
+
+### VP Dashboard
+- `vp-dashboard.html` — old announcements block ဖြုတ်ပြီး `app-announcement-inline` တစ်ကြိမ်ပဲ
+- `vp-dashboard.ts`:
+  - `selectLang()` — backend save + localStorage update + activeView save + `window.location.reload()`
+  - `ngOnInit` — `brycen-active-view` restore (reload ပြီးရင် page ပြန်ရောက်)
+  - `loadAnnouncements()` URL fix: `/api/announcements`
+- Lang menu fix: `overflow:visible` + `position:absolute` + `z-index:9999`
+
+### Translation
+- Announcements: batch translate (1 API call)
+- originalLanguage per announcement — JP user ရေးရင် `ja` သိမ်း
+- EN user ကြည့်ရင် JP → EN auto translate
+- `translateBatch()` — `originalLanguage !== currentLang` ဖြစ်မှပဲ translate call
+
+---
+
+## ⏳ PENDING / NEXT
+
+| # | Task | Priority |
+|---|------|----------|
+| 1 | **Boss Dashboard (Phase 13)** | 🔴 HIGH |
+| 2 | Member Dashboard translation (tasks + announcements) | Medium |
+| 3 | Announcement bar (top bar) translation | Medium |
+| 4 | `SalaryStructureController` — `'VP'` → `'VICE_PRESIDENT'` role fix | Medium |
+| 5 | Branch Projects — translate project names | Low |
+
+---
+
+## 📁 KEY FILE PATHS
+
+### Backend (Java)
+```
+src/main/java/jp/co/brycen/asn/
+├── controller/
+│   ├── AnnouncementController.java            ← originalLanguage fix
+│   ├── AnnouncementTranslationController.java ← NEW (single + batch)
+│   └── ProjectController.java                 ← getByBranchDetails NEW
+├── model/
+│   └── AnnouncementTranslation.java           ← NEW
+└── repository/
+    └── AnnouncementTranslationRepository.java ← NEW
+```
+
+### Frontend (Angular)
+```
+src/main/angular/frontend/src/app/
+├── shared/
+│   ├── announcement-inline.ts/.html         ← batch translate + left border
+│   └── branch-projects-inline.ts/.html      ← staffCount + tasks
+└── dashboard/vp-dashboard/
+    ├── vp-dashboard.ts                      ← selectLang reload + view restore
+    └── vp-dashboard.html                    ← single announcement-inline
+```
+
+---
+
+## 🔑 KEY ARCHITECTURE NOTES
+
+### Language / Reload Flow
+```
+selectLang() flow:
+  1. currentLangObj update
+  2. localStorage 'user'.preferredLanguage update
+  3. PUT /api/auth/language → backend save
+  4. localStorage.setItem('brycen-active-view', activeView)
+  5. window.location.reload()
+  6. ngOnInit → restore activeView from 'brycen-active-view'
+  7. localStorage.removeItem('brycen-active-view')
+```
+
+### Announcement Translation Flow
+```
+POST /api/announcements/translate-batch
+  Body: { ids: [1,2,...], lang: "ja" }
+  Response: [{ id, title, content, cached, provider }]
+
+Cache: announcement_translations table
+  UNIQUE(announcement_id, language_code)
+  ON DELETE CASCADE
+```
+
+### Announcement originalLanguage
+```
+JP user creates → originalLanguage = "ja"
+EN user views   → translateBatch() → JP→EN auto
+EN user creates → originalLanguage = "en"
+JP user views   → translateBatch() → EN→JP auto
+translateBatch() skip condition: originalLanguage === currentLang
+```
+
+### Branch Projects Endpoint
+```
+GET /api/projects/by-branch/{branchId}/details
+Response: id, title, status, progress, startDate, endDate,
+          pmName, pmInitial, pmColor,
+          staffCount, totalTasks, doneTasks, inProgressTasks
+```
+
+---
+
+## 🗄️ DB Tables Added This Session
+```sql
+announcement_translations (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  announcement_id BIGINT NOT NULL,
+  language_code VARCHAR(10) NOT NULL,
+  translated_title VARCHAR(300),
+  translated_content TEXT,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE KEY uq_ann_lang (announcement_id, language_code),
+  FOREIGN KEY (announcement_id) REFERENCES announcements(id) ON DELETE CASCADE
+)
+```
+
+---
+
+## ⚙️ application.properties
+```properties
+spring.datasource.url=jdbc:mysql://localhost:3306/asn_db
+spring.datasource.username=root
+spring.datasource.password=
+spring.jpa.hibernate.ddl-auto=none
+server.port=8080
+translation.provider=claude
+anthropic.api.key=sk-ant-xxxxxxxx
+jwt.secret=brycen-secret-key-2026
+```
+
+---
+
+## 👥 User Roles & Dashboards
+
+| Role | Dashboard | Status |
+|------|-----------|--------|
+| BOSS | `/dashboard/boss` | ⏳ Phase 13 — TODO |
+| COUNTRY_DIRECTOR | `/dashboard/vp` | ✅ |
+| VICE_PRESIDENT | `/dashboard/vp` | ✅ |
+| ADMIN | `/dashboard/admin` | ✅ |
+| PROJECT_MANAGER | `/dashboard/member` | ✅ |
+| LEADER/DEV/etc | `/dashboard/member` | ✅ |
+
+---
+
+## 🌐 Translation Support
+```
+Languages: en / ja / my / km / vi / ko
+Provider: Claude AI (claude-haiku-4-5-20251001)
+Cache: DB tables per content type
+  - task_translations
+  - comment_translations
+  - project_translations
+  - announcement_translations  ← NEW
+  - member_profile_translations
+  - member_skill_translations
+Pattern: on-demand + DB cache
+```
+
+---
+
+*Last updated: 2026-04-27 Session 4 | Brycen Cambodia Team*

@@ -21,7 +21,7 @@ import { AttendanceUploadInline } from '../admin/attendance-upload-inline';
 import { StaffPanelComponent } from '../shared/staff-panel/staff-panel.component';
 import { PayrollWizardInline } from '../admin/payroll-wizard-inline';
 import { PayrollHistoryInline } from '../admin/payroll-history-inline';
-import { AnnouncementHistoryComponent } from '../shared/announcement-history/announcement-history.component';
+import { AnnouncementInline } from '../shared/announcement-inline';
 
 
 const BASE = environment.apiBaseUrl;
@@ -45,7 +45,7 @@ const LOGO_SVG = `data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIiIGhlaWdodD0iMzIi
     StaffPanelComponent,
     PayrollWizardInline, 
     PayrollHistoryInline, 
-    AnnouncementHistoryComponent,
+    AnnouncementInline,
   ],
   templateUrl: './admin-dashboard.html',
   styleUrl: './admin-dashboard.scss'
@@ -161,6 +161,13 @@ export class AdminDashboard implements OnInit, OnDestroy {
     this.currentUser = this.auth.getUser();
     const savedLang = this.currentUser?.preferredLanguage || 'en';
     this.currentLangObj = this.langs.find(l => l.code === savedLang) || this.langs[0];
+    const savedView = localStorage.getItem('brycen-active-view');
+
+    if (savedView) {
+      this.activeView = savedView;
+      localStorage.removeItem('brycen-active-view');
+    }
+
     this.loadAll();
   }
 
@@ -358,11 +365,22 @@ export class AdminDashboard implements OnInit, OnDestroy {
   toggleTheme() { this.setTheme(!this.isDark); }
 
   setLang(lang: any) {
-    this.currentLangObj = lang;
-    this.showLangMenu = false;
-    this.http.put(API.AUTH.LANGUAGE, { language: lang.code },
-      { headers: this.auth.getHeaders() }).subscribe();
-  }
+  this.currentLangObj = lang;
+  this.showLangMenu = false;
+  this.http.put(API.AUTH.LANGUAGE, { language: lang.code },
+    { headers: this.auth.getHeaders() }).subscribe({
+      next: () => {
+        const user = this.auth.getUser();
+        if (user) {
+          user.preferredLanguage = lang.code;
+          localStorage.setItem('user', JSON.stringify(user));
+        }
+        localStorage.setItem('brycen-active-view', this.activeView);
+        window.location.reload();
+      }
+    });
+}
+
 
   // ── Helpers ────────────────────────────────
   getUnreadCount(): number {
