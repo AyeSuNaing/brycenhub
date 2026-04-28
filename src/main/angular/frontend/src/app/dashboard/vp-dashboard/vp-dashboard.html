@@ -86,19 +86,7 @@
             <div class="proj-item-top"><div class="proj-item-left"><span class="proj-dot-sq" style="background:#f59e0b"></span><span class="proj-name" style="font-size:10px;">💵 Salary</span></div><span *ngIf="approvalCounts.SALARY>0" class="rs-badge-red" style="font-size:9px;background:rgba(245,158,11,.2);color:#f59e0b;">{{ approvalCounts.SALARY }}</span></div>
           </div>
         </div>
-        <!-- အသစ် — VP dashboard class သုံး -->
-        <hr class="section-divider"/>
-        <div style="margin-top:6px;">
-          <div class="proj-section-label">SETTINGS</div>
-          <div class="sidebar-item" [class.active]="activeView==='holidays'"
-            (click)="setView('holidays')">
-            <span class="nav-icon">🗓️</span><span>Public Holidays</span>
-          </div>
-          <div class="sidebar-item" [class.active]="activeView==='tax'"
-            (click)="setView('tax')">
-            <span class="nav-icon">🌏</span><span>Tax Brackets</span>
-          </div>
-        </div>
+        
 
       </div>
       <div class="sidebar-bottom">
@@ -107,6 +95,16 @@
           <div *ngIf="settingsOpen" class="settings-submenu">
             <div class="sub-item"><span>👤</span><span>Profile</span></div>
             <div class="sub-item"><span>🔒</span><span>Change Password</span></div>
+            <!-- ✅ ဒါတွေ ထည့် -->
+            <div class="sub-item" (click)="setView('holidays')" [class.active]="activeView==='holidays'"
+              style="cursor:pointer;">
+              <span>🗓️</span><span>Public Holidays</span>
+            </div>
+            <div class="sub-item" (click)="setView('tax')" [class.active]="activeView==='tax'"
+              style="cursor:pointer;">
+              <span>🌏</span><span>Tax Brackets</span>
+            </div>
+            
             <div class="sub-item signout-item" (click)="signOut()"><span>🚪</span><span>Sign out</span></div>
           </div>
         </div>

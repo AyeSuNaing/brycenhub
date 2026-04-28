@@ -98,12 +98,12 @@
 
           <!-- ✅ ADMIN ပဲ Seed + Add ပြမယ် — View only badge မပြတော့ -->
           <ng-container *ngIf="canEdit">
-            <button *ngIf="hasPresetForCountry"
+            <!-- <button *ngIf="hasPresetForCountry"
                     class="btn-secondary"
                     (click)="seedCountryPreset()"
                     [disabled]="saving">
               {{ seedButtonLabel }}
-            </button>
+            </button> -->
             <button class="btn-primary" (click)="openCreateForm()">
               + Add Holiday
             </button>
