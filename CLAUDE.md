@@ -4511,3 +4511,141 @@ Pattern: on-demand + DB cache
 ---
 
 *Last updated: 2026-04-27 Session 4 | Brycen Cambodia Team*
+
+# Brycen Hub PMS — CLAUDE.md
+**Session 10 | 2026-04-28**
+
+## Project Info
+- **Stack:** Angular 21 (standalone) + Spring Boot 2.7.18 / Java 17 + MySQL `asn_db`
+- **Ports:** Frontend :4200 | Backend :8080
+- **Path:** `/Users/brycen_cambodia_2/Documents/1ASNworkspace/welcome/`
+- **Contest Deadline:** May 18, 2026
+- **Reply Language:** Myanmar (Burmese)
+
+---
+
+## Current Focus
+- PM Dashboard CSS fix (pending)
+- Boss Dashboard (Phase 13) — next major feature
+
+---
+
+## ✅ Session 10 Completed
+
+### VP Dashboard (`vp-dashboard.ts` + `vp-dashboard.html`)
+- `logo-wrap` → `(click)="setView('dashboard')"` (click to go home)
+- `profile-section` → `(click)="openMyProfile()"` (click to open own profile)
+- `branchName` binding — replaced hardcoded "Cambodia Branch"
+- Sidebar **INFO section** added (between APPROVALS and Settings):
+  - Public Holidays → `setView('holidays')`
+  - Tax Brackets → `setView('tax')`
+  - Office Address → `setView('branches')`
+- Settings submenu simplified: Profile / Change Password / Sign out only
+- **Office Address view** — calls `GET /api/branches`, shows all branch names + addresses
+- `branches: any[]` property + `loadBranches()` method added
+- `setView('branches')` triggers `loadBranches()`
+- `INFO` label added to `app-labels.i18n.ts` (6 languages)
+
+### i18n — Files Updated This Session
+
+| File | What Changed |
+|------|-------------|
+| `app-labels.i18n.ts` | Added: `INFO`, `Office Address`, `No offices found`, `Bracket Range`, `Taxable Amount`, `Effective Rate`, `Breakdown`, `Rate` (6 languages each) |
+| `tax-brackets-inline.ts` | Added `lbl()` helper, `tierLabel()` uses i18n |
+| `tax-brackets-inline.html` | Stats, title, calculator, table headers all use `lbl()` |
+| `holidays-inline.ts` | Added `lbl()` helper |
+| `holidays-inline.html` | Stats, weekdays (SUN-SAT), buttons, legend all use `lbl()` |
+| `announcement-inline.ts` | Added `lbl()` helper |
+| `announcement-inline.html` | Header, date filter, tabs, card badges all use `lbl()` |
+| `staff-list-inline.ts` | Added `lbl()` helper |
+| `staff-list-inline.html` | Table headers, filters, status badges all use `lbl()` |
+
+---
+
+## Architecture — i18n Pattern
+
+Every component that needs translation:
+```typescript
+// In TS — import and add lbl() method
+import { getLabel, AppLabelKey } from '../i18n/app-labels.i18n';
+
+lbl(key: AppLabelKey): string {
+  return getLabel(this.currentUser?.preferredLanguage, key);
+  // or: getLabel(this.auth.getUser()?.preferredLanguage, key);
+}
+```
+
+```html
+<!-- In HTML — use lbl() -->
+{{ lbl('Dashboard') }}
+{{ lbl('TOTAL BRACKETS') }}
+```
+
+---
+
+## Sidebar Structure (VP Dashboard)
+```
+MAIN
+  📊 Dashboard
+  📁 Branch Projects
+  👥 Members
+  📢 Announcements
+
+APPROVALS
+  🗓 Leave        [badge]
+  ⏰ OT           [badge]
+  💵 Salary       [badge]
+
+INFO
+  🗓️ Public Holidays
+  🌏 Tax Brackets
+  🏢 Office Address
+
+⚙️ Settings (bottom, collapsible)
+  👤 Profile → openMyProfile()
+  🔒 Change Password
+  🚪 Sign out
+```
+
+---
+
+## Key Methods (VP Dashboard)
+
+| Method | Description |
+|--------|-------------|
+| `openMyProfile()` | Sets `selectedStaffId=myId`, `activeView='member-profile'` |
+| `loadBranchName()` | `GET /api/branches/:branchId` → sets `branchName` |
+| `loadBranches()` | `GET /api/branches` → sets `branches[]` |
+| `setView('branches')` | Triggers `loadBranches()` |
+| `lbl(key)` | Returns translated label for current language |
+
+---
+
+## Permissions
+| Role | canEdit (Tax/Holiday) | canViewCurrentWork | canViewDangerZone |
+|------|----------------------|-------------------|-------------------|
+| ADMIN | ✅ | based on viewed staff role | ✅ |
+| VP/CD/BOSS | ❌ | ❌ (own role hidden) | ❌ |
+| Others | ❌ | ✅ | ❌ |
+
+---
+
+## ⏳ Next Priorities (Session 11)
+
+1. **PM Dashboard CSS fix** — original focus, not done yet
+2. **member-dashboard** — add `lbl()` i18n labels
+3. **admin-dashboard** — add `lbl()` i18n labels
+4. **Boss Dashboard (Phase 13)** — `/dashboard/boss`, country-level overview
+5. **SalaryStructureController** — `'VP'` → `'VICE_PRESIDENT'` role fix (pending session 6)
+
+---
+
+## Output Files (This Session)
+All in `/mnt/user-data/outputs/`:
+- `vp-dashboard.ts` ← branchName, branches, openMyProfile, loadBranchName, loadBranches
+- `vp-dashboard.html` ← INFO sidebar, logo/profile click, Office Address view
+- `app-labels.i18n.ts` ← INFO + Office Address + Tax table keys (6 languages)
+- `tax-brackets-inline.ts` + `tax-brackets-inline.html`
+- `holidays-inline.ts` + `holidays-inline.html`
+- `announcement-inline.ts` + `announcement-inline.html`
+- `staff-list-inline.ts` + `staff-list-inline.html`
