@@ -6,6 +6,7 @@ import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { AuthService } from '../services/auth.service';
 import { environment } from '../../environments/environment';
+import { getLabel, AppLabelKey } from '../i18n/app-labels.i18n';
 
 const BASE = environment.apiBaseUrl;
 
@@ -18,7 +19,6 @@ const BASE = environment.apiBaseUrl;
 })
 export class StaffListInline implements OnInit {
 
-  /** Admin=true (show + Add Staff button), VP/CD/Boss=false */
   @Input() showAddBtn = true;
 
   @Output() addStaff    = new EventEmitter<void>();
@@ -48,36 +48,28 @@ export class StaffListInline implements OnInit {
     this.loadRoles();
   }
 
+  // ── i18n helper ──
+  lbl(key: AppLabelKey): string {
+    return getLabel(this.auth.getUser()?.preferredLanguage, key);
+  }
+
   loadStaff() {
     this.isLoading = true;
-    this.http.get<any[]>(`${BASE}/users/staff-list`,
-      { headers: this.auth.getHeaders() })
+    this.http.get<any[]>(`${BASE}/users/staff-list`, { headers: this.auth.getHeaders() })
       .subscribe({
-        next: list => {
-          this.staffList = list;
-          this.isLoading = false;
-          this.cdr.detectChanges();
-        },
+        next: list => { this.staffList = list; this.isLoading = false; this.cdr.detectChanges(); },
         error: () => { this.isLoading = false; }
       });
   }
 
   loadDepartments() {
-    this.http.get<any[]>(`${BASE}/departments/my-branch`,
-      { headers: this.auth.getHeaders() })
-      .subscribe({
-        next: list => { this.departments = list; this.cdr.detectChanges(); },
-        error: () => {}
-      });
+    this.http.get<any[]>(`${BASE}/departments/my-branch`, { headers: this.auth.getHeaders() })
+      .subscribe({ next: list => { this.departments = list; this.cdr.detectChanges(); }, error: () => {} });
   }
 
   loadRoles() {
-    this.http.get<any[]>(`${BASE}/user-roles`,
-      { headers: this.auth.getHeaders() })
-      .subscribe({
-        next: list => { this.roles = list; this.cdr.detectChanges(); },
-        error: () => {}
-      });
+    this.http.get<any[]>(`${BASE}/user-roles`, { headers: this.auth.getHeaders() })
+      .subscribe({ next: list => { this.roles = list; this.cdr.detectChanges(); }, error: () => {} });
   }
 
   get filteredList(): any[] {
@@ -101,7 +93,5 @@ export class StaffListInline implements OnInit {
     return colors[Math.abs(hash) % colors.length];
   }
 
-  getInitial(name: string): string {
-    return name ? name.charAt(0).toUpperCase() : '?';
-  }
+  getInitial(name: string): string { return name ? name.charAt(0).toUpperCase() : '?'; }
 }
