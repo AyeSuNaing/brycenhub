@@ -1,78 +1,56 @@
 <div class="tax-wrapper">
-
-  <!-- ═══════════════════════════════════════════
-       LEFT — MAIN CONTENT (scrollable)
-  ═══════════════════════════════════════════ -->
   <div class="tax-main">
 
-    <!-- ═══════════════════════════════════════
-         STATS ROW
-    ═══════════════════════════════════════ -->
+    <!-- STATS ROW -->
     <div class="stats-grid">
       <div class="stat-card">
-        <div class="stat-label">Total Brackets</div>
+        <div class="stat-label">{{ lbl('TOTAL BRACKETS') }}</div>
         <div class="stat-value">{{ statsTotal }}</div>
         <div class="stat-sub">● {{ countryName }}</div>
       </div>
       <div class="stat-card">
-        <div class="stat-label">Highest Rate</div>
+        <div class="stat-label">{{ lbl('HIGHEST RATE') }}</div>
         <div class="stat-value accent-red">{{ statsHighestRate }}<span class="unit">%</span></div>
-        <div class="stat-sub">Top marginal bracket</div>
+        <div class="stat-sub">{{ lbl('Top marginal bracket') }}</div>
       </div>
       <div class="stat-card">
-        <div class="stat-label">Tax-free Up To</div>
+        <div class="stat-label">{{ lbl('TAX-FREE UP TO') }}</div>
         <div class="stat-value accent-green">{{ formatMoney(statsTaxFreeLimit) }}</div>
-        <div class="stat-sub">{{ currency }} · Exempt ceiling</div>
+        <div class="stat-sub">{{ currency }} · {{ lbl('Exempt ceiling') }}</div>
       </div>
       <div class="stat-card">
-        <div class="stat-label">Currency</div>
+        <div class="stat-label">{{ lbl('CURRENCY') }}</div>
         <div class="stat-value accent-purple">{{ currency }}</div>
-        <div class="stat-sub">Progressive tiers</div>
+        <div class="stat-sub">{{ lbl('Progressive tiers') }}</div>
       </div>
     </div>
 
-    <!-- ═══════════════════════════════════════
-         MAIN CARD — Tax Brackets
-    ═══════════════════════════════════════ -->
+    <!-- MAIN CARD -->
     <div class="tax-card">
-
       <div class="tax-card-header">
         <div class="tax-title-row">
           <div class="card-title">
             <span class="title-icon">💰</span>
-            <span>Tax Brackets</span>
+            <span>{{ lbl('Tax Brackets (title)') }}</span>
           </div>
 
-          <!-- Country switcher — only BOSS/Country Director can switch -->
           <div class="country-switcher" *ngIf="viewingCountry && isGlobalAdmin">
-            <button class="country-pill"
-                    [class.not-own]="!isViewingOwnCountry"
-                    (click)="toggleCountryMenu()">
+            <button class="country-pill" [class.not-own]="!isViewingOwnCountry" (click)="toggleCountryMenu()">
               {{ countryFlag }} {{ countryName }}
               <span *ngIf="!isViewingOwnCountry" class="view-only-badge">Global</span>
               <span class="dropdown-arrow">▾</span>
             </button>
-
             <div *ngIf="showCountryMenu" class="country-menu-backdrop" (click)="showCountryMenu = false"></div>
             <div *ngIf="showCountryMenu" class="country-menu">
               <div class="menu-header">Switch country</div>
-
-              <button *ngIf="country"
-                      class="country-option own"
-                      [class.active]="viewingCountry.id === country.id"
-                      (click)="selectCountry(country)">
+              <button *ngIf="country" class="country-option own" [class.active]="viewingCountry.id === country.id" (click)="selectCountry(country)">
                 <span class="opt-flag">{{ getFlagFor(country) }}</span>
                 <span class="opt-name">{{ country.name }}</span>
                 <span class="opt-badge own-badge">⭐ Yours</span>
               </button>
-
               <div class="menu-divider" *ngIf="country"></div>
-
               <ng-container *ngFor="let c of allCountries">
-                <button *ngIf="!country || c.id !== country.id"
-                        class="country-option"
-                        [class.active]="viewingCountry.id === c.id"
-                        (click)="selectCountry(c)">
+                <button *ngIf="!country || c.id !== country.id" class="country-option" [class.active]="viewingCountry.id === c.id" (click)="selectCountry(c)">
                   <span class="opt-flag">{{ getFlagFor(c) }}</span>
                   <span class="opt-name">{{ c.name }}</span>
                   <span class="opt-badge view-badge">👁️</span>
@@ -81,7 +59,6 @@
             </div>
           </div>
 
-          <!-- Static country label for ADMIN/VP (no switcher) -->
           <span *ngIf="viewingCountry && !isGlobalAdmin" class="country-pill static">
             {{ countryFlag }} {{ countryName }}
           </span>
@@ -89,42 +66,29 @@
 
         <div class="tax-actions">
           <ng-container *ngIf="canEdit">
-            <button *ngIf="hasPresetForCountry"
-                    class="btn-secondary"
-                    (click)="seedCountryPreset()"
-                    [disabled]="saving">
+            <button *ngIf="hasPresetForCountry" class="btn-secondary" (click)="seedCountryPreset()" [disabled]="saving">
               {{ seedButtonLabel }}
             </button>
             <button class="btn-primary" (click)="openCreateForm()">
-              + Add Bracket
+              {{ lbl('+ Add Bracket') }}
             </button>
           </ng-container>
-
-          <!-- Only shown if BOSS/CD viewing another country -->
           <div *ngIf="isGlobalAdmin && !canEdit" class="readonly-hint">
             👁️ View only
           </div>
         </div>
       </div>
 
-      <!-- ═══════════════════════════════════════
-           BRACKETS LIST
-      ═══════════════════════════════════════ -->
+      <!-- BRACKETS LIST -->
       <div *ngIf="loading" class="loading-box">Loading brackets...</div>
 
       <div *ngIf="!loading && brackets.length === 0" class="empty-box">
         <div class="empty-icon">💰</div>
         <div class="empty-title">No tax brackets yet for {{ countryName }}</div>
         <div class="empty-sub">
-          <ng-container *ngIf="canEdit && hasPresetForCountry">
-            Click "{{ seedButtonLabel }}" for a quick start.
-          </ng-container>
-          <ng-container *ngIf="canEdit && !hasPresetForCountry">
-            Click "+ Add Bracket" to create the first tier.
-          </ng-container>
-          <ng-container *ngIf="!canEdit">
-            Switch to your country to manage tax brackets.
-          </ng-container>
+          <ng-container *ngIf="canEdit && hasPresetForCountry">Click "{{ seedButtonLabel }}" for a quick start.</ng-container>
+          <ng-container *ngIf="canEdit && !hasPresetForCountry">Click "{{ lbl('+ Add Bracket') }}" to create the first tier.</ng-container>
+          <ng-container *ngIf="!canEdit">Switch to your country to manage tax brackets.</ng-container>
         </div>
       </div>
 
@@ -134,12 +98,10 @@
              [class.tax-free]="b.taxRate === 0"
              [class.highest]="i === brackets.length - 1 && b.taxRate > 0"
              [style.--tier-color]="tierColorFor(b.taxRate)">
-
           <div class="tier-indicator">
             <div class="tier-num">{{ i + 1 }}</div>
             <div class="tier-label">{{ tierLabel(i, brackets.length, b.taxRate) }}</div>
           </div>
-
           <div class="bracket-range">
             <div class="range-value">
               <span class="range-from">{{ formatMoney(b.minSalary) }}</span>
@@ -149,14 +111,12 @@
             </div>
             <div class="range-unit">{{ currency }}</div>
           </div>
-
           <div class="bracket-rate">
             <div class="rate-value">{{ b.taxRate }}<span class="rate-percent">%</span></div>
             <div class="rate-bar">
               <div class="rate-fill" [style.width.%]="Math.min(+b.taxRate * 2, 100)"></div>
             </div>
           </div>
-
           <div *ngIf="canEdit" class="row-actions">
             <button class="btn-icon" (click)="openEditForm(b)" aria-label="Edit">✏️</button>
             <button class="btn-icon danger" (click)="confirmDelete(b)" aria-label="Delete">🗑️</button>
@@ -164,86 +124,69 @@
         </div>
       </div>
     </div>
-    <!-- /.tax-card -->
 
-
-    <!-- ═══════════════════════════════════════
-         CALCULATOR CARD
-    ═══════════════════════════════════════ -->
+    <!-- CALCULATOR CARD -->
     <div class="tax-card calc-card" *ngIf="brackets.length > 0">
-
       <div class="calc-header">
         <div class="card-title">
           <span class="title-icon">🧮</span>
-          <span>Tax Calculator</span>
+          <span>{{ lbl('Tax Calculator') }}</span>
         </div>
-        <div class="calc-hint">Preview progressive tax for any salary</div>
+        <div class="calc-hint">{{ lbl('Preview progressive tax') }}</div>
       </div>
 
       <div class="calc-input-row">
         <div class="calc-input-group">
-          <label>Monthly Salary ({{ currency }})</label>
+          <label>{{ lbl('MONTHLY SALARY') }} ({{ currency }})</label>
           <div class="calc-input-wrap">
             <span class="currency-prefix">{{ currency === 'USD' ? '$' : '' }}</span>
-            <input type="number"
-                   class="input calc-input"
-                   [(ngModel)]="calcSalary"
-                   min="0"
-                   step="100"
-                   placeholder="e.g. 4000"
-                   (keyup.enter)="runCalculator()">
+            <input type="number" class="input calc-input" [(ngModel)]="calcSalary" min="0" step="100" placeholder="e.g. 4000" (keyup.enter)="runCalculator()">
           </div>
         </div>
-
-        <button class="btn-primary calc-btn"
-                (click)="runCalculator()"
-                [disabled]="calculating">
-          {{ calculating ? 'Calculating...' : '🧮 Calculate' }}
+        <button class="btn-primary calc-btn" (click)="runCalculator()" [disabled]="calculating">
+          {{ calculating ? '...' : '🧮 ' + lbl('Calculate') }}
         </button>
-
         <button *ngIf="calcResult" class="btn-ghost" (click)="clearCalc()">Clear</button>
       </div>
 
       <!-- Result -->
       <div *ngIf="calcResult" class="calc-result">
-
         <div class="calc-summary">
           <div class="summary-item">
-            <div class="summary-label">Gross Salary</div>
+            <div class="summary-label">{{ lbl('Gross') }}</div>
             <div class="summary-value">{{ currency === 'USD' ? '$' : '' }}{{ formatMoney(calcResult.salary) }}</div>
           </div>
           <div class="summary-arrow">→</div>
           <div class="summary-item tax">
-            <div class="summary-label">Total Tax</div>
+            <div class="summary-label">{{ lbl('Tax') }}</div>
             <div class="summary-value">−{{ currency === 'USD' ? '$' : '' }}{{ formatMoney(calcResult.totalTax) }}</div>
           </div>
           <div class="summary-arrow">=</div>
           <div class="summary-item net">
-            <div class="summary-label">Net Salary</div>
+            <div class="summary-label">{{ lbl('Net') }}</div>
             <div class="summary-value">{{ currency === 'USD' ? '$' : '' }}{{ formatMoney(calcResult.netSalary) }}</div>
           </div>
           <div class="summary-rate">
-            <div class="summary-label">Effective Rate</div>
+            <div class="summary-label">{{ lbl('Effective Rate') }}</div>
             <div class="summary-value rate">{{ calcResult.effectiveRate }}%</div>
           </div>
         </div>
 
         <div class="calc-breakdown">
-          <div class="breakdown-title">📋 Breakdown</div>
+          <div class="breakdown-title">📋 {{ lbl('Breakdown') }}</div>
           <table class="breakdown-table">
             <thead>
               <tr>
-                <th>Bracket Range</th>
-                <th>Rate</th>
-                <th>Taxable Amount</th>
-                <th>Tax</th>
+                <th>{{ lbl('Bracket Range') }}</th>
+                <th>{{ lbl('Rate') }}</th>
+                <th>{{ lbl('Taxable Amount') }}</th>
+                <th>{{ lbl('Tax') }}</th>
               </tr>
             </thead>
             <tbody>
               <tr *ngFor="let row of calcResult.breakdown">
                 <td class="bkt-range">
-                  {{ formatMoney(row.from) }}
-                  →
+                  {{ formatMoney(row.from) }} →
                   <span *ngIf="row.to !== null">{{ formatMoney(row.to) }}</span>
                   <span *ngIf="row.to === null" class="unlimited-txt">∞</span>
                 </td>
@@ -258,60 +201,40 @@
     </div>
 
   </div>
-  <!-- /.tax-main -->
-
-
 </div>
 
-
-<!-- ═══════════════════════════════════════════
-     ADD / EDIT MODAL
-═══════════════════════════════════════════ -->
+<!-- ADD / EDIT MODAL -->
 <div *ngIf="showForm" class="modal-backdrop" (click)="closeForm()">
   <div class="modal" (click)="$event.stopPropagation()">
     <div class="modal-header">
-      <h3>{{ editMode ? '✏️ Edit Tax Bracket' : '+ Add Tax Bracket' }}</h3>
+      <h3>{{ editMode ? '✏️ Edit Tax Bracket' : lbl('+ Add Bracket') }}</h3>
       <button class="btn-close" (click)="closeForm()">×</button>
     </div>
-
     <div class="modal-body">
       <div class="form-row">
         <label>Min Salary ({{ currency }}) <span class="required">*</span></label>
-        <input type="number" [(ngModel)]="form.minSalary" class="input"
-               min="0" step="0.01" placeholder="0">
+        <input type="number" [(ngModel)]="form.minSalary" class="input" min="0" step="0.01" placeholder="0">
       </div>
-
       <div class="form-row">
-        <label>
-          Max Salary ({{ currency }})
-          <span class="hint">— leave empty for unlimited</span>
-        </label>
-        <input type="number" [(ngModel)]="form.maxSalary" class="input"
-               min="0" step="0.01" placeholder="Leave empty for ∞">
+        <label>Max Salary ({{ currency }}) <span class="hint">— leave empty for unlimited</span></label>
+        <input type="number" [(ngModel)]="form.maxSalary" class="input" min="0" step="0.01" placeholder="Leave empty for ∞">
       </div>
-
       <div class="form-row">
         <label>Tax Rate (%) <span class="required">*</span></label>
-        <input type="number" [(ngModel)]="form.taxRate" class="input"
-               min="0" max="100" step="0.01" placeholder="e.g. 10">
+        <input type="number" [(ngModel)]="form.taxRate" class="input" min="0" max="100" step="0.01" placeholder="e.g. 10">
       </div>
-
       <div *ngIf="formError" class="form-error">⚠️ {{ formError }}</div>
     </div>
-
     <div class="modal-footer">
-      <button class="btn-secondary" (click)="closeForm()" [disabled]="saving">Cancel</button>
+      <button class="btn-secondary" (click)="closeForm()" [disabled]="saving">{{ lbl('Back') }}</button>
       <button class="btn-primary" (click)="saveForm()" [disabled]="saving">
-        {{ saving ? 'Saving...' : (editMode ? 'Update' : 'Create') }}
+        {{ saving ? '...' : (editMode ? 'Update' : 'Create') }}
       </button>
     </div>
   </div>
 </div>
 
-
-<!-- ═══════════════════════════════════════════
-     DELETE MODAL
-═══════════════════════════════════════════ -->
+<!-- DELETE MODAL -->
 <div *ngIf="deleteTarget" class="modal-backdrop" (click)="cancelDelete()">
   <div class="modal modal-sm" (click)="$event.stopPropagation()">
     <div class="modal-header">
@@ -319,8 +242,7 @@
     </div>
     <div class="modal-body">
       <p>Delete bracket
-        <strong>{{ formatMoney(deleteTarget.minSalary) }}</strong>
-        →
+        <strong>{{ formatMoney(deleteTarget.minSalary) }}</strong> →
         <strong *ngIf="deleteTarget.maxSalary !== null">{{ formatMoney(deleteTarget.maxSalary) }}</strong>
         <strong *ngIf="deleteTarget.maxSalary === null">∞</strong>
         at <strong>{{ deleteTarget.taxRate }}%</strong>?
@@ -328,7 +250,7 @@
       <p class="muted">This action cannot be undone.</p>
     </div>
     <div class="modal-footer">
-      <button class="btn-secondary" (click)="cancelDelete()">Cancel</button>
+      <button class="btn-secondary" (click)="cancelDelete()">{{ lbl('Back') }}</button>
       <button class="btn-danger" (click)="executeDelete()">Delete</button>
     </div>
   </div>

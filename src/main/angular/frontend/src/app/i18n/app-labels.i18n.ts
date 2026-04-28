@@ -14,7 +14,7 @@ export type AppLang = 'en' | 'ja' | 'my' | 'km' | 'vi' | 'ko';
 
 export type AppLabelKey =
   // ── SIDEBAR SECTIONS ──
-  | 'MAIN' | 'APPROVALS' | 'SETTINGS' | 'STAFF' | 'PAYROLL'
+  | 'MAIN' | 'APPROVALS' | 'SETTINGS' | 'STAFF' | 'PAYROLL' | 'INFO'
   // ── SIDEBAR NAV ──
   | 'Dashboard' | 'Branch Projects' | 'Members' | 'Announcements' | 'All Projects'
   | 'Leave' | 'OT' | 'Salary'
@@ -83,14 +83,16 @@ export type AppLabelKey =
   | 'Branch Chat' | 'All branch members'
   | 'My Tasks' | 'Team Members'
   | 'Online' | 'Offline' | 'Branch Staff'
-  | 'Search name role branch';
+  | 'Search name role branch'
+  | 'Office Address' | 'No offices found'
+  | 'Bracket Range' | 'Taxable Amount' | 'Effective Rate' | 'Breakdown' | 'Rate';
 
 // ═══════════════════════════════════════════════════════════════
 // ENGLISH
 // ═══════════════════════════════════════════════════════════════
 const en: Record<AppLabelKey, string> = {
   // Sidebar sections
-  MAIN: 'MAIN', APPROVALS: 'APPROVALS', SETTINGS: 'SETTINGS', STAFF: 'STAFF', PAYROLL: 'PAYROLL',
+  MAIN: 'MAIN', APPROVALS: 'APPROVALS', SETTINGS: 'SETTINGS', STAFF: 'STAFF', PAYROLL: 'PAYROLL', INFO: 'INFO',
   // Sidebar nav
   Dashboard: 'Dashboard', 'Branch Projects': 'Branch Projects',
   Members: 'Members', Announcements: 'Announcements', 'All Projects': 'All Projects',
@@ -191,13 +193,16 @@ const en: Record<AppLabelKey, string> = {
   'My Tasks': 'My Tasks', 'Team Members': 'Team Members',
   Online: 'Online', Offline: 'Offline',
   'Branch Staff': 'Branch Staff', 'Search name role branch': 'Search name, role, branch...',
+  'Office Address': 'Office Addresses', 'No offices found': 'No offices found',
+  'Bracket Range': 'Bracket Range', 'Taxable Amount': 'Taxable Amount',
+  'Effective Rate': 'Effective Rate', Breakdown: 'Breakdown', Rate: 'Rate',
 };
 
 // ═══════════════════════════════════════════════════════════════
 // JAPANESE
 // ═══════════════════════════════════════════════════════════════
 const ja: Record<AppLabelKey, string> = {
-  MAIN: 'メイン', APPROVALS: '承認', SETTINGS: '設定', STAFF: 'スタッフ', PAYROLL: '給与',
+  MAIN: 'メイン', APPROVALS: '承認', SETTINGS: '設定', STAFF: 'スタッフ', PAYROLL: '給与', INFO: '情報',
   Dashboard: 'ダッシュボード', 'Branch Projects': 'プロジェクト',
   Members: 'メンバー', Announcements: 'お知らせ', 'All Projects': '全プロジェクト',
   Leave: '🗓 休暇', OT: '⏰ 残業', Salary: '💵 給与',
@@ -281,14 +286,15 @@ const ja: Record<AppLabelKey, string> = {
   'Branch Chat': 'ブランチチャット', 'All branch members': '全ブランチメンバー',
   'My Tasks': 'マイタスク', 'Team Members': 'チームメンバー',
   Online: 'オンライン', Offline: 'オフライン',
-  'Branch Staff': 'ブランチスタッフ', 'Search name role branch': '名前・役職・部署で検索...',
+  'Branch Staff': 'ブランチスタッフ', 'Search name role branch': '名前・役職・部署で検索...', 'Office Address': 'オフィス住所', 'No offices found': 'オフィスが見つかりません',
+  'Bracket Range': '税率範囲', 'Taxable Amount': '課税額', 'Effective Rate': '実効税率', Breakdown: '内訳', Rate: '税率',
 };
 
 // ═══════════════════════════════════════════════════════════════
 // MYANMAR
 // ═══════════════════════════════════════════════════════════════
 const my: Record<AppLabelKey, string> = {
-  MAIN: 'မိုင်', APPROVALS: 'အတည်ပြုချက်', SETTINGS: 'ဆက်တင်', STAFF: 'ဝန်ထမ်း', PAYROLL: 'လစာ',
+  MAIN: 'မိုင်', APPROVALS: 'အတည်ပြုချက်', SETTINGS: 'ဆက်တင်', STAFF: 'ဝန်ထမ်း', PAYROLL: 'လစာ', INFO: 'သတင်းအချက်',
   Dashboard: 'ဒက်ဘုတ်', 'Branch Projects': 'ပရောဂျက်များ',
   Members: 'အဖွဲ့သားများ', Announcements: 'ကြေငြာချက်', 'All Projects': 'ပရောဂျက်အားလုံး',
   Leave: '🗓 ခွင့်', OT: '⏰ နောက်ကျ', Salary: '💵 လစာ',
@@ -375,14 +381,15 @@ const my: Record<AppLabelKey, string> = {
   'Branch Chat': 'ဌာနခွဲချတ်', 'All branch members': 'အဖွဲ့သားများ',
   'My Tasks': 'ငါ့တာဝန်', 'Team Members': 'အဖွဲ့သားများ',
   Online: 'အွန်လိုင်း', Offline: 'အော့ဖ်လိုင်း',
-  'Branch Staff': 'ဌာနခွဲဝန်ထမ်း', 'Search name role branch': 'အမည်၊ ရာထူး ရှာပါ...',
+  'Branch Staff': 'ဌာနခွဲဝန်ထမ်း', 'Search name role branch': 'အမည်၊ ရာထူး ရှာပါ...', 'Office Address': 'ရုံးလိပ်စာ', 'No offices found': 'ရုံးမတွေ့ပါ',
+  'Bracket Range': 'အခွန်အတိုင်းအတာ', 'Taxable Amount': 'အခွန်ကောက်ငွေ', 'Effective Rate': 'တကယ့်နှုန်း', Breakdown: 'အသေးစိတ်', Rate: 'နှုန်း',
 };
 
 // ═══════════════════════════════════════════════════════════════
 // KHMER
 // ═══════════════════════════════════════════════════════════════
 const km: Record<AppLabelKey, string> = {
-  MAIN: 'មេ', APPROVALS: 'ការអនុម័ត', SETTINGS: 'ការកំណត់', STAFF: 'បុគ្គលិក', PAYROLL: 'ប្រាក់ខែ',
+  MAIN: 'មេ', APPROVALS: 'ការអនុម័ត', SETTINGS: 'ការកំណត់', STAFF: 'បុគ្គលិក', PAYROLL: 'ប្រាក់ខែ', INFO: 'ព័ត៌មាន',
   Dashboard: 'ផ្ទាំងគ្រប់គ្រង', 'Branch Projects': 'គម្រោង',
   Members: 'សមាជិក', Announcements: 'សេចក្តីប្រកាស', 'All Projects': 'គម្រោងទាំងអស់',
   Leave: '🗓 សំណើឈប់', OT: '⏰ ម៉ោងបន្ថែម', Salary: '💵 ប្រាក់ខែ',
@@ -471,7 +478,8 @@ const km: Record<AppLabelKey, string> = {
   'Branch Chat': 'ជជែកសាខា', 'All branch members': 'សមាជិកសាខាទាំងអស់',
   'My Tasks': 'ភារកិច្ចខ្ញុំ', 'Team Members': 'សមាជិកក្រុម',
   Online: 'អនឡាញ', Offline: 'គ្មានអ៊ីនធឺណិត',
-  'Branch Staff': 'បុគ្គលិកសាខា', 'Search name role branch': 'ស្វែងរកឈ្មោះ...',
+  'Branch Staff': 'បុគ្គលិកសាខា', 'Search name role branch': 'ស្វែងរកឈ្មោះ...', 'Office Address': 'អាសយដ្ឋានការិយាល័យ', 'No offices found': 'រកមិនឃើញ',
+  'Bracket Range': 'ជួរអត្រាពន្ធ', 'Taxable Amount': 'ចំនួនជាប់ពន្ធ', 'Effective Rate': 'អត្រាជាក់ស្តែង', Breakdown: 'ព័ត៌មានលម្អិត', Rate: 'អត្រា',
 };
 
 // ═══════════════════════════════════════════════════════════════
@@ -479,7 +487,7 @@ const km: Record<AppLabelKey, string> = {
 // ═══════════════════════════════════════════════════════════════
 const vi: Record<AppLabelKey, string> = {
   MAIN: 'CHÍNH', APPROVALS: 'PHÊ DUYỆT', SETTINGS: 'CÀI ĐẶT',
-  STAFF: 'NHÂN VIÊN', PAYROLL: 'LƯƠNG',
+  STAFF: 'NHÂN VIÊN', PAYROLL: 'LƯƠNG', INFO: 'THÔNG TIN',
   Dashboard: 'Tổng quan', 'Branch Projects': 'Dự án',
   Members: 'Thành viên', Announcements: 'Thông báo', 'All Projects': 'Tất cả dự án',
   Leave: '🗓 Nghỉ phép', OT: '⏰ Tăng ca', Salary: '💵 Lương',
@@ -568,14 +576,15 @@ const vi: Record<AppLabelKey, string> = {
   'Branch Chat': 'Chat Chi nhánh', 'All branch members': 'Tất cả thành viên',
   'My Tasks': 'Nhiệm vụ của tôi', 'Team Members': 'Thành viên nhóm',
   Online: 'Trực tuyến', Offline: 'Ngoại tuyến',
-  'Branch Staff': 'NV Chi nhánh', 'Search name role branch': 'Tìm tên, vai trò...',
+  'Branch Staff': 'NV Chi nhánh', 'Search name role branch': 'Tìm tên, vai trò...', 'Office Address': 'Địa chỉ văn phòng', 'No offices found': 'Không tìm thấy',
+  'Bracket Range': 'Khung thuế', 'Taxable Amount': 'Thu nhập chịu thuế', 'Effective Rate': 'Thuế suất hiệu quả', Breakdown: 'Chi tiết', Rate: 'Thuế suất',
 };
 
 // ═══════════════════════════════════════════════════════════════
 // KOREAN
 // ═══════════════════════════════════════════════════════════════
 const ko: Record<AppLabelKey, string> = {
-  MAIN: '메인', APPROVALS: '승인', SETTINGS: '설정', STAFF: '직원', PAYROLL: '급여',
+  MAIN: '메인', APPROVALS: '승인', SETTINGS: '설정', STAFF: '직원', PAYROLL: '급여', INFO: '정보',
   Dashboard: '대시보드', 'Branch Projects': '프로젝트',
   Members: '멤버', Announcements: '공지사항', 'All Projects': '전체 프로젝트',
   Leave: '🗓 휴가', OT: '⏰ 초과근무', Salary: '💵 급여',
@@ -663,7 +672,8 @@ const ko: Record<AppLabelKey, string> = {
   'Branch Chat': '지점 채팅', 'All branch members': '전체 지점 멤버',
   'My Tasks': '내 태스크', 'Team Members': '팀 멤버',
   Online: '온라인', Offline: '오프라인',
-  'Branch Staff': '지점 직원', 'Search name role branch': '이름, 역할 검색...',
+  'Branch Staff': '지점 직원', 'Search name role branch': '이름, 역할 검색...', 'Office Address': '사무소 주소', 'No offices found': '사무소 없음',
+  'Bracket Range': '세율 구간', 'Taxable Amount': '과세 금액', 'Effective Rate': '실효 세율', Breakdown: '상세 내역', Rate: '세율',
 };
 
 // ═══════════════════════════════════════════════════════════════

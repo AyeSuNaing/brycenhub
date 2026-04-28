@@ -185,6 +185,7 @@ export class VpDashboardComponent implements OnInit, OnDestroy {
   searchDeptId: number | null = null;
   departments: DepartmentItem[] = [];
   branchName = '';
+  branches: any[] = [];
 
   // ══════════════════════════════════════════════════════════════
   // ✅ i18n — label helper (used in HTML as lbl('key'))
@@ -242,7 +243,7 @@ export class VpDashboardComponent implements OnInit, OnDestroy {
     const savedLang = this.currentUser?.preferredLanguage || 'en';
     this.currentLangObj = this.langs.find(l => l.code === savedLang) || this.langs[0];
     this.loadAll();
-    
+
     const savedView = localStorage.getItem('brycen-active-view');
     if (savedView) { this.activeView = savedView; localStorage.removeItem('brycen-active-view'); }
     this.updateMyTasksHeight();
@@ -264,6 +265,7 @@ export class VpDashboardComponent implements OnInit, OnDestroy {
   setView(view: string): void {
     this.activeView = view;
     if (view === 'announcements') { this.loadAnnouncements(); }
+    if (view === 'branches') { this.loadBranches(); }
     if (view === 'salary-approvals') { this.loadingSalary = true; this.loadSalaryApprovals(); }
     if (view === 'salary-detail') { this.loadSalaryDetail(); }
     if (view === 'view-leave') {
@@ -451,6 +453,30 @@ export class VpDashboardComponent implements OnInit, OnDestroy {
     this.loadBranchName();
     this.loadStats(); this.loadLeaveRequests(); this.loadOtRequests();
     this.loadSalaryDashboard(); this.loadBranchProjects(); this.loadBranchMembers();
+    this.loadBranches();
+  }
+
+  loadBranchName(): void {
+    const branchId = this.currentUser?.branchId;
+    if (!branchId) return;
+    this.http.get<any>(`${BASE}/branches/${branchId}`, { headers: this.headers })
+      .pipe(catchError(() => of(null)))
+      .subscribe(b => {
+        if (b?.name) {
+          this.branchName = b.name;
+          this.cdr.markForCheck();
+          this.cdr.detectChanges();
+        }
+      });
+  }
+
+  loadBranches(): void {
+    this.http.get<any[]>(`${BASE}/branches`, { headers: this.headers })
+      .pipe(catchError(() => of([])))
+      .subscribe(list => {
+        this.branches = list || [];
+        this.cdr.detectChanges();
+      });
   }
 
   loadStats(): void {
@@ -493,21 +519,6 @@ export class VpDashboardComponent implements OnInit, OnDestroy {
         this.recomputeTotalPending(); this.cdr.detectChanges();
       });
   }
-
-  loadBranchName(): void {
-    const branchId = this.currentUser?.branchId;
-    if (!branchId) return;
-    this.http.get<any>(`${BASE}/branches/${branchId}`, { headers: this.headers })
-      .pipe(catchError(() => of(null)))
-      .subscribe(b => {
-        if (b?.name) {
-          this.branchName = b.name;  // ✅ "Phnom Penh Office"
-          this.cdr.markForCheck();   // ✅ detectChanges အစား markForCheck သုံး
-          this.cdr.detectChanges();
-        }
-      });
-  }
-
 
   loadBranchProjects(): void {
     this.http.get<any[]>(`${VP_BASE}/branch-projects`, { headers: this.headers })
@@ -831,8 +842,6 @@ export class VpDashboardComponent implements OnInit, OnDestroy {
 
   onViewProfile(staff: any): void { this.selectedStaffId = staff.id; this.activeView = 'member-profile'; }
 
-  signOut(): void { this.auth.logout(); this.router.navigate(['/login']); }
-
   openMyProfile(): void {
     const myId = this.currentUser?.id || this.currentUser?.userId;
     if (!myId) return;
@@ -842,4 +851,5 @@ export class VpDashboardComponent implements OnInit, OnDestroy {
     this.cdr.detectChanges();
   }
 
+  signOut(): void { this.auth.logout(); this.router.navigate(['/login']); }
 }
