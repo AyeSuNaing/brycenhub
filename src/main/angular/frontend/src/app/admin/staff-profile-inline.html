@@ -476,9 +476,9 @@
       </div>
 
       <!-- ── ⑦ Danger Zone ── -->
-      <div class="card" style="margin-bottom:10px;padding:0;overflow:hidden;
-        border-color:rgba(239,68,68,0.2);">
-        <div (click)="toggleAcc('danger')"
+      <div *ngIf="canViewDangerZone()" class="card" style="margin-bottom:10px;padding:0;overflow:hidden;
+          border-color:rgba(239,68,68,0.2);">
+          <div (click)="toggleAcc('danger')"
           style="display:flex;align-items:center;justify-content:space-between;
             padding:12px 16px;cursor:pointer;transition:background 0.15s;"
           onmouseenter="this.style.background='rgba(239,68,68,0.04)'"

@@ -2,7 +2,8 @@
 
   <!-- ════════════ TOPBAR ════════════ -->
   <header class="topbar" style="overflow:visible;">
-    <div class="logo-wrap">
+    
+    <div class="logo-wrap" style="cursor:pointer;" (click)="setView('dashboard')">
       <img class="logo-img" src="logo.jpg" alt="Brycen"/>
       <div>
         <div class="logo-text">Brycen Hub</div>
@@ -45,7 +46,7 @@
   <div class="main-row">
     <aside class="left-sidebar">
       <div class="sidebar-scroll">
-        <div class="profile-section">
+        <div class="profile-section" style="cursor:pointer;" (click)="openMyProfile()">
           <div class="avatar-wrap">
             <div class="avatar-circle" style="display:flex;align-items:center;justify-content:center;">
               <svg viewBox="0 0 64 64" width="58" height="58" xmlns="http://www.w3.org/2000/svg">
@@ -63,49 +64,66 @@
           </div>
           <div class="profile-name">{{ currentUser?.name || 'Tony' }}</div>
           <div class="role-badge">{{ currentUser?.role || 'VICE_PRESIDENT' }}</div>
-          <div class="member-badge">⭐ Cambodia Branch</div>
+          <div class="member-badge">⭐  {{ branchName }}</div>
         </div>
         <hr class="profile-divider"/>
         <div style="margin-top:6px;">
-          <div class="proj-section-label">MAIN</div>
-          <div class="sidebar-item" [class.active]="activeView==='dashboard'" (click)="setView('dashboard')"><span class="nav-icon">📊</span><span>Dashboard</span></div>
-          <div class="sidebar-item" [class.active]="activeView==='branch-projects'" (click)="setView('branch-projects')"><span class="nav-icon">📁</span><span>Branch Projects</span></div>
-          <div class="sidebar-item" [class.active]="activeView==='members' || activeView==='member-profile'" (click)="setView('members')"><span class="nav-icon">👥</span><span>Members</span></div>
-          <div class="sidebar-item" [class.active]="activeView==='announcements'" (click)="setView('announcements')"><span class="nav-icon">📢</span><span>Announcements</span></div>
+          <div class="proj-section-label">{{ lbl('MAIN') }}</div>
+          <div class="sidebar-item" [class.active]="activeView==='dashboard'" (click)="setView('dashboard')">
+            <span class="nav-icon">📊</span><span>{{ lbl('Dashboard') }}</span>
+          </div>
+          <div class="sidebar-item" [class.active]="activeView==='branch-projects'" (click)="setView('branch-projects')">
+            <span class="nav-icon">📁</span><span>{{ lbl('Branch Projects') }}</span>
+          </div>
+          <div class="sidebar-item" [class.active]="activeView==='members' || activeView==='member-profile'" (click)="setView('members')">
+            <span class="nav-icon">👥</span><span>{{ lbl('Members') }}</span>
+          </div>
+          <div class="sidebar-item" [class.active]="activeView==='announcements'" (click)="setView('announcements')">
+            <span class="nav-icon">📢</span><span>{{ lbl('Announcements') }}</span>
+          </div>
           <hr class="section-divider"/>
         </div>
         <div style="margin-top:6px;">
-          <div class="proj-section-label">APPROVALS</div>
+          <div class="proj-section-label">{{ lbl('APPROVALS') }}</div>
           <div class="proj-item-v2" (click)="setView('view-leave')" [class.active-proj]="activeView==='view-leave'">
-            <div class="proj-item-top"><div class="proj-item-left"><span class="proj-dot-sq" style="background:#ef4444"></span><span class="proj-name" style="font-size:10px;">🗓 Leave</span></div><span *ngIf="approvalCounts.LEAVE>0" class="rs-badge-red" style="font-size:9px;">{{ approvalCounts.LEAVE }}</span></div>
+            <div class="proj-item-top">
+              <div class="proj-item-left"><span class="proj-dot-sq" style="background:#ef4444"></span><span class="proj-name" style="font-size:10px;">{{ lbl('Leave') }}</span></div>
+              <span *ngIf="approvalCounts.LEAVE>0" class="rs-badge-red" style="font-size:9px;">{{ approvalCounts.LEAVE }}</span>
+            </div>
           </div>
           <div class="proj-item-v2" (click)="setView('view-ot')" [class.active-proj]="activeView==='view-ot'">
-            <div class="proj-item-top"><div class="proj-item-left"><span class="proj-dot-sq" style="background:#ef4444"></span><span class="proj-name" style="font-size:10px;">⏰ OT</span></div><span *ngIf="approvalCounts.OT>0" class="rs-badge-red" style="font-size:9px;">{{ approvalCounts.OT }}</span></div>
+            <div class="proj-item-top">
+              <div class="proj-item-left"><span class="proj-dot-sq" style="background:#ef4444"></span><span class="proj-name" style="font-size:10px;">{{ lbl('OT') }}</span></div>
+              <span *ngIf="approvalCounts.OT>0" class="rs-badge-red" style="font-size:9px;">{{ approvalCounts.OT }}</span>
+            </div>
           </div>
           <div class="proj-item-v2" (click)="setView('salary-approvals')" [class.active-proj]="activeView==='salary-approvals'">
-            <div class="proj-item-top"><div class="proj-item-left"><span class="proj-dot-sq" style="background:#f59e0b"></span><span class="proj-name" style="font-size:10px;">💵 Salary</span></div><span *ngIf="approvalCounts.SALARY>0" class="rs-badge-red" style="font-size:9px;background:rgba(245,158,11,.2);color:#f59e0b;">{{ approvalCounts.SALARY }}</span></div>
+            <div class="proj-item-top">
+              <div class="proj-item-left"><span class="proj-dot-sq" style="background:#f59e0b"></span><span class="proj-name" style="font-size:10px;">{{ lbl('Salary') }}</span></div>
+              <span *ngIf="approvalCounts.SALARY>0" class="rs-badge-red" style="font-size:9px;background:rgba(245,158,11,.2);color:#f59e0b;">{{ approvalCounts.SALARY }}</span>
+            </div>
           </div>
         </div>
-        
-
       </div>
+
       <div class="sidebar-bottom">
         <div class="settings-wrap">
-          <div class="sidebar-item" (click)="settingsOpen=!settingsOpen"><span class="nav-icon">⚙️</span><span>Settings</span><span style="margin-left:auto;font-size:8px;">{{ settingsOpen?'▲':'▼' }}</span></div>
+          <div class="sidebar-item" (click)="settingsOpen=!settingsOpen">
+            <span class="nav-icon">⚙️</span><span>{{ lbl('Settings') }}</span>
+            <span style="margin-left:auto;font-size:8px;">{{ settingsOpen?'▲':'▼' }}</span>
+          </div>
           <div *ngIf="settingsOpen" class="settings-submenu">
-            <div class="sub-item"><span>👤</span><span>Profile</span></div>
-            <div class="sub-item"><span>🔒</span><span>Change Password</span></div>
-            <!-- ✅ ဒါတွေ ထည့် -->
-            <div class="sub-item" (click)="setView('holidays')" [class.active]="activeView==='holidays'"
-              style="cursor:pointer;">
-              <span>🗓️</span><span>Public Holidays</span>
+            <div class="sub-item" style="cursor:pointer;" (click)="openMyProfile()">
+              <span>👤</span><span>{{ lbl('Profile') }}</span>
             </div>
-            <div class="sub-item" (click)="setView('tax')" [class.active]="activeView==='tax'"
-              style="cursor:pointer;">
-              <span>🌏</span><span>Tax Brackets</span>
+            <div class="sub-item"><span>🔒</span><span>{{ lbl('Change Password') }}</span></div>
+            <div class="sub-item" (click)="setView('holidays')" [class.active]="activeView==='holidays'" style="cursor:pointer;">
+              <span>🗓️</span><span>{{ lbl('Public Holidays') }}</span>
             </div>
-            
-            <div class="sub-item signout-item" (click)="signOut()"><span>🚪</span><span>Sign out</span></div>
+            <div class="sub-item" (click)="setView('tax')" [class.active]="activeView==='tax'" style="cursor:pointer;">
+              <span>🌏</span><span>{{ lbl('Tax Brackets') }}</span>
+            </div>
+            <div class="sub-item signout-item" (click)="signOut()"><span>🚪</span><span>{{ lbl('Sign out') }}</span></div>
           </div>
         </div>
       </div>
@@ -120,11 +138,11 @@
         <!-- ════ SALARY APPROVALS ════ -->
         <div *ngIf="activeView==='salary-approvals'" style="padding:16px;display:flex;flex-direction:column;gap:10px;overflow-y:auto;height:100%;">
           <div style="display:flex;align-items:center;gap:10px;flex-shrink:0;margin-bottom:4px;">
-            <div style="font-size:14px;font-weight:700;">💵 Salary History</div>
+            <div style="font-size:14px;font-weight:700;">💵 {{ lbl('Salary Approvals') }}</div>
             <span style="font-size:10px;opacity:0.4;">{{ salaryHistoryPeriods.length }} periods</span>
           </div>
           <div *ngIf="loadingSalary" style="text-align:center;padding:48px;font-size:12px;opacity:0.4;">Loading...</div>
-          <div *ngIf="!loadingSalary && salaryHistoryPeriods.length===0" style="text-align:center;padding:48px;font-size:12px;opacity:0.4;">📭 No salary records</div>
+          <div *ngIf="!loadingSalary && salaryHistoryPeriods.length===0" style="text-align:center;padding:48px;font-size:12px;opacity:0.4;">📭 {{ lbl('No pending salary approvals') }}</div>
           <ng-container *ngIf="!loadingSalary && salaryHistoryPeriods.length>0">
             <div *ngFor="let p of salaryHistoryPeriods" class="card"
                  (click)="openSalaryDetail(p)"
@@ -137,24 +155,24 @@
                 <span style="font-size:9px;font-weight:700;padding:1px 7px;border-radius:20px;white-space:nowrap;"
                       [style.background]="p.status==='PENDING_APPROVAL'?'rgba(245,158,11,0.15)':p.status==='CONFIRMED'?'rgba(96,165,250,0.15)':p.status==='PAID'?'rgba(34,197,94,0.15)':'rgba(100,116,139,0.15)'"
                       [style.color]="p.status==='PENDING_APPROVAL'?'#f59e0b':p.status==='CONFIRMED'?'#60a5fa':p.status==='PAID'?'#22c55e':'#94a3b8'">
-                  {{ p.status==='PENDING_APPROVAL' ? 'PENDING' : p.status==='CONFIRMED' ? 'CONFIRMED' : p.status==='PAID' ? 'PAID' : p.status }}
+                  {{ p.status==='PENDING_APPROVAL' ? lbl('Pending') : p.status==='CONFIRMED' ? 'CONFIRMED' : p.status==='PAID' ? 'PAID' : p.status }}
                 </span>
                 <div *ngIf="p.status==='PENDING_APPROVAL'" (click)="$event.stopPropagation()" style="margin-left:auto;display:flex;gap:6px;">
-                  <button (click)="rejectSalaryPeriod(p)" [disabled]="salaryActing[p.payPeriod]" [style.opacity]="salaryActing[p.payPeriod]?'0.5':'1'" style="padding:4px 12px;border-radius:6px;border:1px solid rgba(239,68,68,0.3);background:rgba(239,68,68,0.08);color:#ef4444;font-size:10px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap;">✕ Reject</button>
-                  <button (click)="approveSalaryPeriod(p)" [disabled]="salaryActing[p.payPeriod]" [style.opacity]="salaryActing[p.payPeriod]?'0.5':'1'" style="padding:4px 16px;border-radius:6px;border:none;background:linear-gradient(135deg,#14532d,#16a34a);color:white;font-size:10px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;">{{ salaryActing[p.payPeriod] ? '...' : '✓ Approve' }}</button>
+                  <button (click)="rejectSalaryPeriod(p)" [disabled]="salaryActing[p.payPeriod]" [style.opacity]="salaryActing[p.payPeriod]?'0.5':'1'" style="padding:4px 12px;border-radius:6px;border:1px solid rgba(239,68,68,0.3);background:rgba(239,68,68,0.08);color:#ef4444;font-size:10px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap;">{{ lbl('Reject') }}</button>
+                  <button (click)="approveSalaryPeriod(p)" [disabled]="salaryActing[p.payPeriod]" [style.opacity]="salaryActing[p.payPeriod]?'0.5':'1'" style="padding:4px 16px;border-radius:6px;border:none;background:linear-gradient(135deg,#14532d,#16a34a);color:white;font-size:10px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;">{{ salaryActing[p.payPeriod] ? '...' : lbl('Approve') }}</button>
                 </div>
               </div>
               <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:0 16px 10px;">
                 <div style="background:rgba(148,163,184,0.06);border-radius:7px;padding:7px 12px;">
-                  <div style="font-size:8px;opacity:0.4;text-transform:uppercase;letter-spacing:0.7px;margin-bottom:2px;">Gross</div>
+                  <div style="font-size:8px;opacity:0.4;text-transform:uppercase;letter-spacing:0.7px;margin-bottom:2px;">{{ lbl('Gross') }}</div>
                   <div style="font-size:12px;font-weight:700;">{{ formatMoney(p.currency, p.totalGross) }}</div>
                 </div>
                 <div style="background:rgba(148,163,184,0.06);border-radius:7px;padding:7px 12px;">
-                  <div style="font-size:8px;opacity:0.4;text-transform:uppercase;letter-spacing:0.7px;margin-bottom:2px;">Tax</div>
+                  <div style="font-size:8px;opacity:0.4;text-transform:uppercase;letter-spacing:0.7px;margin-bottom:2px;">{{ lbl('Tax') }}</div>
                   <div style="font-size:12px;font-weight:700;color:#ef4444;">-{{ formatMoney(p.currency, p.totalTax) }}</div>
                 </div>
                 <div style="background:rgba(148,163,184,0.06);border-radius:7px;padding:7px 12px;">
-                  <div style="font-size:8px;opacity:0.4;text-transform:uppercase;letter-spacing:0.7px;margin-bottom:2px;">Net</div>
+                  <div style="font-size:8px;opacity:0.4;text-transform:uppercase;letter-spacing:0.7px;margin-bottom:2px;">{{ lbl('Net') }}</div>
                   <div style="font-size:12px;font-weight:700;">{{ formatMoney(p.currency, p.totalNet) }}</div>
                 </div>
               </div>
@@ -165,21 +183,21 @@
         <!-- ════ SALARY DETAIL ════ -->
         <div *ngIf="activeView==='salary-detail'" style="padding:16px;display:flex;flex-direction:column;gap:10px;overflow-y:auto;height:100%;">
           <div style="display:flex;align-items:center;gap:10px;flex-shrink:0;margin-bottom:4px;">
-            <button (click)="setView('salary-approvals')" style="font-size:11px;padding:5px 12px;border-radius:7px;background:transparent;border:1px solid rgba(148,163,184,0.2);color:currentColor;cursor:pointer;font-family:inherit;">← Back</button>
+            <button (click)="setView('salary-approvals')" style="font-size:11px;padding:5px 12px;border-radius:7px;background:transparent;border:1px solid rgba(148,163,184,0.2);color:currentColor;cursor:pointer;font-family:inherit;">{{ lbl('Back') }}</button>
             <div style="font-size:14px;font-weight:700;">💵 {{ formatPeriodLabel(selectedSalaryPeriod?.payPeriod) }}</div>
             <span style="font-size:10px;padding:2px 9px;border-radius:20px;background:rgba(96,165,250,0.15);color:#60a5fa;font-weight:600;">{{ selectedSalaryPeriod?.staffCount }} staff</span>
           </div>
           <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;flex-shrink:0;">
             <div style="background:rgba(148,163,184,0.06);border-radius:8px;padding:10px 14px;border:1px solid rgba(148,163,184,0.1);">
-              <div style="font-size:8px;opacity:0.4;text-transform:uppercase;letter-spacing:0.7px;margin-bottom:3px;">Total Gross</div>
+              <div style="font-size:8px;opacity:0.4;text-transform:uppercase;letter-spacing:0.7px;margin-bottom:3px;">{{ lbl('Gross') }}</div>
               <div style="font-size:14px;font-weight:700;">{{ formatMoney(selectedSalaryPeriod?.currency, selectedSalaryPeriod?.totalGross) }}</div>
             </div>
             <div style="background:rgba(148,163,184,0.06);border-radius:8px;padding:10px 14px;border:1px solid rgba(148,163,184,0.1);">
-              <div style="font-size:8px;opacity:0.4;text-transform:uppercase;letter-spacing:0.7px;margin-bottom:3px;">Total Tax</div>
+              <div style="font-size:8px;opacity:0.4;text-transform:uppercase;letter-spacing:0.7px;margin-bottom:3px;">{{ lbl('Tax') }}</div>
               <div style="font-size:14px;font-weight:700;color:#ef4444;">-{{ formatMoney(selectedSalaryPeriod?.currency, selectedSalaryPeriod?.totalTax) }}</div>
             </div>
             <div style="background:rgba(148,163,184,0.06);border-radius:8px;padding:10px 14px;border:1px solid rgba(148,163,184,0.1);">
-              <div style="font-size:8px;opacity:0.4;text-transform:uppercase;letter-spacing:0.7px;margin-bottom:3px;">Total Net</div>
+              <div style="font-size:8px;opacity:0.4;text-transform:uppercase;letter-spacing:0.7px;margin-bottom:3px;">{{ lbl('Net') }}</div>
               <div style="font-size:14px;font-weight:700;">{{ formatMoney(selectedSalaryPeriod?.currency, selectedSalaryPeriod?.totalNet) }}</div>
             </div>
           </div>
@@ -188,10 +206,10 @@
           <div *ngIf="!loadingSalaryDetail && salaryDetailRows.length>0" class="card" style="padding:0;flex-shrink:0;">
             <div style="display:grid;grid-template-columns:170px 100px 110px 110px 90px 90px 100px 100px 110px;gap:0;padding:8px 16px;border-bottom:1px solid rgba(148,163,184,0.1);align-items:center;">
               <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.4;">Name</span>
-              <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.4;">Department</span>
-              <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.4;">Gross</span>
-              <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.4;">Tax</span>
-              <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.4;">Net</span>
+              <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.4;">{{ lbl('DEPARTMENT') }}</span>
+              <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.4;">{{ lbl('Gross') }}</span>
+              <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.4;">{{ lbl('Tax') }}</span>
+              <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.4;">{{ lbl('Net') }}</span>
               <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.4;">Work Days</span>
               <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.4;">OT</span>
               <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.4;">Deductions</span>
@@ -220,55 +238,31 @@
         </div>
 
         <!-- ════ ANNOUNCEMENTS VIEW ════ -->
-        <app-announcement-inline
-          *ngIf="activeView==='announcements'">
-        </app-announcement-inline>
+        <app-announcement-inline *ngIf="activeView==='announcements'"></app-announcement-inline>
 
         <!-- ════ BRANCH PROJECTS VIEW ════ -->
-        <app-branch-projects-inline
-          *ngIf="activeView==='branch-projects'"
-          [hidePanel]="true"
-          (back)="setView('dashboard')">
-        </app-branch-projects-inline>
+        <app-branch-projects-inline *ngIf="activeView==='branch-projects'" [hidePanel]="true" (back)="setView('dashboard')"></app-branch-projects-inline>
 
         <!-- ════ MEMBERS VIEW ════ -->
-        <app-staff-list-inline
-          *ngIf="activeView==='members'"
-          (viewProfile)="onViewProfile($event)"
-          (addStaff)="setView('members')"
-          (back)="setView('dashboard')">
-        </app-staff-list-inline>
+        <app-staff-list-inline *ngIf="activeView==='members'" (viewProfile)="onViewProfile($event)" (addStaff)="setView('members')" (back)="setView('dashboard')"></app-staff-list-inline>
 
         <!-- ════ MEMBER PROFILE VIEW ════ -->
-        <app-staff-profile-inline
-          *ngIf="activeView==='member-profile'"
-          [staffId]="selectedStaffId"
-          (back)="setView('members')">
-        </app-staff-profile-inline>
+        <app-staff-profile-inline *ngIf="activeView==='member-profile'" [staffId]="selectedStaffId" (back)="setView('members')"></app-staff-profile-inline>
 
-        <app-holidays-inline
-          *ngIf="activeView==='holidays'"
-          style="flex:1;min-width:0;">
-        </app-holidays-inline>
-
-        <app-tax-brackets-inline
-          *ngIf="activeView==='tax'"
-          style="flex:1;min-width:0;">
-        </app-tax-brackets-inline>
-
-        
+        <app-holidays-inline *ngIf="activeView==='holidays'" style="flex:1;min-width:0;"></app-holidays-inline>
+        <app-tax-brackets-inline *ngIf="activeView==='tax'" style="flex:1;min-width:0;"></app-tax-brackets-inline>
 
         <!-- ════ LEAVE VIEW ════ -->
         <div *ngIf="activeView==='view-leave'" style="padding:16px;display:flex;flex-direction:column;gap:12px;overflow-y:auto;height:100%;">
           <div style="display:flex;align-items:center;gap:10px;flex-shrink:0;flex-wrap:wrap;">
-            <div style="font-size:14px;font-weight:700;">🗓 Leave Requests</div>
+            <div style="font-size:14px;font-weight:700;">🗓 {{ lbl('Leave Requests') }}</div>
             <span style="font-size:10px;opacity:0.4;">{{ sortedLeave.length }} records</span>
             <div style="display:flex;gap:4px;margin-left:auto;">
               <button *ngFor="let s of ['ALL','PENDING','APPROVED','REJECTED']" (click)="historyFilter=s; loadHistoryLeave()" style="font-size:10px;padding:4px 10px;border-radius:20px;cursor:pointer;font-family:inherit;" [style.background]="historyFilter===s?'linear-gradient(135deg,#14532d,#16a34a)':'transparent'" [style.color]="historyFilter===s?'white':'currentColor'" [style.border]="historyFilter===s?'none':'1px solid rgba(148,163,184,0.2)'" [style.opacity]="historyFilter===s?'1':'0.55'">{{ s }}</button>
             </div>
           </div>
           <div *ngIf="loadingHistory" style="text-align:center;padding:40px;font-size:12px;opacity:0.4;">Loading...</div>
-          <div *ngIf="!loadingHistory && sortedLeave.length===0" style="text-align:center;padding:40px;font-size:12px;opacity:0.4;">No records</div>
+          <div *ngIf="!loadingHistory && sortedLeave.length===0" style="text-align:center;padding:40px;font-size:12px;opacity:0.4;">{{ lbl('No pending leave requests') }}</div>
           <ng-container *ngIf="!loadingHistory && sortedLeave.length>0">
             <div *ngFor="let r of sortedLeave" style="border-radius:10px;border:1px solid;padding:13px 16px;" [style.borderColor]="r.status==='PENDING'?'rgba(245,158,11,0.35)':r.status==='APPROVED'&&isActiveLeave(r)?'rgba(34,197,94,0.3)':(isDark?'#1e2d4a':'#e2e8f0')" [style.background]="r.status==='PENDING'?'rgba(245,158,11,0.04)':r.status==='APPROVED'&&isActiveLeave(r)?'rgba(34,197,94,0.04)':(isDark?'#0d1424':'white')">
               <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
@@ -276,12 +270,12 @@
                 <div style="flex:1;min-width:0;"><div style="font-size:12px;font-weight:600;">{{ r.userName }}</div><div style="font-size:10px;opacity:0.5;">{{ r.userRole }}</div></div>
                 <span style="font-size:10px;font-weight:700;padding:3px 10px;border-radius:20px;flex-shrink:0;" [style.background]="r.status==='APPROVED'?'rgba(34,197,94,0.15)':r.status==='REJECTED'?'rgba(239,68,68,0.15)':'rgba(245,158,11,0.15)'" [style.color]="r.status==='APPROVED'?'#22c55e':r.status==='REJECTED'?'#ef4444':'#f59e0b'">{{ r.status }}</span>
                 <div *ngIf="r.status==='PENDING'" style="display:flex;gap:6px;flex-shrink:0;">
-                  <button (click)="approveLeaveItem(r)" style="font-size:11px;padding:5px 14px;background:#16a34a;color:white;border:none;border-radius:6px;cursor:pointer;font-weight:700;">✓ Approve</button>
+                  <button (click)="approveLeaveItem(r)" style="font-size:11px;padding:5px 14px;background:#16a34a;color:white;border:none;border-radius:6px;cursor:pointer;font-weight:700;">{{ lbl('Approve') }}</button>
                   <button (click)="rejectLeaveItem(r)" style="font-size:11px;padding:5px 12px;background:transparent;color:currentColor;border:1px solid rgba(148,163,184,0.25);border-radius:6px;cursor:pointer;opacity:0.7;">✕</button>
                 </div>
               </div>
               <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
-                <span style="font-size:10px;font-weight:600;padding:2px 8px;border-radius:20px;" [style.background]="r.leaveType==='ANNUAL'?'rgba(96,165,250,0.15)':r.leaveType==='SICK'?'rgba(248,113,113,0.15)':'rgba(167,139,250,0.15)'" [style.color]="r.leaveType==='ANNUAL'?'#60a5fa':r.leaveType==='SICK'?'#f87171':'#a78bfa'">{{ r.leaveType==='ANNUAL'?'🏖 Annual':r.leaveType==='SICK'?'🤒 Sick':'💼 Unpaid' }}</span>
+                <span style="font-size:10px;font-weight:600;padding:2px 8px;border-radius:20px;" [style.background]="r.leaveType==='ANNUAL'?'rgba(96,165,250,0.15)':r.leaveType==='SICK'?'rgba(248,113,113,0.15)':'rgba(167,139,250,0.15)'" [style.color]="r.leaveType==='ANNUAL'?'#60a5fa':r.leaveType==='SICK'?'#f87171':'#a78bfa'">{{ r.leaveType==='ANNUAL'?'🏖 '+lbl('ANNUAL'):r.leaveType==='SICK'?'🤒 '+lbl('SICK'):'💼 '+lbl('UNPAID') }}</span>
                 <span style="font-size:11px;font-weight:500;">{{ r.startDate | date:'MMM d, yyyy' }} → {{ r.endDate | date:'MMM d, yyyy' }}</span>
                 <span style="font-size:10px;padding:2px 7px;border-radius:20px;background:rgba(148,163,184,0.1);font-weight:600;">{{ r.totalDays }} day{{ r.totalDays > 1 ? 's' : '' }}</span>
                 <span *ngIf="r.reason" style="font-size:10px;opacity:0.6;">· {{ r.reason }}</span>
@@ -293,14 +287,14 @@
         <!-- ════ OT VIEW ════ -->
         <div *ngIf="activeView==='view-ot'" style="padding:16px;display:flex;flex-direction:column;gap:12px;overflow-y:auto;height:100%;">
           <div style="display:flex;align-items:center;gap:10px;flex-shrink:0;flex-wrap:wrap;">
-            <div style="font-size:14px;font-weight:700;">⏰ OT Requests</div>
+            <div style="font-size:14px;font-weight:700;">⏰ {{ lbl('OT Requests') }}</div>
             <span style="font-size:10px;opacity:0.4;">{{ sortedOt.length }} records</span>
             <div style="display:flex;gap:4px;margin-left:auto;">
               <button *ngFor="let s of ['ALL','PENDING','APPROVED','REJECTED']" (click)="historyFilter=s; loadHistoryOt()" style="font-size:10px;padding:4px 10px;border-radius:20px;cursor:pointer;font-family:inherit;" [style.background]="historyFilter===s?'linear-gradient(135deg,#14532d,#16a34a)':'transparent'" [style.color]="historyFilter===s?'white':'currentColor'" [style.border]="historyFilter===s?'none':'1px solid rgba(148,163,184,0.2)'" [style.opacity]="historyFilter===s?'1':'0.55'">{{ s }}</button>
             </div>
           </div>
           <div *ngIf="loadingHistory" style="text-align:center;padding:40px;font-size:12px;opacity:0.4;">Loading...</div>
-          <div *ngIf="!loadingHistory && sortedOt.length===0" style="text-align:center;padding:40px;font-size:12px;opacity:0.4;">No records</div>
+          <div *ngIf="!loadingHistory && sortedOt.length===0" style="text-align:center;padding:40px;font-size:12px;opacity:0.4;">{{ lbl('No pending OT requests') }}</div>
           <ng-container *ngIf="!loadingHistory && sortedOt.length>0">
             <div *ngFor="let r of sortedOt" style="border-radius:10px;border:1px solid;padding:13px 16px;" [style.borderColor]="r.status==='PENDING'?'rgba(245,158,11,0.35)':r.status==='APPROVED'&&isActiveOt(r)?'rgba(34,197,94,0.3)':(isDark?'#1e2d4a':'#e2e8f0')" [style.background]="r.status==='PENDING'?'rgba(245,158,11,0.04)':r.status==='APPROVED'&&isActiveOt(r)?'rgba(34,197,94,0.04)':(isDark?'#0d1424':'white')">
               <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
@@ -308,7 +302,7 @@
                 <div style="flex:1;min-width:0;"><div style="font-size:12px;font-weight:600;">{{ r.userName }}</div><div style="font-size:10px;opacity:0.5;">{{ r.userRole }}</div></div>
                 <span style="font-size:10px;font-weight:700;padding:3px 10px;border-radius:20px;flex-shrink:0;" [style.background]="r.status==='APPROVED'?'rgba(34,197,94,0.15)':r.status==='REJECTED'?'rgba(239,68,68,0.15)':'rgba(245,158,11,0.15)'" [style.color]="r.status==='APPROVED'?'#22c55e':r.status==='REJECTED'?'#ef4444':'#f59e0b'">{{ r.status }}</span>
                 <div *ngIf="r.status==='PENDING'" style="display:flex;gap:6px;flex-shrink:0;">
-                  <button (click)="approveOtItem(r)" style="font-size:11px;padding:5px 14px;background:#16a34a;color:white;border:none;border-radius:6px;cursor:pointer;font-weight:700;">✓ Approve</button>
+                  <button (click)="approveOtItem(r)" style="font-size:11px;padding:5px 14px;background:#16a34a;color:white;border:none;border-radius:6px;cursor:pointer;font-weight:700;">{{ lbl('Approve') }}</button>
                   <button (click)="rejectOtItem(r)" style="font-size:11px;padding:5px 12px;background:transparent;color:currentColor;border:1px solid rgba(148,163,184,0.25);border-radius:6px;cursor:pointer;opacity:0.7;">✕</button>
                 </div>
               </div>
@@ -326,11 +320,28 @@
         <!-- ════ DASHBOARD VIEW ════ -->
         <ng-container *ngIf="activeView==='dashboard' && !showProjectDetail">
 
+          <!-- STAT CARDS -->
           <div class="stats-grid">
-            <div class="stat-card"><div class="stat-label">Active Projects</div><div class="stat-value">{{ stats.activeProjects }}</div><div class="stat-sub">↑ 2 this month</div></div>
-            <div class="stat-card"><div class="stat-label">Total Staff</div><div class="stat-value">{{ stats.totalStaff }}</div><div class="stat-sub" style="color:#22c55e">● Active</div></div>
-            <div class="stat-card"><div class="stat-label">Pending Approvals</div><div class="stat-value" style="color:#ef4444">{{ stats.pendingApprovals }}</div><div class="stat-sub" style="color:#f59e0b">⚠ Action required</div></div>
-            <div class="stat-card"><div class="stat-label">OT Hours (Month)</div><div class="stat-value">{{ stats.monthlyOTHours }}</div><div class="stat-sub">hrs this month</div></div>
+            <div class="stat-card">
+              <div class="stat-label">{{ lbl('Active Projects') }}</div>
+              <div class="stat-value">{{ stats.activeProjects }}</div>
+              <div class="stat-sub">{{ lbl('this month') }}</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">{{ lbl('Total Staff') }}</div>
+              <div class="stat-value">{{ stats.totalStaff }}</div>
+              <div class="stat-sub" style="color:#22c55e">{{ lbl('Active') }}</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">{{ lbl('Pending Approvals') }}</div>
+              <div class="stat-value" style="color:#ef4444">{{ stats.pendingApprovals }}</div>
+              <div class="stat-sub" style="color:#f59e0b">{{ lbl('Action required') }}</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">{{ lbl('OT Hours (Month)') }}</div>
+              <div class="stat-value">{{ stats.monthlyOTHours }}</div>
+              <div class="stat-sub">{{ lbl('hrs this month') }}</div>
+            </div>
           </div>
 
           <!-- OT CARD -->
@@ -338,19 +349,22 @@
             <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px;">
               <div style="display:flex;align-items:center;gap:10px;">
                 <div style="width:34px;height:34px;border-radius:10px;background:rgba(249,115,22,0.12);display:flex;align-items:center;justify-content:center;font-size:16px;">⏰</div>
-                <div><div style="font-size:13px;font-weight:700;">OT Requests</div><div style="font-size:10px;opacity:0.5;margin-top:1px;">Overtime approval queue</div></div>
-                <span style="font-size:10px;padding:3px 9px;border-radius:20px;font-weight:700;margin-left:4px;" [style.background]="otApprovals.length>0?'rgba(239,68,68,0.15)':'rgba(100,116,139,0.12)'" [style.color]="otApprovals.length>0?'#ef4444':'#64748b'">{{ otApprovals.length }} pending</span>
+                <div>
+                  <div style="font-size:13px;font-weight:700;">{{ lbl('OT Requests') }}</div>
+                  <div style="font-size:10px;opacity:0.5;margin-top:1px;">{{ lbl('Overtime approval queue') }}</div>
+                </div>
+                <span style="font-size:10px;padding:3px 9px;border-radius:20px;font-weight:700;margin-left:4px;" [style.background]="otApprovals.length>0?'rgba(239,68,68,0.15)':'rgba(100,116,139,0.12)'" [style.color]="otApprovals.length>0?'#ef4444':'#64748b'">{{ otApprovals.length }} {{ lbl('pending') }}</span>
               </div>
-              <button (click)="setView('view-ot')" style="font-size:10px;padding:5px 14px;border-radius:20px;background:transparent;border:1px solid rgba(148,163,184,0.2);color:currentColor;cursor:pointer;opacity:0.6;font-family:inherit;">View all →</button>
+              <button (click)="setView('view-ot')" style="font-size:10px;padding:5px 14px;border-radius:20px;background:transparent;border:1px solid rgba(148,163,184,0.2);color:currentColor;cursor:pointer;opacity:0.6;font-family:inherit;">{{ lbl('View all') }}</button>
             </div>
-            <div *ngIf="otApprovals.length===0" style="text-align:center;padding:20px 18px;font-size:11px;opacity:0.3;border-top:1px solid rgba(148,163,184,0.07);">No pending OT requests</div>
+            <div *ngIf="otApprovals.length===0" style="text-align:center;padding:20px 18px;font-size:11px;opacity:0.3;border-top:1px solid rgba(148,163,184,0.07);">{{ lbl('No pending OT requests') }}</div>
             <ng-container *ngIf="otApprovals.length>0">
               <div style="display:grid;grid-template-columns:36px 2fr 1fr 1.5fr auto;gap:10px;padding:8px 18px;border-top:1px solid rgba(148,163,184,0.07);border-bottom:1px solid rgba(148,163,184,0.07);">
                 <span></span>
-                <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.4;">Staff</span>
-                <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.4;">Work Date</span>
-                <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.4;">Details</span>
-                <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.4;">Action</span>
+                <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.4;">{{ lbl('Staff') }}</span>
+                <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.4;">{{ lbl('Work Date') }}</span>
+                <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.4;">{{ lbl('Details') }}</span>
+                <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.4;">{{ lbl('Action') }}</span>
               </div>
               <div *ngFor="let a of otApprovals; let last=last" [style.border-bottom]="last?'none':'1px solid rgba(148,163,184,0.05)'" style="display:grid;grid-template-columns:36px 2fr 1fr 1.5fr auto;gap:10px;padding:11px 18px;align-items:center;">
                 <div style="width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:white;" [style.background]="a.avatarColor">{{ a.staffInitial }}</div>
@@ -358,8 +372,8 @@
                 <div style="font-size:10px;opacity:0.7;">{{ a.dueText }}</div>
                 <div style="font-size:10px;opacity:0.65;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ a.reason }}</div>
                 <div style="display:flex;gap:6px;">
-                  <button (click)="approveApproval(a)" style="font-size:10px;padding:5px 14px;background:linear-gradient(135deg,#14532d,#16a34a);color:white;border:none;border-radius:6px;cursor:pointer;font-weight:700;font-family:inherit;">✓ Approve</button>
-                  <button (click)="rejectApproval(a)" style="font-size:10px;padding:5px 12px;background:transparent;color:currentColor;border:1px solid rgba(148,163,184,0.2);border-radius:6px;cursor:pointer;opacity:0.7;font-family:inherit;">✕ Reject</button>
+                  <button (click)="approveApproval(a)" style="font-size:10px;padding:5px 14px;background:linear-gradient(135deg,#14532d,#16a34a);color:white;border:none;border-radius:6px;cursor:pointer;font-weight:700;font-family:inherit;">{{ lbl('Approve') }}</button>
+                  <button (click)="rejectApproval(a)" style="font-size:10px;padding:5px 12px;background:transparent;color:currentColor;border:1px solid rgba(148,163,184,0.2);border-radius:6px;cursor:pointer;opacity:0.7;font-family:inherit;">{{ lbl('Reject') }}</button>
                 </div>
               </div>
             </ng-container>
@@ -370,32 +384,35 @@
             <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px;">
               <div style="display:flex;align-items:center;gap:10px;">
                 <div style="width:34px;height:34px;border-radius:10px;background:rgba(239,68,68,0.12);display:flex;align-items:center;justify-content:center;font-size:16px;">🗓</div>
-                <div><div style="font-size:13px;font-weight:700;">Leave Requests</div><div style="font-size:10px;opacity:0.5;margin-top:1px;">Leave approval queue</div></div>
-                <span style="font-size:10px;padding:3px 9px;border-radius:20px;font-weight:700;margin-left:4px;" [style.background]="leaveApprovals.length>0?'rgba(239,68,68,0.15)':'rgba(100,116,139,0.12)'" [style.color]="leaveApprovals.length>0?'#ef4444':'#64748b'">{{ leaveApprovals.length }} pending</span>
+                <div>
+                  <div style="font-size:13px;font-weight:700;">{{ lbl('Leave Requests') }}</div>
+                  <div style="font-size:10px;opacity:0.5;margin-top:1px;">{{ lbl('Leave approval queue') }}</div>
+                </div>
+                <span style="font-size:10px;padding:3px 9px;border-radius:20px;font-weight:700;margin-left:4px;" [style.background]="leaveApprovals.length>0?'rgba(239,68,68,0.15)':'rgba(100,116,139,0.12)'" [style.color]="leaveApprovals.length>0?'#ef4444':'#64748b'">{{ leaveApprovals.length }} {{ lbl('pending') }}</span>
               </div>
-              <button (click)="setView('view-leave')" style="font-size:10px;padding:5px 14px;border-radius:20px;background:transparent;border:1px solid rgba(148,163,184,0.2);color:currentColor;cursor:pointer;opacity:0.6;font-family:inherit;">View all →</button>
+              <button (click)="setView('view-leave')" style="font-size:10px;padding:5px 14px;border-radius:20px;background:transparent;border:1px solid rgba(148,163,184,0.2);color:currentColor;cursor:pointer;opacity:0.6;font-family:inherit;">{{ lbl('View all') }}</button>
             </div>
-            <div *ngIf="leaveApprovals.length===0" style="text-align:center;padding:20px 18px;font-size:11px;opacity:0.3;border-top:1px solid rgba(148,163,184,0.07);">No pending leave requests</div>
+            <div *ngIf="leaveApprovals.length===0" style="text-align:center;padding:20px 18px;font-size:11px;opacity:0.3;border-top:1px solid rgba(148,163,184,0.07);">{{ lbl('No pending leave requests') }}</div>
             <ng-container *ngIf="leaveApprovals.length>0">
               <div style="display:grid;grid-template-columns:170px 90px 130px 70px 1fr 90px 200px;gap:0;align-items:center;padding:8px 18px;border-top:1px solid rgba(148,163,184,0.07);border-bottom:1px solid rgba(148,163,184,0.1);">
-                <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.4;">Staff</span>
-                <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.4;">Type</span>
-                <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.4;">Dates</span>
-                <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.4;">Days</span>
-                <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.4;">Reason</span>
-                <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.4;">Status</span>
-                <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.4;">Action</span>
+                <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.4;">{{ lbl('Staff') }}</span>
+                <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.4;">{{ lbl('Type') }}</span>
+                <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.4;">{{ lbl('Dates') }}</span>
+                <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.4;">{{ lbl('Days') }}</span>
+                <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.4;">{{ lbl('Reason') }}</span>
+                <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.4;">{{ lbl('Status') }}</span>
+                <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.4;">{{ lbl('Action') }}</span>
               </div>
               <div *ngFor="let a of leaveApprovals; let last=last" [style.border-bottom]="last?'none':'1px solid rgba(148,163,184,0.05)'" style="display:grid;grid-template-columns:170px 90px 130px 70px 1fr 90px 200px;gap:0;align-items:center;padding:12px 18px;">
                 <div style="font-size:11px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ a.staffName }}</div>
-                <div><span style="font-size:9px;padding:3px 9px;border-radius:20px;font-weight:700;text-transform:uppercase;white-space:nowrap;" [style.background]="a.subtitle.includes('Annual')?'rgba(34,197,94,0.15)':a.subtitle.includes('Sick')?'rgba(248,113,113,0.15)':'rgba(167,139,250,0.15)'" [style.color]="a.subtitle.includes('Annual')?'#22c55e':a.subtitle.includes('Sick')?'#f87171':'#a78bfa'">{{ a.subtitle.includes('Annual') ? 'ANNUAL' : a.subtitle.includes('Sick') ? 'SICK' : 'UNPAID' }}</span></div>
+                <div><span style="font-size:9px;padding:3px 9px;border-radius:20px;font-weight:700;text-transform:uppercase;white-space:nowrap;" [style.background]="a.subtitle.includes('Annual')?'rgba(34,197,94,0.15)':a.subtitle.includes('Sick')?'rgba(248,113,113,0.15)':'rgba(167,139,250,0.15)'" [style.color]="a.subtitle.includes('Annual')?'#22c55e':a.subtitle.includes('Sick')?'#f87171':'#a78bfa'">{{ a.subtitle.includes('Annual') ? lbl('ANNUAL') : a.subtitle.includes('Sick') ? lbl('SICK') : lbl('UNPAID') }}</span></div>
                 <div style="font-size:10px;opacity:0.75;white-space:nowrap;">{{ a.dueText }}</div>
                 <div style="font-size:10px;font-weight:600;opacity:0.85;">{{ a.subtitle.includes('·') ? (a.subtitle.split('·')[1]?.trim()) : '—' }}</div>
                 <div style="font-size:10px;opacity:0.6;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ a.reason }}</div>
-                <div><span style="font-size:9px;padding:3px 10px;border-radius:20px;font-weight:700;background:rgba(245,158,11,0.15);color:#f59e0b;white-space:nowrap;">Pending</span></div>
+                <div><span style="font-size:9px;padding:3px 10px;border-radius:20px;font-weight:700;background:rgba(245,158,11,0.15);color:#f59e0b;white-space:nowrap;">{{ lbl('Pending') }}</span></div>
                 <div style="display:flex;gap:6px;flex-shrink:0;padding-left:8px;">
-                  <button (click)="approveApproval(a)" style="font-size:10px;padding:5px 16px;background:linear-gradient(135deg,#14532d,#16a34a);color:white;border:none;border-radius:7px;cursor:pointer;font-weight:700;font-family:inherit;white-space:nowrap;">✓ Approve</button>
-                  <button (click)="rejectApproval(a)" style="font-size:10px;padding:5px 12px;background:transparent;color:currentColor;border:1px solid rgba(148,163,184,0.25);border-radius:7px;cursor:pointer;opacity:0.7;font-family:inherit;white-space:nowrap;">✕ Reject</button>
+                  <button (click)="approveApproval(a)" style="font-size:10px;padding:5px 16px;background:linear-gradient(135deg,#14532d,#16a34a);color:white;border:none;border-radius:7px;cursor:pointer;font-weight:700;font-family:inherit;white-space:nowrap;">{{ lbl('Approve') }}</button>
+                  <button (click)="rejectApproval(a)" style="font-size:10px;padding:5px 12px;background:transparent;color:currentColor;border:1px solid rgba(148,163,184,0.25);border-radius:7px;cursor:pointer;opacity:0.7;font-family:inherit;white-space:nowrap;">{{ lbl('Reject') }}</button>
                 </div>
               </div>
             </ng-container>
@@ -406,21 +423,24 @@
             <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px;">
               <div style="display:flex;align-items:center;gap:10px;">
                 <div style="width:34px;height:34px;border-radius:10px;background:rgba(245,158,11,0.12);display:flex;align-items:center;justify-content:center;font-size:16px;">💵</div>
-                <div><div style="font-size:13px;font-weight:700;">Salary Approvals</div><div style="font-size:10px;opacity:0.5;margin-top:1px;">Monthly payroll approval</div></div>
-                <span style="font-size:10px;padding:3px 9px;border-radius:20px;font-weight:700;margin-left:4px;" [style.background]="salaryPeriods.length>0?'rgba(245,158,11,0.15)':'rgba(100,116,139,0.12)'" [style.color]="salaryPeriods.length>0?'#f59e0b':'#64748b'">{{ salaryPeriods.length }} pending</span>
+                <div>
+                  <div style="font-size:13px;font-weight:700;">{{ lbl('Salary Approvals') }}</div>
+                  <div style="font-size:10px;opacity:0.5;margin-top:1px;">{{ lbl('Monthly payroll approval') }}</div>
+                </div>
+                <span style="font-size:10px;padding:3px 9px;border-radius:20px;font-weight:700;margin-left:4px;" [style.background]="salaryPeriods.length>0?'rgba(245,158,11,0.15)':'rgba(100,116,139,0.12)'" [style.color]="salaryPeriods.length>0?'#f59e0b':'#64748b'">{{ salaryPeriods.length }} {{ lbl('pending') }}</span>
               </div>
-              <button (click)="setView('salary-approvals')" style="font-size:10px;padding:5px 14px;border-radius:20px;background:transparent;border:1px solid rgba(148,163,184,0.2);color:currentColor;cursor:pointer;opacity:0.6;font-family:inherit;">View all →</button>
+              <button (click)="setView('salary-approvals')" style="font-size:10px;padding:5px 14px;border-radius:20px;background:transparent;border:1px solid rgba(148,163,184,0.2);color:currentColor;cursor:pointer;opacity:0.6;font-family:inherit;">{{ lbl('View all') }}</button>
             </div>
-            <div *ngIf="salaryPeriods.length===0" style="text-align:center;padding:20px 18px;font-size:11px;opacity:0.3;border-top:1px solid rgba(148,163,184,0.07);">No pending salary approvals</div>
+            <div *ngIf="salaryPeriods.length===0" style="text-align:center;padding:20px 18px;font-size:11px;opacity:0.3;border-top:1px solid rgba(148,163,184,0.07);">{{ lbl('No pending salary approvals') }}</div>
             <ng-container *ngIf="salaryPeriods.length>0">
               <div style="display:grid;grid-template-columns:160px 90px 140px 130px 140px 90px 180px;gap:0;padding:8px 18px;border-top:1px solid rgba(148,163,184,0.07);border-bottom:1px solid rgba(148,163,184,0.07);align-items:center;">
-                <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.4;">Pay Period</span>
-                <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.4;">Staff</span>
-                <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.4;">Gross</span>
-                <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.4;">Tax</span>
-                <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.4;">Net</span>
-                <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.4;">Status</span>
-                <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.4;">Action</span>
+                <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.4;">{{ lbl('Pay Period') }}</span>
+                <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.4;">{{ lbl('Staff') }}</span>
+                <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.4;">{{ lbl('Gross') }}</span>
+                <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.4;">{{ lbl('Tax') }}</span>
+                <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.4;">{{ lbl('Net') }}</span>
+                <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.4;">{{ lbl('Status') }}</span>
+                <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.4;">{{ lbl('Action') }}</span>
               </div>
               <div *ngFor="let p of salaryPeriods; let last=last" [style.border-bottom]="last?'none':'1px solid rgba(148,163,184,0.05)'" style="display:grid;grid-template-columns:160px 90px 140px 130px 140px 90px 180px;gap:0;padding:11px 18px;align-items:center;">
                 <div style="font-size:11px;font-weight:700;">{{ formatPeriodLabel(p.payPeriod) }}</div>
@@ -428,10 +448,10 @@
                 <div style="font-size:11px;">{{ formatMoney(p.currency, p.totalGross) }}</div>
                 <div style="font-size:11px;font-weight:600;color:#ef4444;">-{{ formatMoney(p.currency, p.totalTax) }}</div>
                 <div style="font-size:11px;font-weight:700;color:#22c55e;">{{ formatMoney(p.currency, p.totalNet) }}</div>
-                <div><span style="font-size:9px;font-weight:700;padding:3px 10px;border-radius:20px;background:rgba(245,158,11,0.15);color:#f59e0b;white-space:nowrap;">Pending</span></div>
+                <div><span style="font-size:9px;font-weight:700;padding:3px 10px;border-radius:20px;background:rgba(245,158,11,0.15);color:#f59e0b;white-space:nowrap;">{{ lbl('Pending') }}</span></div>
                 <div style="display:flex;gap:6px;">
-                  <button (click)="approveSalaryPeriod(p)" [disabled]="salaryActing[p.payPeriod]" [style.opacity]="salaryActing[p.payPeriod]?'0.5':'1'" style="font-size:10px;padding:5px 14px;background:linear-gradient(135deg,#14532d,#16a34a);color:white;border:none;border-radius:6px;cursor:pointer;font-weight:700;font-family:inherit;white-space:nowrap;">{{ salaryActing[p.payPeriod] ? '...' : '✓ Approve' }}</button>
-                  <button (click)="rejectSalaryPeriod(p)" [disabled]="salaryActing[p.payPeriod]" style="font-size:10px;padding:5px 12px;background:transparent;color:currentColor;border:1px solid rgba(148,163,184,0.2);border-radius:6px;cursor:pointer;opacity:0.7;font-family:inherit;white-space:nowrap;">✕ Reject</button>
+                  <button (click)="approveSalaryPeriod(p)" [disabled]="salaryActing[p.payPeriod]" [style.opacity]="salaryActing[p.payPeriod]?'0.5':'1'" style="font-size:10px;padding:5px 14px;background:linear-gradient(135deg,#14532d,#16a34a);color:white;border:none;border-radius:6px;cursor:pointer;font-weight:700;font-family:inherit;white-space:nowrap;">{{ salaryActing[p.payPeriod] ? '...' : lbl('Approve') }}</button>
+                  <button (click)="rejectSalaryPeriod(p)" [disabled]="salaryActing[p.payPeriod]" style="font-size:10px;padding:5px 12px;background:transparent;color:currentColor;border:1px solid rgba(148,163,184,0.2);border-radius:6px;cursor:pointer;opacity:0.7;font-family:inherit;white-space:nowrap;">{{ lbl('Reject') }}</button>
                 </div>
               </div>
             </ng-container>
@@ -440,24 +460,42 @@
           <!-- BRANCH PROJECTS CARD -->
           <div class="card" style="padding:14px;margin-bottom:10px;">
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-              <div class="card-title" style="margin-bottom:0;font-size:12px;">Branch Projects</div>
-              <span style="font-size:10px;opacity:0.45;">{{ branchProjects.length }} projects</span>
+              <div class="card-title" style="margin-bottom:0;font-size:12px;">{{ lbl('Branch Projects (card)') }}</div>
+              <span style="font-size:10px;opacity:0.45;">{{ branchProjects.length }} {{ lbl('projects') }}</span>
             </div>
             <div style="display:grid;grid-template-columns:2fr 1fr 1.5fr 1fr 1fr 1fr;gap:8px;padding:0 6px 7px;border-bottom:1px solid rgba(255,255,255,0.06);">
-              <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.45;">Project</span>
-              <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.45;">Status</span>
-              <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.45;">Progress</span>
-              <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.45;">Owner</span>
-              <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.45;">Due Date</span>
-              <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.45;">Health</span>
+              <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.45;">{{ lbl('PROJECT') }}</span>
+              <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.45;">{{ lbl('STATUS') }}</span>
+              <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.45;">{{ lbl('PROGRESS') }}</span>
+              <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.45;">{{ lbl('OWNER') }}</span>
+              <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.45;">{{ lbl('DUE DATE') }}</span>
+              <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.45;">{{ lbl('HEALTH') }}</span>
             </div>
-            <div *ngFor="let p of branchProjects; let last=last" [style.border-bottom]="last?'none':'1px solid rgba(255,255,255,0.04)'" (click)="openProject(p.id)" style="display:grid;grid-template-columns:2fr 1fr 1.5fr 1fr 1fr 1fr;gap:8px;padding:8px 6px;align-items:center;cursor:pointer;border-radius:6px;transition:background 0.12s;" [style.background]="hoveredRow===('proj-'+p.id)?'rgba(148,163,184,0.06)':'transparent'" (mouseenter)="hoveredRow='proj-'+p.id" (mouseleave)="hoveredRow=null">
+            <div *ngFor="let p of branchProjects; let last=last"
+                 [style.border-bottom]="last?'none':'1px solid rgba(255,255,255,0.04)'"
+                 (click)="openProject(p.id)"
+                 style="display:grid;grid-template-columns:2fr 1fr 1.5fr 1fr 1fr 1fr;gap:8px;padding:8px 6px;align-items:center;cursor:pointer;border-radius:6px;transition:background 0.12s;"
+                 [style.background]="hoveredRow===('proj-'+p.id)?'rgba(148,163,184,0.06)':'transparent'"
+                 (mouseenter)="hoveredRow='proj-'+p.id" (mouseleave)="hoveredRow=null">
               <span style="font-size:11px;font-weight:600;">{{ p.name }}</span>
-              <div style="display:flex;align-items:center;gap:4px;"><div style="width:6px;height:6px;border-radius:50%;" [style.background]="getStatusColor(p.status)"></div><span style="font-size:10px;font-weight:600;" [style.color]="getStatusColor(p.status)">{{ p.status }}</span></div>
-              <div style="display:flex;align-items:center;gap:5px;"><div style="flex:1;height:5px;border-radius:3px;overflow:hidden;background:rgba(148,163,184,0.15);"><div [style.width.%]="p.progress" [style.background]="getProgressGradient(p.status)" style="height:100%;border-radius:3px;"></div></div><span style="font-size:9px;opacity:0.6;min-width:25px;text-align:right;">{{ p.progress }}%</span></div>
-              <div style="display:flex;align-items:center;gap:4px;"><div style="width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;color:white;" [style.background]="p.ownerColor">{{ p.ownerInitial }}</div><span style="font-size:10px;">{{ p.ownerName }}</span></div>
+              <div style="display:flex;align-items:center;gap:4px;">
+                <div style="width:6px;height:6px;border-radius:50%;" [style.background]="getStatusColor(p.status)"></div>
+                <span style="font-size:10px;font-weight:600;" [style.color]="getStatusColor(p.status)">{{ p.status === 'On Track' ? lbl('On Track') : p.status === 'At Risk' ? lbl('At Risk') : lbl('Delayed') }}</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:5px;">
+                <div style="flex:1;height:5px;border-radius:3px;overflow:hidden;background:rgba(148,163,184,0.15);">
+                  <div [style.width.%]="p.progress" [style.background]="getProgressGradient(p.status)" style="height:100%;border-radius:3px;"></div>
+                </div>
+                <span style="font-size:9px;opacity:0.6;min-width:25px;text-align:right;">{{ p.progress }}%</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:4px;">
+                <div style="width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;color:white;" [style.background]="p.ownerColor">{{ p.ownerInitial }}</div>
+                <span style="font-size:10px;">{{ p.ownerName }}</span>
+              </div>
               <span style="font-size:10px;opacity:0.7;">{{ p.dueDate }}</span>
-              <div style="display:flex;gap:2px;"><span *ngFor="let i of getHealthDots(p.health)" style="width:6px;height:6px;border-radius:50%;" [style.background]="getHealthDotColor(i,p.health)"></span></div>
+              <div style="display:flex;gap:2px;">
+                <span *ngFor="let i of getHealthDots(p.health)" style="width:6px;height:6px;border-radius:50%;" [style.background]="getHealthDotColor(i,p.health)"></span>
+              </div>
             </div>
           </div>
 
@@ -477,7 +515,7 @@
         <ng-container *ngIf="getManagementMembers().length > 0">
           <div style="padding:14px 10px 8px;">
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
-              <span style="font-size:10px;font-weight:700;letter-spacing:0.5px;" [style.color]="isDark ? '#a855f7' : '#7c3aed'">MANAGEMENT</span>
+              <span style="font-size:10px;font-weight:700;letter-spacing:0.5px;" [style.color]="isDark ? '#a855f7' : '#7c3aed'">{{ lbl('MANAGEMENT') }}</span>
               <span style="font-size:9px;padding:1px 7px;border-radius:20px;background:rgba(168,85,247,0.12);color:#a855f7;font-weight:700;border:1px solid rgba(168,85,247,0.25);">{{ getManagementMembers().length }}</span>
             </div>
             <div style="display:flex;flex-direction:column;gap:4px;">
@@ -497,15 +535,15 @@
 
         <div style="padding:10px 10px 8px;">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
-            <span style="font-size:10px;font-weight:700;letter-spacing:0.5px;" [style.color]="isDark ? '#22c55e' : '#16a34a'">💬 GROUP CHATS</span>
+            <span style="font-size:10px;font-weight:700;letter-spacing:0.5px;" [style.color]="isDark ? '#22c55e' : '#16a34a'">{{ lbl('GROUP CHATS') }}</span>
             <span style="font-size:9px;padding:1px 7px;border-radius:20px;background:rgba(34,197,94,0.12);color:#22c55e;font-weight:700;border:1px solid rgba(34,197,94,0.25);">{{ branchProjects.length }}</span>
           </div>
           <div style="display:flex;flex-direction:column;gap:4px;">
             <div (click)="openBranchChat()" style="display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:9px;cursor:pointer;border:1px solid;transition:all 0.15s;" [style.background]="isDark ? 'rgba(59,130,246,0.08)' : '#eff6ff'" [style.borderColor]="isDark ? 'rgba(59,130,246,0.3)' : '#93c5fd66'" (mouseenter)="$any($event.currentTarget).style.background = isDark ? 'rgba(59,130,246,0.16)' : '#dbeafe'" (mouseleave)="$any($event.currentTarget).style.background = isDark ? 'rgba(59,130,246,0.08)' : '#eff6ff'">
               <div style="width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,#1d4ed8,#3b82f6);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;">🏢</div>
               <div style="flex:1;min-width:0;">
-                <div style="font-size:11px;font-weight:700;" [style.color]="isDark ? '#93c5fd' : '#1d4ed8'">Branch Chat</div>
-                <div style="font-size:9px;opacity:0.55;" [style.color]="isDark ? '#94a3b8' : '#64748b'">All branch members</div>
+                <div style="font-size:11px;font-weight:700;" [style.color]="isDark ? '#93c5fd' : '#1d4ed8'">{{ lbl('Branch Chat') }}</div>
+                <div style="font-size:9px;opacity:0.55;" [style.color]="isDark ? '#94a3b8' : '#64748b'">{{ lbl('All branch members') }}</div>
               </div>
               <span *ngIf="branchUnreadCount > 0" style="flex-shrink:0;min-width:16px;height:16px;border-radius:20px;background:#ef4444;color:white;font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center;padding:0 4px;">{{ branchUnreadCount > 99 ? '99+' : branchUnreadCount }}</span>
             </div>
@@ -517,7 +555,7 @@
                   <span *ngIf="projectUnreadCounts[p.id] > 0" style="flex-shrink:0;min-width:16px;height:16px;border-radius:20px;background:#ef4444;color:white;font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center;padding:0 4px;">{{ projectUnreadCounts[p.id] > 99 ? '99+' : projectUnreadCounts[p.id] }}</span>
                 </div>
                 <div style="display:flex;align-items:center;gap:4px;margin-top:1px;">
-                  <span style="font-size:9px;font-weight:700;" [style.color]="p.status === 'On Track' ? '#22c55e' : p.status === 'At Risk' ? '#f59e0b' : '#ef4444'">● {{ p.status }}</span>
+                  <span style="font-size:9px;font-weight:700;" [style.color]="p.status === 'On Track' ? '#22c55e' : p.status === 'At Risk' ? '#f59e0b' : '#ef4444'">● {{ p.status === 'On Track' ? lbl('On Track') : p.status === 'At Risk' ? lbl('At Risk') : lbl('Delayed') }}</span>
                   <span style="font-size:9px;" [style.color]="isDark ? 'rgba(255,255,255,0.4)' : '#94a3b8'">· {{ p.progress }}%</span>
                 </div>
               </div>
@@ -531,7 +569,7 @@
         <ng-container *ngIf="getTeamMembers().length > 0">
           <div style="padding:10px 10px 14px;">
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
-              <span style="font-size:10px;font-weight:700;letter-spacing:0.5px;" [style.color]="isDark ? '#64748b' : '#475569'">TEAM</span>
+              <span style="font-size:10px;font-weight:700;letter-spacing:0.5px;" [style.color]="isDark ? '#64748b' : '#475569'">{{ lbl('TEAM') }}</span>
               <span style="font-size:9px;padding:1px 7px;border-radius:20px;background:rgba(100,116,139,0.15);color:#94a3b8;font-weight:700;border:1px solid rgba(100,116,139,0.25);">{{ getTeamMembers().length }}</span>
             </div>
             <div style="display:flex;flex-direction:column;gap:4px;">
@@ -539,7 +577,10 @@
                 <div class="member-avatar" [style.background]="m.color">{{ m.initial }}</div>
                 <div class="member-info-wrap">
                   <div class="member-name" [style.color]="isDark ? '#e2e8f0' : '#1e293b'">{{ m.name }}</div>
-                  <div class="member-info"><span [style]="getRoleBadgeStyle(m.role)" style="padding:1px 5px;border-radius:20px;font-size:7px;font-weight:700;">{{ m.role }}</span><span style="margin-left:3px;">· <span class="member-tasks" [style.color]="isDark ? '' : '#64748b'">{{ m.taskCount }} tasks</span></span></div>
+                  <div class="member-info">
+                    <span [style]="getRoleBadgeStyle(m.role)" style="padding:1px 5px;border-radius:20px;font-size:7px;font-weight:700;">{{ m.role }}</span>
+                    <span style="margin-left:3px;">· <span class="member-tasks" [style.color]="isDark ? '' : '#64748b'">{{ m.taskCount }} {{ lbl('tasks') }}</span></span>
+                  </div>
                 </div>
                 <span *ngIf="memberUnreadCounts[m.id] > 0" style="flex-shrink:0;min-width:16px;height:16px;border-radius:20px;background:#ef4444;color:white;font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center;padding:0 4px;">{{ memberUnreadCounts[m.id] > 99 ? '99+' : memberUnreadCounts[m.id] }}</span>
                 <div style="width:10px;height:10px;border-radius:50%;flex-shrink:0;margin-left:2px;" [style.background]="m.online ? '#22c55e' : '#334155'" [style.boxShadow]="m.online ? '0 0 5px #22c55e88' : 'none'" [style.border]="isDark ? 'none' : '1.5px solid #cbd5e1'"></div>

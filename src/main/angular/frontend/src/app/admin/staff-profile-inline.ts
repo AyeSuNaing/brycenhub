@@ -90,10 +90,8 @@ export class StaffProfileInline implements OnInit {
   ) {}
 
   ngOnInit() {
+    // ✅ loadCurrentWork ကို loadProfile ထဲမှ staff load ပြီးမှ call မယ်
     this.loadProfile();
-    if (this.canViewCurrentWork()) {
-      this.loadCurrentWork();
-    }
   }
 
   // ══════════════════════════════════════════
@@ -107,11 +105,17 @@ export class StaffProfileInline implements OnInit {
     }
   }
 
+  // ✅ FIXED — viewing ခံရသူ (staff) ရဲ့ role ကို check
+  // VP/CD/BOSS/ADMIN ဆိုရင် Work tab မပြ
   canViewCurrentWork(): boolean {
+    const staffRole = (this.staff?.roleName || this.staff?.role || '').toUpperCase();
+    const hideRoles = ['VICE_PRESIDENT', 'COUNTRY_DIRECTOR', 'BOSS', 'ADMIN'];
+    return !hideRoles.includes(staffRole);
+  }
+
+  canViewDangerZone(): boolean {
     const role = this.auth.getUser()?.role || '';
-    const myId = this.auth.getUser()?.id || this.auth.getUser()?.userId;
-    if (Number(myId) === Number(this.staffId)) return true;
-    return ['VICE_PRESIDENT', 'COUNTRY_DIRECTOR', 'BOSS'].includes(role);
+    return role === 'ADMIN';
   }
 
   canViewSalary(): boolean {
@@ -173,6 +177,11 @@ export class StaffProfileInline implements OnInit {
           this.skills    = data.skills || [];
           this.isLoading = false;
           this.cdr.detectChanges();
+
+          // ✅ staff load ပြီးမှ role check လုပ်ပြီး work load
+          if (this.canViewCurrentWork()) {
+            this.loadCurrentWork();
+          }
         },
         error: () => {
           this.isLoading = false;
@@ -216,9 +225,8 @@ export class StaffProfileInline implements OnInit {
         error: () => { this.salaryStructure = null; this.cdr.detectChanges(); }
       });
 
-    // 2) Payroll history — availablePeriods တွေ ယူပြီး user filter
+    // 2) Payroll history
     const branchId = this.auth.getUser()?.branchId || 3;
-    // Step A: get available periods list
     this.http.get<any>(`${BASE}/payroll/history?branchId=${branchId}`, h)
       .subscribe({
         next: firstResp => {
@@ -231,7 +239,6 @@ export class StaffProfileInline implements OnInit {
             return;
           }
 
-          // Step B: fetch all periods ပြီး userId filter
           const allRows: any[] = [];
           let remaining = periods.length;
 
@@ -246,7 +253,6 @@ export class StaffProfileInline implements OnInit {
                 allRows.push(...rows);
                 remaining--;
                 if (remaining === 0) {
-                  // Sort by payPeriod DESC
                   allRows.sort((a, b) => b.payPeriod.localeCompare(a.payPeriod));
                   this.salaryHistory = allRows;
                   this.latestPayslip = allRows[0] || null;
@@ -484,7 +490,6 @@ export class StaffProfileInline implements OnInit {
       { headers: this.auth.getHeaders() }
     ).subscribe({
       next: () => {
-        // Update local data
         const idx = this.attendanceLogs.findIndex(
           a => a.workDate === this.editingLog.workDate
         );
@@ -552,7 +557,6 @@ export class StaffProfileInline implements OnInit {
     return days[new Date(dateStr).getDay()];
   }
 
-  // ── Project Tasks Modal ────────────────────────────────────────
   openProjectTasks(project: any): void {
     this.selectedProject     = project;
     this.projectTasksOpen    = true;
@@ -563,7 +567,6 @@ export class StaffProfileInline implements OnInit {
 
     const h = { headers: this.auth.getHeaders() };
 
-    // Load board columns + tasks parallel
     this.http.get<any[]>(`${BASE}/project-board-columns/by-project/${project.id}`, h)
       .subscribe({
         next: cols => {

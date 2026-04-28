@@ -23,6 +23,9 @@ import { AnnouncementInline } from '../../shared/announcement-inline';
 import { HolidaysInline } from '../../admin/holidays-inline';
 import { TaxBracketsInline } from '../../admin/tax-brackets-inline';
 
+// ✅ i18n
+import { getLabel, AppLabelKey } from '../../i18n/app-labels.i18n';
+
 const BASE = environment.apiBaseUrl;
 const VP_BASE = `${BASE}/vp/dashboard`;
 
@@ -45,7 +48,7 @@ export interface BranchProject {
 export interface BranchMemberItem {
   id: number; name: string; role: string; rawRole: string;
   initial: string; color: string; taskCount: number; online: boolean;
-  management: boolean;  // true = BOSS/CD/VP (cross-branch)
+  management: boolean;
 }
 
 export interface DepartmentItem {
@@ -77,17 +80,16 @@ export class VpDashboardComponent implements OnInit, OnDestroy {
   activeChatMember: ChatMember | null = null;
   selectedStaffId = 0;
 
-  // ── Project Inline ────────────────────────────────────────────
   showProjectDetail = false;
   selectedProjectId: number | null = null;
 
   langs = [
-    { code: 'en', display: 'EN', name: 'English', flag: '🇺🇸' },
-    { code: 'ja', display: 'JP', name: 'Japanese', flag: '🇯🇵' },
-    { code: 'my', display: 'MM', name: 'Myanmar', flag: '🇲🇲' },
-    { code: 'km', display: 'KH', name: 'Khmer', flag: '🇰🇭' },
+    { code: 'en', display: 'EN', name: 'English',    flag: '🇺🇸' },
+    { code: 'ja', display: 'JP', name: 'Japanese',   flag: '🇯🇵' },
+    { code: 'my', display: 'MM', name: 'Myanmar',    flag: '🇲🇲' },
+    { code: 'km', display: 'KH', name: 'Khmer',      flag: '🇰🇭' },
     { code: 'vi', display: 'VN', name: 'Vietnamese', flag: '🇻🇳' },
-    { code: 'ko', display: 'KR', name: 'Korean', flag: '🇰🇷' },
+    { code: 'ko', display: 'KR', name: 'Korean',     flag: '🇰🇷' },
   ];
   currentLangObj = this.langs[0];
   showLangMenu = false;
@@ -96,11 +98,10 @@ export class VpDashboardComponent implements OnInit, OnDestroy {
   myTasksMaxH = 300;
   branchUnreadCount = 0;
 
-  // ── Approval tabs ────────────────────────────────────────────
   activeApprovalTab: ApprovalTab = 'LEAVE';
   readonly approvalTabs: { key: ApprovalTab; label: string }[] = [
-    { key: 'LEAVE', label: 'Leave' },
-    { key: 'OT', label: 'OT' },
+    { key: 'LEAVE',  label: 'Leave'  },
+    { key: 'OT',     label: 'OT'     },
     { key: 'SALARY', label: 'Salary' },
   ];
 
@@ -111,29 +112,26 @@ export class VpDashboardComponent implements OnInit, OnDestroy {
   };
   approvalCounts: Record<ApprovalTab, number> = { LEAVE: 0, OT: 0, SALARY: 0 };
 
-  leaveApprovals: PendingApproval[] = [];
-  otApprovals: PendingApproval[] = [];
+  leaveApprovals:  PendingApproval[] = [];
+  otApprovals:     PendingApproval[] = [];
   salaryApprovals: PendingApproval[] = [];
-  branchProjects: BranchProject[] = [];
-  teamMembers: BranchMemberItem[] = [];
-  projectUnreadCounts: Record<number, number> = {};  // projectId → unread count
-  memberUnreadCounts: Record<number, number> = {};   // userId → unread count
+  branchProjects:  BranchProject[]   = [];
+  teamMembers:     BranchMemberItem[] = [];
+  projectUnreadCounts: Record<number, number> = {};
+  memberUnreadCounts:  Record<number, number> = {};
   private _unreadPollTimer: any = null;
   allAnnouncements: any[] = [];
 
-  // ── Salary approvals — period list ─────────────────────────────
-  salaryPeriods: any[]        = [];   // dashboard card (PENDING only)
-  salaryHistoryPeriods: any[] = [];   // sidebar view (ALL periods)
+  salaryPeriods:        any[] = [];
+  salaryHistoryPeriods: any[] = [];
   salaryActing: { [period: string]: boolean } = {};
   loadingSalary = false;
 
-  // ── Salary Detail ─────────────────────────────────────────────
   selectedSalaryPeriod: any = null;
-  salaryDetailRows: any[] = [];
+  salaryDetailRows:     any[] = [];
   loadingSalaryDetail = false;
   hoveredRow: number | string | null = null;
 
-  // ✅ After — all periods combined summary
   get salaryApproval(): any {
     if (this.salaryPeriods.length === 0) return null;
     if (this.salaryPeriods.length === 1) return this.salaryPeriods[0];
@@ -148,7 +146,6 @@ export class VpDashboardComponent implements OnInit, OnDestroy {
     };
   }
 
-  // ── Payslip modal ────────────────────────────────────────────
   payslipOpen = false;
   payslipRecordId: number | null = null;
 
@@ -167,29 +164,34 @@ export class VpDashboardComponent implements OnInit, OnDestroy {
     { label: 'Done',        count: 0, color: '#22c55e' },
   ];
   overdueTasks: any[] = [];
-  activities: any[] = [];
-  deadlines: any[] = [];
+  activities:   any[] = [];
+  deadlines:    any[] = [];
 
-  // ── History views ────────────────────────────────────────────
-  historyFilter = 'ALL';
+  historyFilter  = 'ALL';
   loadingHistory = false;
-  historyLeave: any[] = [];
-  historyOt: any[] = [];
+  historyLeave:  any[] = [];
+  historyOt:     any[] = [];
 
-  // ── Pay period ───────────────────────────────────────────────
-  periodFrom = '';
-  periodTo = '';
+  periodFrom  = '';
+  periodTo    = '';
   periodLabel = '';
-  customFrom = '';
-  customTo = '';
-  useCustom = false;
+  customFrom  = '';
+  customTo    = '';
+  useCustom   = false;
 
-  // ── Search filters ───────────────────────────────────────────
-  searchName = '';
-  searchFrom = '';
-  searchTo = '';
+  searchName  = '';
+  searchFrom  = '';
+  searchTo    = '';
   searchDeptId: number | null = null;
   departments: DepartmentItem[] = [];
+  branchName = '';
+
+  // ══════════════════════════════════════════════════════════════
+  // ✅ i18n — label helper (used in HTML as lbl('key'))
+  // ══════════════════════════════════════════════════════════════
+  lbl(key: AppLabelKey): string {
+    return getLabel(this.currentLangObj.code, key);
+  }
 
   // ══════════════════════════════════════════════════════════════
   // ACTIVE CHECK HELPERS
@@ -207,10 +209,6 @@ export class VpDashboardComponent implements OnInit, OnDestroy {
     return new Date(r.workDate) >= today;
   }
 
-  // ══════════════════════════════════════════════════════════════
-  // SORT RANK HELPERS
-  // ══════════════════════════════════════════════════════════════
-
   private leaveRank(r: any): number {
     if (r.status === 'PENDING') return 0;
     if (r.status === 'APPROVED' && this.isActiveLeave(r)) return 1;
@@ -223,13 +221,8 @@ export class VpDashboardComponent implements OnInit, OnDestroy {
     return 2;
   }
 
-  get sortedLeave(): any[] {
-    return [...this.historyLeave].sort((a, b) => this.leaveRank(a) - this.leaveRank(b));
-  }
-
-  get sortedOt(): any[] {
-    return [...this.historyOt].sort((a, b) => this.otRank(a) - this.otRank(b));
-  }
+  get sortedLeave(): any[] { return [...this.historyLeave].sort((a, b) => this.leaveRank(a)  - this.leaveRank(b)); }
+  get sortedOt():    any[] { return [...this.historyOt].sort((a, b)    => this.otRank(a)     - this.otRank(b)); }
 
   constructor(
     private http: HttpClient,
@@ -240,11 +233,7 @@ export class VpDashboardComponent implements OnInit, OnDestroy {
     private refreshService: RefreshService,
     private navState: NavigationStateService,
     private ngZone: NgZone,
-  ) { }
-
-  // ══════════════════════════════════════════════════════════════
-  // LIFECYCLE
-  // ══════════════════════════════════════════════════════════════
+  ) {}
 
   ngOnInit(): void {
     const theme = localStorage.getItem('brycen-theme');
@@ -253,101 +242,51 @@ export class VpDashboardComponent implements OnInit, OnDestroy {
     const savedLang = this.currentUser?.preferredLanguage || 'en';
     this.currentLangObj = this.langs.find(l => l.code === savedLang) || this.langs[0];
     this.loadAll();
-    // Restore active view after language change reload
+    
     const savedView = localStorage.getItem('brycen-active-view');
-    if (savedView) {
-      this.activeView = savedView;
-      localStorage.removeItem('brycen-active-view');
-    }
+    if (savedView) { this.activeView = savedView; localStorage.removeItem('brycen-active-view'); }
     this.updateMyTasksHeight();
 
-    // ✅ Restore navigation state (e.g. back from Board/Design/API/Activity page)
     const navSaved = this.navState.restoreProjectState();
     if (navSaved.showProject && navSaved.projectId && navSaved.dashboard === 'vp') {
-      setTimeout(() => {
-        this.openProject(navSaved.projectId!);
-        this.navState.clearProjectState();
-      }, 300);
+      setTimeout(() => { this.openProject(navSaved.projectId!); this.navState.clearProjectState(); }, 300);
     }
 
     this._refreshSub = this.refreshService.refresh$.subscribe(() => {
-      this.loadStats();
-      this.loadLeaveRequests();
-      this.loadOtRequests();
-        this.cdr.detectChanges();
+      this.loadStats(); this.loadLeaveRequests(); this.loadOtRequests(); this.cdr.detectChanges();
     });
   }
 
-  ngOnDestroy(): void {
-    this._refreshSub?.unsubscribe();
-    this.stopUnreadPolling();
-  }
+  ngOnDestroy(): void { this._refreshSub?.unsubscribe(); this.stopUnreadPolling(); }
 
   private get headers() { return this.auth.getHeaders(); }
 
-  // ══════════════════════════════════════════════════════════════
-  // VIEW ROUTING
-  // ══════════════════════════════════════════════════════════════
-
   setView(view: string): void {
     this.activeView = view;
-
     if (view === 'announcements') { this.loadAnnouncements(); }
-    if (view === 'members') { /* staff-list-inline loads itself */ }
-
-    // ✅ FIX: salary-approvals view ဝင်တဲ့အချိန်မှသာ load လုပ်
-    //         loadingSalary ကို explicit reset လုပ်ပြီး ဟောင်းတဲ့ data clear
-    if (view === 'salary-approvals') {
-      this.loadingSalary = true;
-      // ✅ salaryPeriods မ clear မလုပ်ဘဲ — reload ပြီးမှ replace ဖြစ်မည်
-      this.loadSalaryApprovals();
-    }
-
-    if (view === 'salary-detail') {
-      // selectedSalaryPeriod ကို openSalaryDetail() မှာ သတ်မှတ်ပြီးပြီ
-      this.loadSalaryDetail();
-    }
-
+    if (view === 'salary-approvals') { this.loadingSalary = true; this.loadSalaryApprovals(); }
+    if (view === 'salary-detail') { this.loadSalaryDetail(); }
     if (view === 'view-leave') {
-      this.historyFilter = 'ALL';
-      this.useCustom = false;
-      this.resetSearch();
+      this.historyFilter = 'ALL'; this.useCustom = false; this.resetSearch();
       const p = this.getCurrentPayPeriod();
-      this.periodFrom = this.fmtDate(p.from);
-      this.periodTo   = this.fmtDate(p.to);
-      this.periodLabel = p.label;
-      this.loadDepartments();
-      this.loadHistoryLeave();
+      this.periodFrom = this.fmtDate(p.from); this.periodTo = this.fmtDate(p.to); this.periodLabel = p.label;
+      this.loadDepartments(); this.loadHistoryLeave();
     }
-
     if (view === 'view-ot') {
-      this.historyFilter = 'ALL';
-      this.useCustom = false;
-      this.resetSearch();
+      this.historyFilter = 'ALL'; this.useCustom = false; this.resetSearch();
       const p = this.getCurrentPayPeriod();
-      this.periodFrom = this.fmtDate(p.from);
-      this.periodTo   = this.fmtDate(p.to);
-      this.periodLabel = p.label;
-      this.loadDepartments();
-      this.loadHistoryOt();
+      this.periodFrom = this.fmtDate(p.from); this.periodTo = this.fmtDate(p.to); this.periodLabel = p.label;
+      this.loadDepartments(); this.loadHistoryOt();
     }
-
     this.cdr.detectChanges();
   }
 
-  resetSearch(): void {
-    this.searchName = '';
-    this.searchFrom = '';
-    this.searchTo   = '';
-    this.searchDeptId = null;
-  }
-
+  resetSearch(): void { this.searchName = ''; this.searchFrom = ''; this.searchTo = ''; this.searchDeptId = null; }
   applySearch(): void {
     if (this.activeView === 'view-leave') this.loadHistoryLeave();
     if (this.activeView === 'view-ot')    this.loadHistoryOt();
     this.cdr.detectChanges();
   }
-
   clearSearch(): void {
     this.resetSearch();
     if (this.activeView === 'view-leave') this.loadHistoryLeave();
@@ -355,15 +294,10 @@ export class VpDashboardComponent implements OnInit, OnDestroy {
     this.cdr.detectChanges();
   }
 
-  // ══════════════════════════════════════════════════════════════
-  // PAY PERIOD UTILS
-  // ══════════════════════════════════════════════════════════════
-
   getCurrentPayPeriod(): { from: Date; to: Date; label: string } {
     const today = new Date();
     const d = today.getDate();
     let fromY: number, fromM: number, toY: number, toM: number;
-
     if (d >= 25) {
       fromY = today.getFullYear(); fromM = today.getMonth();
       toY   = today.getFullYear(); toM   = today.getMonth() + 1;
@@ -371,10 +305,8 @@ export class VpDashboardComponent implements OnInit, OnDestroy {
       fromY = today.getFullYear(); fromM = today.getMonth() - 1;
       toY   = today.getFullYear(); toM   = today.getMonth();
     }
-
     if (fromM < 0)  { fromM = 11; fromY--; }
     if (toM   > 11) { toM   = 0;  toY++;   }
-
     const from  = new Date(fromY, fromM, 25);
     const to    = new Date(toY,   toM,   24);
     const label = to.toLocaleString('en-US', { month: 'long', year: 'numeric' });
@@ -382,28 +314,21 @@ export class VpDashboardComponent implements OnInit, OnDestroy {
   }
 
   shiftPayPeriod(delta: number): void {
-    const from = new Date(this.periodFrom);
-    const to   = new Date(this.periodTo);
-    from.setMonth(from.getMonth() + delta);
-    to.setMonth(to.getMonth()     + delta);
-    this.periodFrom  = this.fmtDate(from);
-    this.periodTo    = this.fmtDate(to);
+    const from = new Date(this.periodFrom); const to = new Date(this.periodTo);
+    from.setMonth(from.getMonth() + delta); to.setMonth(to.getMonth() + delta);
+    this.periodFrom  = this.fmtDate(from); this.periodTo = this.fmtDate(to);
     this.periodLabel = to.toLocaleString('en-US', { month: 'long', year: 'numeric' });
     this.reloadHistory();
   }
 
   reloadHistory(): void {
-    if (this.activeView === 'view-leave')   this.loadHistoryLeave();
-    if (this.activeView === 'view-ot')      this.loadHistoryOt();
+    if (this.activeView === 'view-leave') this.loadHistoryLeave();
+    if (this.activeView === 'view-ot')    this.loadHistoryOt();
   }
 
   fmtDate(d: Date): string {
-    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
   }
-
-  // ══════════════════════════════════════════════════════════════
-  // DEPARTMENTS
-  // ══════════════════════════════════════════════════════════════
 
   loadDepartments(): void {
     if (this.departments.length > 0) return;
@@ -411,10 +336,6 @@ export class VpDashboardComponent implements OnInit, OnDestroy {
       .pipe(catchError(() => of([])))
       .subscribe(list => { this.departments = list || []; this.cdr.detectChanges(); });
   }
-
-  // ══════════════════════════════════════════════════════════════
-  // QUERY BUILDERS
-  // ══════════════════════════════════════════════════════════════
 
   private buildLeaveQuery(): string {
     const p: string[] = [];
@@ -432,31 +353,20 @@ export class VpDashboardComponent implements OnInit, OnDestroy {
     return p.length ? '?' + p.join('&') : '';
   }
 
-  // ══════════════════════════════════════════════════════════════
-  // HISTORY LOADERS
-  // ══════════════════════════════════════════════════════════════
-
   loadHistoryLeave(): void {
     this.loadingHistory = true;
     this.http.get<any[]>(`${VP_BASE}/leave-requests${this.buildLeaveQuery()}`, { headers: this.headers })
       .pipe(catchError(() => of([])))
-      .subscribe(list => {
-        this.historyLeave    = list || [];
-        this.loadingHistory  = false;
-        this.cdr.detectChanges();
-      });
+      .subscribe(list => { this.historyLeave = list || []; this.loadingHistory = false; this.cdr.detectChanges(); });
   }
 
   loadHistoryOt(): void {
     this.loadingHistory = true;
     this.http.get<any[]>(`${VP_BASE}/ot-requests${this.buildOtQuery()}`, { headers: this.headers })
       .pipe(catchError(() => of([])))
-      .subscribe(list => {
-        this.historyOt      = list || [];
-        this.loadingHistory = false;
-        this.cdr.detectChanges();
-      });
-  }// ── History item actions ─────────────────────────────────────
+      .subscribe(list => { this.historyOt = list || []; this.loadingHistory = false; this.cdr.detectChanges(); });
+  }
+
   approveLeaveItem(r: any): void {
     this.http.patch(`${VP_BASE}/leave-requests/${r.id}/approve`, {}, { headers: this.headers })
       .pipe(catchError(() => of(null)))
@@ -477,16 +387,10 @@ export class VpDashboardComponent implements OnInit, OnDestroy {
       .pipe(catchError(() => of(null)))
       .subscribe(res => { if (res !== null) { this.loadHistoryOt(); this.loadStats(); } });
   }
-  openPayrollApprovals(): void  { this.activeView = 'payroll-approvals'; this.cdr.detectChanges(); }
+
+  openPayrollApprovals():  void { this.activeView = 'payroll-approvals'; this.cdr.detectChanges(); }
   closePayrollApprovals(): void { this.activeView = 'dashboard';          this.cdr.detectChanges(); }
 
-  // ══════════════════════════════════════════════════════════════
-  // ✅ SALARY APPROVALS — period list
-  // ══════════════════════════════════════════════════════════════
-
-  // ✅ Dashboard card — PENDING_APPROVAL only, no spinner
-  //    GET /api/vp/dashboard/salary-approvals
-  // Dashboard card — PENDING_APPROVAL only → salaryPeriods
   loadSalaryDashboard(): void {
     this.http.get<any[]>(`${VP_BASE}/salary-approvals`, { headers: this.headers })
       .pipe(catchError(() => of([])))
@@ -498,108 +402,55 @@ export class VpDashboardComponent implements OnInit, OnDestroy {
       });
   }
 
-  // Sidebar view — ALL periods → salaryHistoryPeriods (badge မပြောင်း)
   loadSalaryApprovals(): void {
     this.loadingSalary = true;
     this.http.get<any[]>(`${VP_BASE}/salary-history`, { headers: this.headers })
       .pipe(catchError(() => of([])))
-      .subscribe(data => {
-        this.salaryHistoryPeriods = data || [];
-        this.loadingSalary        = false;
-        this.cdr.detectChanges();
-      });
+      .subscribe(data => { this.salaryHistoryPeriods = data || []; this.loadingSalary = false; this.cdr.detectChanges(); });
   }
 
   approveSalaryPeriod(p: any): void {
     this.salaryActing[p.payPeriod] = true;
-    const payload = { branchId: p.branchId, payPeriod: p.payPeriod };
-    this.http.post(`${BASE}/payroll/batch/approve`, payload, { headers: this.headers })
-      .pipe(catchError(() => {
-        alert('Failed to approve.');
-        this.salaryActing[p.payPeriod] = false;
-        this.cdr.detectChanges();
-        return of(null);
-      }))
+    this.http.post(`${BASE}/payroll/batch/approve`, { branchId: p.branchId, payPeriod: p.payPeriod }, { headers: this.headers })
+      .pipe(catchError(() => { alert('Failed to approve.'); this.salaryActing[p.payPeriod] = false; this.cdr.detectChanges(); return of(null); }))
       .subscribe(r => {
-        this.salaryActing[p.payPeriod] = false;
-        this.cdr.detectChanges();
-        if (r !== null) {
-          this.loadSalaryDashboard();    // dashboard card — PENDING only
-          this.loadSalaryApprovals();    // sidebar view — ALL history
-          this.loadStats();
-        }
+        this.salaryActing[p.payPeriod] = false; this.cdr.detectChanges();
+        if (r !== null) { this.loadSalaryDashboard(); this.loadSalaryApprovals(); this.loadStats(); }
       });
   }
 
   rejectSalaryPeriod(p: any): void {
     const reason = prompt('Reject reason (optional):') ?? 'Rejected by VP';
     this.salaryActing[p.payPeriod] = true;
-    const payload = { branchId: p.branchId, payPeriod: p.payPeriod, note: reason };
-    this.http.post(`${BASE}/payroll/batch/reject`, payload, { headers: this.headers })
-      .pipe(catchError(() => {
-        alert('Failed to reject.');
-        this.salaryActing[p.payPeriod] = false;
-        this.cdr.detectChanges();
-        return of(null);
-      }))
+    this.http.post(`${BASE}/payroll/batch/reject`, { branchId: p.branchId, payPeriod: p.payPeriod, note: reason }, { headers: this.headers })
+      .pipe(catchError(() => { alert('Failed to reject.'); this.salaryActing[p.payPeriod] = false; this.cdr.detectChanges(); return of(null); }))
       .subscribe(r => {
-        this.salaryActing[p.payPeriod] = false;
-        this.cdr.detectChanges();
-        if (r !== null) {
-          this.loadSalaryDashboard();
-          this.loadSalaryApprovals();
-          this.loadStats();
-        }
+        this.salaryActing[p.payPeriod] = false; this.cdr.detectChanges();
+        if (r !== null) { this.loadSalaryDashboard(); this.loadSalaryApprovals(); this.loadStats(); }
       });
   }
 
-  // ✅ Open salary detail for a period
-  openSalaryDetail(p: any): void {
-    this.selectedSalaryPeriod = p;
-    this.setView('salary-detail');
-  }
+  openSalaryDetail(p: any): void { this.selectedSalaryPeriod = p; this.setView('salary-detail'); }
 
-  // ✅ Load staff breakdown for selected period
   loadSalaryDetail(): void {
     if (!this.selectedSalaryPeriod) return;
-    this.loadingSalaryDetail = true;
-    this.salaryDetailRows = [];
-    const period = this.selectedSalaryPeriod.payPeriod;
-    this.http.get<any[]>(`${VP_BASE}/salary-detail?payPeriod=${period}`, { headers: this.headers })
+    this.loadingSalaryDetail = true; this.salaryDetailRows = [];
+    this.http.get<any[]>(`${VP_BASE}/salary-detail?payPeriod=${this.selectedSalaryPeriod.payPeriod}`, { headers: this.headers })
       .pipe(catchError(() => of([])))
-      .subscribe(data => {
-        this.salaryDetailRows = data || [];
-        this.loadingSalaryDetail = false;
-        this.cdr.detectChanges();
-      });
+      .subscribe(data => { this.salaryDetailRows = data || []; this.loadingSalaryDetail = false; this.cdr.detectChanges(); });
   }
 
   approveSalaryBatch(): void { if (this.salaryPeriods.length > 0) this.approveSalaryPeriod(this.salaryPeriods[0]); }
   rejectSalaryBatch():  void { if (this.salaryPeriods.length > 0) this.rejectSalaryPeriod(this.salaryPeriods[0]);  }
   get salaryActingAny(): boolean { return Object.values(this.salaryActing).some(v => v); }
 
-  // ══════════════════════════════════════════════════════════════
-  // PAYSLIP MODAL
-  // ══════════════════════════════════════════════════════════════
-
-  openPayslip(recordId: number): void {
-    this.payslipRecordId = recordId; this.payslipOpen = true; this.cdr.detectChanges();
-  }
-  closePayslip(): void {
-    this.payslipOpen = false; this.payslipRecordId = null; this.cdr.detectChanges();
-  }
-
-  // ══════════════════════════════════════════════════════════════
-  // DATA LOADING
-  // ══════════════════════════════════════════════════════════════
+  openPayslip(recordId: number): void { this.payslipRecordId = recordId; this.payslipOpen = true; this.cdr.detectChanges(); }
+  closePayslip(): void { this.payslipOpen = false; this.payslipRecordId = null; this.cdr.detectChanges(); }
 
   loadAll(): void {
-    this.loadStats();
-    this.loadLeaveRequests();
-    this.loadOtRequests();
-    this.loadSalaryDashboard();   // ✅ dashboard card အတွက် — loadingSalary မသုံး
-    this.loadBranchProjects();
-    this.loadBranchMembers();
+    this.loadBranchName();
+    this.loadStats(); this.loadLeaveRequests(); this.loadOtRequests();
+    this.loadSalaryDashboard(); this.loadBranchProjects(); this.loadBranchMembers();
   }
 
   loadStats(): void {
@@ -627,11 +478,9 @@ export class VpDashboardComponent implements OnInit, OnDestroy {
     this.http.get<any[]>(`${VP_BASE}/leave-requests?status=PENDING`, { headers: this.headers })
       .pipe(catchError(() => of([])))
       .subscribe(list => {
-        this.leaveApprovals        = (list || []).map(lv => this.normalizeLeave(lv));
-        this.approvalCounts.LEAVE  = this.leaveApprovals.length;
-        this.recomputeTotalPending();
-        this.loading.approvals = false;
-        this.cdr.detectChanges();
+        this.leaveApprovals       = (list || []).map(lv => this.normalizeLeave(lv));
+        this.approvalCounts.LEAVE = this.leaveApprovals.length;
+        this.recomputeTotalPending(); this.loading.approvals = false; this.cdr.detectChanges();
       });
   }
 
@@ -641,86 +490,73 @@ export class VpDashboardComponent implements OnInit, OnDestroy {
       .subscribe(list => {
         this.otApprovals      = (list || []).map(ot => this.normalizeOt(ot));
         this.approvalCounts.OT = this.otApprovals.length;
-        this.recomputeTotalPending();
-        this.cdr.detectChanges();
+        this.recomputeTotalPending(); this.cdr.detectChanges();
       });
   }
+
+  loadBranchName(): void {
+    const branchId = this.currentUser?.branchId;
+    if (!branchId) return;
+    this.http.get<any>(`${BASE}/branches/${branchId}`, { headers: this.headers })
+      .pipe(catchError(() => of(null)))
+      .subscribe(b => {
+        if (b?.name) {
+          this.branchName = b.name;  // ✅ "Phnom Penh Office"
+          this.cdr.markForCheck();   // ✅ detectChanges အစား markForCheck သုံး
+          this.cdr.detectChanges();
+        }
+      });
+  }
+
+
   loadBranchProjects(): void {
     this.http.get<any[]>(`${VP_BASE}/branch-projects`, { headers: this.headers })
       .pipe(catchError(() => of([])))
       .subscribe(list => {
-        this.branchProjects    = (list || []).map(p => this.normalizeProject(p));
-        this.loading.projects  = false;
-        this.cdr.detectChanges();
-        this.loadProjectUnreadCounts();
-        this.startUnreadPolling();
+        this.branchProjects   = (list || []).map(p => this.normalizeProject(p));
+        this.loading.projects = false; this.cdr.detectChanges();
+        this.loadProjectUnreadCounts(); this.startUnreadPolling();
       });
   }
 
-  // ✅ Poll unread counts every 5 seconds (outside Angular zone — no extra CD cycles)
   startUnreadPolling(): void {
     this.stopUnreadPolling();
     this.ngZone.runOutsideAngular(() => {
-      this._unreadPollTimer = setInterval(() => {
-        this.ngZone.run(() => this.loadProjectUnreadCounts());
-      }, 10000);
+      this._unreadPollTimer = setInterval(() => { this.ngZone.run(() => this.loadProjectUnreadCounts()); }, 10000);
     });
   }
 
   stopUnreadPolling(): void {
-    if (this._unreadPollTimer) {
-      clearInterval(this._unreadPollTimer);
-      this._unreadPollTimer = null;
-    }
+    if (this._unreadPollTimer) { clearInterval(this._unreadPollTimer); this._unreadPollTimer = null; }
   }
 
-  // ✅ Fetch unread count per project for group chat badges
   loadProjectUnreadCounts(): void {
     this.loadMemberUnreadCounts();
-    // ✅ Branch Chat unread
     const branchId = this.currentUser?.branchId;
     if (branchId) {
-      this.http.get<any>(
-        `${BASE}/chat/unread?type=BRANCH&channelId=${branchId}`,
-        { headers: this.headers }
-      ).pipe(catchError(() => of({ unreadCount: 0 }))).subscribe(res => {
-        this.branchUnreadCount = res?.unreadCount || 0;
-        this.cdr.detectChanges();
-      });
+      this.http.get<any>(`${BASE}/chat/unread?type=BRANCH&channelId=${branchId}`, { headers: this.headers })
+        .pipe(catchError(() => of({ unreadCount: 0 }))).subscribe(res => {
+          this.branchUnreadCount = res?.unreadCount || 0; this.cdr.detectChanges();
+        });
     }
-    // ✅ Batch — project တစ်ခုချင်းစီ call မလုပ်ဘဲ တစ်ကြိမ်တည်း
     if (this.branchProjects.length === 0) return;
     const ids = this.branchProjects.map(p => p.id).join(',');
-    this.http.get<any[]>(
-      `${BASE}/chat/unread-batch?type=PROJECT&channelIds=${ids}`,
-      { headers: this.headers }
-    ).pipe(catchError(() => of([]))).subscribe(res => {
-      (res || []).forEach((r: any) => {
-        this.projectUnreadCounts[r.channelId] = r.unreadCount || 0;
+    this.http.get<any[]>(`${BASE}/chat/unread-batch?type=PROJECT&channelIds=${ids}`, { headers: this.headers })
+      .pipe(catchError(() => of([]))).subscribe(res => {
+        (res || []).forEach((r: any) => { this.projectUnreadCounts[r.channelId] = r.unreadCount || 0; });
+        this.cdr.detectChanges();
       });
-      this.cdr.detectChanges();
-    });
   }
 
-  // ✅ Fetch unread DM count per member
-  // DIRECT channel_id = VP ကိုယ်တိုင်ရဲ့ userId (receiver)
-  // sender filter — messages where sender_id = m.id AND channel_id = myId
   loadMemberUnreadCounts(): void {
     const myId = this.currentUser?.id || this.currentUser?.userId;
     if (!myId) return;
-    // Fetch all unread for my DIRECT channel (channelId = myId)
-    // then group by sender_id
-    this.http.get<any[]>(
-      `${BASE}/chat/direct-unread-by-sender?userId=${myId}`,
-      { headers: this.headers }
-    ).pipe(catchError(() => of([]))).subscribe(res => {
-      // res = [{ senderId, unreadCount }]
-      this.memberUnreadCounts = {};
-      (res || []).forEach((r: any) => {
-        this.memberUnreadCounts[r.senderId] = r.unreadCount;
+    this.http.get<any[]>(`${BASE}/chat/direct-unread-by-sender?userId=${myId}`, { headers: this.headers })
+      .pipe(catchError(() => of([]))).subscribe(res => {
+        this.memberUnreadCounts = {};
+        (res || []).forEach((r: any) => { this.memberUnreadCounts[r.senderId] = r.unreadCount; });
+        this.cdr.detectChanges();
       });
-      this.cdr.detectChanges();
-    });
   }
 
   loadBranchMembers(): void {
@@ -729,21 +565,15 @@ export class VpDashboardComponent implements OnInit, OnDestroy {
       .subscribe(list => {
         const mapped = (list || []).map(m => this.normalizeMember(m));
         this.teamMembers = mapped.sort((a, b) => this.getMemberRoleOrder(a.rawRole) - this.getMemberRoleOrder(b.rawRole));
-        this.loadMemberUnreadCounts();
-        this.loading.members  = false;
-        this.cdr.detectChanges();
+        this.loadMemberUnreadCounts(); this.loading.members = false; this.cdr.detectChanges();
       });
   }
 
   loadAnnouncements(): void {
-  this.http.get<any[]>(`${BASE}/announcements`, { headers: this.headers })
-    .pipe(catchError(() => of([])))
-    .subscribe(list => { this.allAnnouncements = list || []; this.cdr.detectChanges(); });
-}
-
-  // ══════════════════════════════════════════════════════════════
-  // NORMALIZERS
-  // ══════════════════════════════════════════════════════════════
+    this.http.get<any[]>(`${BASE}/announcements`, { headers: this.headers })
+      .pipe(catchError(() => of([])))
+      .subscribe(list => { this.allAnnouncements = list || []; this.cdr.detectChanges(); });
+  }
 
   private normalizeLeave(lv: any): PendingApproval {
     const s = lv.startDate ? new Date(lv.startDate) : null;
@@ -776,33 +606,25 @@ export class VpDashboardComponent implements OnInit, OnDestroy {
     const ed   = p.endDate ? new Date(p.endDate) : null;
     const dl   = ed ? Math.ceil((ed.getTime() - Date.now()) / 86400000) : 999;
     let st: 'On Track' | 'At Risk' | 'Delayed' = 'On Track';
-    if      (dl < 0)                    st = 'Delayed';
-    else if (dl < 14 && prog < 70)      st = 'At Risk';
-    else if (prog < 30 && dl < 30)      st = 'At Risk';
+    if      (dl < 0)               st = 'Delayed';
+    else if (dl < 14 && prog < 70) st = 'At Risk';
+    else if (prog < 30 && dl < 30) st = 'At Risk';
     return {
       id: p.id, name: p.title || 'Untitled', status: st, progress: prog,
-      ownerName:    p.pmName    || 'Unassigned',
-      ownerInitial: p.pmInitial || '?',
-      ownerColor:   p.pmColor   || '#64748b',
+      ownerName: p.pmName || 'Unassigned', ownerInitial: p.pmInitial || '?',
+      ownerColor: p.pmColor || '#64748b',
       dueDate: ed ? this.formatDate(ed) : '—',
-      health:  this.calcHealth(st, prog, dl),
+      health: this.calcHealth(st, prog, dl),
     };
   }
 
   private normalizeMember(m: any): BranchMemberItem {
     return {
-      id: m.id, name: m.name || 'Unknown',
-      role: m.role || 'Staff',
-      rawRole: m.rawRole || '',
+      id: m.id, name: m.name || 'Unknown', role: m.role || 'Staff', rawRole: m.rawRole || '',
       initial: m.initial || '?', color: m.color || '#64748b',
-      taskCount: m.taskCount || 0, online: m.online === true,
-      management: m.management === true,
+      taskCount: m.taskCount || 0, online: m.online === true, management: m.management === true,
     };
   }
-
-  // ══════════════════════════════════════════════════════════════
-  // APPROVE / REJECT (inbox cards — Leave / OT / Expense)
-  // ══════════════════════════════════════════════════════════════
 
   approveApproval(a: PendingApproval): void {
     const url = this.approveUrl(a); if (!url) return;
@@ -819,19 +641,15 @@ export class VpDashboardComponent implements OnInit, OnDestroy {
   }
 
   private approveUrl(a: PendingApproval): string | null {
-    switch (a.type) {
-      case 'LEAVE':   return `${VP_BASE}/leave-requests/${a.id}/approve`;
-      case 'OT':      return `${VP_BASE}/ot-requests/${a.id}/approve`;
-      default:        return null;
-    }
+    if (a.type === 'LEAVE') return `${VP_BASE}/leave-requests/${a.id}/approve`;
+    if (a.type === 'OT')    return `${VP_BASE}/ot-requests/${a.id}/approve`;
+    return null;
   }
 
   private rejectUrl(a: PendingApproval): string | null {
-    switch (a.type) {
-      case 'LEAVE':   return `${VP_BASE}/leave-requests/${a.id}/reject`;
-      case 'OT':      return `${VP_BASE}/ot-requests/${a.id}/reject`;
-      default:        return null;
-    }
+    if (a.type === 'LEAVE') return `${VP_BASE}/leave-requests/${a.id}/reject`;
+    if (a.type === 'OT')    return `${VP_BASE}/ot-requests/${a.id}/reject`;
+    return null;
   }
 
   private removeApprovalLocally(a: PendingApproval): void {
@@ -839,22 +657,15 @@ export class VpDashboardComponent implements OnInit, OnDestroy {
     const idx  = list.findIndex(x => x.id === a.id);
     if (idx > -1) list.splice(idx, 1);
     this.approvalCounts[a.type] = list.length;
-    this.recomputeTotalPending();
-    this.cdr.detectChanges();
+    this.recomputeTotalPending(); this.cdr.detectChanges();
   }
 
   private getList(type: ApprovalTab): PendingApproval[] {
-    switch (type) {
-      case 'LEAVE':   return this.leaveApprovals;
-      case 'OT':      return this.otApprovals;
-      case 'SALARY':  return this.salaryApprovals;
-      default:        return [];
-    }
+    if (type === 'LEAVE')  return this.leaveApprovals;
+    if (type === 'OT')     return this.otApprovals;
+    if (type === 'SALARY') return this.salaryApprovals;
+    return [];
   }
-
-  // ══════════════════════════════════════════════════════════════
-  // GETTERS
-  // ══════════════════════════════════════════════════════════════
 
   get filteredPendingApprovals(): PendingApproval[] {
     if (this.activeApprovalTab === 'SALARY') return [];
@@ -862,17 +673,11 @@ export class VpDashboardComponent implements OnInit, OnDestroy {
   }
 
   private recomputeTotalPending(): void {
-    this.stats.pendingApprovals =
-      this.approvalCounts.LEAVE  + this.approvalCounts.OT +
-      this.approvalCounts.SALARY;
+    this.stats.pendingApprovals = this.approvalCounts.LEAVE + this.approvalCounts.OT + this.approvalCounts.SALARY;
   }
 
   get totalPendingCount(): number { return this.stats.pendingApprovals; }
   get donutTotal(): number { return this.donutData.reduce((s, d) => s + d.count, 0); }
-
-  // ══════════════════════════════════════════════════════════════
-  // THEME / LANG / TABS
-  // ══════════════════════════════════════════════════════════════
 
   setTheme(dark: boolean): void {
     this.isDark = dark;
@@ -881,42 +686,24 @@ export class VpDashboardComponent implements OnInit, OnDestroy {
     localStorage.setItem('brycen-theme', dark ? 'dark' : 'light');
   }
   toggleTheme(): void { this.setTheme(!this.isDark); }
+
   selectLang(lang: any): void {
     this.currentLangObj = lang;
     this.showLangMenu = false;
-
-    // ① localStorage update
     try {
       const stored = localStorage.getItem('user');
-      if (stored) {
-        const u = JSON.parse(stored);
-        u.preferredLanguage = lang.code;
-        localStorage.setItem('user', JSON.stringify(u));
-      }
+      if (stored) { const u = JSON.parse(stored); u.preferredLanguage = lang.code; localStorage.setItem('user', JSON.stringify(u)); }
     } catch(e) {}
-
-    // ② Backend save + reload
-    // ② Backend save → save view state → reload
-    this.http.put(`${BASE}/auth/language`, { language: lang.code },
-      { headers: this.headers }).subscribe({
-        next: () => {
-          localStorage.setItem('brycen-active-view', this.activeView);
-          window.location.reload();
-        },
-        error: () => {
-          localStorage.setItem('brycen-active-view', this.activeView);
-          window.location.reload();
-        },
-      });
+    this.http.put(`${BASE}/auth/language`, { language: lang.code }, { headers: this.headers }).subscribe({
+      next: () => { localStorage.setItem('brycen-active-view', this.activeView); window.location.reload(); },
+      error: () => { localStorage.setItem('brycen-active-view', this.activeView); window.location.reload(); },
+    });
   }
+
   setApprovalTab(tab: ApprovalTab): void {
     this.activeApprovalTab = tab;
     if (tab === 'SALARY') this.loadSalaryApprovals();
   }
-
-  // ══════════════════════════════════════════════════════════════
-  // CHART HELPERS
-  // ══════════════════════════════════════════════════════════════
 
   getBarMaxVal(): number { return Math.max(1, ...this.chartData.map(d => d.done + d.inProgress + d.todo)); }
   getBarHeight(val: number, max: number): number { return max === 0 ? 0 : (val / max) * 100; }
@@ -930,19 +717,15 @@ export class VpDashboardComponent implements OnInit, OnDestroy {
     return ((offset % 100) + 100) % 100;
   }
 
-  // ══════════════════════════════════════════════════════════════
-  // STYLE HELPERS
-  // ══════════════════════════════════════════════════════════════
-
   getStatusColor(s: string): string {
     return s === 'On Track' ? '#22c55e' : s === 'At Risk' ? '#f59e0b' : '#ef4444';
   }
   getProgressGradient(s: string): string {
-    return s === 'On Track'  ? 'linear-gradient(90deg,#3b82f6,#6366f1)'
-         : s === 'At Risk'   ? 'linear-gradient(90deg,#f59e0b,#fb923c)'
-         :                     'linear-gradient(90deg,#ef4444,#f87171)';
+    return s === 'On Track' ? 'linear-gradient(90deg,#3b82f6,#6366f1)'
+         : s === 'At Risk'  ? 'linear-gradient(90deg,#f59e0b,#fb923c)'
+         :                    'linear-gradient(90deg,#ef4444,#f87171)';
   }
-  getHealthDots(h: number): number[]  { return [0, 1, 2, 3, 4]; }
+  getHealthDots(h: number): number[] { return [0, 1, 2, 3, 4]; }
   getHealthDotColor(i: number, h: number): string {
     if (i >= h) return '#1e2d4a';
     return h >= 4 ? '#22c55e' : h >= 2 ? '#f59e0b' : '#ef4444';
@@ -955,10 +738,6 @@ export class VpDashboardComponent implements OnInit, OnDestroy {
     const c = map[role] || '#64748b';
     return { background: `${c}22`, color: c };
   }
-
-  // ══════════════════════════════════════════════════════════════
-  // FORMAT HELPERS
-  // ══════════════════════════════════════════════════════════════
 
   formatMoney(currency: string, amount: number): string {
     const sym: Record<string, string> = { USD: '$', JPY: '¥', KHR: '៛', MMK: 'K', VND: '₫', KRW: '₩' };
@@ -974,21 +753,13 @@ export class VpDashboardComponent implements OnInit, OnDestroy {
 
   isGroupChat = false;
 
-  // ✅ Split teamMembers — use backend management flag
-  getManagementMembers(): BranchMemberItem[] {
-    return this.teamMembers.filter(m => m.management === true);
-  }
+  getManagementMembers(): BranchMemberItem[] { return this.teamMembers.filter(m => m.management === true); }
+  getTeamMembers():       BranchMemberItem[] { return this.teamMembers.filter(m => m.management !== true); }
 
-  getTeamMembers(): BranchMemberItem[] {
-    return this.teamMembers.filter(m => m.management !== true);
-  }
-
-  // ✅ Management roles float to top
   private getMemberRoleOrder(role: string): number {
     const order: Record<string, number> = {
       'BOSS': 1, 'COUNTRY_DIRECTOR': 2, 'VICE_PRESIDENT': 3,
-      'ADMIN': 4, 'PROJECT_MANAGER': 5, 'LEADER': 6,
-      'UI_UX': 7, 'DEVELOPER': 8, 'QA': 9,
+      'ADMIN': 4, 'PROJECT_MANAGER': 5, 'LEADER': 6, 'UI_UX': 7, 'DEVELOPER': 8, 'QA': 9,
     };
     return order[role?.toUpperCase()] ?? 99;
   }
@@ -996,54 +767,26 @@ export class VpDashboardComponent implements OnInit, OnDestroy {
   openMemberPopup(m: BranchMemberItem): void {
     this.isGroupChat = false;
     this.activeChatMember = { id: m.id, name: m.name, role: m.role, color: m.color, initial: m.initial, online: m.online };
-    // Mark DM as read + clear badge (channelId = myId as receiver)
     const myId = this.currentUser?.id || this.currentUser?.userId;
-    this.http.put(`${BASE}/chat/read-channel?type=DIRECT&channelId=${myId}`, {},
-      { headers: this.headers }).pipe(catchError(() => of(null))).subscribe(() => {
-      this.memberUnreadCounts[m.id] = 0;
-      this.cdr.detectChanges();
-    });
+    this.http.put(`${BASE}/chat/read-channel?type=DIRECT&channelId=${myId}`, {}, { headers: this.headers })
+      .pipe(catchError(() => of(null))).subscribe(() => { this.memberUnreadCounts[m.id] = 0; this.cdr.detectChanges(); });
     this.cdr.detectChanges();
   }
 
   openBranchChat(): void {
     const branchId = this.currentUser?.branchId;
     this.isGroupChat = true;
-    this.activeChatMember = {
-      id: branchId,
-      name: 'Branch Chat',
-      projectId: branchId,
-      projectName: 'Branch Chat',
-      color: '#3b82f6',
-    };
-    // Clear badge
-    this.http.put(
-      `${BASE}/chat/read-channel?type=BRANCH&channelId=${branchId}`, {},
-      { headers: this.headers }
-    ).pipe(catchError(() => of(null))).subscribe(() => {
-      this.branchUnreadCount = 0;
-      this.cdr.detectChanges();
-    });
+    this.activeChatMember = { id: branchId, name: 'Branch Chat', projectId: branchId, projectName: 'Branch Chat', color: '#3b82f6' };
+    this.http.put(`${BASE}/chat/read-channel?type=BRANCH&channelId=${branchId}`, {}, { headers: this.headers })
+      .pipe(catchError(() => of(null))).subscribe(() => { this.branchUnreadCount = 0; this.cdr.detectChanges(); });
     this.cdr.detectChanges();
   }
 
-
-  // ✅ Open group chat for a branch project
   openProjectGroupChat(p: BranchProject): void {
     this.isGroupChat = true;
-    this.activeChatMember = {
-      id: p.id,
-      name: p.name,
-      projectId: p.id,
-      projectName: p.name,
-      color: '#16a34a',
-    };
-    // Mark as read + clear badge
-    this.http.put(`${BASE}/chat/read-channel?type=PROJECT&channelId=${p.id}`, {},
-      { headers: this.headers }).pipe(catchError(() => of(null))).subscribe(() => {
-      this.projectUnreadCounts[p.id] = 0;
-      this.cdr.detectChanges();
-    });
+    this.activeChatMember = { id: p.id, name: p.name, projectId: p.id, projectName: p.name, color: '#16a34a' };
+    this.http.put(`${BASE}/chat/read-channel?type=PROJECT&channelId=${p.id}`, {}, { headers: this.headers })
+      .pipe(catchError(() => of(null))).subscribe(() => { this.projectUnreadCounts[p.id] = 0; this.cdr.detectChanges(); });
     this.cdr.detectChanges();
   }
 
@@ -1060,51 +803,43 @@ export class VpDashboardComponent implements OnInit, OnDestroy {
     if (!e || s?.getTime() === e?.getTime()) return this.formatDate(s!);
     return `${this.formatDate(s!)} — ${this.formatDate(e!)}`;
   }
-  private shortRole(r: string): string {
-    return ({
-      'Project Manager': 'PM',    'Leader': 'Leader',  'Developer': 'Dev',
-      'UI/UX Designer':  'UI/UX', 'QA Engineer': 'QA', 'Admin': 'Admin',
-      'Vice President':  'VP',    'Country Director': 'CD',
-    } as any)[r] || r?.slice(0, 8) || '—';
-  }
   private calcHealth(s: string, p: number, d: number): number {
-    if (s === 'Delayed')  return 1;
+    if (s === 'Delayed') return 1;
     if (s === 'At Risk')  return 2;
-    if (p >= 80)          return 5;
-    if (p >= 50)          return 4;
+    if (p >= 80) return 5;
+    if (p >= 50) return 4;
     return 3;
   }
   private updateMyTasksHeight(): void {
     setTimeout(() => { this.myTasksMaxH = Math.floor(window.innerHeight * 0.42); this.cdr.detectChanges(); }, 0);
   }
 
-  // ✅ VP, COUNTRY_DIRECTOR, BOSS → hidePanel=true (project inline right panel hide)
-  // Member roles → hidePanel=false (project inline right panel ပြ)
   get shouldHideProjectPanel(): boolean {
     const role = this.currentUser?.role || '';
     return ['VICE_PRESIDENT', 'COUNTRY_DIRECTOR', 'BOSS', 'ADMIN'].includes(role);
   }
 
   openProject(id: number): void {
-    this.selectedProjectId = id;
-    this.showProjectDetail = true;
-    // ✅ Save state — design page back can restore
-    this.navState.saveProjectState(id, 'vp');
-    this.cdr.detectChanges();
+    this.selectedProjectId = id; this.showProjectDetail = true;
+    this.navState.saveProjectState(id, 'vp'); this.cdr.detectChanges();
   }
 
   closeProject(): void {
-    this.showProjectDetail = false;
-    this.selectedProjectId = null;
-    this.navState.clearProjectState();
+    this.showProjectDetail = false; this.selectedProjectId = null;
+    this.navState.clearProjectState(); this.cdr.detectChanges();
+  }
+
+  onViewProfile(staff: any): void { this.selectedStaffId = staff.id; this.activeView = 'member-profile'; }
+
+  signOut(): void { this.auth.logout(); this.router.navigate(['/login']); }
+
+  openMyProfile(): void {
+    const myId = this.currentUser?.id || this.currentUser?.userId;
+    if (!myId) return;
+    this.selectedStaffId = myId;
+    this.activeView = 'member-profile';
+    this.settingsOpen = false;
     this.cdr.detectChanges();
   }
 
-  onViewProfile(staff: any): void {
-    this.selectedStaffId = staff.id;
-    this.activeView = 'member-profile';
-  }
-
-  signOut(): void { this.auth.logout(); this.router.navigate(['/login']); }
-  
 }
