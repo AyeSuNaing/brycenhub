@@ -246,6 +246,11 @@ export class VpDashboardComponent implements OnInit, OnDestroy {
 
     const savedView = localStorage.getItem('brycen-active-view');
     if (savedView) { this.activeView = savedView; localStorage.removeItem('brycen-active-view'); }
+    const savedStaffId = localStorage.getItem('brycen-selected-staff');
+    if (savedStaffId) {
+      this.selectedStaffId = Number(savedStaffId);
+      localStorage.removeItem('brycen-selected-staff');
+    }
     this.updateMyTasksHeight();
 
     const navSaved = this.navState.restoreProjectState();
@@ -706,10 +711,19 @@ export class VpDashboardComponent implements OnInit, OnDestroy {
       if (stored) { const u = JSON.parse(stored); u.preferredLanguage = lang.code; localStorage.setItem('user', JSON.stringify(u)); }
     } catch(e) {}
     this.http.put(`${BASE}/auth/language`, { language: lang.code }, { headers: this.headers }).subscribe({
-      next: () => { localStorage.setItem('brycen-active-view', this.activeView); window.location.reload(); },
-      error: () => { localStorage.setItem('brycen-active-view', this.activeView); window.location.reload(); },
+      next: () => {
+        localStorage.setItem('brycen-active-view', this.activeView);
+        if (this.selectedStaffId) { localStorage.setItem('brycen-selected-staff', String(this.selectedStaffId)); }
+        window.location.reload();
+      },
+      error: () => {
+        localStorage.setItem('brycen-active-view', this.activeView);
+        if (this.selectedStaffId) { localStorage.setItem('brycen-selected-staff', String(this.selectedStaffId)); }
+        window.location.reload();
+      },
     });
   }
+
 
   setApprovalTab(tab: ApprovalTab): void {
     this.activeApprovalTab = tab;

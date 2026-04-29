@@ -2,7 +2,7 @@
  * Brycen Hub PMS — App Labels i18n Dictionary
  * Covers ALL pages: Sidebar, VP/Member/Admin Dashboard,
  *   Branch Projects, Staff List, Announcements,
- *   Tax Brackets, Public Holidays
+ *   Tax Brackets, Public Holidays, Staff Profile
  * Used by: ALL dashboards and inline components
  *
  * Usage:
@@ -85,15 +85,30 @@ export type AppLabelKey =
   | 'Online' | 'Offline' | 'Branch Staff'
   | 'Search name role branch'
   | 'Office Address' | 'No offices found'
-  | 'Bracket Range' | 'Taxable Amount' | 'Effective Rate' | 'Breakdown' | 'Rate';
+  | 'Bracket Range' | 'Taxable Amount' | 'Effective Rate' | 'Breakdown' | 'Rate'
+  // ── STAFF PROFILE ──
+  | 'Staff Profile' | 'Basic Information' | 'Login Credentials' | 'CV Information'
+  | 'Skills' | 'CV Projects' | 'Social Links' | 'Danger Zone'
+  | 'Share with staff to login' | 'Copy Email' | 'Copied!'
+  | 'Senior' | 'Mid Level' | 'Beginner' | 'Other (skills)'
+  | 'from CV' | 'No CV data available' | 'No skills added'
+  | 'Education' | 'Experience' | 'Tech Stack' | 'Duration' | 'Role (project)'
+  | 'Deactivate Account' | 'Activate Account' | 'Danger Zone desc'
+  | 'Current Projects' | 'Assigned Tasks'
+  | 'No active projects' | 'No tasks assigned'
+  | 'Salary Structure' | 'Payroll History (profile)' | 'No salary structure'
+  | 'Base Salary' | 'Allowances' | 'Net Salary'
+  | 'View Payslip' | 'Attendance' | 'View Attendance'
+  | 'Profile Tab' | 'Work' | 'Salary (tab)'
+  | 'Back to Staff List' | 'years experience' | 'LOGIN EMAIL' | 'FULL NAME'
+  | 'LANGUAGE' | 'STAFF ID';
+
 
 // ═══════════════════════════════════════════════════════════════
 // ENGLISH
 // ═══════════════════════════════════════════════════════════════
 const en: Record<AppLabelKey, string> = {
-  // Sidebar sections
   MAIN: 'MAIN', APPROVALS: 'APPROVALS', SETTINGS: 'SETTINGS', STAFF: 'STAFF', PAYROLL: 'PAYROLL', INFO: 'INFO',
-  // Sidebar nav
   Dashboard: 'Dashboard', 'Branch Projects': 'Branch Projects',
   Members: 'Members', Announcements: 'Announcements', 'All Projects': 'All Projects',
   Leave: '🗓 Leave', OT: '⏰ OT', Salary: '💵 Salary',
@@ -106,34 +121,28 @@ const en: Record<AppLabelKey, string> = {
   'Monthly Payroll': 'Monthly Payroll', 'Payroll History': 'Payroll History',
   'Leave Request': 'Leave Request', 'OT Request': 'OT Request',
   'New Project': 'New Project', 'MY PROJECTS': 'MY PROJECTS',
-  // VP stat cards
   'Active Projects': 'Active Projects', 'Total Staff': 'Total Staff',
   'Pending Approvals': 'Pending Approvals', 'OT Hours (Month)': 'OT Hours (Month)',
   'this month': '↑ 2 this month', Active: '● Active',
   'Action required': '⚠ Action required', 'hrs this month': 'hrs this month',
-  // Member stat cards
   'TOTAL PROJECTS': 'TOTAL PROJECTS', ACTIVE: 'ACTIVE',
   'OVERDUE TASKS': 'OVERDUE TASKS', 'TEAM MEMBERS': 'TEAM MEMBERS',
   'In progress': 'In progress', 'Needs attention': 'Needs attention',
   'Across projects': 'Across projects',
-  // Admin stat cards
   'TOTAL STAFF': 'TOTAL STAFF', 'PENDING OT': 'PENDING OT / TOTAL HRS',
   'TOTAL HRS': 'TOTAL HRS', 'LEAVE REQUESTS TODAY': 'LEAVE REQUESTS / TODAY',
   'PAYROLL MONTH': 'PAYROLL',
   'Branch members': 'Branch members', 'This month': 'This month',
   Pending: 'Pending', 'Out today': 'Out today', DRAFT: 'DRAFT',
-  // Admin quick actions
   'Quick Actions': '⚡ Quick Actions', 'Today on Leave': '🗓 Today on Leave',
   'Everyone is in today': 'Everyone is in today',
   'Fingerprint Excel': 'Fingerprint Excel', 'New member': 'New member',
   'Add Holiday': 'Add Holiday', 'Next month': 'Next month',
-  // Member chart
   'Projects Overview': 'Projects Overview', 'Last 6 months': 'Last 6 months',
   'Task Status': 'Task Status',
   'To Do': 'To Do', 'In Progress': 'In Progress', 'In Review': 'In Review',
   Done: 'Done', tasks: 'tasks',
   Portfolio: 'Portfolio', 'active projects': 'active projects',
-  // VP/Admin cards
   'OT Requests': 'OT Requests', 'Overtime approval queue': 'Overtime approval queue',
   pending: 'pending', 'No pending OT requests': 'No pending OT requests',
   'View all': 'View all →',
@@ -147,7 +156,6 @@ const en: Record<AppLabelKey, string> = {
   'Monthly payroll approval': 'Monthly payroll approval',
   'No pending salary approvals': 'No pending salary approvals',
   'Pay Period': 'Pay Period', Gross: 'Gross', Tax: 'Tax', Net: 'Net',
-  // Projects table
   'Branch Projects (card)': 'Branch Projects', projects: 'projects',
   'total projects': 'total projects',
   PROJECT: 'PROJECT', STATUS: 'STATUS', PROGRESS: 'PROGRESS',
@@ -156,20 +164,17 @@ const en: Record<AppLabelKey, string> = {
   TEAM: 'TEAM', TASKS: 'TASKS', DUE: 'DUE', All: 'All',
   'On Track': 'On Track', 'At Risk': 'At Risk', Delayed: 'Delayed',
   'ACTIVE (status)': 'ACTIVE',
-  // Staff list
   'Back to Dashboard': '← Back to Dashboard', Back: '← Back',
   'Click a row to view profile': 'Click a row to view profile',
   'Search name or email': 'Search name or email...',
   'All Departments': 'All Departments', 'All Roles': 'All Roles', 'All Status': 'All Status',
   NAME: 'NAME', ROLE: 'ROLE', DEPARTMENT: 'DEPARTMENT', EMAIL: 'EMAIL', PHONE: 'PHONE',
   'Active (staff)': 'Active', Inactive: 'Inactive', members: 'members',
-  // Announcements
-  'total': 'total', '+ New': '+ New',
+  total: 'total', '+ New': '+ New',
   FROM: 'FROM', TO: 'TO', Search: 'Search',
   ALL: 'ALL', 'ACTIVE (ann)': 'ACTIVE', EXPIRED: 'EXPIRED', PINNED: 'PINNED',
   NORMAL: 'NORMAL', IMPORTANT: 'IMPORTANT', Branch: 'Branch', Global: 'Global',
   Pinned: 'Pinned', Expires: 'Expires', ago: 'ago',
-  // Tax brackets
   'TOTAL BRACKETS': 'TOTAL BRACKETS', 'HIGHEST RATE': 'HIGHEST RATE',
   'TAX-FREE UP TO': 'TAX-FREE UP TO', CURRENCY: 'CURRENCY',
   'Top marginal bracket': 'Top marginal bracket',
@@ -179,7 +184,6 @@ const en: Record<AppLabelKey, string> = {
   'Tax Calculator': '🧮 Tax Calculator',
   'Preview progressive tax': 'Preview progressive tax for any salary',
   'MONTHLY SALARY': 'MONTHLY SALARY', Calculate: 'Calculate',
-  // Holidays
   'TOTAL HOLIDAYS': 'TOTAL HOLIDAYS', 'THIS MONTH': 'THIS MONTH',
   'UPCOMING 30 DAYS': 'UPCOMING 30 DAYS', 'WEEKEND OVERLAP': 'WEEKEND OVERLAP',
   'Next month window': 'Next month window', 'Falls on Sat/Sun': 'Falls on Sat/Sun',
@@ -187,7 +191,6 @@ const en: Record<AppLabelKey, string> = {
   Calendar: '📅 Calendar', List: '📋 List', '+ Add Holiday': '+ Add Holiday',
   Holiday: 'Holiday', Weekend: 'Weekend', Today: 'Today',
   SUN: 'Sun', MON: 'Mon', TUE: 'Tue', WED: 'Wed', THU: 'Thu', FRI: 'Fri', SAT: 'Sat',
-  // Right sidebar
   MANAGEMENT: 'MANAGEMENT', 'GROUP CHATS': '💬 GROUP CHATS',
   'Branch Chat': 'Branch Chat', 'All branch members': 'All branch members',
   'My Tasks': 'My Tasks', 'Team Members': 'Team Members',
@@ -196,6 +199,30 @@ const en: Record<AppLabelKey, string> = {
   'Office Address': 'Office Addresses', 'No offices found': 'No offices found',
   'Bracket Range': 'Bracket Range', 'Taxable Amount': 'Taxable Amount',
   'Effective Rate': 'Effective Rate', Breakdown: 'Breakdown', Rate: 'Rate',
+  // Staff Profile
+  'Staff Profile': 'Staff Profile', 'Basic Information': 'Basic Information',
+  'Login Credentials': 'Login Credentials', 'CV Information': 'CV Information',
+  'Skills': 'Skills', 'CV Projects': 'CV Projects',
+  'Social Links': 'Social Links', 'Danger Zone': 'Danger Zone',
+  'Share with staff to login': 'Share with staff to login',
+  'Copy Email': 'Copy Email', 'Copied!': 'Copied!',
+  'Senior': 'Senior', 'Mid Level': 'Mid Level', 'Beginner': 'Beginner', 'Other (skills)': 'Other',
+  'from CV': 'from CV', 'No CV data available': 'No CV data', 'No skills added': 'No skills added',
+  'Education': 'Education', 'Experience': 'Experience',
+  'Tech Stack': 'Tech Stack', 'Duration': 'Duration', 'Role (project)': 'Role',
+  'Deactivate Account': 'Deactivate Account', 'Activate Account': 'Activate Account',
+  'Danger Zone desc': 'This will affect staff login access.',
+  'Current Projects': 'Current Projects', 'Assigned Tasks': 'Assigned Tasks',
+  'No active projects': 'No active projects', 'No tasks assigned': 'No tasks assigned',
+  'Salary Structure': 'Salary Structure', 'Payroll History (profile)': 'Payroll History',
+  'No salary structure': 'No salary structure set',
+  'Base Salary': 'Base Salary', 'Allowances': 'Allowances', 'Net Salary': 'Net Salary',
+  'View Payslip': 'View Payslip', 'Attendance': 'Attendance', 'View Attendance': 'View Attendance',
+  'Profile Tab': 'Profile', 'Work': 'Work', 'Salary (tab)': 'Salary',
+  'Back to Staff List': '← Back to Staff List',
+  'years experience': 'yrs experience',
+  'LOGIN EMAIL': 'LOGIN EMAIL', 'FULL NAME': 'FULL NAME',
+  'LANGUAGE': 'LANGUAGE', 'STAFF ID': 'STAFF ID',
 };
 
 // ═══════════════════════════════════════════════════════════════
@@ -286,8 +313,33 @@ const ja: Record<AppLabelKey, string> = {
   'Branch Chat': 'ブランチチャット', 'All branch members': '全ブランチメンバー',
   'My Tasks': 'マイタスク', 'Team Members': 'チームメンバー',
   Online: 'オンライン', Offline: 'オフライン',
-  'Branch Staff': 'ブランチスタッフ', 'Search name role branch': '名前・役職・部署で検索...', 'Office Address': 'オフィス住所', 'No offices found': 'オフィスが見つかりません',
+  'Branch Staff': 'ブランチスタッフ', 'Search name role branch': '名前・役職・部署で検索...',
+  'Office Address': 'オフィス住所', 'No offices found': 'オフィスが見つかりません',
   'Bracket Range': '税率範囲', 'Taxable Amount': '課税額', 'Effective Rate': '実効税率', Breakdown: '内訳', Rate: '税率',
+  // Staff Profile
+  'Staff Profile': 'スタッフプロフィール', 'Basic Information': '基本情報',
+  'Login Credentials': 'ログイン情報', 'CV Information': 'CV情報',
+  'Skills': 'スキル', 'CV Projects': 'CVプロジェクト',
+  'Social Links': 'SNSリンク', 'Danger Zone': '危険ゾーン',
+  'Share with staff to login': 'ログイン情報をスタッフに共有',
+  'Copy Email': 'メールコピー', 'Copied!': 'コピー済！',
+  'Senior': 'シニア', 'Mid Level': 'ミドル', 'Beginner': '初級', 'Other (skills)': 'その他',
+  'from CV': 'CV由来', 'No CV data available': 'CVデータなし', 'No skills added': 'スキルなし',
+  'Education': '学歴', 'Experience': '経験',
+  'Tech Stack': '技術スタック', 'Duration': '期間', 'Role (project)': '役割',
+  'Deactivate Account': 'アカウント無効化', 'Activate Account': 'アカウント有効化',
+  'Danger Zone desc': 'この操作はスタッフのログインに影響します。',
+  'Current Projects': '現在のプロジェクト', 'Assigned Tasks': '担当タスク',
+  'No active projects': 'プロジェクトなし', 'No tasks assigned': 'タスクなし',
+  'Salary Structure': '給与体系', 'Payroll History (profile)': '給与履歴',
+  'No salary structure': '給与体系未設定',
+  'Base Salary': '基本給', 'Allowances': '手当', 'Net Salary': '手取り',
+  'View Payslip': '給与明細', 'Attendance': '出勤', 'View Attendance': '出勤確認',
+  'Profile Tab': 'プロフィール', 'Work': '業務', 'Salary (tab)': '給与',
+  'Back to Staff List': '← スタッフ一覧へ',
+  'years experience': '年経験',
+  'LOGIN EMAIL': 'ログインメール', 'FULL NAME': '氏名',
+  'LANGUAGE': '言語', 'STAFF ID': 'スタッフID',
 };
 
 // ═══════════════════════════════════════════════════════════════
@@ -381,8 +433,33 @@ const my: Record<AppLabelKey, string> = {
   'Branch Chat': 'ဌာနခွဲချတ်', 'All branch members': 'အဖွဲ့သားများ',
   'My Tasks': 'ငါ့တာဝန်', 'Team Members': 'အဖွဲ့သားများ',
   Online: 'အွန်လိုင်း', Offline: 'အော့ဖ်လိုင်း',
-  'Branch Staff': 'ဌာနခွဲဝန်ထမ်း', 'Search name role branch': 'အမည်၊ ရာထူး ရှာပါ...', 'Office Address': 'ရုံးလိပ်စာ', 'No offices found': 'ရုံးမတွေ့ပါ',
+  'Branch Staff': 'ဌာနခွဲဝန်ထမ်း', 'Search name role branch': 'အမည်၊ ရာထူး ရှာပါ...',
+  'Office Address': 'ရုံးလိပ်စာ', 'No offices found': 'ရုံးမတွေ့ပါ',
   'Bracket Range': 'အခွန်အတိုင်းအတာ', 'Taxable Amount': 'အခွန်ကောက်ငွေ', 'Effective Rate': 'တကယ့်နှုန်း', Breakdown: 'အသေးစိတ်', Rate: 'နှုန်း',
+  // Staff Profile
+  'Staff Profile': 'ဝန်ထမ်းပရိုဖိုင်', 'Basic Information': 'အခြေခံအချက်အလက်',
+  'Login Credentials': 'အကောင့်ဝင်ရောက်ရန်', 'CV Information': 'CV အချက်အလက်',
+  'Skills': 'ကျွမ်းကျင်မှုများ', 'CV Projects': 'CV ပရောဂျက်များ',
+  'Social Links': 'ဆိုရှယ်လင့်ခ်', 'Danger Zone': 'အန္တရာယ်ဇုန်',
+  'Share with staff to login': 'ဝန်ထမ်းနှင့် Login သတင်း မျှဝေပါ',
+  'Copy Email': 'Email ကူးယူ', 'Copied!': 'ကူးပြီး!',
+  'Senior': 'အကြီးတန်း', 'Mid Level': 'အလယ်တန်း', 'Beginner': 'အစပြုသူ', 'Other (skills)': 'အခြား',
+  'from CV': 'CV မှ', 'No CV data available': 'CV ဒေတာမရှိ', 'No skills added': 'ကျွမ်းကျင်မှုမရှိ',
+  'Education': 'ပညာရေး', 'Experience': 'အတွေ့အကြုံ',
+  'Tech Stack': 'နည်းပညာ', 'Duration': 'ကြာချိန်', 'Role (project)': 'ရာထူး',
+  'Deactivate Account': 'အကောင့်ပိတ်ပင်', 'Activate Account': 'အကောင့်ဖွင့်',
+  'Danger Zone desc': 'ဤလုပ်ဆောင်ချက်သည် ဝန်ထမ်း Login ကို အကျိုးသက်ရောက်မည်။',
+  'Current Projects': 'လက်ရှိပရောဂျက်', 'Assigned Tasks': 'သတ်မှတ်ထားသောတာဝန်',
+  'No active projects': 'ပရောဂျက်မရှိ', 'No tasks assigned': 'တာဝန်မရှိ',
+  'Salary Structure': 'လစာဖွဲ့စည်းပုံ', 'Payroll History (profile)': 'လစာမှတ်တမ်း',
+  'No salary structure': 'လစာဖွဲ့စည်းပုံ မသတ်မှတ်ရသေး',
+  'Base Salary': 'အခြေခံလစာ', 'Allowances': 'ခွင့်ပြုကြေး', 'Net Salary': 'ကျန်လစာ',
+  'View Payslip': 'လစာဇယားကြည့်', 'Attendance': 'တက်ရောက်မှု', 'View Attendance': 'တက်ရောက်မှုကြည့်',
+  'Profile Tab': 'ပရိုဖိုင်', 'Work': 'လုပ်ငန်း', 'Salary (tab)': 'လစာ',
+  'Back to Staff List': '← ဝန်ထမ်းစာရင်းသို့',
+  'years experience': 'နှစ် အတွေ့အကြုံ',
+  'LOGIN EMAIL': 'Login Email', 'FULL NAME': 'အမည်',
+  'LANGUAGE': 'ဘာသာ', 'STAFF ID': 'ဝန်ထမ်း ID',
 };
 
 // ═══════════════════════════════════════════════════════════════
@@ -427,8 +504,7 @@ const km: Record<AppLabelKey, string> = {
   'OT Requests': 'សំណើ OT', 'Overtime approval queue': 'វេនអនុម័ត OT',
   pending: 'រង់ចាំ', 'No pending OT requests': 'គ្មានសំណើ OT',
   'View all': 'មើលទាំងអស់ →',
-  Staff: 'បុគ្គលិក', 'Work Date': 'ថ្ងៃធ្វើការ', Details: 'ព័ត៌មានលម្អិត',
-  Action: 'សកម្មភាព',
+  Staff: 'បុគ្គលិក', 'Work Date': 'ថ្ងៃធ្វើការ', Details: 'ព័ត៌មានលម្អិត', Action: 'សកម្មភាព',
   'Leave Requests': 'សំណើច្បាប់', 'Leave approval queue': 'វេនអនុម័តច្បាប់',
   'No pending leave requests': 'គ្មានសំណើច្បាប់',
   Type: 'ប្រភេទ', Dates: 'កាលបរិច្ឆេទ', Days: 'ថ្ងៃ', Reason: 'មូលហេតុ',
@@ -448,10 +524,8 @@ const km: Record<AppLabelKey, string> = {
   'Back to Dashboard': '← ត្រឡប់', Back: '← ត្រឡប់',
   'Click a row to view profile': 'ចុចដើម្បីមើលប្រវត្តិរូប',
   'Search name or email': 'ស្វែងរកឈ្មោះ ឬអ៊ីម៉ែល...',
-  'All Departments': 'នាយកដ្ឋានទាំងអស់', 'All Roles': 'តួនាទីទាំងអស់',
-  'All Status': 'ស្ថានភាពទាំងអស់',
-  NAME: 'ឈ្មោះ', ROLE: 'តួនាទី', DEPARTMENT: 'នាយកដ្ឋាន',
-  EMAIL: 'អ៊ីម៉ែល', PHONE: 'ទូរស័ព្ទ',
+  'All Departments': 'នាយកដ្ឋានទាំងអស់', 'All Roles': 'តួនាទីទាំងអស់', 'All Status': 'ស្ថានភាពទាំងអស់',
+  NAME: 'ឈ្មោះ', ROLE: 'តួនាទី', DEPARTMENT: 'នាយកដ្ឋាន', EMAIL: 'អ៊ីម៉ែល', PHONE: 'ទូរស័ព្ទ',
   'Active (staff)': 'សកម្ម', Inactive: 'អសកម្ម', members: 'នាក់',
   total: 'ចំនួន', '+ New': '+ ថ្មី',
   FROM: 'ចាប់ពី', TO: 'ដល់', Search: 'ស្វែងរក',
@@ -464,8 +538,7 @@ const km: Record<AppLabelKey, string> = {
   'Exempt ceiling': 'USD · អត្រាពន្ធ', 'Progressive tiers': 'ពន្ធបន្តបន្ទាប់',
   'Tax Brackets (title)': '💰 អត្រាពន្ធ', '+ Add Bracket': '+ បន្ថែម',
   'TAX-FREE': 'គ្មានពន្ធ', HIGHEST: 'ខ្ពស់បំផុត',
-  'Tax Calculator': '🧮 គណនាពន្ធ',
-  'Preview progressive tax': 'មើលពន្ធជាមុន',
+  'Tax Calculator': '🧮 គណនាពន្ធ', 'Preview progressive tax': 'មើលពន្ធជាមុន',
   'MONTHLY SALARY': 'ប្រាក់ខែ', Calculate: 'គណនា',
   'TOTAL HOLIDAYS': 'ថ្ងៃឈប់សម្រាកសរុប', 'THIS MONTH': 'ខែនេះ',
   'UPCOMING 30 DAYS': '30 ថ្ងៃខាងមុខ', 'WEEKEND OVERLAP': 'ជួបចុងសប្ដាហ៍',
@@ -478,8 +551,33 @@ const km: Record<AppLabelKey, string> = {
   'Branch Chat': 'ជជែកសាខា', 'All branch members': 'សមាជិកសាខាទាំងអស់',
   'My Tasks': 'ភារកិច្ចខ្ញុំ', 'Team Members': 'សមាជិកក្រុម',
   Online: 'អនឡាញ', Offline: 'គ្មានអ៊ីនធឺណិត',
-  'Branch Staff': 'បុគ្គលិកសាខា', 'Search name role branch': 'ស្វែងរកឈ្មោះ...', 'Office Address': 'អាសយដ្ឋានការិយាល័យ', 'No offices found': 'រកមិនឃើញ',
+  'Branch Staff': 'បុគ្គលិកសាខា', 'Search name role branch': 'ស្វែងរកឈ្មោះ...',
+  'Office Address': 'អាសយដ្ឋានការិយាល័យ', 'No offices found': 'រកមិនឃើញ',
   'Bracket Range': 'ជួរអត្រាពន្ធ', 'Taxable Amount': 'ចំនួនជាប់ពន្ធ', 'Effective Rate': 'អត្រាជាក់ស្តែង', Breakdown: 'ព័ត៌មានលម្អិត', Rate: 'អត្រា',
+  // Staff Profile
+  'Staff Profile': 'ប្រវត្តិរូបបុគ្គលិក', 'Basic Information': 'ព័ត៌មានមូលដ្ឋាន',
+  'Login Credentials': 'ពត៌មានចូល', 'CV Information': 'ព័ត៌មាន CV',
+  'Skills': 'ជំនាញ', 'CV Projects': 'គម្រោង CV',
+  'Social Links': 'តំណភ្ជាប់', 'Danger Zone': 'តំបន់គ្រោះថ្នាក់',
+  'Share with staff to login': 'ចែករំលែកជាមួយបុគ្គលិក',
+  'Copy Email': 'ចម្លងអ៊ីម៉ែល', 'Copied!': 'ចម្លងរួច!',
+  'Senior': 'ជាន់ខ្ពស់', 'Mid Level': 'កណ្ដាល', 'Beginner': 'ថ្មីថ្មោង', 'Other (skills)': 'ផ្សេងៗ',
+  'from CV': 'ពី CV', 'No CV data available': 'គ្មានទិន្នន័យ CV', 'No skills added': 'គ្មានជំនាញ',
+  'Education': 'ការអប់រំ', 'Experience': 'បទពិសោធ',
+  'Tech Stack': 'បច្ចេកវិទ្យា', 'Duration': 'រយៈពេល', 'Role (project)': 'តួនាទី',
+  'Deactivate Account': 'បិទគណនី', 'Activate Account': 'បើកគណនី',
+  'Danger Zone desc': 'សកម្មភាពនេះប៉ះពាល់ដល់ការចូលរបស់បុគ្គលិក។',
+  'Current Projects': 'គម្រោងបច្ចុប្បន្ន', 'Assigned Tasks': 'កិច្ចការបានដាក់',
+  'No active projects': 'គ្មានគម្រោង', 'No tasks assigned': 'គ្មានកិច្ចការ',
+  'Salary Structure': 'រចនាសម្ព័ន្ធប្រាក់ខែ', 'Payroll History (profile)': 'ប្រវត្តិប្រាក់ខែ',
+  'No salary structure': 'មិនមានរចនាសម្ព័ន្ធ',
+  'Base Salary': 'ប្រាក់ខែមូលដ្ឋាន', 'Allowances': 'ប្រាក់បន្ថែម', 'Net Salary': 'ប្រាក់សុទ្ធ',
+  'View Payslip': 'មើលបង្កាន់ដៃ', 'Attendance': 'វត្តមាន', 'View Attendance': 'មើលវត្តមាន',
+  'Profile Tab': 'ព័ត៌មាន', 'Work': 'ការងារ', 'Salary (tab)': 'ប្រាក់ខែ',
+  'Back to Staff List': '← ត្រឡប់',
+  'years experience': 'ឆ្នាំបទពិសោធ',
+  'LOGIN EMAIL': 'អ៊ីម៉ែលចូល', 'FULL NAME': 'ឈ្មោះពេញ',
+  'LANGUAGE': 'ភាសា', 'STAFF ID': 'អត្តលេខ',
 };
 
 // ═══════════════════════════════════════════════════════════════
@@ -525,8 +623,7 @@ const vi: Record<AppLabelKey, string> = {
   'OT Requests': 'Yêu cầu OT', 'Overtime approval queue': 'Hàng chờ OT',
   pending: 'chờ', 'No pending OT requests': 'Không có yêu cầu OT',
   'View all': 'Xem tất cả →',
-  Staff: 'NHÂN VIÊN', 'Work Date': 'NGÀY LÀM', Details: 'CHI TIẾT',
-  Action: 'HÀNH ĐỘNG',
+  Staff: 'NHÂN VIÊN', 'Work Date': 'NGÀY LÀM', Details: 'CHI TIẾT', Action: 'HÀNH ĐỘNG',
   'Leave Requests': 'Yêu cầu nghỉ phép', 'Leave approval queue': 'Hàng chờ nghỉ',
   'No pending leave requests': 'Không có yêu cầu nghỉ',
   Type: 'LOẠI', Dates: 'NGÀY', Days: 'SỐ NGÀY', Reason: 'LÝ DO',
@@ -546,10 +643,8 @@ const vi: Record<AppLabelKey, string> = {
   'Back to Dashboard': '← Tổng quan', Back: '← Quay lại',
   'Click a row to view profile': 'Nhấn hàng để xem hồ sơ',
   'Search name or email': 'Tìm tên hoặc email...',
-  'All Departments': 'Tất cả phòng ban', 'All Roles': 'Tất cả vai trò',
-  'All Status': 'Tất cả trạng thái',
-  NAME: 'TÊN', ROLE: 'VAI TRÒ', DEPARTMENT: 'PHÒNG BAN',
-  EMAIL: 'EMAIL', PHONE: 'ĐIỆN THOẠI',
+  'All Departments': 'Tất cả phòng ban', 'All Roles': 'Tất cả vai trò', 'All Status': 'Tất cả trạng thái',
+  NAME: 'TÊN', ROLE: 'VAI TRÒ', DEPARTMENT: 'PHÒNG BAN', EMAIL: 'EMAIL', PHONE: 'ĐIỆN THOẠI',
   'Active (staff)': 'Hoạt động', Inactive: 'Không hoạt động', members: 'thành viên',
   total: 'tổng', '+ New': '+ Mới',
   FROM: 'TỪ', TO: 'ĐẾN', Search: 'Tìm kiếm',
@@ -562,8 +657,7 @@ const vi: Record<AppLabelKey, string> = {
   'Exempt ceiling': 'USD · Miễn thuế', 'Progressive tiers': 'Thuế lũy tiến',
   'Tax Brackets (title)': '💰 Thuế', '+ Add Bracket': '+ Thêm mức thuế',
   'TAX-FREE': 'Miễn thuế', HIGHEST: 'Cao nhất',
-  'Tax Calculator': '🧮 Tính thuế',
-  'Preview progressive tax': 'Xem trước thuế cho bất kỳ mức lương',
+  'Tax Calculator': '🧮 Tính thuế', 'Preview progressive tax': 'Xem trước thuế cho bất kỳ mức lương',
   'MONTHLY SALARY': 'LƯƠNG THÁNG', Calculate: 'Tính',
   'TOTAL HOLIDAYS': 'TỔNG NGÀY NGHỈ', 'THIS MONTH': 'THÁNG NÀY',
   'UPCOMING 30 DAYS': '30 NGÀY TỚI', 'WEEKEND OVERLAP': 'TRÙNG CUỐI TUẦN',
@@ -576,8 +670,33 @@ const vi: Record<AppLabelKey, string> = {
   'Branch Chat': 'Chat Chi nhánh', 'All branch members': 'Tất cả thành viên',
   'My Tasks': 'Nhiệm vụ của tôi', 'Team Members': 'Thành viên nhóm',
   Online: 'Trực tuyến', Offline: 'Ngoại tuyến',
-  'Branch Staff': 'NV Chi nhánh', 'Search name role branch': 'Tìm tên, vai trò...', 'Office Address': 'Địa chỉ văn phòng', 'No offices found': 'Không tìm thấy',
+  'Branch Staff': 'NV Chi nhánh', 'Search name role branch': 'Tìm tên, vai trò...',
+  'Office Address': 'Địa chỉ văn phòng', 'No offices found': 'Không tìm thấy',
   'Bracket Range': 'Khung thuế', 'Taxable Amount': 'Thu nhập chịu thuế', 'Effective Rate': 'Thuế suất hiệu quả', Breakdown: 'Chi tiết', Rate: 'Thuế suất',
+  // Staff Profile
+  'Staff Profile': 'Hồ sơ nhân viên', 'Basic Information': 'Thông tin cơ bản',
+  'Login Credentials': 'Thông tin đăng nhập', 'CV Information': 'Thông tin CV',
+  'Skills': 'Kỹ năng', 'CV Projects': 'Dự án CV',
+  'Social Links': 'Mạng xã hội', 'Danger Zone': 'Vùng nguy hiểm',
+  'Share with staff to login': 'Chia sẻ thông tin đăng nhập',
+  'Copy Email': 'Sao chép Email', 'Copied!': 'Đã sao chép!',
+  'Senior': 'Cao cấp', 'Mid Level': 'Trung cấp', 'Beginner': 'Người mới', 'Other (skills)': 'Khác',
+  'from CV': 'từ CV', 'No CV data available': 'Không có CV', 'No skills added': 'Chưa có kỹ năng',
+  'Education': 'Học vấn', 'Experience': 'Kinh nghiệm',
+  'Tech Stack': 'Công nghệ', 'Duration': 'Thời gian', 'Role (project)': 'Vai trò',
+  'Deactivate Account': 'Vô hiệu hóa', 'Activate Account': 'Kích hoạt',
+  'Danger Zone desc': 'Hành động này ảnh hưởng đến khả năng đăng nhập.',
+  'Current Projects': 'Dự án hiện tại', 'Assigned Tasks': 'Nhiệm vụ được giao',
+  'No active projects': 'Không có dự án', 'No tasks assigned': 'Không có nhiệm vụ',
+  'Salary Structure': 'Cơ cấu lương', 'Payroll History (profile)': 'Lịch sử lương',
+  'No salary structure': 'Chưa thiết lập cơ cấu lương',
+  'Base Salary': 'Lương cơ bản', 'Allowances': 'Phụ cấp', 'Net Salary': 'Lương thực nhận',
+  'View Payslip': 'Xem phiếu lương', 'Attendance': 'Chấm công', 'View Attendance': 'Xem chấm công',
+  'Profile Tab': 'Hồ sơ', 'Work': 'Công việc', 'Salary (tab)': 'Lương',
+  'Back to Staff List': '← Danh sách NV',
+  'years experience': 'năm kinh nghiệm',
+  'LOGIN EMAIL': 'EMAIL ĐĂNG NHẬP', 'FULL NAME': 'HỌ TÊN',
+  'LANGUAGE': 'NGÔN NGỮ', 'STAFF ID': 'MÃ NV',
 };
 
 // ═══════════════════════════════════════════════════════════════
@@ -603,8 +722,7 @@ const ko: Record<AppLabelKey, string> = {
   'Action required': '⚠ 조치 필요', 'hrs this month': '시간/이번 달',
   'TOTAL PROJECTS': '총 프로젝트', ACTIVE: '활성',
   'OVERDUE TASKS': '기한 초과', 'TEAM MEMBERS': '팀 멤버',
-  'In progress': '진행 중', 'Needs attention': '주의 필요',
-  'Across projects': '전체 프로젝트',
+  'In progress': '진행 중', 'Needs attention': '주의 필요', 'Across projects': '전체 프로젝트',
   'TOTAL STAFF': '총 직원', 'PENDING OT': '초과근무 대기',
   'TOTAL HRS': '총 시간', 'LEAVE REQUESTS TODAY': '휴가 / 오늘',
   'PAYROLL MONTH': '급여',
@@ -637,15 +755,12 @@ const ko: Record<AppLabelKey, string> = {
   OWNER: '담당자', 'DUE DATE': '마감일', HEALTH: '건강도',
   TOTAL: '합계', 'ON TRACK': '정상', 'AT RISK': '위험', DELAYED: '지연',
   TEAM: '팀', TASKS: '태스크', DUE: '마감', All: '전체',
-  'On Track': '정상', 'At Risk': '위험', Delayed: '지연',
-  'ACTIVE (status)': '활성',
+  'On Track': '정상', 'At Risk': '위험', Delayed: '지연', 'ACTIVE (status)': '활성',
   'Back to Dashboard': '← 대시보드', Back: '← 뒤로',
   'Click a row to view profile': '행을 클릭하여 프로필 보기',
   'Search name or email': '이름 또는 이메일 검색...',
-  'All Departments': '전체 부서', 'All Roles': '전체 역할',
-  'All Status': '전체 상태',
-  NAME: '이름', ROLE: '역할', DEPARTMENT: '부서',
-  EMAIL: '이메일', PHONE: '전화',
+  'All Departments': '전체 부서', 'All Roles': '전체 역할', 'All Status': '전체 상태',
+  NAME: '이름', ROLE: '역할', DEPARTMENT: '부서', EMAIL: '이메일', PHONE: '전화',
   'Active (staff)': '활성', Inactive: '비활성', members: '명',
   total: '개', '+ New': '+ 새로',
   FROM: '시작', TO: '종료', Search: '검색',
@@ -658,8 +773,7 @@ const ko: Record<AppLabelKey, string> = {
   'Exempt ceiling': 'USD · 면세 한도', 'Progressive tiers': '누진세율',
   'Tax Brackets (title)': '💰 세율', '+ Add Bracket': '+ 세율 추가',
   'TAX-FREE': '면세', HIGHEST: '최고',
-  'Tax Calculator': '🧮 세금 계산기',
-  'Preview progressive tax': '임의 급여에 대한 누진세 미리보기',
+  'Tax Calculator': '🧮 세금 계산기', 'Preview progressive tax': '임의 급여에 대한 누진세 미리보기',
   'MONTHLY SALARY': '월급', Calculate: '계산',
   'TOTAL HOLIDAYS': '총 공휴일', 'THIS MONTH': '이번 달',
   'UPCOMING 30 DAYS': '향후 30일', 'WEEKEND OVERLAP': '주말 겹침',
@@ -672,8 +786,33 @@ const ko: Record<AppLabelKey, string> = {
   'Branch Chat': '지점 채팅', 'All branch members': '전체 지점 멤버',
   'My Tasks': '내 태스크', 'Team Members': '팀 멤버',
   Online: '온라인', Offline: '오프라인',
-  'Branch Staff': '지점 직원', 'Search name role branch': '이름, 역할 검색...', 'Office Address': '사무소 주소', 'No offices found': '사무소 없음',
+  'Branch Staff': '지점 직원', 'Search name role branch': '이름, 역할 검색...',
+  'Office Address': '사무소 주소', 'No offices found': '사무소 없음',
   'Bracket Range': '세율 구간', 'Taxable Amount': '과세 금액', 'Effective Rate': '실효 세율', Breakdown: '상세 내역', Rate: '세율',
+  // Staff Profile
+  'Staff Profile': '직원 프로필', 'Basic Information': '기본 정보',
+  'Login Credentials': '로그인 정보', 'CV Information': 'CV 정보',
+  'Skills': '스킬', 'CV Projects': 'CV 프로젝트',
+  'Social Links': '소셜 링크', 'Danger Zone': '위험 구역',
+  'Share with staff to login': '직원에게 로그인 정보 공유',
+  'Copy Email': '이메일 복사', 'Copied!': '복사됨!',
+  'Senior': '시니어', 'Mid Level': '미드레벨', 'Beginner': '초급', 'Other (skills)': '기타',
+  'from CV': 'CV 출처', 'No CV data available': 'CV 없음', 'No skills added': '스킬 없음',
+  'Education': '학력', 'Experience': '경력',
+  'Tech Stack': '기술 스택', 'Duration': '기간', 'Role (project)': '역할',
+  'Deactivate Account': '계정 비활성화', 'Activate Account': '계정 활성화',
+  'Danger Zone desc': '이 작업은 직원의 로그인에 영향을 미칩니다.',
+  'Current Projects': '현재 프로젝트', 'Assigned Tasks': '담당 태스크',
+  'No active projects': '프로젝트 없음', 'No tasks assigned': '태스크 없음',
+  'Salary Structure': '급여 구조', 'Payroll History (profile)': '급여 내역',
+  'No salary structure': '급여 구조 미설정',
+  'Base Salary': '기본급', 'Allowances': '수당', 'Net Salary': '실수령액',
+  'View Payslip': '급여명세서', 'Attendance': '출결', 'View Attendance': '출결 확인',
+  'Profile Tab': '프로필', 'Work': '업무', 'Salary (tab)': '급여',
+  'Back to Staff List': '← 직원 목록',
+  'years experience': '년 경력',
+  'LOGIN EMAIL': '로그인 이메일', 'FULL NAME': '이름',
+  'LANGUAGE': '언어', 'STAFF ID': '직원 ID',
 };
 
 // ═══════════════════════════════════════════════════════════════

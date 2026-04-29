@@ -7,6 +7,7 @@ import { HttpClient } from '@angular/common/http';
 import { AuthService } from '../services/auth.service';
 import { PayslipModalComponent } from '../shared/payslip-modal.component';
 import { environment } from '../../environments/environment';
+import { getLabel, AppLabelKey } from '../i18n/app-labels.i18n';
 
 const BASE = environment.apiBaseUrl;
 
@@ -89,8 +90,14 @@ export class StaffProfileInline implements OnInit {
     private cdr:   ChangeDetectorRef,
   ) {}
 
+  // ══════════════════════════════════════════
+  // i18n
+  // ══════════════════════════════════════════
+  lbl(key: AppLabelKey): string {
+    return getLabel(this.auth.getUser()?.preferredLanguage, key);
+  }
+
   ngOnInit() {
-    // ✅ loadCurrentWork ကို loadProfile ထဲမှ staff load ပြီးမှ call မယ်
     this.loadProfile();
   }
 
@@ -105,8 +112,6 @@ export class StaffProfileInline implements OnInit {
     }
   }
 
-  // ✅ FIXED — viewing ခံရသူ (staff) ရဲ့ role ကို check
-  // VP/CD/BOSS/ADMIN ဆိုရင် Work tab မပြ
   canViewCurrentWork(): boolean {
     const staffRole = (this.staff?.roleName || this.staff?.role || '').toUpperCase();
     const hideRoles = ['VICE_PRESIDENT', 'COUNTRY_DIRECTOR', 'BOSS', 'ADMIN'];
@@ -178,7 +183,6 @@ export class StaffProfileInline implements OnInit {
           this.isLoading = false;
           this.cdr.detectChanges();
 
-          // ✅ staff load ပြီးမှ role check လုပ်ပြီး work load
           if (this.canViewCurrentWork()) {
             this.loadCurrentWork();
           }
@@ -207,7 +211,6 @@ export class StaffProfileInline implements OnInit {
     this.loadingSalary = true;
     const h = { headers: this.auth.getHeaders() };
 
-    // 1) Salary structure history
     this.http.get<any[]>(`${BASE}/salary-structures/history/${this.staffId}`, h)
       .subscribe({
         next: d => {
@@ -215,8 +218,8 @@ export class StaffProfileInline implements OnInit {
           this.salaryStructure = list.length > 0 ? {
             currency:            'USD',
             baseSalary:          list[0].baseSalary,
-            otRatePerHour:       0,
-            workingDaysPerMonth: 26,
+            otRatePerHour:       list[0].otRatePerHour || 0,
+            workingDaysPerMonth: list[0].workingDaysPerMonth || 26,
             effectiveDate:       list[0].effectiveDate,
             note:                list[0].note,
           } : null;
@@ -225,7 +228,6 @@ export class StaffProfileInline implements OnInit {
         error: () => { this.salaryStructure = null; this.cdr.detectChanges(); }
       });
 
-    // 2) Payroll history
     const branchId = this.auth.getUser()?.branchId || 3;
     this.http.get<any>(`${BASE}/payroll/history?branchId=${branchId}`, h)
       .subscribe({
@@ -364,10 +366,10 @@ export class StaffProfileInline implements OnInit {
 
   getSkillGroups(): { level: string; label: string; skills: any[] }[] {
     return [
-      { level: 'SENIOR',   label: 'Senior',    skills: this.skills.filter(s => s.skillLevel === 'SENIOR')   },
-      { level: 'MID',      label: 'Mid Level', skills: this.skills.filter(s => s.skillLevel === 'MID')      },
-      { level: 'BEGINNER', label: 'Beginner',  skills: this.skills.filter(s => s.skillLevel === 'BEGINNER') },
-      { level: '',         label: 'Other',     skills: this.skills.filter(s => !s.skillLevel)               },
+      { level: 'SENIOR',   label: this.lbl('Senior'),         skills: this.skills.filter(s => s.skillLevel === 'SENIOR')   },
+      { level: 'MID',      label: this.lbl('Mid Level'),      skills: this.skills.filter(s => s.skillLevel === 'MID')      },
+      { level: 'BEGINNER', label: this.lbl('Beginner'),       skills: this.skills.filter(s => s.skillLevel === 'BEGINNER') },
+      { level: '',         label: this.lbl('Other (skills)'), skills: this.skills.filter(s => !s.skillLevel)               },
     ];
   }
 
