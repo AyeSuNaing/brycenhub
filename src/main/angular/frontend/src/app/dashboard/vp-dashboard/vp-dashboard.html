@@ -82,28 +82,43 @@
           </div>
           <hr class="section-divider"/>
         </div>
+
+        <!-- ── APPROVALS SECTION ── -->
         <div style="margin-top:6px;">
           <div class="proj-section-label">{{ lbl('APPROVALS') }}</div>
-          <div class="proj-item-v2" (click)="setView('view-leave')" [class.active-proj]="activeView==='view-leave'">
-            <div class="proj-item-top">
-              <div class="proj-item-left"><span class="proj-dot-sq" style="background:#ef4444"></span><span class="proj-name" style="font-size:10px;">{{ lbl('Leave') }}</span></div>
-              <span *ngIf="approvalCounts.LEAVE>0" class="rs-badge-red" style="font-size:9px;">{{ approvalCounts.LEAVE }}</span>
-            </div>
+          <div class="sidebar-item" [class.active]="activeView==='view-leave'" (click)="setView('view-leave')">
+            
+            <span>{{ lbl('Leave') }}</span>
+            <span *ngIf="approvalCounts.LEAVE>0"
+              style="margin-left:auto;min-width:18px;height:18px;border-radius:20px;
+                background:#ef4444;color:white;font-size:9px;font-weight:700;
+                display:flex;align-items:center;justify-content:center;padding:0 4px;">
+              {{ approvalCounts.LEAVE }}
+            </span>
           </div>
-          <div class="proj-item-v2" (click)="setView('view-ot')" [class.active-proj]="activeView==='view-ot'">
-            <div class="proj-item-top">
-              <div class="proj-item-left"><span class="proj-dot-sq" style="background:#ef4444"></span><span class="proj-name" style="font-size:10px;">{{ lbl('OT') }}</span></div>
-              <span *ngIf="approvalCounts.OT>0" class="rs-badge-red" style="font-size:9px;">{{ approvalCounts.OT }}</span>
-            </div>
+          <div class="sidebar-item" [class.active]="activeView==='view-ot'" (click)="setView('view-ot')">
+            
+            <span>{{ lbl('OT') }}</span>
+            <span *ngIf="approvalCounts.OT>0"
+              style="margin-left:auto;min-width:18px;height:18px;border-radius:20px;
+                background:#ef4444;color:white;font-size:9px;font-weight:700;
+                display:flex;align-items:center;justify-content:center;padding:0 4px;">
+              {{ approvalCounts.OT }}
+            </span>
           </div>
-          <div class="proj-item-v2" (click)="setView('salary-approvals')" [class.active-proj]="activeView==='salary-approvals'">
-            <div class="proj-item-top">
-              <div class="proj-item-left"><span class="proj-dot-sq" style="background:#f59e0b"></span><span class="proj-name" style="font-size:10px;">{{ lbl('Salary') }}</span></div>
-              <span *ngIf="approvalCounts.SALARY>0" class="rs-badge-red" style="font-size:9px;background:rgba(245,158,11,.2);color:#f59e0b;">{{ approvalCounts.SALARY }}</span>
-            </div>
+          <div class="sidebar-item" [class.active]="activeView==='salary-approvals'" (click)="setView('salary-approvals')">
+            
+            <span>{{ lbl('Salary') }}</span>
+            <span *ngIf="approvalCounts.SALARY>0"
+              style="margin-left:auto;min-width:18px;height:18px;border-radius:20px;
+                background:rgba(245,158,11,0.2);color:#f59e0b;font-size:9px;font-weight:700;
+                display:flex;align-items:center;justify-content:center;padding:0 4px;">
+              {{ approvalCounts.SALARY }}
+            </span>
           </div>
           <hr class="section-divider"/>
         </div>
+
         <!-- ── INFO SECTION ── -->
         <div style="margin-top:6px;">
           <div class="proj-section-label">{{ lbl('INFO') }}</div>
@@ -339,7 +354,6 @@
         <!-- ════ DASHBOARD VIEW ════ -->
         <ng-container *ngIf="activeView==='dashboard' && !showProjectDetail">
 
-          <!-- STAT CARDS -->
           <div class="stats-grid">
             <div class="stat-card">
               <div class="stat-label">{{ lbl('Active Projects') }}</div>
