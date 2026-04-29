@@ -10,13 +10,13 @@
             border:none;color:inherit;padding:0;"
           onmouseenter="this.style.opacity='1'"
           onmouseleave="this.style.opacity='0.45'">
-          ← Back
+          {{ lbl('Back') }}
         </button>
         <span style="opacity:0.15;">|</span>
         <div>
-          <div style="font-size:15px;font-weight:700;">Branch Projects</div>
+          <div style="font-size:15px;font-weight:700;">{{ lbl('Branch Projects (card)') }}</div>
           <div style="font-size:10px;opacity:0.4;margin-top:1px;">
-            {{ projects.length }} total projects
+            {{ projects.length }} {{ lbl('total projects') }}
           </div>
         </div>
       </div>
@@ -26,22 +26,22 @@
     <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;flex-shrink:0;">
       <div style="padding:10px 14px;border-radius:10px;border:1px solid rgba(34,197,94,0.15);
         background:rgba(34,197,94,0.04);">
-        <div style="font-size:8px;opacity:0.4;text-transform:uppercase;letter-spacing:0.7px;margin-bottom:3px;">Total</div>
+        <div style="font-size:8px;opacity:0.4;text-transform:uppercase;letter-spacing:0.7px;margin-bottom:3px;">{{ lbl('TOTAL') }}</div>
         <div style="font-size:18px;font-weight:800;">{{ projects.length }}</div>
       </div>
       <div style="padding:10px 14px;border-radius:10px;border:1px solid rgba(34,197,94,0.2);
         background:rgba(34,197,94,0.06);">
-        <div style="font-size:8px;opacity:0.4;text-transform:uppercase;letter-spacing:0.7px;margin-bottom:3px;">On Track</div>
+        <div style="font-size:8px;opacity:0.4;text-transform:uppercase;letter-spacing:0.7px;margin-bottom:3px;">{{ lbl('ON TRACK') }}</div>
         <div style="font-size:18px;font-weight:800;color:#22c55e;">{{ countByStatus['On Track'] }}</div>
       </div>
       <div style="padding:10px 14px;border-radius:10px;border:1px solid rgba(245,158,11,0.2);
         background:rgba(245,158,11,0.06);">
-        <div style="font-size:8px;opacity:0.4;text-transform:uppercase;letter-spacing:0.7px;margin-bottom:3px;">At Risk</div>
+        <div style="font-size:8px;opacity:0.4;text-transform:uppercase;letter-spacing:0.7px;margin-bottom:3px;">{{ lbl('AT RISK') }}</div>
         <div style="font-size:18px;font-weight:800;color:#f59e0b;">{{ countByStatus['At Risk'] }}</div>
       </div>
       <div style="padding:10px 14px;border-radius:10px;border:1px solid rgba(239,68,68,0.2);
         background:rgba(239,68,68,0.06);">
-        <div style="font-size:8px;opacity:0.4;text-transform:uppercase;letter-spacing:0.7px;margin-bottom:3px;">Delayed</div>
+        <div style="font-size:8px;opacity:0.4;text-transform:uppercase;letter-spacing:0.7px;margin-bottom:3px;">{{ lbl('DELAYED') }}</div>
         <div style="font-size:18px;font-weight:800;color:#ef4444;">{{ countByStatus['Delayed'] }}</div>
       </div>
     </div>
@@ -55,7 +55,7 @@
         [style.background]="statusFilter===f.key ? getTrackColor(f.key==='ALL'?'On Track':f.key)+'22' : 'transparent'"
         [style.borderColor]="statusFilter===f.key ? getTrackColor(f.key==='ALL'?'On Track':f.key) : 'rgba(148,163,184,0.2)'"
         [style.color]="statusFilter===f.key ? getTrackColor(f.key==='ALL'?'On Track':f.key) : '#94a3b8'">
-        {{ f.label }}
+        {{ f.key === 'ALL' ? lbl('All') : f.key === 'On Track' ? lbl('On Track') : f.key === 'At Risk' ? lbl('At Risk') : lbl('Delayed') }}
         <span style="margin-left:4px;font-size:9px;opacity:0.7;">{{ countByStatus[f.key] }}</span>
       </button>
     </div>
@@ -76,14 +76,16 @@
     <!-- ── Table header ── -->
     <div *ngIf="!isLoading && filtered.length > 0"
       style="display:flex;align-items:center;gap:16px;padding:0 16px 6px;flex-shrink:0;">
-      <span style="flex:2;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.35;">Project</span>
-      <span style="width:70px;flex-shrink:0;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.35;">Status</span>
-      <span style="flex:1.5;min-width:120px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.35;">Progress</span>
-      <span style="width:140px;flex-shrink:0;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.35;">Owner</span>
-      <span style="width:80px;flex-shrink:0;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.35;">Team / Tasks</span>
-      <span style="width:60px;flex-shrink:0;text-align:center;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.35;">Due</span>
-      <span style="flex-shrink:0;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.35;">Health</span>
+      <span style="flex:2;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.35;">{{ lbl('PROJECT') }}</span>
+      <span style="width:70px;flex-shrink:0;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.35;">{{ lbl('STATUS') }}</span>
+      <span style="flex:1.5;min-width:120px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.35;">{{ lbl('PROGRESS') }}</span>
+      <span style="width:140px;flex-shrink:0;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.35;">{{ lbl('OWNER') }}</span>
+      <span style="width:80px;flex-shrink:0;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.35;">{{ lbl('TEAM') }} / {{ lbl('TASKS') }}</span>
+      <span style="width:60px;flex-shrink:0;text-align:center;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.35;">{{ lbl('DUE') }}</span>
+      <span style="flex-shrink:0;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.35;">{{ lbl('HEALTH') }}</span>
     </div>
+
+    <!-- ── Table rows ── -->
     <div *ngIf="!isLoading && filtered.length > 0"
       style="display:flex;flex-direction:column;gap:8px;flex-shrink:0;">
 
@@ -94,100 +96,87 @@
         [style.borderColor]="p.status==='Delayed'?'rgba(239,68,68,0.35)':p.status==='At Risk'?'rgba(245,158,11,0.3)':'rgba(34,197,94,0.2)'"
         [style.background]="p.status==='Delayed'?'rgba(239,68,68,0.04)':p.status==='At Risk'?'rgba(245,158,11,0.03)':'rgba(34,197,94,0.02)'"
         [style.borderLeft]="p.status==='Delayed'?'3px solid #ef4444':p.status==='At Risk'?'3px solid #f59e0b':'3px solid #22c55e'"
-        [style.opacity]="p.projectStatus==='CANCELLED'?'0.5':'1'"
-        onmouseenter="this.style.filter='brightness(1.04)'"
-        onmouseleave="this.style.filter='brightness(1)'">
+        onmouseenter="this.style.filter='brightness(1.06)'"
+        onmouseleave="this.style.filter='none'">
 
-        <!-- Project name + track -->
+        <!-- Name + status label -->
         <div style="flex:2;min-width:0;">
-          <div style="font-size:12px;font-weight:700;margin-bottom:4px;
-            white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
-            {{ p.name }}
-          </div>
-          <div style="display:flex;align-items:center;gap:5px;">
-            <div style="width:6px;height:6px;border-radius:50%;flex-shrink:0;"
-              [style.background]="getTrackColor(p.status)"></div>
-            <span style="font-size:10px;font-weight:600;"
-              [style.color]="getTrackColor(p.status)">{{ p.status }}</span>
+          <div style="font-size:12px;font-weight:700;white-space:nowrap;
+            overflow:hidden;text-overflow:ellipsis;">{{ p.name }}</div>
+          <div style="font-size:10px;margin-top:3px;display:flex;align-items:center;gap:4px;"
+            [style.color]="getTrackColor(p.status)">
+            <span style="width:6px;height:6px;border-radius:50%;flex-shrink:0;"
+              [style.background]="getTrackColor(p.status)"></span>
+            {{ p.status === 'On Track' ? lbl('On Track') : p.status === 'At Risk' ? lbl('At Risk') : lbl('Delayed') }}
           </div>
         </div>
 
         <!-- Status badge -->
-        <span style="font-size:9px;padding:2px 8px;border-radius:20px;font-weight:700;flex-shrink:0;"
-          [style.background]="getStatusBadgeStyle(p.projectStatus)['background']"
-          [style.color]="getStatusBadgeStyle(p.projectStatus)['color']">
-          {{ p.projectStatus }}
-        </span>
+        <div style="width:70px;flex-shrink:0;">
+          <span style="font-size:9px;font-weight:700;padding:3px 8px;border-radius:20px;
+            background:rgba(34,197,94,0.15);color:#22c55e;
+            border:1px solid rgba(34,197,94,0.25);">
+            {{ lbl('ACTIVE (status)') }}
+          </span>
+        </div>
 
         <!-- Progress bar -->
-        <div style="flex:1.5;min-width:120px;">
-          <div style="display:flex;align-items:center;gap:8px;">
-            <div style="flex:1;height:5px;border-radius:3px;
-              background:rgba(148,163,184,0.12);overflow:hidden;">
-              <div [style.width.%]="p.progress"
-                [style.background]="getProgressGradient(p.status)"
-                style="height:100%;border-radius:3px;transition:width 0.3s;">
-              </div>
+        <div style="flex:1.5;min-width:120px;display:flex;align-items:center;gap:8px;">
+          <div style="flex:1;height:5px;border-radius:3px;background:rgba(148,163,184,0.15);overflow:hidden;">
+            <div [style.width.%]="p.progress"
+              style="height:100%;border-radius:3px;transition:width 0.4s;"
+              [style.background]="p.status==='Delayed'?'linear-gradient(90deg,#ef4444,#f87171)':p.status==='At Risk'?'linear-gradient(90deg,#f59e0b,#fb923c)':'linear-gradient(90deg,#3b82f6,#6366f1)'">
             </div>
-            <span style="font-size:10px;font-weight:600;opacity:0.7;width:30px;text-align:right;">
-              {{ p.progress }}%
-            </span>
           </div>
+          <span style="font-size:10px;font-weight:700;flex-shrink:0;width:30px;text-align:right;"
+            [style.color]="p.status==='Delayed'?'#ef4444':p.status==='At Risk'?'#f59e0b':'#94a3b8'">
+            {{ p.progress }}%
+          </span>
         </div>
 
         <!-- Owner -->
-        <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;width:140px;">
-          <div style="width:22px;height:22px;border-radius:50%;flex-shrink:0;
+        <div style="width:140px;flex-shrink:0;display:flex;align-items:center;gap:8px;">
+          <div style="width:24px;height:24px;border-radius:50%;flex-shrink:0;
             display:flex;align-items:center;justify-content:center;
-            font-size:9px;font-weight:700;color:white;"
+            font-size:9px;font-weight:800;color:white;"
             [style.background]="p.ownerColor">
             {{ p.ownerInitial }}
           </div>
-          <span style="font-size:10px;opacity:0.7;white-space:nowrap;
-            overflow:hidden;text-overflow:ellipsis;">
+          <span style="font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
             {{ p.ownerName }}
           </span>
         </div>
 
-        <!-- Staff + Task count -->
-        <div style="display:flex;align-items:center;gap:10px;flex-shrink:0;">
-          <div style="display:flex;align-items:center;gap:3px;opacity:0.6;">
-            <span style="font-size:10px;">👥</span>
-            <span style="font-size:10px;font-weight:600;">{{ p.staffCount }}</span>
-          </div>
-          <div style="display:flex;align-items:center;gap:3px;opacity:0.6;">
-            <span style="font-size:10px;">📋</span>
-            <span style="font-size:10px;font-weight:600;">
-              {{ p.doneTasks }}/{{ p.totalTasks }}
-            </span>
-          </div>
+        <!-- Team / Tasks -->
+        <div style="width:80px;flex-shrink:0;font-size:10px;opacity:0.6;">
+          <span>👥 {{ p.staffCount }}</span>
+          <span style="margin-left:6px;">🗂 {{ p.doneTasks }}/{{ p.totalTasks }}</span>
         </div>
 
         <!-- Due date -->
-        <span style="font-size:10px;opacity:0.5;flex-shrink:0;width:60px;text-align:center;">
-          {{ p.dueDate }}
-        </span>
+        <div style="width:60px;flex-shrink:0;text-align:center;">
+          <span style="font-size:10px;opacity:0.6;">{{ p.dueDate }}</span>
+        </div>
 
         <!-- Health dots -->
         <div style="display:flex;gap:3px;flex-shrink:0;">
-          <span *ngFor="let i of getHealthDots()"
-            style="width:7px;height:7px;border-radius:50%;"
-            [style.background]="getHealthDotColor(i, p.health)">
-          </span>
+          <div *ngFor="let dot of [0,1,2,3,4]"
+            style="width:8px;height:8px;border-radius:50%;transition:background 0.2s;"
+            [style.background]="getHealthDotColor(dot, p.health)">
+          </div>
         </div>
+
       </div>
     </div>
 
   </div>
 </ng-container>
 
-<!-- ── Project Inline ── -->
-<div *ngIf="showProjectDetail && selectedProjectId"
-  style="flex:1;min-width:0;display:flex;overflow:hidden;height:100%;">
+<!-- Project Detail -->
+<ng-container *ngIf="showProjectDetail && selectedProjectId">
   <app-project-inline
-    [projectId]="selectedProjectId!"
+    [projectId]="selectedProjectId"
     [hidePanel]="hidePanel"
-    (close)="closeProject()"
-    style="flex:1;min-width:0;width:100%;overflow:hidden;height:100%;">
+    (close)="closeProject()">
   </app-project-inline>
-</div>
+</ng-container>
