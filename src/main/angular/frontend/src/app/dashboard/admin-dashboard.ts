@@ -22,6 +22,8 @@ import { StaffPanelComponent } from '../shared/staff-panel/staff-panel.component
 import { PayrollWizardInline } from '../admin/payroll-wizard-inline';
 import { PayrollHistoryInline } from '../admin/payroll-history-inline';
 import { AnnouncementInline } from '../shared/announcement-inline';
+import { ChangePasswordInline } from '../shared/change-password/change-password-inline';
+
 
 
 const BASE = environment.apiBaseUrl;
@@ -46,6 +48,7 @@ const LOGO_SVG = `data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIiIGhlaWdodD0iMzIi
     PayrollWizardInline, 
     PayrollHistoryInline, 
     AnnouncementInline,
+    ChangePasswordInline,
   ],
   templateUrl: './admin-dashboard.html',
   styleUrl: './admin-dashboard.scss'
