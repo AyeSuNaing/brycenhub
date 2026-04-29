@@ -24,6 +24,16 @@ public interface LeaveRequestRepository extends JpaRepository<LeaveRequest, Long
             @Param("branchId") Long branchId,
             @Param("status")   String status);
 
+    // ── All statuses — all branches ──────────────────────────────
+    List<LeaveRequest> findAllByOrderByCreatedAtDesc();
+
+    // ── All statuses — own branch ────────────────────────────────
+    @Query("SELECT l FROM LeaveRequest l " +
+           "WHERE l.userId IN (SELECT u.id FROM User u WHERE u.branchId = :branchId) " +
+           "ORDER BY l.createdAt DESC")
+    List<LeaveRequest> findByBranchIdAllOrderByCreatedAtDesc(
+            @Param("branchId") Long branchId);
+
     // ── Staff — own requests ──────────────────────────────────────
     List<LeaveRequest> findByUserIdOrderByCreatedAtDesc(Long userId);
 
@@ -83,7 +93,7 @@ public interface LeaveRequestRepository extends JpaRepository<LeaveRequest, Long
     List<LeaveRequest> findByUserIdInAndStatusAndStartDateBetweenOrderByCreatedAtDesc(
             List<Long> userIds, String status, LocalDate from, LocalDate to);
 
-    // ── VP History — status filter only (no date) ─────────────────  ← NEW
+    // ── VP History — status filter only (no date) ─────────────────
     List<LeaveRequest> findByUserIdInAndStatusOrderByCreatedAtDesc(
             List<Long> userIds, String status);
 }

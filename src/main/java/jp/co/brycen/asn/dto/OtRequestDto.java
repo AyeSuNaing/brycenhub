@@ -11,17 +11,13 @@ public class OtRequestDto {
     // ── CREATE (Staff submit) ────────────────────────────────────
     @Data
     public static class CreateRequest {
-
         @NotNull(message = "Work date is required")
         private LocalDate workDate;
-
         @NotNull(message = "OT hours is required")
         private BigDecimal otHours;
-
         @NotNull(message = "Day type is required")
         private String dayType;
         // WEEKDAY / SATURDAY / SUNDAY / HOLIDAY
-
         private Long projectId;
         private String reason;
     }
@@ -51,5 +47,9 @@ public class OtRequestDto {
         private String     status;
         // PENDING / APPROVED / REJECTED
         private LocalDateTime createdAt;
+        // ── Approval info ──
+        private Long          approvedBy;
+        private String        approvedByName;
+        private LocalDateTime approvedAt;
     }
 }

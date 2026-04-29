@@ -4,6 +4,7 @@ import jp.co.brycen.asn.dto.AuthDto;
 import jp.co.brycen.asn.model.Department;
 import jp.co.brycen.asn.model.User;
 import jp.co.brycen.asn.repository.DepartmentRepository;
+import jp.co.brycen.asn.repository.UserRepository;
 import lombok.Data;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -15,6 +16,7 @@ import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/departments")
@@ -22,6 +24,9 @@ public class DepartmentController {
 
     @Autowired
     private DepartmentRepository departmentRepository;
+
+    @Autowired
+    private UserRepository userRepository;
 
     // ============================================================
     // GET /api/departments/by-branch/{branchId}
@@ -35,18 +40,29 @@ public class DepartmentController {
 
     // ============================================================
     // GET /api/departments/my-branch
-    // Admin ကိုယ်တိုင်ရဲ့ branch departments
+    // ✅ staffCount ပါသော DeptResponse list ပြန်ပေး
     // ============================================================
     @GetMapping("/my-branch")
     @PreAuthorize("hasAnyRole('BOSS', 'COUNTRY_DIRECTOR', 'ADMIN')")
-    public ResponseEntity<List<Department>> getMyBranchDepts(
+    public ResponseEntity<List<DeptResponse>> getMyBranchDepts(
             @AuthenticationPrincipal User admin) {
         Long branchId = admin.getBranchId();
-        if (branchId == null) {
-            return ResponseEntity.ok(departmentRepository.findAll());
-        }
-        return ResponseEntity.ok(
-            departmentRepository.findByBranchId(branchId));
+        List<Department> depts = branchId == null
+            ? departmentRepository.findAll()
+            : departmentRepository.findByBranchId(branchId);
+
+        List<DeptResponse> result = depts.stream().map(d -> {
+            DeptResponse r = new DeptResponse();
+            r.setId(d.getId());
+            r.setBranchId(d.getBranchId());
+            r.setName(d.getName());
+            r.setDescription(d.getDescription());
+            r.setStaffCount(
+                userRepository.countByDepartmentIdAndIsActive(d.getId(), true));
+            return r;
+        }).collect(Collectors.toList());
+
+        return ResponseEntity.ok(result);
     }
 
     // ============================================================
@@ -113,6 +129,16 @@ public class DepartmentController {
             return ResponseEntity.badRequest()
                 .body(new AuthDto.MessageResponse(e.getMessage(), false));
         }
+    }
+
+    // ── Response DTO ──────────────────────────────────────────────
+    @Data
+    public static class DeptResponse {
+        private Long   id;
+        private Long   branchId;
+        private String name;
+        private String description;
+        private long   staffCount;
     }
 
     // ── Request DTO ───────────────────────────────────────────────

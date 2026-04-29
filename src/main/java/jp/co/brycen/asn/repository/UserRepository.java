@@ -34,5 +34,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
     
     /** Active staff in a branch. */
     List<User> findByBranchIdAndIsActive(Long branchId, Boolean isActive);
+    long countByDepartmentIdAndIsActive(Long departmentId, Boolean isActive);
+
     
 }

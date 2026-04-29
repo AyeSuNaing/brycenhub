@@ -9,7 +9,6 @@
         <div class="logo-slogan">One Group. One Platform. Full Visibility.</div>
       </div>
     </div>
-
     <div class="topbar-spacer"></div>
 
     <!-- Search -->
@@ -25,16 +24,20 @@
         <span style="font-weight:600;">{{ currentLangObj.display }}</span>
         <span style="font-size:9px;opacity:0.6;">▾</span>
       </div>
-      <div *ngIf="showLangMenu" (click)="$event.stopPropagation()" style="position:absolute;top:calc(100% + 6px);right:0;min-width:140px;
+      <div *ngIf="showLangMenu" (click)="$event.stopPropagation()"
+        style="position:absolute;top:calc(100% + 6px);right:0;min-width:180px;
           border-radius:10px;border:1px solid;z-index:999;padding:4px;"
-        [style.background]="isDark ? '#131929' : 'white'" [style.borderColor]="isDark ? '#1e2d4a' : '#e2e8f0'">
-        <div *ngFor="let lang of langs" (click)="setLang(lang)" style="display:flex;align-items:center;gap:8px;padding:7px 10px;
+        [style.background]="isDark ? '#131929' : 'white'"
+        [style.borderColor]="isDark ? '#1e2d4a' : '#e2e8f0'">
+        <div *ngFor="let lang of langs" (click)="setLang(lang)"
+          style="display:flex;align-items:center;gap:8px;padding:7px 10px;
             border-radius:7px;cursor:pointer;font-size:11px;"
-          [style.color]="currentLangObj.code === lang.code ? '#22c55e' : ''">
+          [style.background]="currentLangObj.code===lang.code?(isDark?'#14532d33':'#f0fdf4'):'transparent'"
+          [style.color]="currentLangObj.code===lang.code?'#22c55e':''">
           <span style="font-size:14px;">{{ lang.flag }}</span>
           <span style="font-weight:600;">{{ lang.display }}</span>
           <span style="opacity:0.5;font-size:10px;">{{ lang.name }}</span>
-          <span *ngIf="currentLangObj.code === lang.code" style="margin-left:auto;color:#22c55e;">✓</span>
+          <span *ngIf="currentLangObj.code===lang.code" style="margin-left:auto;color:#22c55e;">✓</span>
         </div>
       </div>
     </div>
@@ -55,7 +58,7 @@
   <!-- ════════════ MAIN ROW ════════════ -->
   <div class="main-row">
 
-    <!-- ══════════ LEFT SIDEBAR (STATIC) ══════════ -->
+    <!-- ══════════ LEFT SIDEBAR ══════════ -->
     <aside class="left-sidebar">
       <div class="sidebar-scroll">
 
@@ -74,20 +77,20 @@
             padding:2px 8px;border-radius:20px;font-weight:700;">
             {{ currentUser?.role || 'ADMIN' }}
           </span>
-          <div class="member-badge">
-            <span>⚙️</span><span>HR Manager</span>
-          </div>
+          <div class="member-badge"><span>⚙️</span><span>HR Manager</span></div>
         </div>
         <hr class="profile-divider" />
 
-        <!-- Nav sections -->
+        <!-- Nav sections — lbl() on section.label and item.labelKey -->
         <div *ngFor="let section of navSections" style="margin-top:6px;">
-          <div class="proj-section-label">{{ section.label }}</div>
-          <div *ngFor="let item of section.items" class="sidebar-item" [class.active]="activeView === item.key"
+          <div class="proj-section-label">{{ lbl(section.label) }}</div>
+          <div *ngFor="let item of section.items"
+            class="sidebar-item" [class.active]="activeView === item.key"
             (click)="setView(item.key, item['route'])">
             <span class="nav-icon">{{ item.icon }}</span>
-            <span>{{ item.label }}</span>
-            <span *ngIf="item['badge'] > 0" class="item-badge" [style.background]="item['badgeColor'] || '#ef4444'">
+            <span>{{ lbl(item.labelKey) }}</span>
+            <span *ngIf="item['badge'] > 0" class="item-badge"
+              [style.background]="item['badgeColor'] || '#ef4444'">
               {{ item['badge'] }}
             </span>
           </div>
@@ -101,99 +104,86 @@
         <div class="settings-wrap">
           <div class="sidebar-item" (click)="settingsOpen=!settingsOpen;$event.stopPropagation()">
             <span class="nav-icon">⚙️</span>
-            <span>Settings</span>
+            <span>{{ lbl('Settings') }}</span>
             <span style="margin-left:auto;font-size:10px;opacity:0.5;">
               {{ settingsOpen ? '▲' : '▼' }}
             </span>
           </div>
           <div *ngIf="settingsOpen" class="settings-submenu">
-            <div class="sub-item"><span>👤</span><span>Profile</span></div>
+            <div class="sub-item" style="cursor:pointer;" (click)="openMyProfile()">
+              <span>👤</span><span>{{ lbl('Profile') }}</span>
+            </div>
             <div class="sub-item" style="cursor:pointer;"
               (click)="setView('change-password');settingsOpen=false">
-              <span>🔒</span><span>Change Password</span>
+              <span>🔒</span><span>{{ lbl('Change Password') }}</span>
             </div>
             <div class="sub-item signout-item" (click)="signOut()">
-              <span>🚪</span><span>Sign out</span>
+              <span>🚪</span><span>{{ lbl('Sign out') }}</span>
             </div>
           </div>
         </div>
       </div>
     </aside>
 
-    <!-- ══════════════════════════════════════════════
-         NEW: CENTER + RIGHT PANEL WRAPPER
-         Center = swappable views
-         Right  = persistent StaffPanel
-    ══════════════════════════════════════════════ -->
     <div class="main-with-panel">
-
-      <!-- ══════════ CENTER: Swappable Views ══════════ -->
       <div class="main-center">
 
         <!-- ══════════ DASHBOARD HOME ══════════ -->
         <main *ngIf="activeView === 'dashboard'" class="main-content">
 
-          <!-- ── ROW 1: Stats ── -->
+          <!-- Stats -->
           <div class="stats-grid">
             <div class="stat-card">
-              <div class="stat-label">Total Staff</div>
+              <div class="stat-label">{{ lbl('TOTAL STAFF') }}</div>
               <div class="stat-value">{{ loading.stats ? '—' : stats.totalStaff }}</div>
-              <div class="stat-sub">Branch members</div>
+              <div class="stat-sub">{{ lbl('Branch members') }}</div>
             </div>
             <div class="stat-card">
-              <div class="stat-label">Pending OT / Total hrs</div>
+              <div class="stat-label">{{ lbl('PENDING OT') }}</div>
               <div class="stat-value">
                 <span style="color:#f59e0b;">{{ stats.pendingOT }}</span>
                 <span style="font-size:14px;color:#818cf8;"> / {{ stats.totalOTHours }}h</span>
               </div>
-              <div class="stat-sub">This month</div>
+              <div class="stat-sub">{{ lbl('This month') }}</div>
             </div>
             <div class="stat-card">
-              <div class="stat-label">Leave Requests / Today</div>
+              <div class="stat-label">{{ lbl('LEAVE REQUESTS TODAY') }}</div>
               <div class="stat-value">
                 <span style="color:#a78bfa;">{{ stats.leaveRequests }}</span>
                 <span style="font-size:14px;color:#f87171;"> / {{ stats.todayLeave }}</span>
               </div>
-              <div class="stat-sub">Pending / Out today</div>
+              <div class="stat-sub">{{ lbl('Pending') }} / {{ lbl('Out today') }}</div>
             </div>
             <div class="stat-card">
-              <div class="stat-label">Payroll</div>
+              <div class="stat-label">{{ lbl('PAYROLL MONTH') }}</div>
               <div class="stat-value" style="color:#22c55e;">{{ currentMonth }}</div>
               <div class="stat-sub" style="color:#f59e0b;">● {{ payrollStatus }}</div>
             </div>
           </div>
 
-          <!-- ── ROW 2: Holidays | Quick Actions | Today Leave ── -->
+          <!-- Row 2 -->
           <div class="row2-grid">
 
-            <!-- Holidays — Mini Calendar -->
+            <!-- Holidays -->
             <div class="card">
               <div class="card-header">
                 <div class="card-title">🗓️ {{ currentMonth }} Holidays</div>
                 <span class="badge-purple">{{ holidays.length }}</span>
               </div>
-
-              <!-- Weekday header -->
               <div class="cal-weekdays">
                 <div class="cal-wd cal-sun">S</div>
-                <div class="cal-wd">M</div>
-                <div class="cal-wd">T</div>
-                <div class="cal-wd">W</div>
-                <div class="cal-wd">T</div>
-                <div class="cal-wd">F</div>
-                <div class="cal-wd cal-sat">S</div>
+                <div class="cal-wd">M</div><div class="cal-wd">T</div>
+                <div class="cal-wd">W</div><div class="cal-wd">T</div>
+                <div class="cal-wd">F</div><div class="cal-wd cal-sat">S</div>
               </div>
-
-              <!-- Day grid -->
               <div class="cal-grid">
-                <div *ngFor="let cell of calendarGrid"
-                     class="cal-cell"
-                     [class.cal-out]="!cell.inMonth"
-                     [class.cal-sun-bg]="cell.inMonth && isSunday(cell.date)"
-                     [class.cal-sat-bg]="cell.inMonth && isSaturday(cell.date)"
-                     [class.cal-today]="isToday(cell.date)"
-                     [class.cal-holiday]="getHolidayForDate(cell.date) && cell.inMonth"
-                     (click)="getHolidayForDate(cell.date) && cell.inMonth ? openHolidayModal(getHolidayForDate(cell.date)) : null">
+                <div *ngFor="let cell of calendarGrid" class="cal-cell"
+                  [class.cal-out]="!cell.inMonth"
+                  [class.cal-sun-bg]="cell.inMonth && isSunday(cell.date)"
+                  [class.cal-sat-bg]="cell.inMonth && isSaturday(cell.date)"
+                  [class.cal-today]="isToday(cell.date)"
+                  [class.cal-holiday]="getHolidayForDate(cell.date) && cell.inMonth"
+                  (click)="getHolidayForDate(cell.date) && cell.inMonth ? openHolidayModal(getHolidayForDate(cell.date)) : null">
                   {{ cell.date.getDate() }}
                 </div>
               </div>
@@ -202,35 +192,35 @@
             <!-- Quick Actions -->
             <div class="card">
               <div class="card-header">
-                <div class="card-title">⚡ Quick Actions</div>
+                <div class="card-title">{{ lbl('Quick Actions') }}</div>
               </div>
               <div class="quick-grid">
                 <div class="quick-btn" (click)="setView('attendance')">
                   <span class="quick-icon">📅</span>
                   <div>
-                    <div class="quick-title">Upload Attendance</div>
-                    <div class="quick-sub">Fingerprint Excel</div>
+                    <div class="quick-title">{{ lbl('Upload Attendance') }}</div>
+                    <div class="quick-sub">{{ lbl('Fingerprint Excel') }}</div>
                   </div>
                 </div>
                 <div class="quick-btn" (click)="setView('payroll')">
                   <span class="quick-icon">💰</span>
                   <div>
-                    <div class="quick-title">Monthly Payroll</div>
+                    <div class="quick-title">{{ lbl('Monthly Payroll') }}</div>
                     <div class="quick-sub">{{ currentMonth }} · {{ payrollStatus }}</div>
                   </div>
                 </div>
                 <div class="quick-btn" (click)="setView('add-staff')">
                   <span class="quick-icon">➕</span>
                   <div>
-                    <div class="quick-title">Add Staff</div>
-                    <div class="quick-sub">New member</div>
+                    <div class="quick-title">{{ lbl('Add Staff') }}</div>
+                    <div class="quick-sub">{{ lbl('New member') }}</div>
                   </div>
                 </div>
                 <div class="quick-btn" (click)="setView('holidays')">
                   <span class="quick-icon">🗓️</span>
                   <div>
-                    <div class="quick-title">Add Holiday</div>
-                    <div class="quick-sub">Next month</div>
+                    <div class="quick-title">{{ lbl('Add Holiday') }}</div>
+                    <div class="quick-sub">{{ lbl('Next month') }}</div>
                   </div>
                 </div>
               </div>
@@ -239,11 +229,12 @@
             <!-- Today on Leave -->
             <div class="card">
               <div class="card-header">
-                <div class="card-title">📋 Today on Leave</div>
+                <div class="card-title">📋 {{ lbl('Today on Leave') }}</div>
                 <span class="badge-red">{{ stats.todayLeave }} out</span>
               </div>
-              <div *ngIf="todayLeaveList.length === 0" style="font-size:10px;opacity:0.4;text-align:center;padding:8px 0;">
-                Everyone is in today
+              <div *ngIf="todayLeaveList.length === 0"
+                style="font-size:10px;opacity:0.4;text-align:center;padding:8px 0;">
+                {{ lbl('Everyone is in today') }}
               </div>
               <div *ngFor="let l of todayLeaveList" class="today-item">
                 <div class="today-avatar" [style.background]="getAvatarColor(l.userName || '')">
@@ -255,29 +246,24 @@
                 </span>
               </div>
             </div>
-
           </div>
 
-          <!-- ── ROW 3: OT Requests ── -->
+          <!-- OT Requests -->
           <div class="card">
             <div class="card-header">
-              <div class="card-title">⏰ OT Requests</div>
-              <span class="badge-yellow">{{ stats.pendingOT }} pending</span>
+              <div class="card-title">⏰ {{ lbl('OT Requests') }}</div>
+              <span class="badge-yellow">{{ stats.pendingOT }} {{ lbl('pending') }}</span>
             </div>
             <div *ngIf="loading.ot" class="loading-txt">Loading...</div>
             <div *ngIf="!loading.ot && otRequests.length === 0" class="empty-txt">
-              No pending OT requests
+              {{ lbl('No pending OT requests') }}
             </div>
             <table *ngIf="!loading.ot && otRequests.length > 0" class="data-table">
               <thead>
                 <tr>
-                  <th>Staff</th>
-                  <th>Date</th>
-                  <th>Day</th>
-                  <th>Hours</th>
-                  <th>Rate</th>
-                  <th>Project</th>
-                  <th>Action</th>
+                  <th>{{ lbl('Staff') }}</th><th>{{ lbl('Work Date') }}</th>
+                  <th>Day</th><th>Hours</th><th>Rate</th><th>Project</th>
+                  <th>{{ lbl('Action') }}</th>
                 </tr>
               </thead>
               <tbody>
@@ -296,34 +282,31 @@
                   <td><span style="color:#818cf8;">×{{ ot.otRate }}</span></td>
                   <td class="muted" style="font-size:10px;">{{ ot.projectName || '—' }}</td>
                   <td>
-                    <button class="btn-approve" (click)="approveOT(ot.id)">✓ Approve</button>
-                    <button class="btn-reject" (click)="rejectOT(ot.id)">✕ Reject</button>
+                    <button class="btn-approve" (click)="approveOT(ot.id)">{{ lbl('Approve') }}</button>
+                    <button class="btn-reject" (click)="rejectOT(ot.id)">{{ lbl('Reject') }}</button>
                   </td>
                 </tr>
               </tbody>
             </table>
           </div>
 
-          <!-- ── ROW 4: Leave Requests ── -->
+          <!-- Leave Requests -->
           <div class="card">
             <div class="card-header">
-              <div class="card-title">🏖️ Leave Requests</div>
-              <span class="badge-purple">{{ stats.leaveRequests }} pending</span>
+              <div class="card-title">🏖️ {{ lbl('Leave Requests') }}</div>
+              <span class="badge-purple">{{ stats.leaveRequests }} {{ lbl('pending') }}</span>
             </div>
             <div *ngIf="loading.leave" class="loading-txt">Loading...</div>
             <div *ngIf="!loading.leave && leaveRequests.length === 0" class="empty-txt">
-              No pending leave requests
+              {{ lbl('No pending leave requests') }}
             </div>
             <table *ngIf="!loading.leave && leaveRequests.length > 0" class="data-table">
               <thead>
                 <tr>
-                  <th>Staff</th>
-                  <th>Type</th>
-                  <th>Dates</th>
-                  <th>Days</th>
-                  <th>Reason</th>
-                  <th>Status</th>
-                  <th>Action</th>
+                  <th>{{ lbl('Staff') }}</th><th>{{ lbl('Type') }}</th>
+                  <th>{{ lbl('Dates') }}</th><th>{{ lbl('Days') }}</th>
+                  <th>{{ lbl('Reason') }}</th><th>{{ lbl('Status') }}</th>
+                  <th>{{ lbl('Action') }}</th>
                 </tr>
               </thead>
               <tbody>
@@ -347,58 +330,52 @@
                   </td>
                   <td class="muted">{{ lv.totalDays }} days</td>
                   <td class="reason-cell">{{ lv.reason || '—' }}</td>
-                  <td><span class="badge-yellow">Pending</span></td>
+                  <td><span class="badge-yellow">{{ lbl('Pending') }}</span></td>
                   <td>
-                    <button class="btn-approve" (click)="approveLeave(lv.id)">✓ Approve</button>
-                    <button class="btn-reject" (click)="rejectLeave(lv.id)">✕ Reject</button>
+                    <button class="btn-approve" (click)="approveLeave(lv.id)">{{ lbl('Approve') }}</button>
+                    <button class="btn-reject" (click)="rejectLeave(lv.id)">{{ lbl('Reject') }}</button>
                   </td>
                 </tr>
               </tbody>
             </table>
           </div>
 
-          <!-- ── ROW 5: Staff Preview (top 5) ── -->
+          <!-- Staff Preview -->
           <div class="card">
             <div class="card-header">
               <div class="card-title">
-                👥 Staff List
+                👥 {{ lbl('Staff List') }}
                 <span style="font-size:10px;font-weight:400;opacity:0.4;margin-left:6px;">
-                  {{ staffList.length }} members
+                  {{ staffList.length }} {{ lbl('members') }}
                 </span>
               </div>
-              <button class="btn-primary" (click)="setView('add-staff')">+ Add Staff</button>
+              <button class="btn-primary" (click)="setView('add-staff')">+ {{ lbl('Add Staff') }}</button>
             </div>
             <div *ngIf="loading.staff" class="loading-txt">Loading...</div>
             <div *ngIf="!loading.staff" style="overflow-x:auto;">
               <table class="data-table" style="min-width:900px;">
                 <thead>
                   <tr>
-                    <th>Name</th>
-                    <th>Role</th>
-                    <th>Department</th>
-                    <th>Email</th>
-                    <th>Status</th>
-                    <th>Skills</th>
+                    <th>{{ lbl('NAME') }}</th><th>{{ lbl('ROLE') }}</th>
+                    <th>{{ lbl('DEPARTMENT') }}</th><th>{{ lbl('EMAIL') }}</th>
+                    <th>{{ lbl('Status') }}</th><th>Skills</th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr *ngFor="let s of staffList.slice(0,5)">
-                    <td>
-                      <div class="table-user">
-                        {{ s.name }}
-                      </div>
-                    </td>
+                    <td><div class="table-user">{{ s.name }}</div></td>
                     <td>
                       <span style="font-size:9px;font-weight:700;padding:3px 9px;
-                      border-radius:20px;white-space:nowrap;"
-                      [style.background]="(s.roleColor || '#64748b') + '22'"
-                      [style.color]="s.roleColor || '#94a3b8'"
-                      [style.border]="'1px solid ' + (s.roleColor || '#64748b') + '44'">
+                        border-radius:20px;white-space:nowrap;"
+                        [style.background]="(s.roleColor || '#64748b') + '22'"
+                        [style.color]="s.roleColor || '#94a3b8'"
+                        [style.border]="'1px solid ' + (s.roleColor || '#64748b') + '44'">
                         {{ s.roleDisplayName || '—' }}
                       </span>
                     </td>
                     <td>
-                      <span *ngIf="s.departmentName; else noDept" style="font-size:10px;padding:2px 8px;border-radius:20px;
+                      <span *ngIf="s.departmentName; else noDept"
+                        style="font-size:10px;padding:2px 8px;border-radius:20px;
                           background:#818cf822;color:#818cf8;font-weight:600;">
                         {{ s.departmentName }}
                       </span>
@@ -406,10 +383,9 @@
                     </td>
                     <td class="muted">{{ s.email }}</td>
                     <td>
-                      <span class="status-dot" [style.background]="s.isActive ? '#22c55e' : '#ef4444'">
-                      </span>
+                      <span class="status-dot" [style.background]="s.isActive ? '#22c55e' : '#ef4444'"></span>
                       <span [style.color]="s.isActive ? '#22c55e' : '#ef4444'" style="font-size:11px;">
-                        {{ s.isActive ? 'Active' : 'Inactive' }}
+                        {{ s.isActive ? lbl('Active (staff)') : lbl('Inactive') }}
                       </span>
                     </td>
                     <td style="font-size:10px;">
@@ -422,94 +398,76 @@
                 </tbody>
               </table>
             </div>
-            <!-- View all link -->
             <div style="text-align:center;padding:8px 0 0;font-size:10px;cursor:pointer;opacity:0.5;"
               (click)="setView('staff-list')">
-              View all {{ staffList.length }} staff →
+              {{ lbl('View all') }} {{ staffList.length }} staff →
             </div>
           </div>
 
         </main>
-        <!-- ════ END DASHBOARD HOME ════ -->
 
-        <!-- ══════════════════════════════════
-             INLINE VIEWS — swappable based on activeView
-        ══════════════════════════════════ -->
-
-        <!-- Staff List -->
+        <!-- Inline views -->
         <app-staff-list-inline *ngIf="activeView === 'staff-list'"
           (addStaff)="setView('add-staff')"
           (viewProfile)="onViewProfile($event)"
           (back)="closeToDashboard()">
         </app-staff-list-inline>
 
-        <!-- Add Staff -->
         <app-add-staff-inline *ngIf="activeView === 'add-staff'"
           (close)="setView('staff-list')"
           (created)="onStaffCreated()">
         </app-add-staff-inline>
 
-        <!-- Staff Profile -->
         <app-staff-profile-inline *ngIf="activeView === 'staff-profile'"
           [staffId]="selectedStaffId"
           (back)="setView('staff-list')"
           (edit)="setView('add-staff')">
         </app-staff-profile-inline>
 
-        <!-- Public Holidays -->
-        <app-holidays-inline *ngIf="activeView === 'holidays'"
-          (back)="closeToDashboard()">
+        <app-holidays-inline *ngIf="activeView === 'holidays'" (back)="closeToDashboard()">
         </app-holidays-inline>
 
-        <!-- Tax Brackets -->
-        <app-tax-brackets-inline *ngIf="activeView === 'tax'"
-          (back)="closeToDashboard()">
+        <app-tax-brackets-inline *ngIf="activeView === 'tax'" (back)="closeToDashboard()">
         </app-tax-brackets-inline>
 
-        <!-- Salary Structures -->
-        <app-salary-structures-inline *ngIf="activeView === 'salary'"
-          (back)="closeToDashboard()">
+        <app-salary-structures-inline *ngIf="activeView === 'salary'" (back)="closeToDashboard()">
         </app-salary-structures-inline>
 
-        <!-- Attendance Upload -->
-        <app-attendance-upload-inline *ngIf="activeView === 'attendance'"
-          (back)="closeToDashboard()">
+        <app-attendance-upload-inline *ngIf="activeView === 'attendance'" (back)="closeToDashboard()">
         </app-attendance-upload-inline>
 
-        <!-- Announcements History -->
-        <app-announcement-inline
-          *ngIf="activeView === 'announce'"
+        <app-announcement-inline *ngIf="activeView === 'announce'"
           style="flex:1;display:flex;flex-direction:column;min-height:0;overflow:hidden;">
         </app-announcement-inline>
 
-        <!-- Monthly Payroll Wizard -->
-        <app-payroll-wizard-inline *ngIf="activeView === 'payroll'"
-          (back)="closeToDashboard()">
+        <app-payroll-wizard-inline *ngIf="activeView === 'payroll'" (back)="closeToDashboard()">
         </app-payroll-wizard-inline>
 
-        <!-- Payroll History (NEW) -->
-        <app-payroll-history-inline *ngIf="activeView === 'payroll-history'"
-          (back)="closeToDashboard()">
+        <app-payroll-history-inline *ngIf="activeView === 'payroll-history'" (back)="closeToDashboard()">
         </app-payroll-history-inline>
 
+        <app-leave-approval-inline *ngIf="activeView==='leave'"
+          role="admin" (back)="closeToDashboard()">
+        </app-leave-approval-inline>
 
-        <app-change-password-inline
-          *ngIf="activeView==='change-password'"
-          (back)="setView('dashboard')">
+        <app-ot-approval-inline *ngIf="activeView==='ot'"
+          role="admin" (back)="closeToDashboard()">
+        </app-ot-approval-inline>
+
+                <app-change-password-inline *ngIf="activeView==='change-password'" (back)="setView('dashboard')">
         </app-change-password-inline>
 
+        <app-department-inline *ngIf="activeView === 'department'"
+          (back)="closeToDashboard()">
+        </app-department-inline>
+
       </div>
-      <!-- /.main-center -->
 
-      <!-- ══════════ RIGHT STAFF PANEL (PERSISTENT) ══════════ -->
       <app-staff-panel *ngIf="showRightPanel"></app-staff-panel>
-
     </div>
-    <!-- /.main-with-panel -->
+  </div>
 
-  </div><!-- /main-row -->
-
-  <!-- ════════════ HOLIDAY DETAIL MODAL ════════════ -->
+  <!-- Holiday Modal -->
   <div *ngIf="selectedHoliday" class="holiday-modal-overlay" (click)="closeHolidayModal()">
     <div class="holiday-modal" (click)="$event.stopPropagation()">
       <div class="holiday-modal-head">

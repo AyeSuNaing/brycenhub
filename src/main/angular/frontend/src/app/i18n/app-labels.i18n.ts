@@ -113,7 +113,12 @@ export type AppLabelKey =
   | 'Copy' | 'Copied!'
   | 'Notice title' | 'Notice line1' | 'Notice line2'
   | 'Enter new password' | 'Repeat new password'
-  | 'Done Back';
+  | 'Done Back'
+  // ── DEPARTMENTS ──
+  | 'Departments (title)' | 'departments' | 'Add Department' | 'Edit Department'
+  | 'No departments yet' | 'Dept name placeholder' | 'Dept desc placeholder'
+  | 'Name *' | 'Description' | 'Create' | 'Update' | 'Cancel'
+  | 'Delete confirm' | 'members (dept)';
 
 
 // ═══════════════════════════════════════════════════════════════
@@ -251,6 +256,15 @@ const en: Record<AppLabelKey, string> = {
   'Enter new password': 'Enter new password',
   'Repeat new password': 'Repeat new password',
   'Done Back': '✓ Done — Back',
+  'Departments (title)': '🏢 Departments', 'departments': 'departments',
+  'Add Department': '+ Add Department', 'Edit Department': '✏️ Edit Department',
+  'No departments yet': 'No departments yet',
+  'Dept name placeholder': 'e.g. Engineering',
+  'Dept desc placeholder': 'Optional description',
+  'Name *': 'Name *', 'Description': 'Description',
+  'Create': 'Create', 'Update': 'Update', 'Cancel': 'Cancel',
+  'Delete confirm': 'Delete this department?',
+  'members (dept)': 'members',
 };
 
 // ═══════════════════════════════════════════════════════════════
@@ -384,6 +398,15 @@ const ja: Record<AppLabelKey, string> = {
   'Enter new password': '新しいパスワードを入力',
   'Repeat new password': 'パスワードを再入力',
   'Done Back': '✓ 完了 — 戻る',
+  'Departments (title)': '🏢 部署', 'departments': '部署',
+  'Add Department': '+ 部署追加', 'Edit Department': '✏️ 部署編集',
+  'No departments yet': '部署がありません',
+  'Dept name placeholder': '例: エンジニアリング',
+  'Dept desc placeholder': '説明（任意）',
+  'Name *': '名前 *', 'Description': '説明',
+  'Create': '作成', 'Update': '更新', 'Cancel': 'キャンセル',
+  'Delete confirm': 'この部署を削除しますか？',
+  'members (dept)': 'メンバー',
 };
 
 // ═══════════════════════════════════════════════════════════════
@@ -520,6 +543,15 @@ const my: Record<AppLabelKey, string> = {
   'Enter new password': 'စကားဝှက်အသစ် ထည့်ပါ',
   'Repeat new password': 'စကားဝှက် ထပ်ထည့်ပါ',
   'Done Back': '✓ Done — Back',
+  'Departments (title)': '🏢 ဌာနများ', 'departments': 'departments',
+  'Add Department': '+ ဌာနထည့်', 'Edit Department': '✏️ ဌာနပြင်',
+  'No departments yet': 'ဌာနမရှိသေး',
+  'Dept name placeholder': 'ဥပမာ - Engineering',
+  'Dept desc placeholder': 'ဖော်ပြချက် (ချန်ထားနိုင်)',
+  'Name *': 'အမည် *', 'Description': 'ဖော်ပြချက်',
+  'Create': 'ဖန်တီး', 'Update': 'ပြင်မည်', 'Cancel': 'ပယ်မည်',
+  'Delete confirm': 'ဌာနကို ဖျက်မည်လား?',
+  'members (dept)': 'ဦး',
 };
 
 // ═══════════════════════════════════════════════════════════════
@@ -654,6 +686,15 @@ const km: Record<AppLabelKey, string> = {
   'Enter new password': 'បញ្ចូលពាក្យសម្ងាត់ថ្មី',
   'Repeat new password': 'បញ្ចូលម្ដងទៀត',
   'Done Back': '✓ រួចរាល់ — ត្រឡប់',
+  'Departments (title)': '🏢 នាយកដ្ឋាន', 'departments': 'នាយកដ្ឋាន',
+  'Add Department': '+ បន្ថែម', 'Edit Department': '✏️ កែប្រែ',
+  'No departments yet': 'មិនទាន់មាននាយកដ្ឋាន',
+  'Dept name placeholder': 'ឧ. វិស្វកម្ម',
+  'Dept desc placeholder': 'ពណ៌នា (ស្រេចចិត្ត)',
+  'Name *': 'ឈ្មោះ *', 'Description': 'ពណ៌នា',
+  'Create': 'បង្កើត', 'Update': 'ធ្វើបច្ចុប្បន្នភាព', 'Cancel': 'បោះបង់',
+  'Delete confirm': 'លុបនាយកដ្ឋាននេះ?',
+  'members (dept)': 'នាក់',
 };
 
 // ═══════════════════════════════════════════════════════════════
@@ -789,6 +830,15 @@ const vi: Record<AppLabelKey, string> = {
   'Enter new password': 'Nhập mật khẩu mới',
   'Repeat new password': 'Nhập lại mật khẩu',
   'Done Back': '✓ Xong — Quay lại',
+  'Departments (title)': '🏢 Phòng ban', 'departments': 'phòng ban',
+  'Add Department': '+ Thêm phòng ban', 'Edit Department': '✏️ Sửa phòng ban',
+  'No departments yet': 'Chưa có phòng ban',
+  'Dept name placeholder': 'VD: Kỹ thuật',
+  'Dept desc placeholder': 'Mô tả (tùy chọn)',
+  'Name *': 'Tên *', 'Description': 'Mô tả',
+  'Create': 'Tạo', 'Update': 'Cập nhật', 'Cancel': 'Hủy',
+  'Delete confirm': 'Xóa phòng ban này?',
+  'members (dept)': 'thành viên',
 };
 
 // ═══════════════════════════════════════════════════════════════
@@ -921,6 +971,15 @@ const ko: Record<AppLabelKey, string> = {
   'Enter new password': '새 비밀번호 입력',
   'Repeat new password': '비밀번호 재입력',
   'Done Back': '✓ 완료 — 뒤로',
+  'Departments (title)': '🏢 부서', 'departments': '부서',
+  'Add Department': '+ 부서 추가', 'Edit Department': '✏️ 부서 수정',
+  'No departments yet': '부서가 없습니다',
+  'Dept name placeholder': '예: 엔지니어링',
+  'Dept desc placeholder': '설명 (선택사항)',
+  'Name *': '이름 *', 'Description': '설명',
+  'Create': '생성', 'Update': '수정', 'Cancel': '취소',
+  'Delete confirm': '이 부서를 삭제하시겠습니까?',
+  'members (dept)': '명',
 };
 
 // ═══════════════════════════════════════════════════════════════

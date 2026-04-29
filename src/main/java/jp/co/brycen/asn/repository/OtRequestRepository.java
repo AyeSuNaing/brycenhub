@@ -25,6 +25,16 @@ public interface OtRequestRepository extends JpaRepository<OtRequest, Long> {
             @Param("branchId") Long branchId,
             @Param("status")   String status);
 
+    // ── All statuses — all branches ──────────────────────────────
+    List<OtRequest> findAllByOrderByCreatedAtDesc();
+
+    // ── All statuses — own branch ────────────────────────────────
+    @Query("SELECT o FROM OtRequest o " +
+           "WHERE o.userId IN (SELECT u.id FROM User u WHERE u.branchId = :branchId) " +
+           "ORDER BY o.createdAt DESC")
+    List<OtRequest> findByBranchIdAllOrderByCreatedAtDesc(
+            @Param("branchId") Long branchId);
+
     // ── Staff — own requests ──────────────────────────────────────
     List<OtRequest> findByUserIdOrderByCreatedAtDesc(Long userId);
 
@@ -79,7 +89,7 @@ public interface OtRequestRepository extends JpaRepository<OtRequest, Long> {
     List<OtRequest> findByUserIdInAndStatusAndWorkDateBetweenOrderByWorkDateDesc(
             List<Long> userIds, String status, LocalDate from, LocalDate to);
 
-    // ── VP History — status filter only (no date) ─────────────────  ← NEW
+    // ── VP History — status filter only (no date) ─────────────────
     List<OtRequest> findByUserIdInAndStatusOrderByCreatedAtDesc(
             List<Long> userIds, String status);
 }
