@@ -22,6 +22,8 @@ import { BranchProjectsInline } from '../../shared/branch-projects-inline';
 import { AnnouncementInline } from '../../shared/announcement-inline';
 import { HolidaysInline } from '../../admin/holidays-inline';
 import { TaxBracketsInline } from '../../admin/tax-brackets-inline';
+import { ChangePasswordInline } from '../../shared/change-password/change-password-inline';
+
 
 // ✅ i18n
 import { getLabel, AppLabelKey } from '../../i18n/app-labels.i18n';
@@ -66,6 +68,7 @@ export interface DepartmentItem {
     StaffListInline, StaffProfileInline, BranchProjectsInline, AnnouncementInline,
     HolidaysInline,
     TaxBracketsInline,
+    ChangePasswordInline,
   ],
   templateUrl: './vp-dashboard.html',
   styleUrl: './vp-dashboard.scss'

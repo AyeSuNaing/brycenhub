@@ -163,7 +163,7 @@ public class UserController {
 	// PUT /api/users/{id}/change-password
 	// ============================================================
 	@PutMapping("/{id}/change-password")
-	@PreAuthorize("hasAnyRole('BOSS', 'ADMIN')")
+	@PreAuthorize("isAuthenticated() and (#id == authentication.principal.id or hasAnyRole('BOSS', 'ADMIN'))")
 	public ResponseEntity<?> changePassword(@PathVariable Long id,
 			@Valid @RequestBody UserDto.ChangePasswordRequest request) {
 		try {

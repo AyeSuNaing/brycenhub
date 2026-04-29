@@ -101,7 +101,19 @@ export type AppLabelKey =
   | 'View Payslip' | 'Attendance' | 'View Attendance'
   | 'Profile Tab' | 'Work' | 'Salary (tab)'
   | 'Back to Staff List' | 'years experience' | 'LOGIN EMAIL' | 'FULL NAME'
-  | 'LANGUAGE' | 'STAFF ID';
+  | 'LANGUAGE' | 'STAFF ID'
+  // ── CHANGE PASSWORD ──
+  | 'Change Password' | 'Update your account password'
+  | 'NEW PASSWORD' | 'CONFIRM PASSWORD' | 'Password Requirements'
+  | 'At least 8 characters' | 'One uppercase letter' | 'One number' | 'One special character'
+  | 'Show' | 'Hide' | 'Passwords match' | 'Passwords do not match'
+  | 'Weak' | 'Fair' | 'Good' | 'Strong'
+  | 'Update Password' | 'Saving...'
+  | 'Password Changed!' | 'Copy done save notice'
+  | 'Copy' | 'Copied!'
+  | 'Notice title' | 'Notice line1' | 'Notice line2'
+  | 'Enter new password' | 'Repeat new password'
+  | 'Done Back';
 
 
 // ═══════════════════════════════════════════════════════════════
@@ -111,7 +123,7 @@ const en: Record<AppLabelKey, string> = {
   MAIN: 'MAIN', APPROVALS: 'APPROVALS', SETTINGS: 'SETTINGS', STAFF: 'STAFF', PAYROLL: 'PAYROLL', INFO: 'INFO',
   Dashboard: 'Dashboard', 'Branch Projects': 'Branch Projects',
   Members: 'Members', Announcements: 'Announcements', 'All Projects': 'All Projects',
-  Leave: '🗓 Leave', OT: '⏰ OT', Salary: '💵 Salary',
+  Leave: 'Leave', OT: 'OT', Salary: 'Salary',
   Profile: 'Profile', 'Change Password': 'Change Password',
   'Public Holidays': 'Public Holidays', 'Tax Brackets': 'Tax Brackets',
   'Sign out': 'Sign out', Settings: 'Settings',
@@ -205,7 +217,7 @@ const en: Record<AppLabelKey, string> = {
   'Skills': 'Skills', 'CV Projects': 'CV Projects',
   'Social Links': 'Social Links', 'Danger Zone': 'Danger Zone',
   'Share with staff to login': 'Share with staff to login',
-  'Copy Email': 'Copy Email', 'Copied!': 'Copied!',
+  'Copy Email': 'Copy Email',
   'Senior': 'Senior', 'Mid Level': 'Mid Level', 'Beginner': 'Beginner', 'Other (skills)': 'Other',
   'from CV': 'from CV', 'No CV data available': 'No CV data', 'No skills added': 'No skills added',
   'Education': 'Education', 'Experience': 'Experience',
@@ -223,6 +235,22 @@ const en: Record<AppLabelKey, string> = {
   'years experience': 'yrs experience',
   'LOGIN EMAIL': 'LOGIN EMAIL', 'FULL NAME': 'FULL NAME',
   'LANGUAGE': 'LANGUAGE', 'STAFF ID': 'STAFF ID',
+  'Update your account password': 'Update your account password',
+  'NEW PASSWORD': 'NEW PASSWORD', 'CONFIRM PASSWORD': 'CONFIRM PASSWORD',
+  'Password Requirements': 'Password Requirements',
+  'At least 8 characters': 'At least 8 characters', 'One uppercase letter': 'One uppercase letter',
+  'One number': 'One number', 'One special character': 'One special character',
+  'Show': 'Show', 'Hide': 'Hide',
+  'Passwords match': '✓ Passwords match', 'Passwords do not match': '✗ Passwords do not match',
+  'Weak': 'Weak', 'Fair': 'Fair', 'Good': 'Good', 'Strong': 'Strong',
+  'Update Password': '🔒 Update Password', 'Saving...': '⏳ Saving...',
+  'Password Changed!': 'Password Changed!', 'Copy done save notice': 'Copy and save it in a safe place',
+  'Copy': '📋 Copy', 'Copied!': '✓ Copied!',
+  'Notice title': 'Notice', 'Notice line1': 'Remember your password — system does not store it',
+  'Notice line2': 'If you forget, contact Admin to reset',
+  'Enter new password': 'Enter new password',
+  'Repeat new password': 'Repeat new password',
+  'Done Back': '✓ Done — Back',
 };
 
 // ═══════════════════════════════════════════════════════════════
@@ -232,7 +260,7 @@ const ja: Record<AppLabelKey, string> = {
   MAIN: 'メイン', APPROVALS: '承認', SETTINGS: '設定', STAFF: 'スタッフ', PAYROLL: '給与', INFO: '情報',
   Dashboard: 'ダッシュボード', 'Branch Projects': 'プロジェクト',
   Members: 'メンバー', Announcements: 'お知らせ', 'All Projects': '全プロジェクト',
-  Leave: '🗓 休暇', OT: '⏰ 残業', Salary: '💵 給与',
+  Leave: '休暇', OT: '残業', Salary: '給与',
   Profile: 'プロフィール', 'Change Password': 'パスワード変更',
   'Public Holidays': '祝日', 'Tax Brackets': '税率',
   'Sign out': 'サインアウト', Settings: '設定',
@@ -322,7 +350,7 @@ const ja: Record<AppLabelKey, string> = {
   'Skills': 'スキル', 'CV Projects': 'CVプロジェクト',
   'Social Links': 'SNSリンク', 'Danger Zone': '危険ゾーン',
   'Share with staff to login': 'ログイン情報をスタッフに共有',
-  'Copy Email': 'メールコピー', 'Copied!': 'コピー済！',
+  'Copy Email': 'メールコピー',
   'Senior': 'シニア', 'Mid Level': 'ミドル', 'Beginner': '初級', 'Other (skills)': 'その他',
   'from CV': 'CV由来', 'No CV data available': 'CVデータなし', 'No skills added': 'スキルなし',
   'Education': '学歴', 'Experience': '経験',
@@ -340,6 +368,22 @@ const ja: Record<AppLabelKey, string> = {
   'years experience': '年経験',
   'LOGIN EMAIL': 'ログインメール', 'FULL NAME': '氏名',
   'LANGUAGE': '言語', 'STAFF ID': 'スタッフID',
+  'Update your account password': 'アカウントのパスワードを更新',
+  'NEW PASSWORD': '新しいパスワード', 'CONFIRM PASSWORD': 'パスワード確認',
+  'Password Requirements': 'パスワード要件',
+  'At least 8 characters': '8文字以上', 'One uppercase letter': '大文字1文字以上',
+  'One number': '数字1文字以上', 'One special character': '特殊文字1文字以上',
+  'Show': '表示', 'Hide': '非表示',
+  'Passwords match': '✓ パスワードが一致', 'Passwords do not match': '✗ パスワードが一致しません',
+  'Weak': '弱い', 'Fair': '普通', 'Good': '良い', 'Strong': '強い',
+  'Update Password': '🔒 パスワードを更新', 'Saving...': '⏳ 保存中...',
+  'Password Changed!': 'パスワードが変更されました！', 'Copy done save notice': 'コピーして安全な場所に保存してください',
+  'Copy': '📋 コピー', 'Copied!': '✓ コピー済！',
+  'Notice title': '注意事項', 'Notice line1': 'パスワードを変更後は必ず記録してください',
+  'Notice line2': 'パスワードを忘れた場合はAdminにリセットを依頼してください',
+  'Enter new password': '新しいパスワードを入力',
+  'Repeat new password': 'パスワードを再入力',
+  'Done Back': '✓ 完了 — 戻る',
 };
 
 // ═══════════════════════════════════════════════════════════════
@@ -349,7 +393,7 @@ const my: Record<AppLabelKey, string> = {
   MAIN: 'မိုင်', APPROVALS: 'အတည်ပြုချက်', SETTINGS: 'ဆက်တင်', STAFF: 'ဝန်ထမ်း', PAYROLL: 'လစာ', INFO: 'သတင်းအချက်',
   Dashboard: 'ဒက်ဘုတ်', 'Branch Projects': 'ပရောဂျက်များ',
   Members: 'အဖွဲ့သားများ', Announcements: 'ကြေငြာချက်', 'All Projects': 'ပရောဂျက်အားလုံး',
-  Leave: '🗓 ခွင့်', OT: '⏰ နောက်ကျ', Salary: '💵 လစာ',
+  Leave: 'ခွင့်', OT: 'နောက်ကျ', Salary: 'လစာ',
   Profile: 'ပရိုဖိုင်', 'Change Password': 'စကားဝှက်ပြောင်း',
   'Public Holidays': 'အားလပ်ရက်', 'Tax Brackets': 'အခွန်',
   'Sign out': 'ထွက်မည်', Settings: 'ဆက်တင်',
@@ -442,7 +486,7 @@ const my: Record<AppLabelKey, string> = {
   'Skills': 'ကျွမ်းကျင်မှုများ', 'CV Projects': 'CV ပရောဂျက်များ',
   'Social Links': 'ဆိုရှယ်လင့်ခ်', 'Danger Zone': 'အန္တရာယ်ဇုန်',
   'Share with staff to login': 'ဝန်ထမ်းနှင့် Login သတင်း မျှဝေပါ',
-  'Copy Email': 'Email ကူးယူ', 'Copied!': 'ကူးပြီး!',
+  'Copy Email': 'Email ကူးယူ',
   'Senior': 'အကြီးတန်း', 'Mid Level': 'အလယ်တန်း', 'Beginner': 'အစပြုသူ', 'Other (skills)': 'အခြား',
   'from CV': 'CV မှ', 'No CV data available': 'CV ဒေတာမရှိ', 'No skills added': 'ကျွမ်းကျင်မှုမရှိ',
   'Education': 'ပညာရေး', 'Experience': 'အတွေ့အကြုံ',
@@ -460,6 +504,22 @@ const my: Record<AppLabelKey, string> = {
   'years experience': 'နှစ် အတွေ့အကြုံ',
   'LOGIN EMAIL': 'Login Email', 'FULL NAME': 'အမည်',
   'LANGUAGE': 'ဘာသာ', 'STAFF ID': 'ဝန်ထမ်း ID',
+  'Update your account password': 'အကောင့်စကားဝှက်ပြောင်းရန်',
+  'NEW PASSWORD': 'စကားဝှက်အသစ်', 'CONFIRM PASSWORD': 'စကားဝှက်ထပ်စစ်',
+  'Password Requirements': 'စကားဝှက်လိုအပ်ချက်',
+  'At least 8 characters': 'အနည်းဆုံး ၈ လုံး', 'One uppercase letter': 'အကြီးစာလုံး ၁ လုံး',
+  'One number': 'ဂဏန်း ၁ လုံး', 'One special character': 'သင်္ကေတ ၁ လုံး',
+  'Show': 'ပြ', 'Hide': 'ဖျောက်',
+  'Passwords match': '✓ တူညီသည်', 'Passwords do not match': '✗ မတူညီပါ',
+  'Weak': 'အားနည်း', 'Fair': 'သာမန်', 'Good': 'ကောင်း', 'Strong': 'အားကောင်း',
+  'Update Password': '🔒 ပြောင်းမည်', 'Saving...': '⏳ သိမ်းနေသည်...',
+  'Password Changed!': 'စကားဝှက် ပြောင်းပြီးပါပြီ!', 'Copy done save notice': 'Copy ကူးပြီး Safe နေရာမှာ သိမ်းထားပါ',
+  'Copy': '📋 Copy', 'Copied!': '✓ ကူးပြီး!',
+  'Notice title': 'သတိပြုရန်', 'Notice line1': 'Password ပြောင်းပြီးနောက် မှတ်ထားပါ — system မှာ သိမ်းမထားပါ',
+  'Notice line2': 'Password မေ့သွားပါက Admin ကို reset လုပ်ခိုင်းနိုင်သည်',
+  'Enter new password': 'စကားဝှက်အသစ် ထည့်ပါ',
+  'Repeat new password': 'စကားဝှက် ထပ်ထည့်ပါ',
+  'Done Back': '✓ Done — Back',
 };
 
 // ═══════════════════════════════════════════════════════════════
@@ -469,7 +529,7 @@ const km: Record<AppLabelKey, string> = {
   MAIN: 'មេ', APPROVALS: 'ការអនុម័ត', SETTINGS: 'ការកំណត់', STAFF: 'បុគ្គលិក', PAYROLL: 'ប្រាក់ខែ', INFO: 'ព័ត៌មាន',
   Dashboard: 'ផ្ទាំងគ្រប់គ្រង', 'Branch Projects': 'គម្រោង',
   Members: 'សមាជិក', Announcements: 'សេចក្តីប្រកាស', 'All Projects': 'គម្រោងទាំងអស់',
-  Leave: '🗓 សំណើឈប់', OT: '⏰ ម៉ោងបន្ថែម', Salary: '💵 ប្រាក់ខែ',
+  Leave: 'សំណើឈប់', OT: 'ម៉ោងបន្ថែម', Salary: 'ប្រាក់ខែ',
   Profile: 'គណនី', 'Change Password': 'ផ្លាស់ប្ដូរពាក្យសម្ងាត់',
   'Public Holidays': 'ថ្ងៃឈប់សម្រាក', 'Tax Brackets': 'អត្រាពន្ធ',
   'Sign out': 'ចាកចេញ', Settings: 'ការកំណត់',
@@ -560,7 +620,7 @@ const km: Record<AppLabelKey, string> = {
   'Skills': 'ជំនាញ', 'CV Projects': 'គម្រោង CV',
   'Social Links': 'តំណភ្ជាប់', 'Danger Zone': 'តំបន់គ្រោះថ្នាក់',
   'Share with staff to login': 'ចែករំលែកជាមួយបុគ្គលិក',
-  'Copy Email': 'ចម្លងអ៊ីម៉ែល', 'Copied!': 'ចម្លងរួច!',
+  'Copy Email': 'ចម្លងអ៊ីម៉ែល',
   'Senior': 'ជាន់ខ្ពស់', 'Mid Level': 'កណ្ដាល', 'Beginner': 'ថ្មីថ្មោង', 'Other (skills)': 'ផ្សេងៗ',
   'from CV': 'ពី CV', 'No CV data available': 'គ្មានទិន្នន័យ CV', 'No skills added': 'គ្មានជំនាញ',
   'Education': 'ការអប់រំ', 'Experience': 'បទពិសោធ',
@@ -578,6 +638,22 @@ const km: Record<AppLabelKey, string> = {
   'years experience': 'ឆ្នាំបទពិសោធ',
   'LOGIN EMAIL': 'អ៊ីម៉ែលចូល', 'FULL NAME': 'ឈ្មោះពេញ',
   'LANGUAGE': 'ភាសា', 'STAFF ID': 'អត្តលេខ',
+  'Update your account password': 'ធ្វើបច្ចុប្បន្នភាពពាក្យសម្ងាត់',
+  'NEW PASSWORD': 'ពាក្យសម្ងាត់ថ្មី', 'CONFIRM PASSWORD': 'បញ្ជាក់ពាក្យសម្ងាត់',
+  'Password Requirements': 'លក្ខខណ្ឌពាក្យសម្ងាត់',
+  'At least 8 characters': 'យ៉ាងហោចណាស់ ៨ តួ', 'One uppercase letter': 'អក្សរធំ ១',
+  'One number': 'លេខ ១', 'One special character': 'តួអក្សរពិសេស ១',
+  'Show': 'បង្ហាញ', 'Hide': 'លាក់',
+  'Passwords match': '✓ ត្រូវគ្នា', 'Passwords do not match': '✗ មិនត្រូវគ្នា',
+  'Weak': 'ខ្សោយ', 'Fair': 'មធ្យម', 'Good': 'ល្អ', 'Strong': 'រឹងមាំ',
+  'Update Password': '🔒 ធ្វើបច្ចុប្បន្នភាព', 'Saving...': '⏳ កំពុងរក្សាទុក...',
+  'Password Changed!': 'ពាក្យសម្ងាត់ផ្លាស់ប្ដូររួច!', 'Copy done save notice': 'ចម្លងហើយរក្សាទុកក្នុងកន្លែងសុវត្ថិភាព',
+  'Copy': '📋 ចម្លង', 'Copied!': '✓ ចម្លងរួច!',
+  'Notice title': 'ចំណាំ', 'Notice line1': 'ចងចាំពាក្យសម្ងាត់ — ប្រព័ន្ធមិនរក្សាទុកទេ',
+  'Notice line2': 'បើភ្លេច សូមទាក់ទង Admin',
+  'Enter new password': 'បញ្ចូលពាក្យសម្ងាត់ថ្មី',
+  'Repeat new password': 'បញ្ចូលម្ដងទៀត',
+  'Done Back': '✓ រួចរាល់ — ត្រឡប់',
 };
 
 // ═══════════════════════════════════════════════════════════════
@@ -588,7 +664,7 @@ const vi: Record<AppLabelKey, string> = {
   STAFF: 'NHÂN VIÊN', PAYROLL: 'LƯƠNG', INFO: 'THÔNG TIN',
   Dashboard: 'Tổng quan', 'Branch Projects': 'Dự án',
   Members: 'Thành viên', Announcements: 'Thông báo', 'All Projects': 'Tất cả dự án',
-  Leave: '🗓 Nghỉ phép', OT: '⏰ Tăng ca', Salary: '💵 Lương',
+  Leave: 'Nghỉ phép', OT: 'Tăng ca', Salary: 'Lương',
   Profile: 'Hồ sơ', 'Change Password': 'Đổi mật khẩu',
   'Public Holidays': 'Ngày nghỉ lễ', 'Tax Brackets': 'Thuế',
   'Sign out': 'Đăng xuất', Settings: 'Cài đặt',
@@ -679,7 +755,7 @@ const vi: Record<AppLabelKey, string> = {
   'Skills': 'Kỹ năng', 'CV Projects': 'Dự án CV',
   'Social Links': 'Mạng xã hội', 'Danger Zone': 'Vùng nguy hiểm',
   'Share with staff to login': 'Chia sẻ thông tin đăng nhập',
-  'Copy Email': 'Sao chép Email', 'Copied!': 'Đã sao chép!',
+  'Copy Email': 'Sao chép Email',
   'Senior': 'Cao cấp', 'Mid Level': 'Trung cấp', 'Beginner': 'Người mới', 'Other (skills)': 'Khác',
   'from CV': 'từ CV', 'No CV data available': 'Không có CV', 'No skills added': 'Chưa có kỹ năng',
   'Education': 'Học vấn', 'Experience': 'Kinh nghiệm',
@@ -697,6 +773,22 @@ const vi: Record<AppLabelKey, string> = {
   'years experience': 'năm kinh nghiệm',
   'LOGIN EMAIL': 'EMAIL ĐĂNG NHẬP', 'FULL NAME': 'HỌ TÊN',
   'LANGUAGE': 'NGÔN NGỮ', 'STAFF ID': 'MÃ NV',
+  'Update your account password': 'Cập nhật mật khẩu tài khoản',
+  'NEW PASSWORD': 'MẬT KHẨU MỚI', 'CONFIRM PASSWORD': 'XÁC NHẬN MẬT KHẨU',
+  'Password Requirements': 'Yêu cầu mật khẩu',
+  'At least 8 characters': 'Ít nhất 8 ký tự', 'One uppercase letter': 'Một chữ hoa',
+  'One number': 'Một chữ số', 'One special character': 'Một ký tự đặc biệt',
+  'Show': 'Hiện', 'Hide': 'Ẩn',
+  'Passwords match': '✓ Mật khẩu khớp', 'Passwords do not match': '✗ Mật khẩu không khớp',
+  'Weak': 'Yếu', 'Fair': 'Trung bình', 'Good': 'Tốt', 'Strong': 'Mạnh',
+  'Update Password': '🔒 Cập nhật', 'Saving...': '⏳ Đang lưu...',
+  'Password Changed!': 'Đổi mật khẩu thành công!', 'Copy done save notice': 'Sao chép và lưu vào nơi an toàn',
+  'Copy': '📋 Sao chép', 'Copied!': '✓ Đã sao chép!',
+  'Notice title': 'Lưu ý', 'Notice line1': 'Hãy nhớ mật khẩu — hệ thống không lưu trữ',
+  'Notice line2': 'Nếu quên, liên hệ Admin để reset',
+  'Enter new password': 'Nhập mật khẩu mới',
+  'Repeat new password': 'Nhập lại mật khẩu',
+  'Done Back': '✓ Xong — Quay lại',
 };
 
 // ═══════════════════════════════════════════════════════════════
@@ -706,7 +798,7 @@ const ko: Record<AppLabelKey, string> = {
   MAIN: '메인', APPROVALS: '승인', SETTINGS: '설정', STAFF: '직원', PAYROLL: '급여', INFO: '정보',
   Dashboard: '대시보드', 'Branch Projects': '프로젝트',
   Members: '멤버', Announcements: '공지사항', 'All Projects': '전체 프로젝트',
-  Leave: '🗓 휴가', OT: '⏰ 초과근무', Salary: '💵 급여',
+  Leave: '휴가', OT: '초과근무', Salary: '급여',
   Profile: '프로필', 'Change Password': '비밀번호 변경',
   'Public Holidays': '공휴일', 'Tax Brackets': '세금',
   'Sign out': '로그아웃', Settings: '설정',
@@ -795,7 +887,7 @@ const ko: Record<AppLabelKey, string> = {
   'Skills': '스킬', 'CV Projects': 'CV 프로젝트',
   'Social Links': '소셜 링크', 'Danger Zone': '위험 구역',
   'Share with staff to login': '직원에게 로그인 정보 공유',
-  'Copy Email': '이메일 복사', 'Copied!': '복사됨!',
+  'Copy Email': '이메일 복사',
   'Senior': '시니어', 'Mid Level': '미드레벨', 'Beginner': '초급', 'Other (skills)': '기타',
   'from CV': 'CV 출처', 'No CV data available': 'CV 없음', 'No skills added': '스킬 없음',
   'Education': '학력', 'Experience': '경력',
@@ -813,6 +905,22 @@ const ko: Record<AppLabelKey, string> = {
   'years experience': '년 경력',
   'LOGIN EMAIL': '로그인 이메일', 'FULL NAME': '이름',
   'LANGUAGE': '언어', 'STAFF ID': '직원 ID',
+  'Update your account password': '계정 비밀번호를 업데이트하세요',
+  'NEW PASSWORD': '새 비밀번호', 'CONFIRM PASSWORD': '비밀번호 확인',
+  'Password Requirements': '비밀번호 요건',
+  'At least 8 characters': '최소 8자', 'One uppercase letter': '대문자 1개',
+  'One number': '숫자 1개', 'One special character': '특수문자 1개',
+  'Show': '표시', 'Hide': '숨기기',
+  'Passwords match': '✓ 비밀번호 일치', 'Passwords do not match': '✗ 비밀번호 불일치',
+  'Weak': '약함', 'Fair': '보통', 'Good': '좋음', 'Strong': '강함',
+  'Update Password': '🔒 비밀번호 변경', 'Saving...': '⏳ 저장 중...',
+  'Password Changed!': '비밀번호가 변경되었습니다!', 'Copy done save notice': '복사하여 안전한 곳에 저장하세요',
+  'Copy': '📋 복사', 'Copied!': '✓ 복사됨!',
+  'Notice title': '주의사항', 'Notice line1': '비밀번호를 변경 후 기억해두세요 — 시스템에 저장되지 않습니다',
+  'Notice line2': '잊어버린 경우 Admin에게 초기화를 요청하세요',
+  'Enter new password': '새 비밀번호 입력',
+  'Repeat new password': '비밀번호 재입력',
+  'Done Back': '✓ 완료 — 뒤로',
 };
 
 // ═══════════════════════════════════════════════════════════════

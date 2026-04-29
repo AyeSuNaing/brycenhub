@@ -142,7 +142,7 @@
           </div>
           <div *ngIf="settingsOpen" class="settings-submenu">
             <div class="sub-item" style="cursor:pointer;" (click)="openMyProfile()"><span>👤</span><span>{{ lbl('Profile') }}</span></div>
-            <div class="sub-item"><span>🔒</span><span>{{ lbl('Change Password') }}</span></div>
+            <div class="sub-item" style="cursor:pointer;" (click)="setView('change-password');settingsOpen=false"><span>🔒</span><span>{{ lbl('Change Password') }}</span></div>
             <div class="sub-item signout-item" (click)="signOut()"><span>🚪</span><span>{{ lbl('Sign out') }}</span></div>
           </div>
         </div>
@@ -256,6 +256,10 @@
             </div>
           </div>
         </div>
+        <app-change-password-inline
+          *ngIf="activeView==='change-password'"
+          (back)="setView('dashboard')">
+        </app-change-password-inline>
 
         <!-- ════ ANNOUNCEMENTS VIEW ════ -->
         <app-announcement-inline *ngIf="activeView==='announcements'"></app-announcement-inline>
