@@ -261,6 +261,17 @@
           (back)="setView('dashboard')">
         </app-change-password-inline>
 
+        <!-- ════ LEAVE VIEW ════ -->
+        <app-leave-approval-inline *ngIf="activeView==='view-leave'"
+          role="vp" (back)="setView('dashboard')">
+        </app-leave-approval-inline>
+
+        <!-- ════ OT VIEW ════ -->
+        <app-ot-approval-inline *ngIf="activeView==='view-ot'"
+          role="vp" (back)="setView('dashboard')">
+        </app-ot-approval-inline>
+
+
         <!-- ════ ANNOUNCEMENTS VIEW ════ -->
         <app-announcement-inline *ngIf="activeView==='announcements'"></app-announcement-inline>
 
@@ -291,7 +302,7 @@
         <app-tax-brackets-inline *ngIf="activeView==='tax'" style="flex:1;min-width:0;"></app-tax-brackets-inline>
 
         <!-- ════ LEAVE VIEW ════ -->
-        <div *ngIf="activeView==='view-leave'" style="padding:16px;display:flex;flex-direction:column;gap:12px;overflow-y:auto;height:100%;">
+        <!-- <div *ngIf="activeView==='view-leave'" style="padding:16px;display:flex;flex-direction:column;gap:12px;overflow-y:auto;height:100%;">
           <div style="display:flex;align-items:center;gap:10px;flex-shrink:0;flex-wrap:wrap;">
             <div style="font-size:14px;font-weight:700;">🗓 {{ lbl('Leave Requests') }}</div>
             <span style="font-size:10px;opacity:0.4;">{{ sortedLeave.length }} records</span>
@@ -320,10 +331,10 @@
               </div>
             </div>
           </ng-container>
-        </div>
+        </div> -->
 
         <!-- ════ OT VIEW ════ -->
-        <div *ngIf="activeView==='view-ot'" style="padding:16px;display:flex;flex-direction:column;gap:12px;overflow-y:auto;height:100%;">
+        <!-- <div *ngIf="activeView==='view-ot'" style="padding:16px;display:flex;flex-direction:column;gap:12px;overflow-y:auto;height:100%;">
           <div style="display:flex;align-items:center;gap:10px;flex-shrink:0;flex-wrap:wrap;">
             <div style="font-size:14px;font-weight:700;">⏰ {{ lbl('OT Requests') }}</div>
             <span style="font-size:10px;opacity:0.4;">{{ sortedOt.length }} records</span>
@@ -353,7 +364,7 @@
               </div>
             </div>
           </ng-container>
-        </div>
+        </div> -->
 
         <!-- ════ DASHBOARD VIEW ════ -->
         <ng-container *ngIf="activeView==='dashboard' && !showProjectDetail">
