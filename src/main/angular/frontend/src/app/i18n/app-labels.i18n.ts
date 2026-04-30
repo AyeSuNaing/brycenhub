@@ -74,6 +74,16 @@ export type AppLabelKey =
   | 'CV not uploaded (optional)' | 'No skills added (optional)'
   | 'already exists' | 'Pending Review'
   | 'Login Credentials (add)' | 'Share with the new staff member to login'
+  // ── SALARY STRUCTURES ──
+  | 'With Salary Set' | 'Avg Salary' | 'Total Monthly'
+  | 'Active members' | 'Per employee' | 'Payroll budget' | 'pending setup'
+  | 'Search staff, role, department...' | 'Sort by'
+  | 'Salary not set' | 'No history' | 'Set Salary' | 'Update (salary)'
+  | 'Add New Change' | 'New Base Salary' | 'Effective Date' | 'Note (salary)'
+  | 'Salary History' | 'Loading history...' | 'No salary history'
+  | 'Loading staff salaries...' | 'No staff found' | 'Delete' | 'Delete Salary Record?'
+  | 'Salary structures are append-only' | 'Current (salary)' | 'Since (salary)'
+  | 'Added by' | 'Saving...(salary)' | 'Save (salary)'
   // ── ANNOUNCEMENTS PAGE ──
   | 'total' | '+ New'
   | 'FROM' | 'TO' | 'Search'
@@ -217,6 +227,20 @@ const en: Record<AppLabelKey, string> = {
   'already exists': 'already exists', 'Pending Review': '⏳ Pending Review',
   'Login Credentials (add)': 'Login Credentials',
   'Share with the new staff member to login': 'Share with the new staff member to login',
+  'With Salary Set': 'WITH SALARY SET', 'Avg Salary': 'AVG SALARY', 'Total Monthly': 'TOTAL MONTHLY',
+  'Active members': 'Active members', 'Per employee': 'Per employee', 'Payroll budget': 'Payroll budget',
+  'pending setup': 'pending setup', 'Search staff, role, department...': 'Search staff, role, department...',
+  'Sort by': 'Sort by', 'Salary not set': 'Salary not set', 'No history': 'No history',
+  'Set Salary': '+ Set Salary', 'Update (salary)': '📈 Update',
+  'Add New Change': '📈 Add New Change', 'New Base Salary': 'New Base Salary',
+  'Effective Date': 'Effective Date', 'Note (salary)': 'Note',
+  'Salary History': 'Salary History', 'Loading history...': 'Loading history...',
+  'No salary history': 'No salary history for this user yet.',
+  'Loading staff salaries...': 'Loading staff salaries...',
+  'No staff found': 'No staff found', 'Delete': 'Delete', 'Delete Salary Record?': '🗑️ Delete Salary Record?',
+  'Salary structures are append-only': 'Salary structures are normally append-only. Only delete for corrections.',
+  'Current (salary)': 'Current', 'Since (salary)': 'Since',
+  'Added by': 'Added by', 'Saving...(salary)': 'Saving...', 'Save (salary)': 'Save',
   'Loading...': 'Loading...', hrs: 'hrs', yrs: 'yrs', days: 'days', 'upload CV': 'upload CV', Holidays: 'Holidays',
   total: 'total', '+ New': '+ New',
   FROM: 'FROM', TO: 'TO', Search: 'Search',
@@ -377,6 +401,20 @@ const ja: Record<AppLabelKey, string> = {
   'already exists': '既に存在します', 'Pending Review': '⏳ 確認待ち',
   'Login Credentials (add)': 'ログイン情報',
   'Share with the new staff member to login': 'ログイン情報を新スタッフに共有してください',
+  'With Salary Set': '給与設定済み', 'Avg Salary': '平均給与', 'Total Monthly': '月次合計',
+  'Active members': 'アクティブメンバー', 'Per employee': '一人当たり', 'Payroll budget': '給与予算',
+  'pending setup': '未設定', 'Search staff, role, department...': 'スタッフ・役職・部署で検索...',
+  'Sort by': '並び替え', 'Salary not set': '給与未設定', 'No history': '履歴なし',
+  'Set Salary': '+ 給与設定', 'Update (salary)': '📈 更新',
+  'Add New Change': '📈 変更追加', 'New Base Salary': '新しい基本給',
+  'Effective Date': '適用日', 'Note (salary)': 'メモ',
+  'Salary History': '給与履歴', 'Loading history...': '履歴読込中...',
+  'No salary history': '給与履歴がありません',
+  'Loading staff salaries...': '給与データ読込中...',
+  'No staff found': 'スタッフが見つかりません', 'Delete': '削除', 'Delete Salary Record?': '🗑️ 給与記録を削除?',
+  'Salary structures are append-only': '給与体系は通常追記専用です。修正のみ削除可能です。',
+  'Current (salary)': '現在', 'Since (salary)': '開始日',
+  'Added by': '追加者', 'Saving...(salary)': '保存中...', 'Save (salary)': '保存',
   'Loading...': '読込中...', hrs: '時間', yrs: '年', days: '日', 'upload CV': 'CV未', Holidays: '祝日',
   total: '件', '+ New': '+ 新規',
   FROM: '開始日', TO: '終了日', Search: '検索',
@@ -538,6 +576,20 @@ const my: Record<AppLabelKey, string> = {
   'already exists': 'ရှိပြီးသား', 'Pending Review': '⏳ စစ်ဆေးဆဲ',
   'Login Credentials (add)': 'Login အချက်အလက်',
   'Share with the new staff member to login': 'ဝန်ထမ်းသစ်ထံ login အချက်အလက် မျှဝေပါ',
+  'With Salary Set': 'လစာသတ်မှတ်ပြီး', 'Avg Salary': 'ပျမ်းမျှလစာ', 'Total Monthly': 'လစဉ်စုစုပေါင်း',
+  'Active members': 'တက်ကြွသောဝန်ထမ်းများ', 'Per employee': 'တစ်ဦးချင်း', 'Payroll budget': 'လစာဘတ်ဂျက်',
+  'pending setup': 'မသတ်မှတ်ရသေး', 'Search staff, role, department...': 'ဝန်ထမ်း၊ ရာထူး၊ ဌာနရှာပါ...',
+  'Sort by': 'စီရန်', 'Salary not set': 'လစာမသတ်မှတ်ရသေး', 'No history': 'မှတ်တမ်းမရှိ',
+  'Set Salary': '+ လစာသတ်မှတ်', 'Update (salary)': '📈 ပြောင်းမည်',
+  'Add New Change': '📈 ပြောင်းလဲမှုထည့်', 'New Base Salary': 'လစာအသစ်',
+  'Effective Date': 'အသက်ဝင်ရက်', 'Note (salary)': 'မှတ်ချက်',
+  'Salary History': 'လစာမှတ်တမ်း', 'Loading history...': 'မှတ်တမ်းဖတ်နေ...',
+  'No salary history': 'လစာမှတ်တမ်းမရှိသေး',
+  'Loading staff salaries...': 'လစာဒေတာဖတ်နေ...',
+  'No staff found': 'ဝန်ထမ်းမတွေ့', 'Delete': 'ဖျက်', 'Delete Salary Record?': '🗑️ လစာမှတ်တမ်းဖျက်မလား?',
+  'Salary structures are append-only': 'လစာဖွဲ့စည်းမှုသည် ပြင်မှတ်တမ်းများသာ ဖြစ်သည်။',
+  'Current (salary)': 'လက်ရှိ', 'Since (salary)': 'ကနေ',
+  'Added by': 'ထည့်သူ', 'Saving...(salary)': 'သိမ်းနေ...', 'Save (salary)': 'သိမ်း',
   'Loading...': 'ခဏစောင့်...', hrs: 'နာရီ', yrs: 'နှစ်', days: 'ရက်', 'upload CV': 'CV မရှိ', Holidays: 'ရုံးပိတ်ရက်',
   total: 'ခု', '+ New': '+ အသစ်',
   FROM: 'စပြီး', TO: 'အထိ', Search: 'ရှာ',
@@ -700,6 +752,7 @@ const km: Record<AppLabelKey, string> = {
   'already exists': 'មានរួចហើយ', 'Pending Review': '⏳ រង់ចាំពិនិត្យ',
   'Login Credentials (add)': 'ព័ត៌មានចូល',
   'Share with the new staff member to login': 'ចែករំលែកព័ត៌មានចូលជាមួយបុគ្គលិកថ្មី',
+  'With Salary Set': 'កំណត់ប្រាក់ខែរួច', 'Avg Salary': 'ប្រាក់ខែមធ្យម', 'Total Monthly': 'សរុបប្រចាំខែ', 'Active members': 'សមាជិកសកម្ម', 'Per employee': 'ក្នុងមនុស្សម្នាក់', 'Payroll budget': 'ថវិកាប្រាក់ខែ', 'pending setup': 'មិនទាន់កំណត់', 'Sort by': 'តម្រៀបតាម', 'Salary not set': 'មិនទាន់កំណត់ប្រាក់ខែ', 'No history': 'គ្មានប្រវត្តិ', 'Set Salary': '+ កំណត់ប្រាក់ខែ', 'Update (salary)': '📈 ធ្វើបច្ចុប្បន្នភាព', 'Add New Change': '📈 បន្ថែមការផ្លាស់ប្តូរ', 'New Base Salary': 'ប្រាក់ខែថ្មី', 'Effective Date': 'កាលបរិច្ឆេទចាប់ផ្តើម', 'Note (salary)': 'កំណត់ចំណាំ', 'Salary History': 'ប្រវត្តិប្រាក់ខែ', 'No staff found': 'រកមិនឃើញបុគ្គលិក', 'Current (salary)': 'បច្ចុប្បន្ន', 'Since (salary)': 'តាំងពី', 'Added by': 'បន្ថែមដោយ', 'Save (salary)': 'រក្សាទុក', 'Loading history...': 'កំពុងផ្ទុក...', 'No salary history': 'គ្មានប្រវត្តិប្រាក់ខែ', 'Loading staff salaries...': 'កំពុងផ្ទុក...', 'Delete': 'លុប', 'Delete Salary Record?': 'លុបកំណត់ត្រាប្រាក់ខែ?', 'Salary structures are append-only': 'ការលុបសម្រាប់ការកែតម្រូវតែប៉ុណ្ណោះ', 'Saving...(salary)': 'កំពុងរក្សាទុក...', 'Search staff, role, department...': 'ស្វែងរក...',
   'Loading...': 'កំពុងផ្ទុក...', hrs: 'ម៉ោង', yrs: 'ឆ្នាំ', days: 'ថ្ងៃ', 'upload CV': 'គ្មាន CV', Holidays: 'ថ្ងៃឈប់', Inactive: 'អសកម្ម', members: 'នាក់',
   total: 'ចំនួន', '+ New': '+ ថ្មី',
   FROM: 'ចាប់ពី', TO: 'ដល់', Search: 'ស្វែងរក',
@@ -861,6 +914,7 @@ const vi: Record<AppLabelKey, string> = {
   'already exists': 'đã tồn tại', 'Pending Review': '⏳ Chờ xem xét',
   'Login Credentials (add)': 'Thông tin đăng nhập',
   'Share with the new staff member to login': 'Chia sẻ thông tin đăng nhập với nhân viên mới',
+  'With Salary Set': 'Đã thiết lập lương', 'Avg Salary': 'Lương trung bình', 'Total Monthly': 'Tổng hàng tháng', 'Active members': 'Thành viên hoạt động', 'Per employee': 'Mỗi nhân viên', 'Payroll budget': 'Ngân sách lương', 'pending setup': 'Chưa thiết lập', 'Sort by': 'Sắp xếp', 'Salary not set': 'Chưa thiết lập lương', 'No history': 'Không có lịch sử', 'Set Salary': '+ Thiết lập lương', 'Update (salary)': '📈 Cập nhật', 'Add New Change': '📈 Thêm thay đổi', 'New Base Salary': 'Lương cơ bản mới', 'Effective Date': 'Ngày hiệu lực', 'Note (salary)': 'Ghi chú', 'Salary History': 'Lịch sử lương', 'No staff found': 'Không tìm thấy nhân viên', 'Current (salary)': 'Hiện tại', 'Since (salary)': 'Từ', 'Added by': 'Thêm bởi', 'Save (salary)': 'Lưu', 'Loading history...': 'Đang tải...', 'No salary history': 'Chưa có lịch sử lương', 'Loading staff salaries...': 'Đang tải...', 'Delete': 'Xóa', 'Delete Salary Record?': 'Xóa bản ghi lương?', 'Salary structures are append-only': 'Chỉ xóa khi cần sửa lỗi.', 'Saving...(salary)': 'Đang lưu...', 'Search staff, role, department...': 'Tìm kiếm...',
   'Loading...': 'Đang tải...', hrs: 'giờ', yrs: 'năm', days: 'ngày', 'upload CV': 'Chưa CV', Holidays: 'Ngày nghỉ', Inactive: 'Không hoạt động', members: 'thành viên',
   total: 'tổng', '+ New': '+ Mới',
   FROM: 'TỪ', TO: 'ĐẾN', Search: 'Tìm kiếm',
@@ -1019,6 +1073,7 @@ const ko: Record<AppLabelKey, string> = {
   'already exists': '이미 존재함', 'Pending Review': '⏳ 검토 대기',
   'Login Credentials (add)': '로그인 정보',
   'Share with the new staff member to login': '신규 직원에게 로그인 정보를 공유하세요',
+  'With Salary Set': '급여 설정됨', 'Avg Salary': '평균 급여', 'Total Monthly': '월 합계', 'Active members': '활성 직원', 'Per employee': '1인당', 'Payroll budget': '급여 예산', 'pending setup': '미설정', 'Sort by': '정렬', 'Salary not set': '급여 미설정', 'No history': '이력 없음', 'Set Salary': '+ 급여 설정', 'Update (salary)': '📈 업데이트', 'Add New Change': '📈 변경 추가', 'New Base Salary': '새 기본급', 'Effective Date': '적용일', 'Note (salary)': '메모', 'Salary History': '급여 이력', 'No staff found': '직원 없음', 'Current (salary)': '현재', 'Since (salary)': '시작', 'Added by': '추가자', 'Save (salary)': '저장', 'Loading history...': '로딩...', 'No salary history': '급여 이력 없음', 'Loading staff salaries...': '로딩...', 'Delete': '삭제', 'Delete Salary Record?': '급여 기록 삭제?', 'Salary structures are append-only': '수정 목적으로만 삭제 가능합니다.', 'Saving...(salary)': '저장 중...', 'Search staff, role, department...': '검색...',
   'Loading...': '로딩...', hrs: '시간', yrs: '년', days: '일', 'upload CV': 'CV없음', Holidays: '공휴일', Inactive: '비활성', members: '명',
   total: '개', '+ New': '+ 새로',
   FROM: '시작', TO: '종료', Search: '검색',
