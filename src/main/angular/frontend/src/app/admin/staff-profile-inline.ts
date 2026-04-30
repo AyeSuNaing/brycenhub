@@ -31,6 +31,15 @@ export class StaffProfileInline implements OnInit {
   isToggling     = false;
   copiedField    = '';
 
+  // ── Password Reset ─────────────────────────
+  showResetDialog  = false;
+  resetPassword    = '';
+  resetCopied      = false;
+  resetCopiedBoth  = false;
+  isResetting      = false;
+  resetDone        = false;
+  resetError       = '';
+
   // ── Tab state ──────────────────────────────
   activeTab: 'profile' | 'work' | 'salary' = 'profile';
 
@@ -299,6 +308,71 @@ export class StaffProfileInline implements OnInit {
         },
         error: () => { this.isToggling = false; }
       });
+  }
+
+  // ── Password Reset ──────────────────────────
+  openResetDialog() {
+    this.showResetDialog = true;
+    this.resetDone       = false;
+    this.resetError      = '';
+    this.resetPassword   = 'password';
+    this.resetCopied     = false;
+    this.resetCopiedBoth = false;
+    this.cdr.detectChanges();
+  }
+
+  closeResetDialog() {
+    this.showResetDialog = false;
+    this.resetDone       = false;
+    this.resetError      = '';
+    this.cdr.detectChanges();
+  }
+
+  generateResetPassword() {
+    const upper = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
+    const lower = 'abcdefghjkmnpqrstuvwxyz';
+    const digits = '23456789';
+    const symbols = '@#$!';
+    const all = upper + lower + digits + symbols;
+    let pwd = '';
+    pwd += upper[Math.floor(Math.random() * upper.length)];
+    pwd += lower[Math.floor(Math.random() * lower.length)];
+    pwd += digits[Math.floor(Math.random() * digits.length)];
+    pwd += symbols[Math.floor(Math.random() * symbols.length)];
+    for (let i = 4; i < 10; i++) pwd += all[Math.floor(Math.random() * all.length)];
+    this.resetPassword   = pwd.split('').sort(() => Math.random() - 0.5).join('');
+    this.resetCopied     = false;
+    this.resetCopiedBoth = false;
+    this.cdr.detectChanges();
+  }
+
+  confirmReset() {
+    if (!this.resetPassword || !this.staffId) return;
+    this.isResetting = true;
+    this.resetError  = '';
+    this.cdr.detectChanges();
+    this.http.put(`${BASE}/users/${this.staffId}/change-password`,
+      { newPassword: this.resetPassword },
+      { headers: this.auth.getHeaders() }
+    ).subscribe({
+      next: () => { this.isResetting = false; this.resetDone = true; this.cdr.detectChanges(); },
+      error: (err) => { this.isResetting = false; this.resetError = err?.error?.message || 'Failed to reset password'; this.cdr.detectChanges(); }
+    });
+  }
+
+  copyResetPassword() {
+    navigator.clipboard.writeText(this.resetPassword).then(() => {
+      this.resetCopied = true; this.cdr.detectChanges();
+      setTimeout(() => { this.resetCopied = false; this.cdr.detectChanges(); }, 2500);
+    });
+  }
+
+  copyResetBoth() {
+    const text = `Email: ${this.staff.email}\nPassword: ${this.resetPassword}`;
+    navigator.clipboard.writeText(text).then(() => {
+      this.resetCopiedBoth = true; this.cdr.detectChanges();
+      setTimeout(() => { this.resetCopiedBoth = false; this.cdr.detectChanges(); }, 2500);
+    });
   }
 
   copyField(text: string, field: string) {

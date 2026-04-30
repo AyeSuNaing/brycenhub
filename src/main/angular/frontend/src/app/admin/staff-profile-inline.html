@@ -199,6 +199,20 @@
               {{ copiedField==='email' ? lbl('Copied!') : lbl('Copy Email') }}
             </button>
           </div>
+          <!-- Admin only: Reset Password button -->
+          <div *ngIf="canViewDangerZone()"
+            style="margin-top:10px;display:flex;justify-content:center;">
+            <button (click)="openResetDialog()"
+              style="font-size:10px;padding:6px 16px;border-radius:8px;cursor:pointer;
+                background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.25);
+                color:#ef4444;font-family:inherit;font-weight:600;
+                display:flex;align-items:center;gap:6px;transition:all 0.15s;"
+              onmouseenter="this.style.background='rgba(239,68,68,0.15)'"
+              onmouseleave="this.style.background='rgba(239,68,68,0.08)'">
+               {{ lbl('Reset Password') }}
+            </button>
+          </div>
+
           <div style="margin-top:8px;font-size:10px;opacity:0.35;text-align:center;">
             Password is only available at the time of staff creation
           </div>
@@ -1108,3 +1122,113 @@
   (close)="closePayslip()"
   (actionSuccess)="closePayslip()">
 </app-payslip-modal>
+
+<!-- ══ PASSWORD RESET MODAL ══ -->
+<div *ngIf="showResetDialog"
+  style="position:fixed;inset:0;background:rgba(0,0,0,0.6);
+    display:flex;align-items:center;justify-content:center;
+    z-index:9999;padding:20px;">
+  <div style="max-width:420px;width:100%;border-radius:14px;overflow:hidden;
+    background:var(--input-bg);border:1px solid rgba(239,68,68,0.25);">
+
+    <!-- Header -->
+    <div style="padding:18px 22px 14px;border-bottom:1px solid rgba(128,128,128,0.1);
+      display:flex;justify-content:space-between;align-items:center;">
+      <div>
+        <div style="font-size:14px;font-weight:800;">{{ lbl('Reset Password (title)') }}</div>
+        <div style="font-size:10px;opacity:0.45;margin-top:3px;">{{ staff?.name }}</div>
+      </div>
+      <button (click)="closeResetDialog()"
+        style="background:none;border:none;font-size:16px;cursor:pointer;
+          opacity:0.4;color:inherit;padding:4px 8px;">✕</button>
+    </div>
+
+    <!-- Body -->
+    <div style="padding:18px 22px;">
+
+      <!-- STEP 1: Before reset -->
+      <div *ngIf="!resetDone">
+        <p style="font-size:11px;opacity:0.55;margin-bottom:16px;line-height:1.5;">
+          {{ lbl('Reset Password desc') }}
+        </p>
+        <div style="display:flex;gap:8px;margin-bottom:12px;">
+          <div style="flex:1;padding:10px 14px;border-radius:9px;
+            background:rgba(128,128,128,0.06);border:1px solid rgba(128,128,128,0.1);
+            font-family:monospace;font-size:13px;font-weight:700;
+            color:#16a34a;letter-spacing:1.5px;word-break:break-all;">
+            {{ resetPassword }}
+          </div>
+          <button (click)="generateResetPassword()" title="Regenerate"
+            style="padding:0 14px;border-radius:9px;background:transparent;
+              border:1px solid rgba(128,128,128,0.2);cursor:pointer;
+              font-size:16px;color:inherit;flex-shrink:0;">🔄</button>
+        </div>
+        <div *ngIf="resetError"
+          style="padding:8px 12px;border-radius:8px;margin-bottom:12px;
+            background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);
+            color:#ef4444;font-size:11px;">⚠️ {{ resetError }}</div>
+        <div style="display:flex;gap:8px;justify-content:flex-end;">
+          <button (click)="closeResetDialog()"
+            style="padding:8px 16px;border-radius:8px;background:transparent;
+              border:1px solid var(--color-border);font-size:11px;cursor:pointer;
+              color:inherit;font-family:inherit;">{{ lbl('Cancel') }}</button>
+          <button (click)="confirmReset()" [disabled]="isResetting"
+            style="padding:8px 18px;border-radius:8px;background:#ef4444;
+              border:none;font-size:11px;font-weight:700;cursor:pointer;
+              color:white;font-family:inherit;"
+            [style.opacity]="isResetting ? '0.6' : '1'">
+            {{ isResetting ? lbl('Resetting...') : lbl('Reset Password') }}
+          </button>
+        </div>
+      </div>
+
+      <!-- STEP 2: Done -->
+      <div *ngIf="resetDone">
+        <div style="text-align:center;margin-bottom:16px;">
+          <div style="font-size:32px;margin-bottom:8px;">✅</div>
+          <div style="font-size:13px;font-weight:700;">{{ lbl('Password Reset!') }}</div>
+          <div style="font-size:10px;opacity:0.45;margin-top:3px;">{{ lbl('Reset done desc') }}</div>
+        </div>
+        <div style="padding:10px 14px;border-radius:9px;margin-bottom:8px;
+          background:rgba(128,128,128,0.05);border:1px solid rgba(128,128,128,0.1);">
+          <div style="font-size:8px;font-weight:700;text-transform:uppercase;
+            letter-spacing:0.8px;opacity:0.4;margin-bottom:2px;">✉️ EMAIL</div>
+          <div style="font-size:12px;font-weight:600;">{{ staff?.email }}</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;padding:10px 14px;
+          border-radius:9px;margin-bottom:12px;
+          background:rgba(22,163,74,0.06);border:1px solid rgba(22,163,74,0.25);">
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:8px;font-weight:700;text-transform:uppercase;
+              letter-spacing:0.8px;opacity:0.4;margin-bottom:2px;">🔑 {{ lbl('New Password (reset)') }}</div>
+            <div style="font-size:13px;font-weight:800;font-family:monospace;
+              color:#16a34a;letter-spacing:1.5px;word-break:break-all;">{{ resetPassword }}</div>
+          </div>
+          <button (click)="copyResetPassword()"
+            style="padding:5px 12px;border-radius:7px;font-size:10px;font-weight:700;
+              cursor:pointer;border:1px solid;transition:all 0.2s;white-space:nowrap;flex-shrink:0;"
+            [style.background]="resetCopied ? 'rgba(22,163,74,0.12)' : 'transparent'"
+            [style.borderColor]="resetCopied ? '#16a34a' : 'rgba(148,163,184,0.3)'"
+            [style.color]="resetCopied ? '#16a34a' : 'inherit'">
+            {{ resetCopied ? '✓ Copied' : lbl('Copy Password (reset)') }}
+          </button>
+        </div>
+        <button (click)="copyResetBoth()"
+          style="width:100%;padding:9px;border-radius:9px;margin-bottom:12px;
+            border:1px dashed rgba(22,163,74,0.35);font-size:11px;font-weight:600;
+            cursor:pointer;font-family:inherit;background:transparent;transition:all 0.15s;"
+          [style.color]="resetCopiedBoth ? '#16a34a' : '#94a3b8'"
+          [style.background]="resetCopiedBoth ? 'rgba(22,163,74,0.06)' : 'transparent'">
+          {{ resetCopiedBoth ? '✅ Copied!' : lbl('Copy Both (reset)') }}
+        </button>
+        <div style="display:flex;justify-content:center;">
+          <button (click)="closeResetDialog()"
+            style="padding:8px 20px;border-radius:8px;background:transparent;
+              border:1px solid var(--color-border);font-size:11px;cursor:pointer;
+              color:inherit;font-family:inherit;">{{ lbl('Done') }}</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>

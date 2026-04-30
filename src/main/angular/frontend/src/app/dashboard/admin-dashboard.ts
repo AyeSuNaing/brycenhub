@@ -28,7 +28,7 @@ import { LeaveApprovalInline } from '../shared/leave-approval/leave-approval-inl
 import { OtApprovalInline } from '../shared/ot-approval/ot-approval-inline';
 import { getLabel, AppLabelKey } from '../i18n/app-labels.i18n';
 
-const BASE = environment.apiBaseUrl;
+const BASE       = environment.apiBaseUrl;
 const ADMIN_BASE = `${environment.apiBaseUrl}/admin/dashboard`;
 
 const LOGO_SVG = `data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIHZpZXdCb3g9IjAgMCAzMiAzMiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIHJ4PSI4IiBmaWxsPSIjMTY1MzM0Ii8+PHRleHQgeD0iNiIgeT0iMjIiIGZvbnQtc2l6ZT0iMTgiIGZpbGw9IiM4NmVmYWMiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC13ZWlnaHQ9ImJvbGQiPkI8L3RleHQ+PC9zdmc+`;
@@ -112,9 +112,9 @@ export class AdminDashboard implements OnInit, OnDestroy {
     },
     {
       label: 'PAYROLL', items: [
-        { key: 'leave',          icon: '🏖️', labelKey: 'Leave Requests (nav)', badge: 0, badgeColor: '#818cf8' },
-        { key: 'ot',             icon: '⏰', labelKey: 'OT Request',            badge: 0, badgeColor: '#f59e0b' },
-        { key: 'salary',         icon: '💵', labelKey: 'Salary Structures' },
+        { key: 'leave',           icon: '🏖️', labelKey: 'Leave Requests (nav)', badge: 0, badgeColor: '#818cf8' },
+        { key: 'ot',              icon: '⏰', labelKey: 'OT Request',            badge: 0, badgeColor: '#f59e0b' },
+        { key: 'salary',          icon: '💵', labelKey: 'Salary Structures' },
         { key: 'attendance',      icon: '📅', labelKey: 'Upload Attendance' },
         { key: 'payroll',         icon: '💰', labelKey: 'Monthly Payroll' },
         { key: 'payroll-history', icon: '📊', labelKey: 'Payroll History' },
@@ -142,8 +142,18 @@ export class AdminDashboard implements OnInit, OnDestroy {
     this.currentUser = this.auth.getUser();
     const savedLang = this.currentUser?.preferredLanguage || 'en';
     this.currentLangObj = this.langs.find(l => l.code === savedLang) || this.langs[0];
+
+    // ── View restore (lang ပြောင်းပြီး reload ဖြစ်တဲ့အခါ)
     const savedView = localStorage.getItem('brycen-active-view');
     if (savedView) { this.activeView = savedView; localStorage.removeItem('brycen-active-view'); }
+
+    // ✅ FIX: selectedStaffId restore — staff-profile view မှာ blank မဖြစ်အောင်
+    const savedStaffId = localStorage.getItem('brycen-selected-staff');
+    if (savedStaffId) {
+      this.selectedStaffId = Number(savedStaffId);
+      localStorage.removeItem('brycen-selected-staff');
+    }
+
     this.loadAll();
   }
 
@@ -159,10 +169,13 @@ export class AdminDashboard implements OnInit, OnDestroy {
     this.loading.stats = true;
     this.http.get<any>(`${ADMIN_BASE}/stats`, { headers: this.auth.getHeaders() }).subscribe({
       next: s => {
-        this.stats.totalStaff = s.totalStaff; this.stats.pendingOT = s.pendingOT;
-        this.stats.totalOTHours = s.totalOTHours; this.stats.leaveRequests = s.leaveRequests;
-        this.stats.todayLeave = s.todayLeave; this.payrollStatus = s.payrollStatus;
-        this.loading.stats = false;
+        this.stats.totalStaff    = s.totalStaff;
+        this.stats.pendingOT     = s.pendingOT;
+        this.stats.totalOTHours  = s.totalOTHours;
+        this.stats.leaveRequests = s.leaveRequests;
+        this.stats.todayLeave    = s.todayLeave;
+        this.payrollStatus       = s.payrollStatus;
+        this.loading.stats       = false;
         this.updateOtBadge(s.pendingOT);
         this.cdr.detectChanges();
       },
@@ -174,10 +187,11 @@ export class AdminDashboard implements OnInit, OnDestroy {
     this.loading.staff = true;
     this.http.get<any[]>(`${BASE}/users/staff-list`, { headers: this.auth.getHeaders() }).subscribe({
       next: users => {
-        this.staffList = users;
-        this.stats.active = users.filter(u => u.isActive).length;
-        this.stats.inactive = users.filter(u => !u.isActive).length;
-        this.loading.staff = false; this.cdr.detectChanges();
+        this.staffList       = users;
+        this.stats.active    = users.filter(u => u.isActive).length;
+        this.stats.inactive  = users.filter(u => !u.isActive).length;
+        this.loading.staff   = false;
+        this.cdr.detectChanges();
       },
       error: () => { this.loading.staff = false; }
     });
@@ -195,8 +209,10 @@ export class AdminDashboard implements OnInit, OnDestroy {
     this.loading.leave = true;
     this.http.get<any[]>(`${ADMIN_BASE}/leave-requests?status=PENDING`, { headers: this.auth.getHeaders() }).subscribe({
       next: list => {
-        this.leaveRequests = list; this.updateLeaveBadge(list.length);
-        this.loading.leave = false; this.cdr.detectChanges();
+        this.leaveRequests = list;
+        this.updateLeaveBadge(list.length);
+        this.loading.leave = false;
+        this.cdr.detectChanges();
       },
       error: () => { this.loading.leave = false; }
     });
@@ -212,8 +228,10 @@ export class AdminDashboard implements OnInit, OnDestroy {
   loadHolidays() {
     this.loading.holiday = true;
     const now = new Date();
-    this.http.get<any[]>(`${ADMIN_BASE}/holidays?year=${now.getFullYear()}&month=${now.getMonth()+1}`,
-      { headers: this.auth.getHeaders() }).subscribe({
+    this.http.get<any[]>(
+      `${ADMIN_BASE}/holidays?year=${now.getFullYear()}&month=${now.getMonth() + 1}`,
+      { headers: this.auth.getHeaders() }
+    ).subscribe({
       next: list => { this.holidays = list; this.loading.holiday = false; this.cdr.detectChanges(); },
       error: () => { this.loading.holiday = false; }
     });
@@ -221,16 +239,19 @@ export class AdminDashboard implements OnInit, OnDestroy {
 
   loadAnnouncements() {
     this.dataService.getAnnouncements().subscribe({
-      next: d => { this.announcements = d; this.cdr.detectChanges(); }, error: () => {}
+      next: d => { this.announcements = d; this.cdr.detectChanges(); },
+      error: () => {}
     });
   }
 
   loadNotifications() {
     this.dataService.getNotifications().subscribe({
-      next: d => { this.notifications = d; this.cdr.detectChanges(); }, error: () => {}
+      next: d => { this.notifications = d; this.cdr.detectChanges(); },
+      error: () => {}
     });
   }
 
+  // ── View navigation
   setView(key: string, route?: string) {
     this.activeView = key;
     if (route) this.router.navigate([route]);
@@ -240,45 +261,7 @@ export class AdminDashboard implements OnInit, OnDestroy {
   onStaffCreated() { this.activeView = 'staff-list'; this.loadStats(); this.loadStaff(); }
   onViewProfile(staff: any) { this.selectedStaffId = staff.id; this.activeView = 'staff-profile'; }
 
-  toggleActivation(staff: any) {
-    const url = staff.isActive ? `${BASE}/users/${staff.id}/deactivate` : `${BASE}/users/${staff.id}/activate`;
-    this.http.put(url, {}, { headers: this.auth.getHeaders() }).subscribe({
-      next: () => { staff.isActive = !staff.isActive; this.loadStats(); this.cdr.detectChanges(); },
-      error: () => {}
-    });
-  }
-
-  approveOT(id: number) {
-    this.http.patch(`${ADMIN_BASE}/ot-requests/${id}/approve`, {}, { headers: this.auth.getHeaders() })
-      .subscribe({ next: () => { this.loadStats(); this.loadOTRequests(); } });
-  }
-  rejectOT(id: number) {
-    this.http.patch(`${ADMIN_BASE}/ot-requests/${id}/reject`, {}, { headers: this.auth.getHeaders() })
-      .subscribe({ next: () => { this.loadStats(); this.loadOTRequests(); } });
-  }
-  approveLeave(id: number) {
-    this.http.patch(`${ADMIN_BASE}/leave-requests/${id}/approve`, {}, { headers: this.auth.getHeaders() })
-      .subscribe({ next: () => { this.loadStats(); this.loadLeaveRequests(); this.loadTodayLeave(); } });
-  }
-  rejectLeave(id: number) {
-    this.http.patch(`${ADMIN_BASE}/leave-requests/${id}/reject`, {}, { headers: this.auth.getHeaders() })
-      .subscribe({ next: () => { this.loadStats(); this.loadLeaveRequests(); } });
-  }
-
-  updateLeaveBadge(count: number) {
-    for (const section of this.navSections) {
-      const item = section.items.find(i => i.key === 'leave');
-      if (item) { item.badge = count; break; }
-    }
-  }
-
-  updateOtBadge(count: number) {
-    for (const section of this.navSections) {
-      const item = section.items.find(i => i.key === 'ot');
-      if (item) { item.badge = count; break; }
-    }
-  }
-
+  // ── Theme
   setTheme(dark: boolean) {
     this.isDark = dark;
     document.body.classList.toggle('dark', dark);
@@ -287,6 +270,7 @@ export class AdminDashboard implements OnInit, OnDestroy {
   }
   toggleTheme() { this.setTheme(!this.isDark); }
 
+  // ── Language ✅ FIX: selectedStaffId ကိုပါ save → reload ပြီးရင် staff-profile blank မဖြစ်တော့ဘူး
   setLang(lang: any) {
     this.currentLangObj = lang;
     this.showLangMenu = false;
@@ -295,11 +279,25 @@ export class AdminDashboard implements OnInit, OnDestroy {
         const user = this.auth.getUser();
         if (user) { user.preferredLanguage = lang.code; localStorage.setItem('user', JSON.stringify(user)); }
         localStorage.setItem('brycen-active-view', this.activeView);
+        if (this.selectedStaffId) {
+          localStorage.setItem('brycen-selected-staff', String(this.selectedStaffId));
+        }
+        window.location.reload();
+      },
+      error: () => {
+        // error ဖြစ်လဲ reload — lang UI ပြောင်းသွားဆိုတော့ reload လုပ်ရမယ်
+        const user = this.auth.getUser();
+        if (user) { user.preferredLanguage = lang.code; localStorage.setItem('user', JSON.stringify(user)); }
+        localStorage.setItem('brycen-active-view', this.activeView);
+        if (this.selectedStaffId) {
+          localStorage.setItem('brycen-selected-staff', String(this.selectedStaffId));
+        }
         window.location.reload();
       }
     });
   }
 
+  // ── Profile
   openMyProfile() {
     const myId = this.currentUser?.id || this.currentUser?.userId;
     if (!myId) return;
@@ -309,12 +307,59 @@ export class AdminDashboard implements OnInit, OnDestroy {
     this.cdr.detectChanges();
   }
 
+  // ── Staff activation
+  toggleActivation(staff: any) {
+    const url = staff.isActive
+      ? `${BASE}/users/${staff.id}/deactivate`
+      : `${BASE}/users/${staff.id}/activate`;
+    this.http.put(url, {}, { headers: this.auth.getHeaders() }).subscribe({
+      next: () => { staff.isActive = !staff.isActive; this.loadStats(); this.cdr.detectChanges(); },
+      error: () => {}
+    });
+  }
+
+  // ── OT approval
+  approveOT(id: number) {
+    this.http.patch(`${ADMIN_BASE}/ot-requests/${id}/approve`, {}, { headers: this.auth.getHeaders() })
+      .subscribe({ next: () => { this.loadStats(); this.loadOTRequests(); } });
+  }
+  rejectOT(id: number) {
+    this.http.patch(`${ADMIN_BASE}/ot-requests/${id}/reject`, {}, { headers: this.auth.getHeaders() })
+      .subscribe({ next: () => { this.loadStats(); this.loadOTRequests(); } });
+  }
+
+  // ── Leave approval
+  approveLeave(id: number) {
+    this.http.patch(`${ADMIN_BASE}/leave-requests/${id}/approve`, {}, { headers: this.auth.getHeaders() })
+      .subscribe({ next: () => { this.loadStats(); this.loadLeaveRequests(); this.loadTodayLeave(); } });
+  }
+  rejectLeave(id: number) {
+    this.http.patch(`${ADMIN_BASE}/leave-requests/${id}/reject`, {}, { headers: this.auth.getHeaders() })
+      .subscribe({ next: () => { this.loadStats(); this.loadLeaveRequests(); } });
+  }
+
+  // ── Badge updaters
+  updateLeaveBadge(count: number) {
+    for (const section of this.navSections) {
+      const item = section.items.find(i => i.key === 'leave');
+      if (item) { item.badge = count; break; }
+    }
+  }
+  updateOtBadge(count: number) {
+    for (const section of this.navSections) {
+      const item = section.items.find(i => i.key === 'ot');
+      if (item) { item.badge = count; break; }
+    }
+  }
+
+  // ── Helpers
   getUnreadCount(): number { return this.notifications.filter((n: any) => !n.isRead).length; }
   getAvatarColor(name: string): string {
-    const c = ['#16a34a','#0284c7','#7c3aed','#db2777','#ea580c','#0891b2'];
+    const c = ['#16a34a', '#0284c7', '#7c3aed', '#db2777', '#ea580c', '#0891b2'];
     return c[(name?.charCodeAt(0) || 0) % c.length];
   }
   getInitial(name: string): string { return name ? name.charAt(0).toUpperCase() : '?'; }
+
   getLeaveTypeStyle(type: string): string {
     const m: Record<string, string> = {
       ANNUAL: 'background:#22c55e22;color:#22c55e',
@@ -324,6 +369,7 @@ export class AdminDashboard implements OnInit, OnDestroy {
     return m[type] || 'background:#1e293b;color:#94a3b8';
   }
 
+  // ── Calendar
   get calendarGrid(): { date: Date; inMonth: boolean }[] {
     const now = new Date(); const y = now.getFullYear(); const m = now.getMonth();
     const firstDay = new Date(y, m, 1); const startOffset = firstDay.getDay();
@@ -339,7 +385,7 @@ export class AdminDashboard implements OnInit, OnDestroy {
   isSaturday(d: Date): boolean { return d.getDay() === 6; }
   isToday(d: Date): boolean {
     const t = new Date();
-    return d.getFullYear()===t.getFullYear() && d.getMonth()===t.getMonth() && d.getDate()===t.getDate();
+    return d.getFullYear() === t.getFullYear() && d.getMonth() === t.getMonth() && d.getDate() === t.getDate();
   }
   getHolidayForDate(d: Date): any | null {
     if (!this.holidays?.length) return null;
@@ -347,10 +393,11 @@ export class AdminDashboard implements OnInit, OnDestroy {
     return this.holidays.find(h => this.toYMD(new Date(h.holidayDate)) === ymd) || null;
   }
   private toYMD(d: Date): string {
-    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
   }
   openHolidayModal(holiday: any): void { this.selectedHoliday = holiday; }
   closeHolidayModal(): void { this.selectedHoliday = null; }
+
   signOut() { this.auth.logout(); this.router.navigate(['/login']); }
 
   @HostListener('document:click', ['$event'])

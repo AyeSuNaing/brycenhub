@@ -4649,3 +4649,172 @@ All in `/mnt/user-data/outputs/`:
 - `holidays-inline.ts` + `holidays-inline.html`
 - `announcement-inline.ts` + `announcement-inline.html`
 - `staff-list-inline.ts` + `staff-list-inline.html`
+
+# Brycen Hub PMS — CLAUDE.md
+**Session: 2026-04-30 (Translation Session)**
+
+## Project Info
+- **Stack:** Angular 21 (standalone) + Spring Boot 2.7.18 / Java 17 + MySQL `asn_db`
+- **Ports:** Frontend :4200 | Backend :8080
+- **Path:** `/Users/brycen_cambodia_2/Documents/1ASNworkspace/welcome/`
+- **GitHub:** `AyeSuNaing/brycenhub` (main branch)
+- **Contest Deadline:** May 18, 2026
+- **Reply Language:** Myanmar (Burmese)
+
+---
+
+## ✅ THIS SESSION — COMPLETED
+
+### i18n Translation (lbl() pattern) applied to:
+
+| Component | TS | HTML | Notes |
+|-----------|-----|------|-------|
+| `attendance-upload-inline` | ✅ | ✅ | OnInit + lbl(), arrow fn fix |
+| `payroll-wizard-inline` | ✅ | ✅ | Full 3-step wizard |
+| `payroll-history-inline` | ✅ | ✅ | Original method signatures kept |
+| `staff-profile-inline` | ✅ | ✅ | + Password Reset feature |
+| `app-labels.i18n.ts` | ✅ | — | Total keys: 433 |
+
+### Password Reset Feature (staff-profile)
+- **Backend endpoint:** `PUT /api/users/{id}/change-password` → `{ newPassword }` ✅ exists
+- **Permission:** Admin only (`canViewDangerZone()`)
+- **Default password:** `password` (🔄 button generates random)
+- **UX:** 2-step modal (generate → confirm → copy credentials)
+- **Copy options:** Copy Password only OR Copy Email + Password
+
+### app-labels.i18n.ts Key Groups Added
+```
+// Attendance Upload (17 keys)
+'Upload Attendance (title)' | 'Fingerprint Excel file' | 'Back to Dashboard (att)'
+'Drop Excel file here' | 'Choose file' | 'or (upload)' | 'MATCHED' | 'UNMATCHED'
+'DUPLICATE' | 'INVALID (att)' | 'Parsing...' | 'Failed to parse'
+'Attendance saved successfully' | 'New records' | 'Updated (att)'
+'Skipped (att)' | 'Upload another file' | 'Save selected'
+
+// Payroll Wizard (23 keys)
+'Monthly Payroll (title)' | 'Select pay period' | 'Pay cycle desc'
+'BRANCH (payroll)' | 'PAY PERIOD (payroll)' | 'Calculate Payroll' | 'Calculating...'
+'1 · Period' | '2 · Preview' | '3 · Done' | 'Period (col)'
+'Total Staff (payroll)' | 'Total Gross' | 'Total Tax' | 'Total Net'
+'ready (payroll)' | 'warnings (payroll)' | 'Ready (filter)' | 'Warnings (filter)'
+'Save records' | 'Saving... (payroll)' | 'staff ready to save'
+'Payroll saved' | 'Calculate another period' | 'New records (payroll)'
+'Updated (payroll)' | 'Skipped (payroll)' | 'Records saved as DRAFT'
+'Base = salary_structures' | 'Actual days = attendance_logs'
+'OT = approved ot_requests' | 'Tax = progressive from tax_brackets'
+
+// Payroll History (20 keys)
+'Payroll History (title)' | 'PERIOD (hist)' | 'RECORDS'
+'TOTAL GROSS' | 'TOTAL TAX' | 'TOTAL NET'
+'Draft (pill)' | 'Pending (pill)' | 'Confirmed (pill)' | 'Paid (pill)' | 'All paid'
+'STAFF (col)' | 'GROSS (col)' | 'TAX (col)' | 'NET (col)'
+'STATUS (col)' | 'PAID DATE' | 'VIEW (col)'
+'Search name role dept' | 'No payroll records'
+'Submit for Approval' | 'Mark as Paid'
+
+// Password Reset (10 keys)
+'Reset Password' | 'Reset Password (title)' | 'Reset Password desc'
+'New Password (reset)' | 'Confirm Password (reset)'
+'Resetting...' | 'Password Reset!' | 'Reset done desc'
+'Copy Password (reset)' | 'Copy Both (reset)'
+```
+
+---
+
+## 🚨 IMPORTANT — Files to Apply
+
+All in `/mnt/user-data/outputs/`:
+
+| Output File | → Project Path |
+|-------------|----------------|
+| `app-labels.i18n.ts` | `src/app/i18n/app-labels.i18n.ts` |
+| `attendance-upload-inline.ts` | `src/app/admin/attendance-upload-inline.ts` |
+| `attendance-upload-inline.html` | `src/app/admin/attendance-upload-inline.html` |
+| `payroll-wizard-inline.ts` | `src/app/admin/payroll-wizard-inline.ts` |
+| `payroll-wizard-inline.html` | `src/app/admin/payroll-wizard-inline.html` |
+| `payroll-history-inline.ts` | `src/app/admin/payroll-history-inline.ts` |
+| `payroll-history-inline.html` | `src/app/admin/payroll-history-inline.html` |
+| `staff-profile-inline.ts` | `src/app/admin/staff-profile-inline.ts` |
+| `staff-profile-inline.html` | `src/app/admin/staff-profile-inline.html` |
+
+---
+
+## ⏳ NEXT PRIORITIES
+
+1. **Boss Dashboard** (Phase 13) — `/dashboard/boss`, country-level overview
+2. **PM Dashboard CSS fix** — still pending from earlier sessions
+3. **Member Dashboard i18n** — lbl() pattern not applied yet
+4. **VP Dashboard** — remaining translation gaps
+
+---
+
+## 🏗️ Architecture
+
+### i18n Pattern (LOCKED)
+```typescript
+// TS
+import { getLabel, AppLabelKey } from '../i18n/app-labels.i18n';
+lbl(key: AppLabelKey): string {
+  return getLabel(this.currentUser?.preferredLanguage || this.auth.getUser()?.preferredLanguage, key);
+}
+// HTML
+{{ lbl('Dashboard') }}
+```
+
+### Angular Template Rules
+- ❌ NO arrow functions in templates → NG5002 error
+- ✅ Use component method/property instead
+- Example: `g.matchedDays === 0` NOT `g.rows.filter(r => r.status === 'MATCHED').length === 0`
+
+### RefreshService
+- Method: `trigger()` NOT `triggerRefresh()`
+
+### Payroll History — Original Method Signatures (DO NOT CHANGE)
+```typescript
+onPeriodChange()               // no args — uses this.selectedPeriod
+openActionDialog(kind: 'submit' | 'paid')
+closeActionDialog()
+doBatchAction()
+onModalClose()
+onActionSuccess(ev: { newStatus: string; id: number })
+get isAdmin(): boolean         // getter
+```
+
+---
+
+## 💰 SALARY CYCLE (Locked)
+```
+Pay Period: 25th (prev month) ~ 24th (this month)
+Working: Mon-Fri only
+OT Rate: Mon-Fri/Sat = ×1.5 | Sun/Holiday = ×2.0
+Currency: Per-branch (JP=JPY, MM=MMK, KH=KHR, VN=VND, KR=KRW, US=USD)
+Status: DRAFT → PENDING_APPROVAL → CONFIRMED → PAID
+```
+
+---
+
+## 🔑 KEY USER INFO
+- Cambodia branch_id=3, USD currency
+- Login: Super Admin (admin@asn.com / password)
+- Burmese replies + English technical terms
+- Cambodia timezone
+
+---
+
+## 📁 Admin Dashboard navSections
+```
+MAIN:    Dashboard, Announcements
+STAFF:   Staff List, Add Staff, Departments
+PAYROLL: Leave Requests [badge], OT Request, Salary Structures,
+         Upload Attendance, Monthly Payroll, Payroll History
+INFO:    Public Holidays, Tax Brackets
+```
+
+---
+
+## 🐛 KNOWN ISSUES / PENDING
+- **Payroll Warning (non-blocking):** NG8107 in payroll-wizard-inline.html:259
+  `saveResult.skippedReasons?.length` → use `.length` (not `?.length`)
+- **Build cache:** If errors persist → `rm -rf .angular/cache` + restart `ng serve`
+
+*Last updated: 2026-04-30 — Translation Session*
