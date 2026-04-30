@@ -420,7 +420,7 @@
 
         <app-staff-profile-inline *ngIf="activeView === 'staff-profile'"
           [staffId]="selectedStaffId"
-          (back)="setView('staff-list')"
+          (back)="setView(profileBackTo)"
           (edit)="setView('add-staff')">
         </app-staff-profile-inline>
 
