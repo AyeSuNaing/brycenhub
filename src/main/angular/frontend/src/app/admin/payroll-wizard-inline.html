@@ -1,276 +1,211 @@
-<!-- ═══════════════════════════════════════════════════════════
-     💰 Payroll Wizard — 3-step flow
-     Step 1: Period select + Calculate
-     Step 2: Preview + Save
-     Step 3: Done
-═══════════════════════════════════════════════════════════ -->
-
+<!-- 💰 Payroll Wizard — 3-step flow -->
 <div class="payroll-wizard">
 
-  <!-- ═══════════ HEADER (common) ═══════════ -->
+  <!-- HEADER -->
   <div class="wiz-header">
-    <button class="btn-back" (click)="closeToDashboard()">← Back to Dashboard</button>
+    <button class="btn-back" (click)="closeToDashboard()">{{ lbl('Back to Dashboard') }}</button>
     <div class="wiz-title">
       <span class="wiz-icon">💰</span>
-      <span>Monthly Payroll</span>
+      <span>{{ lbl('Monthly Payroll (title)') }}</span>
     </div>
     <div class="wiz-steps">
-      <span class="step-pill" [class.active]="step === 1" [class.done]="step > 1">1 · Period</span>
+      <span class="step-pill" [class.active]="step === 1" [class.done]="step > 1">{{ lbl('1 · Period') }}</span>
       <span class="step-sep">›</span>
-      <span class="step-pill" [class.active]="step === 2" [class.done]="step > 2">2 · Preview</span>
+      <span class="step-pill" [class.active]="step === 2" [class.done]="step > 2">{{ lbl('2 · Preview') }}</span>
       <span class="step-sep">›</span>
-      <span class="step-pill" [class.active]="step === 3">3 · Done</span>
+      <span class="step-pill" [class.active]="step === 3">{{ lbl('3 · Done') }}</span>
     </div>
   </div>
 
-  <!-- ═══════════ STEP 1 — Select Period ═══════════ -->
+  <!-- STEP 1 — Select Period -->
   <div *ngIf="step === 1" class="wiz-step wiz-center">
     <div class="card step1-card">
-      <h2 class="step-title">Select pay period</h2>
-      <p class="step-sub">Pay cycle: <b>25th of previous month → 24th of selected month</b>.
-        Working days: Mon–Fri, excluding public holidays.</p>
+      <h2 class="step-title">{{ lbl('Select pay period') }}</h2>
+      <p class="step-sub">{{ lbl('Pay cycle desc') }}</p>
 
-      <!-- Branch info -->
       <div class="form-row">
-        <label class="form-label">Branch</label>
+        <label class="form-label">{{ lbl('BRANCH (payroll)') }}</label>
         <div class="branch-display">
           <span class="branch-icon">🏢</span>
           <span>{{ branchName || ('Branch #' + branchId) }}</span>
         </div>
       </div>
 
-      <!-- Period -->
       <div class="form-row">
-        <label class="form-label">Pay period</label>
+        <label class="form-label">{{ lbl('PAY PERIOD (payroll)') }}</label>
         <select class="form-select" [(ngModel)]="payPeriod">
           <option *ngFor="let opt of periodOptions" [value]="opt.value">{{ opt.label }}</option>
         </select>
       </div>
 
-      <!-- Error -->
       <div *ngIf="errorMsg" class="alert alert-error">⚠️ {{ errorMsg }}</div>
 
-      <!-- Action -->
       <div class="form-actions">
-        <button class="btn-primary btn-lg"
-                (click)="calculate()"
+        <button class="btn-primary btn-lg" (click)="calculate()"
                 [disabled]="isCalculating || !branchId || !payPeriod">
-          <span *ngIf="!isCalculating">🧮 Calculate Payroll</span>
-          <span *ngIf="isCalculating">Calculating...</span>
+          <span *ngIf="!isCalculating">{{ lbl('Calculate Payroll') }}</span>
+          <span *ngIf="isCalculating">{{ lbl('Calculating...') }}</span>
         </button>
       </div>
 
-      <!-- Info footer -->
       <div class="info-box">
-        <div class="info-item"><span>📊</span>Base = salary_structures (latest)</div>
-        <div class="info-item"><span>📅</span>Actual days = attendance_logs</div>
-        <div class="info-item"><span>💪</span>OT = approved ot_requests</div>
-        <div class="info-item"><span>🧾</span>Tax = progressive from tax_brackets</div>
+        <div class="info-item"><span>📊</span>{{ lbl('Base = salary_structures') }}</div>
+        <div class="info-item"><span>📅</span>{{ lbl('Actual days = attendance_logs') }}</div>
+        <div class="info-item"><span>💪</span>{{ lbl('OT = approved ot_requests') }}</div>
+        <div class="info-item"><span>🧾</span>{{ lbl('Tax = progressive from tax_brackets') }}</div>
       </div>
     </div>
   </div>
 
-  <!-- ═══════════ STEP 2 — Preview ═══════════ -->
+  <!-- STEP 2 — Preview -->
   <div *ngIf="step === 2 && preview" class="wiz-step">
 
-    <!-- Summary strip -->
     <div class="summary-strip">
       <div class="sum-card">
-        <div class="sum-label">Period</div>
+        <div class="sum-label">{{ lbl('Period (col)') }}</div>
         <div class="sum-value">{{ preview.payPeriod }}</div>
         <div class="sum-sub">{{ preview.periodStart }} → {{ preview.periodEnd }}</div>
       </div>
       <div class="sum-card">
-        <div class="sum-label">Total Staff</div>
+        <div class="sum-label">{{ lbl('Total Staff (payroll)') }}</div>
         <div class="sum-value">{{ preview.totalStaff }}</div>
         <div class="sum-sub">
-          <span class="ok-dot"></span>{{ preview.calculableStaff }} ready
-          <span class="warn-dot"></span>{{ preview.warningStaff }} warnings
+          <span class="ok-dot"></span>{{ preview.calculableStaff }} {{ lbl('ready (payroll)') }}
+          <span class="warn-dot"></span>{{ preview.warningStaff }} {{ lbl('warnings (payroll)') }}
         </div>
       </div>
       <div class="sum-card">
-        <div class="sum-label">Total Gross</div>
+        <div class="sum-label">{{ lbl('Total Gross') }}</div>
         <div class="sum-value money">{{ currencyPrefix(preview.currency) }}{{ formatMoney(preview.totalGross) }}</div>
       </div>
       <div class="sum-card">
-        <div class="sum-label">Total Tax</div>
+        <div class="sum-label">{{ lbl('Total Tax') }}</div>
         <div class="sum-value money tax">{{ currencyPrefix(preview.currency) }}{{ formatMoney(preview.totalTax) }}</div>
       </div>
       <div class="sum-card sum-highlight">
-        <div class="sum-label">Total Net</div>
+        <div class="sum-label">{{ lbl('Total Net') }}</div>
         <div class="sum-value money net">{{ currencyPrefix(preview.currency) }}{{ formatMoney(preview.totalNet) }}</div>
       </div>
     </div>
 
-    <!-- Filter bar -->
     <div class="filter-bar">
-      <input type="text"
-             class="filter-search"
-             placeholder="🔍 Search name, email, role..."
+      <input type="text" class="filter-search"
+             [placeholder]="lbl('Search name email role (payroll)')"
              [(ngModel)]="searchQuery" />
-
       <div class="filter-chips">
-        <button class="chip" [class.active]="filterStatus === 'ALL'"
-                (click)="filterStatus = 'ALL'">
+        <button class="chip" [class.active]="filterStatus === 'ALL'" (click)="filterStatus = 'ALL'">
           All ({{ preview.rows.length }})
         </button>
-        <button class="chip chip-ok" [class.active]="filterStatus === 'CALCULABLE'"
-                (click)="filterStatus = 'CALCULABLE'">
-          ✓ Ready ({{ preview.calculableStaff }})
+        <button class="chip chip-ok" [class.active]="filterStatus === 'CALCULABLE'" (click)="filterStatus = 'CALCULABLE'">
+          {{ lbl('Ready (filter)') }} ({{ preview.calculableStaff }})
         </button>
-        <button class="chip chip-warn" [class.active]="filterStatus === 'WARNING'"
-                (click)="filterStatus = 'WARNING'">
-          ⚠ Warnings ({{ preview.warningStaff }})
+        <button class="chip chip-warn" [class.active]="filterStatus === 'WARNING'" (click)="filterStatus = 'WARNING'">
+          {{ lbl('Warnings (filter)') }} ({{ preview.warningStaff }})
         </button>
       </div>
-
       <div class="filter-right">
-        <span class="selected-info">
-          <b>{{ selectedCount }}</b> selected
-        </span>
-        <button class="btn-back-sm" (click)="backToStep1()">← Change period</button>
+        <label class="select-all-label">
+          <input type="checkbox" [checked]="allVisibleSelected" (change)="toggleAllVisible()">
+          Select all visible
+        </label>
       </div>
     </div>
 
-    <!-- Table -->
-    <div class="table-wrap">
-      <table class="payroll-table">
+    <div class="preview-table-wrap">
+      <table class="preview-table">
         <thead>
           <tr>
-            <th style="width:32px;">
-              <input type="checkbox"
-                     [checked]="allVisibleSelected"
-                     (change)="toggleAllVisible()" />
-            </th>
-            <th>Staff</th>
-            <th style="text-align:right;">Base</th>
-            <th style="text-align:center;">Days</th>
-            <th style="text-align:right;">Daily</th>
-            <th style="text-align:right;">Earned</th>
-            <th style="text-align:right;">OT</th>
-            <th style="text-align:right;">Gross</th>
-            <th style="text-align:right;">Tax</th>
-            <th style="text-align:right;">Net</th>
-            <th style="text-align:center;">Status</th>
+            <th style="width:36px;"></th>
+            <th>{{ lbl('NAME') }}</th>
+            <th>{{ lbl('Base Salary') }}</th>
+            <th>{{ lbl('Days') }}</th>
+            <th>{{ lbl('Gross') }}</th>
+            <th>OT</th>
+            <th>{{ lbl('Tax') }}</th>
+            <th>{{ lbl('Net Salary') }}</th>
+            <th>Status</th>
           </tr>
         </thead>
         <tbody>
           <tr *ngFor="let r of visibleRows"
-              [class.row-warn]="r.warning !== 'NONE'">
+              [class.row-warning]="r.warning !== 'NONE'"
+              [class.row-ok]="r.warning === 'NONE'">
             <td>
               <input type="checkbox"
-                     [(ngModel)]="r.selected"
-                     [disabled]="r.warning !== 'NONE'" />
+                     [checked]="r.selected"
+                     [disabled]="r.warning !== 'NONE'"
+                     (change)="r.selected = !r.selected; cdr.detectChanges()">
             </td>
+            <td class="td-name">
+              <div class="name-line">{{ r.userName }}</div>
+              <div class="meta-line">{{ r.roleDisplayName }} · {{ r.departmentName }}</div>
+            </td>
+            <td class="td-money">{{ currencyPrefix(r.currency) }}{{ formatMoney(r.baseSalary) }}</td>
+            <td class="td-days">
+              <span [class.day-warn]="r.actualDays < r.workingDays">{{ r.actualDays }}</span>/{{ r.workingDays }}
+            </td>
+            <td class="td-money">{{ currencyPrefix(r.currency) }}{{ formatMoney(r.grossSalary) }}</td>
+            <td class="td-money ot">{{ r.otAmount > 0 ? '+' + currencyPrefix(r.currency) + formatMoney(r.otAmount) : '—' }}</td>
+            <td class="td-money tax">-{{ currencyPrefix(r.currency) }}{{ formatMoney(r.taxAmount) }}</td>
+            <td class="td-money net">{{ currencyPrefix(r.currency) }}{{ formatMoney(r.netSalary) }}</td>
             <td>
-              <div class="staff-cell">
-                <div class="avatar-sm" [style.background]="getAvatarColor(r.userName)">
-                  {{ getInitial(r.userName) }}
-                </div>
-                <div class="staff-meta">
-                  <div class="staff-name">{{ r.userName }}</div>
-                  <div class="staff-sub">
-                    <span *ngIf="r.roleDisplayName" class="role-pill"
-                          [style.color]="r.roleColor || '#9ca3af'">
-                      {{ r.roleDisplayName }}
-                    </span>
-                    <span *ngIf="r.departmentName" class="dept-dot">· {{ r.departmentName }}</span>
-                  </div>
-                </div>
-              </div>
-            </td>
-            <td class="money">{{ currencyPrefix(r.currency) }}{{ formatMoney(r.baseSalary) }}</td>
-            <td style="text-align:center;">
-              <span class="days-cell">
-                <span class="days-actual" [class.days-zero]="r.actualDays === 0">
-                  {{ r.actualDays }}
-                </span>
-                <span class="days-sep">/</span>
-                <span class="days-working">{{ r.workingDays }}</span>
-              </span>
-            </td>
-            <td class="money muted">{{ currencyPrefix(r.currency) }}{{ formatMoney(r.dailyRate) }}</td>
-            <td class="money">{{ currencyPrefix(r.currency) }}{{ formatMoney(r.earnedSalary) }}</td>
-            <td class="money" [class.muted]="!r.otAmount">
-              {{ currencyPrefix(r.currency) }}{{ formatMoney(r.otAmount) }}
-            </td>
-            <td class="money bold">{{ currencyPrefix(r.currency) }}{{ formatMoney(r.grossSalary) }}</td>
-            <td class="money tax">−{{ currencyPrefix(r.currency) }}{{ formatMoney(r.taxAmount) }}</td>
-            <td class="money net bold">{{ currencyPrefix(r.currency) }}{{ formatMoney(r.netSalary) }}</td>
-            <td style="text-align:center;">
-              <span class="badge" [ngClass]="warningBadgeClass(r.warning)">
-                {{ warningLabel(r.warning) }}
-              </span>
-              <div *ngIf="r.existsInDb && r.currentStatus"
-                   class="status-sub">
-                 {{ r.currentStatus }}
-              </div>
-            </td>
-          </tr>
-
-          <!-- Empty state -->
-          <tr *ngIf="visibleRows.length === 0">
-            <td colspan="11" class="empty-state">
-              No staff match current filters.
+              <span *ngIf="r.warning === 'NONE'" class="badge-ok">✓ {{ lbl('Ready (filter)') }}</span>
+              <span *ngIf="r.warning !== 'NONE'" class="badge-warn" [title]="r.warningMessage">⚠ {{ r.warning }}</span>
             </td>
           </tr>
         </tbody>
       </table>
     </div>
 
-    <!-- Bottom action bar -->
     <div class="bottom-bar">
       <div *ngIf="errorMsg" class="alert alert-error inline">⚠️ {{ errorMsg }}</div>
       <div class="bottom-bar-info">
-        <b>{{ selectedCount }}</b> staff ready to save as DRAFT · can be finalized later
+        <b>{{ selectedCount }}</b> {{ lbl('staff ready to save') }}
       </div>
-      <button class="btn-primary btn-lg"
-              (click)="save()"
+      <button class="btn-primary btn-lg" (click)="save()"
               [disabled]="isSaving || selectedCount === 0">
-        <span *ngIf="!isSaving">💾 Save {{ selectedCount }} records</span>
-        <span *ngIf="isSaving">Saving...</span>
+        <span *ngIf="!isSaving">{{ lbl('Save records') }} ({{ selectedCount }})</span>
+        <span *ngIf="isSaving">{{ lbl('Saving... (payroll)') }}</span>
       </button>
     </div>
   </div>
 
-  <!-- ═══════════ STEP 3 — Done ═══════════ -->
+  <!-- STEP 3 — Done -->
   <div *ngIf="step === 3 && saveResult" class="wiz-step wiz-center">
     <div class="card done-card">
       <div class="done-icon">✅</div>
-      <h2 class="done-title">Payroll saved</h2>
+      <h2 class="done-title">{{ lbl('Payroll saved') }}</h2>
       <p class="done-sub">{{ preview?.payPeriod }} · {{ preview?.branchName }}</p>
 
       <div class="done-stats">
         <div class="done-stat">
           <div class="stat-num stat-green">{{ saveResult.savedCount }}</div>
-          <div class="stat-lbl">New records</div>
+          <div class="stat-lbl">{{ lbl('New records (payroll)') }}</div>
         </div>
         <div class="done-stat">
           <div class="stat-num stat-blue">{{ saveResult.updatedCount }}</div>
-          <div class="stat-lbl">Updated</div>
+          <div class="stat-lbl">{{ lbl('Updated (payroll)') }}</div>
         </div>
         <div class="done-stat" *ngIf="saveResult.skippedCount > 0">
           <div class="stat-num stat-amber">{{ saveResult.skippedCount }}</div>
-          <div class="stat-lbl">Skipped</div>
+          <div class="stat-lbl">{{ lbl('Skipped (payroll)') }}</div>
         </div>
       </div>
 
-      <!-- Skipped reasons -->
-      <div *ngIf="saveResult.skippedReasons?.length" class="skip-box">
+      <div *ngIf="saveResult.skippedReasons.length" class="skip-box">
         <div class="skip-header">⚠️ Skipped:</div>
         <ul>
           <li *ngFor="let r of saveResult.skippedReasons">{{ r }}</li>
         </ul>
       </div>
 
-      <div class="done-next">
-        Records saved as <b>DRAFT</b>. Next: Management Review  → Confirm → Pay.
-      </div>
+      <div class="done-next">{{ lbl('Records saved as DRAFT') }}</div>
 
       <div class="done-actions">
-        <button class="btn-ghost" (click)="calculateAnother()">← Calculate another period</button>
-        <button class="btn-primary" (click)="closeToDashboard()">Done</button>
+        <button class="btn-ghost" (click)="calculateAnother()">{{ lbl('Calculate another period') }}</button>
+        <button class="btn-primary" (click)="closeToDashboard()">{{ lbl('3 · Done') }}</button>
       </div>
     </div>
   </div>
+
 </div>
