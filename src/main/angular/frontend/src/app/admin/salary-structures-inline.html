@@ -1,50 +1,42 @@
 <div class="salary-wrapper">
-
-  <!-- ═══════════════════════════════════════════
-       MAIN CONTENT (full width — no right panel since staff IS the content)
-  ═══════════════════════════════════════════ -->
   <div class="salary-main">
 
-    <!-- ═══════════════════════════════════════
-         STATS ROW
-    ═══════════════════════════════════════ -->
+    <!-- Stats Row -->
     <div class="stats-grid">
       <div class="stat-card">
-        <div class="stat-label">Total Staff</div>
+        <div class="stat-label">{{ lbl('Total Staff') }}</div>
         <div class="stat-value">{{ stats.totalStaff }}</div>
-        <div class="stat-sub">● Active members</div>
+        <div class="stat-sub">● {{ lbl('Active members') }}</div>
       </div>
       <div class="stat-card">
-        <div class="stat-label">With Salary Set</div>
+        <div class="stat-label">{{ lbl('With Salary Set') }}</div>
         <div class="stat-value accent-green">{{ stats.withSalary }}</div>
-        <div class="stat-sub">{{ stats.withoutSalary }} pending setup</div>
+        <div class="stat-sub">{{ stats.withoutSalary }} {{ lbl('pending setup') }}</div>
       </div>
       <div class="stat-card">
-        <div class="stat-label">Avg Salary</div>
+        <div class="stat-label">{{ lbl('Avg Salary') }}</div>
         <div class="stat-value accent-purple">
           <span class="prefix">{{ currencyPrefix(stats.currency) }}</span>{{ formatMoney(stats.avgSalary) }}
         </div>
-        <div class="stat-sub">{{ stats.currency }} · Per employee</div>
+        <div class="stat-sub">{{ stats.currency }} · {{ lbl('Per employee') }}</div>
       </div>
       <div class="stat-card">
-        <div class="stat-label">Total Monthly</div>
+        <div class="stat-label">{{ lbl('Total Monthly') }}</div>
         <div class="stat-value accent-amber">
           <span class="prefix">{{ currencyPrefix(stats.currency) }}</span>{{ formatMoney(stats.totalMonthly) }}
         </div>
-        <div class="stat-sub">{{ stats.currency }} · Payroll budget</div>
+        <div class="stat-sub">{{ stats.currency }} · {{ lbl('Payroll budget') }}</div>
       </div>
     </div>
 
-    <!-- ═══════════════════════════════════════
-         MAIN CARD — Staff salary table
-    ═══════════════════════════════════════ -->
+    <!-- Main Card -->
     <div class="salary-card">
 
       <div class="salary-card-header">
         <div class="header-title-row">
           <div class="card-title">
             <span class="title-icon">💰</span>
-            <span>Salary Structures</span>
+            <span>{{ lbl('Salary Structures') }}</span>
           </div>
           <span class="currency-badge">{{ stats.currency }}</span>
         </div>
@@ -54,61 +46,46 @@
       <div class="filters-bar">
         <div class="salary-search-box">
           <span class="search-icon">🔍</span>
-          <input type="text"
-                 class="search-input"
-                 placeholder="Search staff, role, department..."
-                 [(ngModel)]="searchQuery">
-          <button *ngIf="searchQuery" class="clear-btn" (click)="searchQuery = ''">×</button>
+          <input type="text" class="search-input"
+            [placeholder]="lbl('Search staff, role, department...')"
+            [(ngModel)]="searchQuery">
+          <button *ngIf="searchQuery" class="clear-btn" (click)="searchQuery=''">×</button>
         </div>
 
         <!-- Sort dropdown -->
         <div class="sort-wrap">
-          <button class="sort-btn"
-                  (click)="toggleSortMenu(); $event.stopPropagation()">
+          <button class="sort-btn" (click)="toggleSortMenu(); $event.stopPropagation()">
             <span class="sort-label">{{ currentSortLabel }}</span>
             <span class="sort-arrow">▾</span>
           </button>
-
-          <div *ngIf="showSortMenu"
-               class="sort-backdrop"
-               (click)="showSortMenu = false"></div>
-
+          <div *ngIf="showSortMenu" class="sort-backdrop" (click)="showSortMenu=false"></div>
           <div *ngIf="showSortMenu" class="sort-menu" (click)="$event.stopPropagation()">
-            <div class="menu-header">Sort by</div>
-            <button *ngFor="let opt of sortOptions"
-                    class="sort-option"
-                    [class.active]="sortBy === opt.key"
-                    (click)="setSort(opt.key)">
+            <div class="menu-header">{{ lbl('Sort by') }}</div>
+            <button *ngFor="let opt of sortOptions" class="sort-option"
+              [class.active]="sortBy===opt.key" (click)="setSort(opt.key)">
               <span class="opt-label">{{ opt.label }}</span>
-              <span *ngIf="sortBy === opt.key" class="opt-check">✓</span>
+              <span *ngIf="sortBy===opt.key" class="opt-check">✓</span>
             </button>
           </div>
         </div>
 
         <div class="status-filter">
-          <button class="chip"
-                  [class.active]="statusFilter === 'ALL'"
-                  (click)="setStatusFilter('ALL')">
+          <button class="chip" [class.active]="statusFilter==='ALL'" (click)="setStatusFilter('ALL')">
             All <span class="chip-count">{{ staffRows.length }}</span>
           </button>
-          <button class="chip set"
-                  [class.active]="statusFilter === 'SET'"
-                  (click)="setStatusFilter('SET')">
+          <button class="chip set" [class.active]="statusFilter==='SET'" (click)="setStatusFilter('SET')">
             ✅ Set <span class="chip-count">{{ stats.withSalary }}</span>
           </button>
-          <button class="chip unset"
-                  [class.active]="statusFilter === 'UNSET'"
-                  (click)="setStatusFilter('UNSET')">
+          <button class="chip unset" [class.active]="statusFilter==='UNSET'" (click)="setStatusFilter('UNSET')">
             ⚠️ Unset <span class="chip-count">{{ stats.withoutSalary }}</span>
           </button>
         </div>
 
         <div class="role-filter">
-          <button *ngFor="let r of roleFilters"
-                  class="role-chip"
-                  [class.active]="selectedRoleFilter === r.key"
-                  [style.--role-color]="r.color"
-                  (click)="setRoleFilter(r.key)">
+          <button *ngFor="let r of roleFilters" class="role-chip"
+            [class.active]="selectedRoleFilter===r.key"
+            [style.--role-color]="r.color"
+            (click)="setRoleFilter(r.key)">
             {{ r.label }}
             <span class="role-count">{{ roleCount[r.key] || 0 }}</span>
           </button>
@@ -116,22 +93,20 @@
       </div>
 
       <!-- Loading / Empty -->
-      <div *ngIf="loading" class="loading-box">Loading staff salaries...</div>
+      <div *ngIf="loading" class="loading-box">{{ lbl('Loading staff salaries...') }}</div>
 
-      <div *ngIf="!loading && filteredRows.length === 0" class="empty-box">
+      <div *ngIf="!loading && filteredRows.length===0" class="empty-box">
         <div class="empty-icon">💰</div>
-        <div class="empty-title">No staff found</div>
+        <div class="empty-title">{{ lbl('No staff found') }}</div>
         <div class="empty-sub">Try adjusting your search or filters.</div>
       </div>
 
       <!-- Staff rows -->
-      <div *ngIf="!loading && filteredRows.length > 0" class="staff-list">
-        <div *ngFor="let s of filteredRows"
-             class="staff-row"
-             [class.has-salary]="s.currentSalary != null"
-             [class.no-salary]="s.currentSalary == null">
+      <div *ngIf="!loading && filteredRows.length>0" class="staff-list">
+        <div *ngFor="let s of filteredRows" class="staff-row"
+          [class.has-salary]="s.currentSalary != null"
+          [class.no-salary]="s.currentSalary == null">
 
-          <!-- Avatar + Name + Role + Dept -->
           <div class="staff-identity">
             <div class="staff-avatar" [style.background]="getAvatarColor(s.userId)">
               {{ getInitial(s.name) }}
@@ -139,11 +114,10 @@
             <div class="identity-info">
               <div class="staff-name">{{ toTitleCase(s.name) }}</div>
               <div class="staff-meta">
-                <span class="role-badge"
-                      *ngIf="s.roleDisplayName"
-                      [style.background]="(s.roleColor || '#64748b') + '22'"
-                      [style.color]="s.roleColor || '#94a3b8'"
-                      [style.border]="'1px solid ' + (s.roleColor || '#64748b') + '33'">
+                <span class="role-badge" *ngIf="s.roleDisplayName"
+                  [style.background]="(s.roleColor||'#64748b')+'22'"
+                  [style.color]="s.roleColor||'#94a3b8'"
+                  [style.border]="'1px solid '+(s.roleColor||'#64748b')+'33'">
                   {{ s.roleDisplayName }}
                 </span>
                 <span *ngIf="s.departmentName" class="dept-text">· {{ s.departmentName }}</span>
@@ -151,7 +125,6 @@
             </div>
           </div>
 
-          <!-- Current salary -->
           <div class="salary-box">
             <ng-container *ngIf="s.currentSalary != null; else noSalaryBox">
               <div class="salary-amount">
@@ -160,7 +133,7 @@
                 <span class="currency-suffix" *ngIf="!currencyPrefix(s.currency)">{{ s.currency }}</span>
               </div>
               <div class="salary-meta">
-                Since {{ formatDate(s.currentEffectiveDate) }}
+                {{ lbl('Since (salary)') }} {{ formatDate(s.currentEffectiveDate) }}
                 <span class="meta-dot">·</span>
                 <span class="relative">{{ formatRelative(s.currentEffectiveDate) }}</span>
               </div>
@@ -168,35 +141,27 @@
             <ng-template #noSalaryBox>
               <div class="no-salary-text">
                 <span class="no-salary-icon">⚠️</span>
-                Salary not set
+                {{ lbl('Salary not set') }}
               </div>
             </ng-template>
           </div>
 
-          <!-- History count -->
           <div class="history-box">
-            <button *ngIf="s.historyCount && s.historyCount > 0"
-                    class="history-btn"
-                    (click)="openHistory(s)">
-              📋 {{ s.historyCount }} change<span *ngIf="s.historyCount !== 1">s</span>
+            <button *ngIf="s.historyCount && s.historyCount>0" class="history-btn" (click)="openHistory(s)">
+              📋 {{ s.historyCount }} change<span *ngIf="s.historyCount!==1">s</span>
             </button>
-            <span *ngIf="!s.historyCount || s.historyCount === 0" class="history-empty">
-              No history
+            <span *ngIf="!s.historyCount || s.historyCount===0" class="history-empty">
+              {{ lbl('No history') }}
             </span>
           </div>
 
-          <!-- Actions -->
           <div class="row-actions">
             <ng-container *ngIf="canEdit">
-              <button class="btn-primary btn-sm"
-                      *ngIf="s.currentSalary == null"
-                      (click)="openForm(s)">
-                + Set Salary
+              <button class="btn-primary btn-sm" *ngIf="s.currentSalary==null" (click)="openForm(s)">
+                {{ lbl('Set Salary') }}
               </button>
-              <button class="btn-secondary btn-sm"
-                      *ngIf="s.currentSalary != null"
-                      (click)="openForm(s)">
-                📈 Update
+              <button class="btn-secondary btn-sm" *ngIf="s.currentSalary!=null" (click)="openForm(s)">
+                {{ lbl('Update (salary)') }}
               </button>
             </ng-container>
           </div>
@@ -204,24 +169,17 @@
       </div>
 
     </div>
-    <!-- /.salary-card -->
-
   </div>
 </div>
 
 
-<!-- ═══════════════════════════════════════════
-     ADD / UPDATE SALARY MODAL
-═══════════════════════════════════════════ -->
+<!-- ADD/UPDATE MODAL -->
 <div *ngIf="showForm" class="modal-backdrop" (click)="closeForm()">
   <div class="modal" (click)="$event.stopPropagation()">
     <div class="modal-header">
-      <h3>
-        {{ formTarget?.currentSalary == null ? '+ Set Salary' : '📈 Update Salary' }}
-      </h3>
+      <h3>{{ formTarget?.currentSalary==null ? lbl('Set Salary') : lbl('Update (salary)') }}</h3>
       <button class="btn-close" (click)="closeForm()">×</button>
     </div>
-
     <div class="modal-body">
       <div class="form-target" *ngIf="formTarget">
         <div class="target-avatar" [style.background]="getAvatarColor(formTarget.userId)">
@@ -234,160 +192,116 @@
             <span *ngIf="formTarget.departmentName"> · {{ formTarget.departmentName }}</span>
           </div>
         </div>
-        <div class="target-current" *ngIf="formTarget.currentSalary != null">
-          <div class="current-label">Current</div>
-          <div class="current-value">
-            {{ currencyPrefix(formTarget.currency) }}{{ formatMoney(formTarget.currentSalary) }}
-          </div>
+        <div class="target-current" *ngIf="formTarget.currentSalary!=null">
+          <div class="current-label">{{ lbl('Current (salary)') }}</div>
+          <div class="current-value">{{ currencyPrefix(formTarget.currency) }}{{ formatMoney(formTarget.currentSalary) }}</div>
         </div>
       </div>
 
       <div class="form-row">
-        <label>
-          New Base Salary ({{ formTarget?.currency || 'USD' }})
-          <span class="required">*</span>
-        </label>
+        <label>{{ lbl('New Base Salary') }} ({{ formTarget?.currency || 'USD' }}) <span class="required">*</span></label>
         <div class="input-wrap">
           <span class="in-prefix">{{ currencyPrefix(formTarget?.currency) }}</span>
-          <input type="number"
-                 [(ngModel)]="form.baseSalary"
-                 class="input money-input"
-                 min="0" step="0.01"
-                 placeholder="e.g. 1500">
+          <input type="number" [(ngModel)]="form.baseSalary" class="input money-input" min="0" step="0.01" placeholder="e.g. 1500">
         </div>
       </div>
 
       <div class="form-row">
-        <label>Effective Date <span class="required">*</span></label>
+        <label>{{ lbl('Effective Date') }} <span class="required">*</span></label>
         <input type="date" [(ngModel)]="form.effectiveDate" class="input">
       </div>
 
       <div class="form-row">
-        <label>Note <span class="hint">— e.g. "Annual raise", "Promotion"</span></label>
-        <input type="text" [(ngModel)]="form.note" class="input"
-               maxlength="500"
-               placeholder="Optional reason for this change">
+        <label>{{ lbl('Note (salary)') }} <span class="hint">— e.g. "Annual raise", "Promotion"</span></label>
+        <input type="text" [(ngModel)]="form.note" class="input" maxlength="500" placeholder="Optional reason for this change">
       </div>
 
       <div *ngIf="formError" class="form-error">⚠️ {{ formError }}</div>
     </div>
-
     <div class="modal-footer">
-      <button class="btn-ghost" (click)="closeForm()" [disabled]="saving">Cancel</button>
+      <button class="btn-ghost" (click)="closeForm()" [disabled]="saving">{{ lbl('Cancel') }}</button>
       <button class="btn-primary" (click)="saveForm()" [disabled]="saving">
-        {{ saving ? 'Saving...' : 'Save' }}
+        {{ saving ? lbl('Saving...(salary)') : lbl('Save (salary)') }}
       </button>
     </div>
   </div>
 </div>
 
 
-<!-- ═══════════════════════════════════════════
-     HISTORY MODAL
-═══════════════════════════════════════════ -->
+<!-- HISTORY MODAL -->
 <div *ngIf="showHistory" class="modal-backdrop" (click)="closeHistory()">
   <div class="modal modal-wide" (click)="$event.stopPropagation()">
     <div class="modal-header">
-      <h3>
-        📋 Salary History — {{ toTitleCase(historyTarget?.name || '') }}
-      </h3>
+      <h3>📋 {{ lbl('Salary History') }} — {{ toTitleCase(historyTarget?.name || '') }}</h3>
       <button class="btn-close" (click)="closeHistory()">×</button>
     </div>
-
     <div class="modal-body">
-      <div *ngIf="loadingHistory" class="loading-box-sm">Loading history...</div>
-
-      <div *ngIf="!loadingHistory && historyItems.length === 0" class="empty-box-sm">
-        No salary history for this user yet.
+      <div *ngIf="loadingHistory" class="loading-box-sm">{{ lbl('Loading history...') }}</div>
+      <div *ngIf="!loadingHistory && historyItems.length===0" class="empty-box-sm">
+        {{ lbl('No salary history') }}
       </div>
-
-      <div *ngIf="!loadingHistory && historyItems.length > 0" class="history-timeline">
-        <div *ngFor="let h of historyItems; let i = index"
-             class="history-item"
-             [class.current]="i === 0">
-
+      <div *ngIf="!loadingHistory && historyItems.length>0" class="history-timeline">
+        <div *ngFor="let h of historyItems; let i=index" class="history-item" [class.current]="i===0">
           <div class="timeline-dot"></div>
-
           <div class="history-card">
             <div class="history-row-main">
               <div class="history-salary">
                 <span class="hist-prefix">{{ currencyPrefix(historyTarget?.currency) }}</span>
                 <span class="hist-amount">{{ formatMoney(h.baseSalary) }}</span>
-                <span *ngIf="i === 0" class="current-tag">CURRENT</span>
+                <span *ngIf="i===0" class="current-tag">CURRENT</span>
               </div>
-
               <div class="history-change" *ngIf="changeVsNext(i) as chg">
-                <span class="change-arrow" [class.up]="chg.diff > 0" [class.down]="chg.diff < 0">
-                  {{ chg.diff > 0 ? '▲' : (chg.diff < 0 ? '▼' : '–') }}
+                <span class="change-arrow" [class.up]="chg.diff>0" [class.down]="chg.diff<0">
+                  {{ chg.diff>0?'▲':(chg.diff<0?'▼':'–') }}
                 </span>
-                <span class="change-diff" [class.up]="chg.diff > 0" [class.down]="chg.diff < 0">
-                  {{ chg.diff > 0 ? '+' : '' }}{{ currencyPrefix(historyTarget?.currency) }}{{ formatMoney(Math.abs(chg.diff)) }}
+                <span class="change-diff" [class.up]="chg.diff>0" [class.down]="chg.diff<0">
+                  {{ chg.diff>0?'+':'' }}{{ currencyPrefix(historyTarget?.currency) }}{{ formatMoney(Math.abs(chg.diff)) }}
                 </span>
-                <span class="change-percent" [class.up]="chg.diff > 0" [class.down]="chg.diff < 0">
-                  ({{ chg.percent > 0 ? '+' : '' }}{{ chg.percent.toFixed(1) }}%)
+                <span class="change-percent" [class.up]="chg.diff>0" [class.down]="chg.diff<0">
+                  ({{ chg.percent>0?'+':'' }}{{ chg.percent.toFixed(1) }}%)
                 </span>
               </div>
             </div>
-
             <div class="history-date">
-              Effective {{ formatDate(h.effectiveDate) }}
+              {{ lbl('Effective Date') }} {{ formatDate(h.effectiveDate) }}
               <span class="meta-dot">·</span>
               <span class="relative">{{ formatRelative(h.effectiveDate) }}</span>
             </div>
-
-            <div class="history-note" *ngIf="h.note">
-              💬 {{ h.note }}
-            </div>
-
+            <div class="history-note" *ngIf="h.note">💬 {{ h.note }}</div>
             <div class="history-footer">
               <span class="created-by" *ngIf="h.createdByName">
-                Added by {{ toTitleCase(h.createdByName) }}
+                {{ lbl('Added by') }} {{ toTitleCase(h.createdByName) }}
               </span>
-              <button *ngIf="canEdit"
-                      class="btn-icon-sm danger"
-                      (click)="confirmDeleteHistory(h)"
-                      title="Delete (correction only)">
-                🗑️
-              </button>
+              <button *ngIf="canEdit" class="btn-icon-sm danger" (click)="confirmDeleteHistory(h)" title="Delete">🗑️</button>
             </div>
           </div>
         </div>
       </div>
     </div>
-
     <div class="modal-footer">
-      <button class="btn-ghost" (click)="closeHistory()">Close</button>
-      <button *ngIf="canEdit && historyTarget"
-              class="btn-primary"
-              (click)="closeHistory(); openForm(historyTarget!)">
-        📈 Add New Change
+      <button class="btn-ghost" (click)="closeHistory()">{{ lbl('Back') }}</button>
+      <button *ngIf="canEdit && historyTarget" class="btn-primary" (click)="closeHistory(); openForm(historyTarget!)">
+        {{ lbl('Add New Change') }}
       </button>
     </div>
   </div>
 </div>
 
 
-<!-- ═══════════════════════════════════════════
-     DELETE CONFIRM MODAL
-═══════════════════════════════════════════ -->
+<!-- DELETE CONFIRM MODAL -->
 <div *ngIf="deleteTarget" class="modal-backdrop" (click)="cancelDelete()">
   <div class="modal modal-sm" (click)="$event.stopPropagation()">
-    <div class="modal-header">
-      <h3>🗑️ Delete Salary Record?</h3>
-    </div>
+    <div class="modal-header"><h3>{{ lbl('Delete Salary Record?') }}</h3></div>
     <div class="modal-body">
       <p>Delete salary record of
-         <strong>{{ currencyPrefix(historyTarget?.currency) }}{{ formatMoney(deleteTarget.baseSalary) }}</strong>
-         effective <strong>{{ formatDate(deleteTarget.effectiveDate) }}</strong>?
+        <strong>{{ currencyPrefix(historyTarget?.currency) }}{{ formatMoney(deleteTarget.baseSalary) }}</strong>
+        effective <strong>{{ formatDate(deleteTarget.effectiveDate) }}</strong>?
       </p>
-      <p class="muted">
-        ⚠️ Salary structures are normally append-only. Only delete for corrections.
-        This action cannot be undone.
-      </p>
+      <p class="muted">⚠️ {{ lbl('Salary structures are append-only') }}</p>
     </div>
     <div class="modal-footer">
-      <button class="btn-ghost" (click)="cancelDelete()">Cancel</button>
-      <button class="btn-danger" (click)="executeDelete()">Delete</button>
+      <button class="btn-ghost" (click)="cancelDelete()">{{ lbl('Cancel') }}</button>
+      <button class="btn-danger" (click)="executeDelete()">{{ lbl('Delete') }}</button>
     </div>
   </div>
 </div>
