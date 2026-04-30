@@ -84,6 +84,13 @@ export type AppLabelKey =
   | 'Loading staff salaries...' | 'No staff found' | 'Delete' | 'Delete Salary Record?'
   | 'Salary structures are append-only' | 'Current (salary)' | 'Since (salary)'
   | 'Added by' | 'Saving...(salary)' | 'Save (salary)'
+  // ── ATTENDANCE UPLOAD ──
+  | 'Upload Attendance (title)' | 'Fingerprint Excel file' | 'Back to Dashboard (att)'
+  | 'Drop Excel file here' | 'Choose file' | 'or (upload)'
+  | 'Parsing...' | 'Failed to parse'
+  | 'Attendance saved successfully' | 'New records' | 'Updated (att)' | 'Skipped (att)'
+  | 'Upload another file' | 'Save selected'
+  | 'MATCHED' | 'UNMATCHED' | 'DUPLICATE' | 'INVALID (att)'
   // ── ANNOUNCEMENTS PAGE ──
   | 'total' | '+ New'
   | 'FROM' | 'TO' | 'Search'
@@ -241,6 +248,7 @@ const en: Record<AppLabelKey, string> = {
   'Salary structures are append-only': 'Salary structures are normally append-only. Only delete for corrections.',
   'Current (salary)': 'Current', 'Since (salary)': 'Since',
   'Added by': 'Added by', 'Saving...(salary)': 'Saving...', 'Save (salary)': 'Save',
+    'Upload Attendance (title)': '📅 Upload Attendance', 'Fingerprint Excel file': 'Fingerprint Excel file', 'Back to Dashboard (att)': '← Back to Dashboard', 'Drop Excel file here': 'Drop Excel file here', 'Choose file': 'Choose file', 'or (upload)': 'or', 'Parsing...': 'Parsing...', 'Failed to parse': 'Failed to parse Excel file.', 'Attendance saved successfully': 'Attendance saved successfully', 'New records': 'New records', 'Updated (att)': 'Updated', 'Skipped (att)': 'Skipped', 'Upload another file': 'Upload another file', 'Save selected': 'Save selected', 'MATCHED': 'MATCHED', 'UNMATCHED': 'UNMATCHED', 'DUPLICATE': 'DUPLICATE', 'INVALID (att)': 'INVALID',
   'Loading...': 'Loading...', hrs: 'hrs', yrs: 'yrs', days: 'days', 'upload CV': 'upload CV', Holidays: 'Holidays',
   total: 'total', '+ New': '+ New',
   FROM: 'FROM', TO: 'TO', Search: 'Search',
@@ -415,6 +423,7 @@ const ja: Record<AppLabelKey, string> = {
   'Salary structures are append-only': '給与体系は通常追記専用です。修正のみ削除可能です。',
   'Current (salary)': '現在', 'Since (salary)': '開始日',
   'Added by': '追加者', 'Saving...(salary)': '保存中...', 'Save (salary)': '保存',
+    'Upload Attendance (title)': '📅 出勤記録アップロード', 'Fingerprint Excel file': '指紋Excelファイル', 'Back to Dashboard (att)': '← ダッシュボードへ', 'Drop Excel file here': 'Excelファイルをここにドロップ', 'Choose file': 'ファイル選択', 'or (upload)': 'または', 'Parsing...': '解析中...', 'Failed to parse': 'Excelファイルの解析に失敗しました。', 'Attendance saved successfully': '出勤記録を保存しました', 'New records': '新規レコード', 'Updated (att)': '更新', 'Skipped (att)': 'スキップ', 'Upload another file': '別のファイルをアップロード', 'Save selected': '選択して保存', 'MATCHED': '一致', 'UNMATCHED': '不一致', 'DUPLICATE': '重複', 'INVALID (att)': '無効',
   'Loading...': '読込中...', hrs: '時間', yrs: '年', days: '日', 'upload CV': 'CV未', Holidays: '祝日',
   total: '件', '+ New': '+ 新規',
   FROM: '開始日', TO: '終了日', Search: '検索',
@@ -590,6 +599,7 @@ const my: Record<AppLabelKey, string> = {
   'Salary structures are append-only': 'လစာဖွဲ့စည်းမှုသည် ပြင်မှတ်တမ်းများသာ ဖြစ်သည်။',
   'Current (salary)': 'လက်ရှိ', 'Since (salary)': 'ကနေ',
   'Added by': 'ထည့်သူ', 'Saving...(salary)': 'သိမ်းနေ...', 'Save (salary)': 'သိမ်း',
+    'Upload Attendance (title)': '📅 တက်ရောက်မှုတင်', 'Fingerprint Excel file': 'လက်ဗောင်း Excel ဖိုင်', 'Back to Dashboard (att)': '← ဒက်ဘုတ်သို့', 'Drop Excel file here': 'Excel ဖိုင်ဤနေရာချပါ', 'Choose file': 'ဖိုင်ရွေးပါ', 'or (upload)': 'သို့မဟုတ်', 'Parsing...': 'ဖတ်နေ...', 'Failed to parse': 'Excel ဖိုင်ဖတ်မရပါ', 'Attendance saved successfully': 'တက်ရောက်မှု သိမ်းပြီးပါပြီ', 'New records': 'မှတ်တမ်းအသစ်', 'Updated (att)': 'ပြင်ဆင်ပြီး', 'Skipped (att)': 'ကျော်သွား', 'Upload another file': 'ဖိုင်အသစ်တင်', 'Save selected': 'ရွေးချယ်ပြီး သိမ်း', 'MATCHED': 'တူညီ', 'UNMATCHED': 'မတူ', 'DUPLICATE': 'ထပ်နေ', 'INVALID (att)': 'မမှန်',
   'Loading...': 'ခဏစောင့်...', hrs: 'နာရီ', yrs: 'နှစ်', days: 'ရက်', 'upload CV': 'CV မရှိ', Holidays: 'ရုံးပိတ်ရက်',
   total: 'ခု', '+ New': '+ အသစ်',
   FROM: 'စပြီး', TO: 'အထိ', Search: 'ရှာ',
@@ -752,7 +762,8 @@ const km: Record<AppLabelKey, string> = {
   'already exists': 'មានរួចហើយ', 'Pending Review': '⏳ រង់ចាំពិនិត្យ',
   'Login Credentials (add)': 'ព័ត៌មានចូល',
   'Share with the new staff member to login': 'ចែករំលែកព័ត៌មានចូលជាមួយបុគ្គលិកថ្មី',
-  'With Salary Set': 'កំណត់ប្រាក់ខែរួច', 'Avg Salary': 'ប្រាក់ខែមធ្យម', 'Total Monthly': 'សរុបប្រចាំខែ', 'Active members': 'សមាជិកសកម្ម', 'Per employee': 'ក្នុងមនុស្សម្នាក់', 'Payroll budget': 'ថវិកាប្រាក់ខែ', 'pending setup': 'មិនទាន់កំណត់', 'Sort by': 'តម្រៀបតាម', 'Salary not set': 'មិនទាន់កំណត់ប្រាក់ខែ', 'No history': 'គ្មានប្រវត្តិ', 'Set Salary': '+ កំណត់ប្រាក់ខែ', 'Update (salary)': '📈 ធ្វើបច្ចុប្បន្នភាព', 'Add New Change': '📈 បន្ថែមការផ្លាស់ប្តូរ', 'New Base Salary': 'ប្រាក់ខែថ្មី', 'Effective Date': 'កាលបរិច្ឆេទចាប់ផ្តើម', 'Note (salary)': 'កំណត់ចំណាំ', 'Salary History': 'ប្រវត្តិប្រាក់ខែ', 'No staff found': 'រកមិនឃើញបុគ្គលិក', 'Current (salary)': 'បច្ចុប្បន្ន', 'Since (salary)': 'តាំងពី', 'Added by': 'បន្ថែមដោយ', 'Save (salary)': 'រក្សាទុក', 'Loading history...': 'កំពុងផ្ទុក...', 'No salary history': 'គ្មានប្រវត្តិប្រាក់ខែ', 'Loading staff salaries...': 'កំពុងផ្ទុក...', 'Delete': 'លុប', 'Delete Salary Record?': 'លុបកំណត់ត្រាប្រាក់ខែ?', 'Salary structures are append-only': 'ការលុបសម្រាប់ការកែតម្រូវតែប៉ុណ្ណោះ', 'Saving...(salary)': 'កំពុងរក្សាទុក...', 'Search staff, role, department...': 'ស្វែងរក...',
+  'With Salary Set': 'កំណត់ប្រាក់ខែរួច', 'Avg Salary': 'ប្រាក់ខែមធ្យម', 'Total Monthly': 'សរុបប្រចាំខែ', 'Active members': 'សមាជិកសកម្ម', 'Per employee': 'ក្នុងមនុស្សម្នាក់', 'Payroll budget': 'ថវិកាប្រាក់ខែ', 'pending setup': 'មិនទាន់កំណត់', 'Sort by': 'តម្រៀបតាម', 'Salary not set': 'មិនទាន់កំណត់ប្រាក់ខែ', 'No history': 'គ្មានប្រវត្តិ', 'Set Salary': '+ កំណត់ប្រាក់ខែ', 'Update (salary)': '📈 ធ្វើបច្ចុប្បន្នភាព', 'Add New Change': '📈 បន្ថែមការផ្លាស់ប្តូរ', 'New Base Salary': 'ប្រាក់ខែថ្មី', 'Effective Date': 'កាលបរិច្ឆេទចាប់ផ្តើម', 'Note (salary)': 'កំណត់ចំណាំ', 'Salary History': 'ប្រវត្តិប្រាក់ខែ', 'No staff found': 'រកមិនឃើញបុគ្គលិក', 'Current (salary)': 'បច្ចុប្បន្ន', 'Since (salary)': 'តាំងពី', 'Added by': 'បន្ថែមដោយ', 'Save (salary)': 'រក្សាទុក', 'Loading history...': 'កំពុងផ្ទុក...', 'No salary history': 'គ្មានប្រវត្តិប្រាក់ខែ', 'Loading staff salaries...': 'កំពុងផ្ទុក...',   'Upload Attendance (title)': '📅 បញ្ចូលវត្តមាន', 'Fingerprint Excel file': 'ឯកសារ Excel', 'Back to Dashboard (att)': '← ត្រឡប់', 'Drop Excel file here': 'ទម្លាក់ Excel ទីនេះ', 'Choose file': 'ជ្រើសឯកសារ', 'or (upload)': 'ឬ', 'Parsing...': 'កំពុងដំណើរការ...', 'Failed to parse': 'បរាជ័យ', 'Attendance saved successfully': 'រក្សាទុករួចរាល់', 'New records': 'កំណត់ត្រាថ្មី', 'Updated (att)': 'ធ្វើបច្ចុប្បន្នភាព', 'Skipped (att)': 'រំលង', 'Upload another file': 'បញ្ចូលឯកសារផ្សេង', 'Save selected': 'រក្សាទុក', 'MATCHED': 'ត្រឹមត្រូវ', 'UNMATCHED': 'មិនត្រូវ', 'DUPLICATE': 'ស្ទួន', 'INVALID (att)': 'មិនត្រឹមត្រូវ',
+'Delete': 'លុប', 'Delete Salary Record?': 'លុបកំណត់ត្រាប្រាក់ខែ?', 'Salary structures are append-only': 'ការលុបសម្រាប់ការកែតម្រូវតែប៉ុណ្ណោះ', 'Saving...(salary)': 'កំពុងរក្សាទុក...', 'Search staff, role, department...': 'ស្វែងរក...',
   'Loading...': 'កំពុងផ្ទុក...', hrs: 'ម៉ោង', yrs: 'ឆ្នាំ', days: 'ថ្ងៃ', 'upload CV': 'គ្មាន CV', Holidays: 'ថ្ងៃឈប់', Inactive: 'អសកម្ម', members: 'នាក់',
   total: 'ចំនួន', '+ New': '+ ថ្មី',
   FROM: 'ចាប់ពី', TO: 'ដល់', Search: 'ស្វែងរក',
@@ -914,7 +925,8 @@ const vi: Record<AppLabelKey, string> = {
   'already exists': 'đã tồn tại', 'Pending Review': '⏳ Chờ xem xét',
   'Login Credentials (add)': 'Thông tin đăng nhập',
   'Share with the new staff member to login': 'Chia sẻ thông tin đăng nhập với nhân viên mới',
-  'With Salary Set': 'Đã thiết lập lương', 'Avg Salary': 'Lương trung bình', 'Total Monthly': 'Tổng hàng tháng', 'Active members': 'Thành viên hoạt động', 'Per employee': 'Mỗi nhân viên', 'Payroll budget': 'Ngân sách lương', 'pending setup': 'Chưa thiết lập', 'Sort by': 'Sắp xếp', 'Salary not set': 'Chưa thiết lập lương', 'No history': 'Không có lịch sử', 'Set Salary': '+ Thiết lập lương', 'Update (salary)': '📈 Cập nhật', 'Add New Change': '📈 Thêm thay đổi', 'New Base Salary': 'Lương cơ bản mới', 'Effective Date': 'Ngày hiệu lực', 'Note (salary)': 'Ghi chú', 'Salary History': 'Lịch sử lương', 'No staff found': 'Không tìm thấy nhân viên', 'Current (salary)': 'Hiện tại', 'Since (salary)': 'Từ', 'Added by': 'Thêm bởi', 'Save (salary)': 'Lưu', 'Loading history...': 'Đang tải...', 'No salary history': 'Chưa có lịch sử lương', 'Loading staff salaries...': 'Đang tải...', 'Delete': 'Xóa', 'Delete Salary Record?': 'Xóa bản ghi lương?', 'Salary structures are append-only': 'Chỉ xóa khi cần sửa lỗi.', 'Saving...(salary)': 'Đang lưu...', 'Search staff, role, department...': 'Tìm kiếm...',
+  'With Salary Set': 'Đã thiết lập lương', 'Avg Salary': 'Lương trung bình', 'Total Monthly': 'Tổng hàng tháng', 'Active members': 'Thành viên hoạt động', 'Per employee': 'Mỗi nhân viên', 'Payroll budget': 'Ngân sách lương', 'pending setup': 'Chưa thiết lập', 'Sort by': 'Sắp xếp', 'Salary not set': 'Chưa thiết lập lương', 'No history': 'Không có lịch sử', 'Set Salary': '+ Thiết lập lương', 'Update (salary)': '📈 Cập nhật', 'Add New Change': '📈 Thêm thay đổi', 'New Base Salary': 'Lương cơ bản mới', 'Effective Date': 'Ngày hiệu lực', 'Note (salary)': 'Ghi chú', 'Salary History': 'Lịch sử lương', 'No staff found': 'Không tìm thấy nhân viên', 'Current (salary)': 'Hiện tại', 'Since (salary)': 'Từ', 'Added by': 'Thêm bởi', 'Save (salary)': 'Lưu', 'Loading history...': 'Đang tải...', 'No salary history': 'Chưa có lịch sử lương', 'Loading staff salaries...': 'Đang tải...',   'Upload Attendance (title)': '📅 Tải chấm công', 'Fingerprint Excel file': 'File Excel điểm danh', 'Back to Dashboard (att)': '← Tổng quan', 'Drop Excel file here': 'Kéo file Excel vào đây', 'Choose file': 'Chọn file', 'or (upload)': 'hoặc', 'Parsing...': 'Đang xử lý...', 'Failed to parse': 'Lỗi đọc file Excel', 'Attendance saved successfully': 'Đã lưu chấm công', 'New records': 'Bản ghi mới', 'Updated (att)': 'Cập nhật', 'Skipped (att)': 'Bỏ qua', 'Upload another file': 'Tải file khác', 'Save selected': 'Lưu đã chọn', 'MATCHED': 'KHỚP', 'UNMATCHED': 'KHÔNG KHỚP', 'DUPLICATE': 'TRÙNG', 'INVALID (att)': 'KHÔNG HỢP LỆ',
+'Delete': 'Xóa', 'Delete Salary Record?': 'Xóa bản ghi lương?', 'Salary structures are append-only': 'Chỉ xóa khi cần sửa lỗi.', 'Saving...(salary)': 'Đang lưu...', 'Search staff, role, department...': 'Tìm kiếm...',
   'Loading...': 'Đang tải...', hrs: 'giờ', yrs: 'năm', days: 'ngày', 'upload CV': 'Chưa CV', Holidays: 'Ngày nghỉ', Inactive: 'Không hoạt động', members: 'thành viên',
   total: 'tổng', '+ New': '+ Mới',
   FROM: 'TỪ', TO: 'ĐẾN', Search: 'Tìm kiếm',
@@ -1073,7 +1085,8 @@ const ko: Record<AppLabelKey, string> = {
   'already exists': '이미 존재함', 'Pending Review': '⏳ 검토 대기',
   'Login Credentials (add)': '로그인 정보',
   'Share with the new staff member to login': '신규 직원에게 로그인 정보를 공유하세요',
-  'With Salary Set': '급여 설정됨', 'Avg Salary': '평균 급여', 'Total Monthly': '월 합계', 'Active members': '활성 직원', 'Per employee': '1인당', 'Payroll budget': '급여 예산', 'pending setup': '미설정', 'Sort by': '정렬', 'Salary not set': '급여 미설정', 'No history': '이력 없음', 'Set Salary': '+ 급여 설정', 'Update (salary)': '📈 업데이트', 'Add New Change': '📈 변경 추가', 'New Base Salary': '새 기본급', 'Effective Date': '적용일', 'Note (salary)': '메모', 'Salary History': '급여 이력', 'No staff found': '직원 없음', 'Current (salary)': '현재', 'Since (salary)': '시작', 'Added by': '추가자', 'Save (salary)': '저장', 'Loading history...': '로딩...', 'No salary history': '급여 이력 없음', 'Loading staff salaries...': '로딩...', 'Delete': '삭제', 'Delete Salary Record?': '급여 기록 삭제?', 'Salary structures are append-only': '수정 목적으로만 삭제 가능합니다.', 'Saving...(salary)': '저장 중...', 'Search staff, role, department...': '검색...',
+  'With Salary Set': '급여 설정됨', 'Avg Salary': '평균 급여', 'Total Monthly': '월 합계', 'Active members': '활성 직원', 'Per employee': '1인당', 'Payroll budget': '급여 예산', 'pending setup': '미설정', 'Sort by': '정렬', 'Salary not set': '급여 미설정', 'No history': '이력 없음', 'Set Salary': '+ 급여 설정', 'Update (salary)': '📈 업데이트', 'Add New Change': '📈 변경 추가', 'New Base Salary': '새 기본급', 'Effective Date': '적용일', 'Note (salary)': '메모', 'Salary History': '급여 이력', 'No staff found': '직원 없음', 'Current (salary)': '현재', 'Since (salary)': '시작', 'Added by': '추가자', 'Save (salary)': '저장', 'Loading history...': '로딩...', 'No salary history': '급여 이력 없음', 'Loading staff salaries...': '로딩...',   'Upload Attendance (title)': '📅 출결 업로드', 'Fingerprint Excel file': '지문 Excel 파일', 'Back to Dashboard (att)': '← 대시보드', 'Drop Excel file here': 'Excel 파일을 여기에 드롭', 'Choose file': '파일 선택', 'or (upload)': '또는', 'Parsing...': '처리 중...', 'Failed to parse': 'Excel 파일 오류', 'Attendance saved successfully': '출결 저장 완료', 'New records': '새 기록', 'Updated (att)': '업데이트', 'Skipped (att)': '건너뜀', 'Upload another file': '다른 파일 업로드', 'Save selected': '선택 저장', 'MATCHED': '매칭', 'UNMATCHED': '미매칭', 'DUPLICATE': '중복', 'INVALID (att)': '유효하지 않음',
+'Delete': '삭제', 'Delete Salary Record?': '급여 기록 삭제?', 'Salary structures are append-only': '수정 목적으로만 삭제 가능합니다.', 'Saving...(salary)': '저장 중...', 'Search staff, role, department...': '검색...',
   'Loading...': '로딩...', hrs: '시간', yrs: '년', days: '일', 'upload CV': 'CV없음', Holidays: '공휴일', Inactive: '비활성', members: '명',
   total: '개', '+ New': '+ 새로',
   FROM: '시작', TO: '종료', Search: '검색',

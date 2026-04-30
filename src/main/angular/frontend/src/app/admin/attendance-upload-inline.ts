@@ -1,11 +1,12 @@
 import {
-  Component, Output, EventEmitter, ChangeDetectorRef
+  Component, OnInit, Output, EventEmitter, ChangeDetectorRef
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { AuthService } from '../services/auth.service';
 import { environment } from '../../environments/environment';
+import { getLabel, AppLabelKey } from '../i18n/app-labels.i18n';
 
 const BASE = environment.apiBaseUrl;
 
@@ -58,28 +59,23 @@ interface StaffGroup {
   styleUrls: ['./attendance-upload-inline.scss'],
   host: { style: 'display:contents' }
 })
-export class AttendanceUploadInline {
+export class AttendanceUploadInline implements OnInit {
 
   @Output() back = new EventEmitter<void>();
 
   step: 1 | 2 = 1;
-  // 1 = Upload + Preview (combined) | 2 = Done
 
-  // File
   selectedFile: File | null = null;
   isDragging = false;
   isParsing = false;
   parseError = '';
 
-  // Preview
   preview: PreviewResponse | null = null;
   groups: StaffGroup[] = [];
 
-  // Filters
   searchQuery = '';
   filterStatus: 'ALL' | 'MATCHED' | 'UNMATCHED' | 'DUPLICATE' | 'INVALID' = 'ALL';
 
-  // Save
   isSaving = false;
   saveResult: { savedCount: number; updatedCount: number; skippedCount: number; message: string } | null = null;
   saveError = '';
@@ -87,15 +83,23 @@ export class AttendanceUploadInline {
   readonly MAX_SIZE_MB = 5;
   readonly MAX_SIZE_BYTES = this.MAX_SIZE_MB * 1024 * 1024;
 
+  currentUser: any = null;
+
+  // ── i18n ──────────────────────────────────
+  lbl(key: AppLabelKey): string {
+    return getLabel(this.currentUser?.preferredLanguage || this.auth.getUser()?.preferredLanguage, key);
+  }
+
   constructor(
     private http: HttpClient,
     private auth: AuthService,
     private cdr: ChangeDetectorRef,
   ) {}
 
-  // ══════════════════════════════════════════════
-  // STEP 1
-  // ══════════════════════════════════════════════
+  ngOnInit(): void {
+    this.currentUser = this.auth.getUser();
+  }
+
   onFileSelect(event: Event) {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
@@ -126,8 +130,6 @@ export class AttendanceUploadInline {
     }
     this.selectedFile = file;
     this.cdr.detectChanges();
-
-    // Auto-preview immediately — no manual click needed
     this.uploadAndPreview();
   }
 
@@ -150,52 +152,32 @@ export class AttendanceUploadInline {
     const formData = new FormData();
     formData.append('file', this.selectedFile);
 
-    this.http.post<PreviewResponse>(
-      `${BASE}/attendance/upload-preview`,
-      formData
-    ).subscribe({
+    this.http.post<PreviewResponse>(`${BASE}/attendance/upload-preview`, formData).subscribe({
       next: data => {
         data.rows.forEach(r => { r.selected = r.status === 'MATCHED'; });
         this.preview = data;
         this.groups = this.buildGroups(data.rows);
-        // Stay on step 1 — preview shows inline below uploader
         this.isParsing = false;
         this.cdr.detectChanges();
       },
       error: err => {
-        this.parseError = err.error?.message || 'Failed to parse Excel file.';
-        this.selectedFile = null; // reset on error
+        this.parseError = err.error?.message || this.lbl('Failed to parse');
+        this.selectedFile = null;
         this.isParsing = false;
         this.cdr.detectChanges();
       }
     });
   }
 
-  // ══════════════════════════════════════════════
-  // GROUP BY STAFF
-  // ══════════════════════════════════════════════
   private buildGroups(rows: ParsedRow[]): StaffGroup[] {
     const map = new Map<string, StaffGroup>();
-
     for (const r of rows) {
       const key = r.userId ? `u:${r.userId}` : `e:${r.email || 'unknown'}`;
       let g = map.get(key);
       if (!g) {
-        g = {
-          key,
-          email: r.email,
-          matchedName: r.matchedName,
-          matchedRole: r.matchedRole,
-          matchedBranch: r.matchedBranch,
-          userId: r.userId,
-          totalDays: 0,
-          matchedDays: 0,
-          hasIssues: false,
-          status: 'MATCHED',
-          rows: [],
-          expanded: false,
-          allSelected: false,
-        };
+        g = { key, email: r.email, matchedName: r.matchedName, matchedRole: r.matchedRole,
+              matchedBranch: r.matchedBranch, userId: r.userId, totalDays: 0, matchedDays: 0,
+              hasIssues: false, status: 'MATCHED', rows: [], expanded: false, allSelected: false };
         map.set(key, g);
       }
       g.rows.push(r);
@@ -214,31 +196,22 @@ export class AttendanceUploadInline {
     }
 
     groups.sort((a, b) => {
-      // Issues first (UNMATCHED/DUPLICATE/INVALID/MIXED), MATCHED last
-      const aIssue = (a.status === 'MATCHED') ? 1 : 0;
-      const bIssue = (b.status === 'MATCHED') ? 1 : 0;
+      const aIssue = a.status === 'MATCHED' ? 1 : 0;
+      const bIssue = b.status === 'MATCHED' ? 1 : 0;
       if (aIssue !== bIssue) return aIssue - bIssue;
       return (a.matchedName || a.email).localeCompare(b.matchedName || b.email);
     });
-
     return groups;
   }
 
-  // ══════════════════════════════════════════════
-  // STEP 2 — Filter / Select
-  // ══════════════════════════════════════════════
   get filteredGroups(): StaffGroup[] {
     let result = this.groups;
-
     if (this.filterStatus !== 'ALL') {
       result = result.filter(g => {
-        if (this.filterStatus === 'MATCHED') {
-          return g.status === 'MATCHED' || g.status === 'MIXED';
-        }
+        if (this.filterStatus === 'MATCHED') return g.status === 'MATCHED' || g.status === 'MIXED';
         return g.rows.some(r => r.status === this.filterStatus);
       });
     }
-
     const q = this.searchQuery.trim().toLowerCase();
     if (q) {
       result = result.filter(g =>
@@ -248,19 +221,15 @@ export class AttendanceUploadInline {
         (g.matchedBranch || '').toLowerCase().includes(q)
       );
     }
-
     return result;
   }
 
   get totalSelectedCount(): number {
-    if (!this.preview) return 0;
-    return this.preview.rows.filter(r => r.selected).length;
+    return this.preview ? this.preview.rows.filter(r => r.selected).length : 0;
   }
 
   setFilter(s: typeof this.filterStatus) { this.filterStatus = s; }
-
   toggleExpand(g: StaffGroup) { g.expanded = !g.expanded; }
-
   expandAll() { this.filteredGroups.forEach(g => g.expanded = true); }
   collapseAll() { this.filteredGroups.forEach(g => g.expanded = false); }
 
@@ -283,9 +252,7 @@ export class AttendanceUploadInline {
 
   selectAllMatched() {
     if (!this.preview) return;
-    this.preview.rows.forEach(r => {
-      if (r.status === 'MATCHED') r.selected = true;
-    });
+    this.preview.rows.forEach(r => { if (r.status === 'MATCHED') r.selected = true; });
     this.groups.forEach(g => {
       const matched = g.rows.filter(r => r.status === 'MATCHED');
       g.allSelected = matched.length > 0;
@@ -299,116 +266,46 @@ export class AttendanceUploadInline {
   }
 
   clearAll() {
-    this.selectedFile = null;
-    this.preview = null;
-    this.groups = [];
-    this.parseError = '';
-    this.saveResult = null;
-    this.searchQuery = '';
-    this.filterStatus = 'ALL';
+    this.selectedFile = null; this.preview = null; this.groups = [];
+    this.parseError = ''; this.saveResult = null;
+    this.searchQuery = ''; this.filterStatus = 'ALL';
     this.cdr.detectChanges();
   }
 
-  // ══════════════════════════════════════════════
-  // SAVE
-  // ══════════════════════════════════════════════
   confirmSave() {
     if (!this.preview) return;
-
     const rowsToSave = this.preview.rows
       .filter(r => r.status === 'MATCHED' && r.selected && r.userId)
-      .map(r => ({
-        userId: r.userId,
-        workDate: r.workDate,
-        timeIn: r.timeIn || null,
-        timeOut: r.timeOut || null,
-        isDayoff: false,
-        note: null,
-      }));
+      .map(r => ({ userId: r.userId, workDate: r.workDate, timeIn: r.timeIn || null, timeOut: r.timeOut || null, isDayoff: false, note: null }));
 
-    if (rowsToSave.length === 0) {
-      this.saveError = 'No rows selected to save.';
-      this.cdr.detectChanges();
-      return;
-    }
+    if (rowsToSave.length === 0) { this.saveError = 'No rows selected to save.'; this.cdr.detectChanges(); return; }
 
-    this.isSaving = true;
-    this.saveError = '';
-    this.cdr.detectChanges();
+    this.isSaving = true; this.saveError = ''; this.cdr.detectChanges();
 
-    this.http.post<any>(
-      `${BASE}/attendance/confirm-save`,
-      { rows: rowsToSave },
-      { headers: this.auth.getHeaders() }
-    ).subscribe({
-      next: resp => {
-        this.saveResult = resp;
-        this.isSaving = false;
-        this.step = 2; // move to done screen
-        this.cdr.detectChanges();
-      },
-      error: err => {
-        this.saveError = err.error?.message || 'Failed to save attendance records.';
-        this.isSaving = false;
-        this.cdr.detectChanges();
-      }
-    });
+    this.http.post<any>(`${BASE}/attendance/confirm-save`, { rows: rowsToSave }, { headers: this.auth.getHeaders() })
+      .subscribe({
+        next: resp => { this.saveResult = resp; this.isSaving = false; this.step = 2; this.cdr.detectChanges(); },
+        error: err => { this.saveError = err.error?.message || 'Failed to save attendance records.'; this.isSaving = false; this.cdr.detectChanges(); }
+      });
   }
 
   uploadAnother() {
-    this.step = 1;
-    this.selectedFile = null;
-    this.preview = null;
-    this.groups = [];
-    this.saveResult = null;
-    this.parseError = '';
-    this.saveError = '';
-    this.searchQuery = '';
-    this.filterStatus = 'ALL';
+    this.step = 1; this.selectedFile = null; this.preview = null;
+    this.groups = []; this.saveResult = null; this.saveError = '';
+    this.searchQuery = ''; this.filterStatus = 'ALL';
     this.cdr.detectChanges();
   }
 
-  // ══════════════════════════════════════════════
-  // HELPERS
-  // ══════════════════════════════════════════════
-  formatFileSize(bytes: number): string {
-    if (bytes < 1024) return bytes + ' B';
-    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
-    return (bytes / 1024 / 1024).toFixed(2) + ' MB';
+  statusBg(s: string): string {
+    const m: Record<string,string> = { MATCHED:'rgba(34,197,94,0.12)', UNMATCHED:'rgba(239,68,68,0.12)', DUPLICATE:'rgba(245,158,11,0.12)', INVALID:'rgba(148,163,184,0.12)' };
+    return m[s] || 'transparent';
   }
-
-  statusColor(status: string): string {
-    const m: Record<string, string> = {
-      MATCHED:   '#22c55e',
-      UNMATCHED: '#ef4444',
-      DUPLICATE: '#f59e0b',
-      INVALID:   '#94a3b8',
-      MIXED:     '#a78bfa',
-    };
-    return m[status] || '#94a3b8';
+  statusColor(s: string): string {
+    const m: Record<string,string> = { MATCHED:'#22c55e', UNMATCHED:'#ef4444', DUPLICATE:'#f59e0b', INVALID:'#94a3b8' };
+    return m[s] || 'inherit';
   }
-
-  statusBg(status: string): string {
-    const m: Record<string, string> = {
-      MATCHED:   'rgba(34, 197, 94, 0.12)',
-      UNMATCHED: 'rgba(239, 68, 68, 0.12)',
-      DUPLICATE: 'rgba(245, 158, 11, 0.12)',
-      INVALID:   'rgba(148, 163, 184, 0.12)',
-      MIXED:     'rgba(167, 139, 250, 0.12)',
-    };
-    return m[status] || 'rgba(148, 163, 184, 0.12)';
-  }
-
-  getInitial(name?: string): string {
-    return (name || '?').charAt(0).toUpperCase();
-  }
-
-  getAvatarColor(seed?: string): string {
-    const colors = ['#6366f1', '#8b5cf6', '#ec4899', '#f59e0b',
-                    '#22c55e', '#06b6d4', '#3b82f6', '#a855f7'];
-    if (!seed) return colors[0];
-    let h = 0;
-    for (let i = 0; i < seed.length; i++) h = (h * 31 + seed.charCodeAt(i)) >>> 0;
-    return colors[h % colors.length];
+  groupStatusDot(s: string): string {
+    const m: Record<string,string> = { MATCHED:'#22c55e', UNMATCHED:'#ef4444', DUPLICATE:'#f59e0b', INVALID:'#94a3b8', MIXED:'#f59e0b' };
+    return m[s] || '#94a3b8';
   }
 }
