@@ -167,7 +167,7 @@
             <!-- Holidays -->
             <div class="card">
               <div class="card-header">
-                <div class="card-title">🗓️ {{ currentMonth }} Holidays</div>
+                <div class="card-title">🗓️ {{ currentMonth }} {{ lbl('Holidays') }}</div>
                 <span class="badge-purple">{{ holidays.length }}</span>
               </div>
               <div class="cal-weekdays">
@@ -254,7 +254,7 @@
               <div class="card-title">⏰ {{ lbl('OT Requests') }}</div>
               <span class="badge-yellow">{{ stats.pendingOT }} {{ lbl('pending') }}</span>
             </div>
-            <div *ngIf="loading.ot" class="loading-txt">Loading...</div>
+            <div *ngIf="loading.ot" class="loading-txt">{{ lbl('Loading...') }}</div>
             <div *ngIf="!loading.ot && otRequests.length === 0" class="empty-txt">
               {{ lbl('No pending OT requests') }}
             </div>
@@ -262,7 +262,7 @@
               <thead>
                 <tr>
                   <th>{{ lbl('Staff') }}</th><th>{{ lbl('Work Date') }}</th>
-                  <th>Day</th><th>Hours</th><th>Rate</th><th>Project</th>
+                  <th>{{ lbl('Day type') }}</th><th>{{ lbl('OT Hours') }}</th><th>{{ lbl('OT Rate') }}</th><th>{{ lbl('Project (col)') }}</th>
                   <th>{{ lbl('Action') }}</th>
                 </tr>
               </thead>
@@ -278,7 +278,7 @@
                   </td>
                   <td class="muted">{{ ot.workDate | date:'MMM d' }}</td>
                   <td class="muted">{{ ot.dayType }}</td>
-                  <td>{{ ot.otHours }}hrs</td>
+                  <td>{{ ot.otHours }}{{ lbl('hrs') }}</td>
                   <td><span style="color:#818cf8;">×{{ ot.otRate }}</span></td>
                   <td class="muted" style="font-size:10px;">{{ ot.projectName || '—' }}</td>
                   <td>
@@ -296,7 +296,7 @@
               <div class="card-title">🏖️ {{ lbl('Leave Requests') }}</div>
               <span class="badge-purple">{{ stats.leaveRequests }} {{ lbl('pending') }}</span>
             </div>
-            <div *ngIf="loading.leave" class="loading-txt">Loading...</div>
+            <div *ngIf="loading.leave" class="loading-txt">{{ lbl('Loading...') }}</div>
             <div *ngIf="!loading.leave && leaveRequests.length === 0" class="empty-txt">
               {{ lbl('No pending leave requests') }}
             </div>
@@ -328,7 +328,7 @@
                     {{ lv.startDate | date:'MMM d' }}
                     <span *ngIf="lv.startDate !== lv.endDate"> – {{ lv.endDate | date:'MMM d' }}</span>
                   </td>
-                  <td class="muted">{{ lv.totalDays }} days</td>
+                  <td class="muted">{{ lv.totalDays }} {{ lbl('days') }}</td>
                   <td class="reason-cell">{{ lv.reason || '—' }}</td>
                   <td><span class="badge-yellow">{{ lbl('Pending') }}</span></td>
                   <td>
@@ -351,7 +351,7 @@
               </div>
               <button class="btn-primary" (click)="setView('add-staff')">+ {{ lbl('Add Staff') }}</button>
             </div>
-            <div *ngIf="loading.staff" class="loading-txt">Loading...</div>
+            <div *ngIf="loading.staff" class="loading-txt">{{ lbl('Loading...') }}</div>
             <div *ngIf="!loading.staff" style="overflow-x:auto;">
               <table class="data-table" style="min-width:900px;">
                 <thead>
@@ -391,7 +391,7 @@
                     <td style="font-size:10px;">
                       <span *ngIf="s.skills?.length; else noSkills">{{ s.skills.join(', ') }}</span>
                       <ng-template #noSkills>
-                        <span class="muted" style="font-style:italic;">— (upload CV)</span>
+                        <span class="muted" style="font-style:italic;">— ({{ lbl('upload CV') }})</span>
                       </ng-template>
                     </td>
                   </tr>
@@ -400,7 +400,7 @@
             </div>
             <div style="text-align:center;padding:8px 0 0;font-size:10px;cursor:pointer;opacity:0.5;"
               (click)="setView('staff-list')">
-              {{ lbl('View all') }} {{ staffList.length }} staff →
+              {{ lbl('View all') }} {{ staffList.length }} {{ lbl('members') }} →
             </div>
           </div>
 

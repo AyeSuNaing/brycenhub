@@ -44,7 +44,7 @@ export type AppLabelKey =
   | 'Staff' | 'Work Date' | 'Details' | 'Action'
   | 'Leave Requests' | 'Leave approval queue' | 'No pending leave requests'
   | 'Type' | 'Dates' | 'Days' | 'Reason' | 'Status'
-  | 'Pending' | 'Approve' | 'Reject'
+  | 'Approve' | 'Reject'
   | 'ANNUAL' | 'SICK' | 'UNPAID'
   | 'Salary Approvals' | 'Monthly payroll approval' | 'No pending salary approvals'
   | 'Pay Period' | 'Gross' | 'Tax' | 'Net'
@@ -59,8 +59,23 @@ export type AppLabelKey =
   | 'Search name or email' | 'All Departments' | 'All Roles' | 'All Status'
   | 'NAME' | 'ROLE' | 'DEPARTMENT' | 'EMAIL' | 'PHONE'
   | 'Active (staff)' | 'Inactive' | 'members'
+  // ── ADMIN TABLE / COMMON ──
+  | 'Day type' | 'OT Hours' | 'OT Rate' | 'Project (col)'
+  | 'Loading...' | 'hrs' | 'yrs' | 'days' | 'upload CV' | 'Holidays'
+  // ── ADD STAFF FORM ──
+  | 'Add New Staff' | 'Onboard a new team member'
+  | 'Basic Info' | 'CV Upload' | 'Preview & Submit'
+  | 'Personal details and account setup'
+  | 'PASSWORD' | 'PREFERRED LANGUAGE'
+  | 'Regenerate' | 'Share this password with the new staff member'
+  | 'Select role...' | 'Select department...'
+  | 'Next — CV Upload' | 'Next — Skills' | 'Next — Preview'
+  | 'Back to Staff List (add)' | 'Creating...' | 'Create Staff Member'
+  | 'CV not uploaded (optional)' | 'No skills added (optional)'
+  | 'already exists' | 'Pending Review'
+  | 'Login Credentials (add)' | 'Share with the new staff member to login'
   // ── ANNOUNCEMENTS PAGE ──
-  | 'Announcements' | 'total' | '+ New'
+  | 'total' | '+ New'
   | 'FROM' | 'TO' | 'Search'
   | 'ALL' | 'ACTIVE (ann)' | 'EXPIRED' | 'PINNED'
   | 'NORMAL' | 'IMPORTANT' | 'Branch' | 'Global'
@@ -103,14 +118,14 @@ export type AppLabelKey =
   | 'Back to Staff List' | 'years experience' | 'LOGIN EMAIL' | 'FULL NAME'
   | 'LANGUAGE' | 'STAFF ID'
   // ── CHANGE PASSWORD ──
-  | 'Change Password' | 'Update your account password'
+  | 'Update your account password'
   | 'NEW PASSWORD' | 'CONFIRM PASSWORD' | 'Password Requirements'
   | 'At least 8 characters' | 'One uppercase letter' | 'One number' | 'One special character'
   | 'Show' | 'Hide' | 'Passwords match' | 'Passwords do not match'
   | 'Weak' | 'Fair' | 'Good' | 'Strong'
   | 'Update Password' | 'Saving...'
   | 'Password Changed!' | 'Copy done save notice'
-  | 'Copy' | 'Copied!'
+  | 'Copy'
   | 'Notice title' | 'Notice line1' | 'Notice line2'
   | 'Enter new password' | 'Repeat new password'
   | 'Done Back'
@@ -187,6 +202,22 @@ const en: Record<AppLabelKey, string> = {
   'All Departments': 'All Departments', 'All Roles': 'All Roles', 'All Status': 'All Status',
   NAME: 'NAME', ROLE: 'ROLE', DEPARTMENT: 'DEPARTMENT', EMAIL: 'EMAIL', PHONE: 'PHONE',
   'Active (staff)': 'Active', Inactive: 'Inactive', members: 'members',
+  'Day type': 'Day', 'OT Hours': 'Hours', 'OT Rate': 'Rate', 'Project (col)': 'Project',
+  'Add New Staff': 'Add New Staff', 'Onboard a new team member': 'Onboard a new team member',
+  'Basic Info': 'Basic Info', 'CV Upload': 'CV Upload', 'Preview & Submit': 'Preview & Submit',
+  'Personal details and account setup': 'Personal details and account setup',
+  'Regenerate': '🔄 Regenerate',
+  'Share this password with the new staff member': 'Share this password with the new staff member',
+  'Select role...': 'Select role...', 'Select department...': 'Select department...',
+  'Next — CV Upload': 'Next — CV Upload →', 'Next — Skills': 'Next — Skills →', 'Next — Preview': 'Next — Preview →',
+  'Back to Staff List (add)': '← Back to Staff List',
+  'Creating...': '⏳ Creating...', 'Create Staff Member': '🚀 Create Staff Member',
+  'CV not uploaded (optional)': 'CV not uploaded (optional)',
+  'No skills added (optional)': 'No skills added (optional)',
+  'already exists': 'already exists', 'Pending Review': '⏳ Pending Review',
+  'Login Credentials (add)': 'Login Credentials',
+  'Share with the new staff member to login': 'Share with the new staff member to login',
+  'Loading...': 'Loading...', hrs: 'hrs', yrs: 'yrs', days: 'days', 'upload CV': 'upload CV', Holidays: 'Holidays',
   total: 'total', '+ New': '+ New',
   FROM: 'FROM', TO: 'TO', Search: 'Search',
   ALL: 'ALL', 'ACTIVE (ann)': 'ACTIVE', EXPIRED: 'EXPIRED', PINNED: 'PINNED',
@@ -239,6 +270,7 @@ const en: Record<AppLabelKey, string> = {
   'Back to Staff List': '← Back to Staff List',
   'years experience': 'yrs experience',
   'LOGIN EMAIL': 'LOGIN EMAIL', 'FULL NAME': 'FULL NAME',
+  'PASSWORD': 'PASSWORD', 'PREFERRED LANGUAGE': 'Preferred Language',
   'LANGUAGE': 'LANGUAGE', 'STAFF ID': 'STAFF ID',
   'Update your account password': 'Update your account password',
   'NEW PASSWORD': 'NEW PASSWORD', 'CONFIRM PASSWORD': 'CONFIRM PASSWORD',
@@ -330,6 +362,22 @@ const ja: Record<AppLabelKey, string> = {
   'All Departments': '全部署', 'All Roles': '全役職', 'All Status': '全ステータス',
   NAME: '名前', ROLE: '役職', DEPARTMENT: '部署', EMAIL: 'メール', PHONE: '電話',
   'Active (staff)': 'アクティブ', Inactive: '非アクティブ', members: 'メンバー',
+  'Day type': '曜日', 'OT Hours': '時間', 'OT Rate': '率', 'Project (col)': 'プロジェクト',
+  'Add New Staff': 'スタッフ追加', 'Onboard a new team member': '新メンバーのオンボーディング',
+  'Basic Info': '基本情報', 'CV Upload': 'CV アップロード', 'Preview & Submit': '確認・送信',
+  'Personal details and account setup': '個人情報とアカウント設定',
+  'Regenerate': '🔄 再生成',
+  'Share this password with the new staff member': 'このパスワードを新スタッフに共有してください',
+  'Select role...': '役職を選択...', 'Select department...': '部署を選択...',
+  'Next — CV Upload': '次へ — CV →', 'Next — Skills': '次へ — スキル →', 'Next — Preview': '次へ — 確認 →',
+  'Back to Staff List (add)': '← スタッフ一覧へ',
+  'Creating...': '⏳ 作成中...', 'Create Staff Member': '🚀 スタッフを作成',
+  'CV not uploaded (optional)': 'CV 未アップロード（任意）',
+  'No skills added (optional)': 'スキル未追加（任意）',
+  'already exists': '既に存在します', 'Pending Review': '⏳ 確認待ち',
+  'Login Credentials (add)': 'ログイン情報',
+  'Share with the new staff member to login': 'ログイン情報を新スタッフに共有してください',
+  'Loading...': '読込中...', hrs: '時間', yrs: '年', days: '日', 'upload CV': 'CV未', Holidays: '祝日',
   total: '件', '+ New': '+ 新規',
   FROM: '開始日', TO: '終了日', Search: '検索',
   ALL: 'すべて', 'ACTIVE (ann)': 'アクティブ', EXPIRED: '期限切れ', PINNED: '固定',
@@ -381,6 +429,7 @@ const ja: Record<AppLabelKey, string> = {
   'Back to Staff List': '← スタッフ一覧へ',
   'years experience': '年経験',
   'LOGIN EMAIL': 'ログインメール', 'FULL NAME': '氏名',
+  'PASSWORD': 'パスワード', 'PREFERRED LANGUAGE': '表示言語',
   'LANGUAGE': '言語', 'STAFF ID': 'スタッフID',
   'Update your account password': 'アカウントのパスワードを更新',
   'NEW PASSWORD': '新しいパスワード', 'CONFIRM PASSWORD': 'パスワード確認',
@@ -474,6 +523,22 @@ const my: Record<AppLabelKey, string> = {
   'All Departments': 'ဌာနအားလုံး', 'All Roles': 'ရာထူးအားလုံး', 'All Status': 'အားလုံး',
   NAME: 'အမည်', ROLE: 'ရာထူး', DEPARTMENT: 'ဌာန', EMAIL: 'အီးမေးလ်', PHONE: 'ဖုန်း',
   'Active (staff)': 'တက်ကြွ', Inactive: 'တက်ကြွမဟုတ်', members: 'ဦး',
+  'Day type': 'နေ့မျိုး', 'OT Hours': 'နာရီ', 'OT Rate': 'နှုန်း', 'Project (col)': 'ပရောဂျက်',
+  'Add New Staff': 'ဝန်ထမ်းထည့်', 'Onboard a new team member': 'ဝန်ထမ်းသစ် စာရင်းသွင်းခြင်း',
+  'Basic Info': 'အခြေခံ', 'CV Upload': 'CV တင်', 'Preview & Submit': 'ကြိုကြည့် · တင်ပို့',
+  'Personal details and account setup': 'ကိုယ်ရေးအချက်အလက်နှင့် အကောင့်ဖွင့်ခြင်း',
+  'Regenerate': '🔄 ပြန်ထုတ်',
+  'Share this password with the new staff member': 'ဝန်ထမ်းသစ်ထံ password မျှဝေပါ',
+  'Select role...': 'ရာထူးရွေး...', 'Select department...': 'ဌာနရွေး...',
+  'Next — CV Upload': 'ဆက် — CV တင် →', 'Next — Skills': 'ဆက် — ကျွမ်းကျင်မှု →', 'Next — Preview': 'ဆက် — ကြိုကြည့် →',
+  'Back to Staff List (add)': '← ဝန်ထမ်းစာရင်းသို့',
+  'Creating...': '⏳ ဖန်တီးနေ...', 'Create Staff Member': '🚀 ဝန်ထမ်းဖန်တီး',
+  'CV not uploaded (optional)': 'CV မတင်ရသေး (ရွေးချယ်မှု)',
+  'No skills added (optional)': 'ကျွမ်းကျင်မှု မထည့်ရသေး (ရွေးချယ်မှု)',
+  'already exists': 'ရှိပြီးသား', 'Pending Review': '⏳ စစ်ဆေးဆဲ',
+  'Login Credentials (add)': 'Login အချက်အလက်',
+  'Share with the new staff member to login': 'ဝန်ထမ်းသစ်ထံ login အချက်အလက် မျှဝေပါ',
+  'Loading...': 'ခဏစောင့်...', hrs: 'နာရီ', yrs: 'နှစ်', days: 'ရက်', 'upload CV': 'CV မရှိ', Holidays: 'ရုံးပိတ်ရက်',
   total: 'ခု', '+ New': '+ အသစ်',
   FROM: 'စပြီး', TO: 'အထိ', Search: 'ရှာ',
   ALL: 'အားလုံး', 'ACTIVE (ann)': 'တက်ကြွ', EXPIRED: 'သက်တမ်းကုန်', PINNED: 'ပင်ထိုး',
@@ -526,6 +591,7 @@ const my: Record<AppLabelKey, string> = {
   'Back to Staff List': '← ဝန်ထမ်းစာရင်းသို့',
   'years experience': 'နှစ် အတွေ့အကြုံ',
   'LOGIN EMAIL': 'Login Email', 'FULL NAME': 'အမည်',
+  'PASSWORD': 'စကားဝှက်', 'PREFERRED LANGUAGE': 'နှစ်သက်သောဘာသာ',
   'LANGUAGE': 'ဘာသာ', 'STAFF ID': 'ဝန်ထမ်း ID',
   'Update your account password': 'အကောင့်စကားဝှက်ပြောင်းရန်',
   'NEW PASSWORD': 'စကားဝှက်အသစ်', 'CONFIRM PASSWORD': 'စကားဝှက်ထပ်စစ်',
@@ -618,7 +684,23 @@ const km: Record<AppLabelKey, string> = {
   'Search name or email': 'ស្វែងរកឈ្មោះ ឬអ៊ីម៉ែល...',
   'All Departments': 'នាយកដ្ឋានទាំងអស់', 'All Roles': 'តួនាទីទាំងអស់', 'All Status': 'ស្ថានភាពទាំងអស់',
   NAME: 'ឈ្មោះ', ROLE: 'តួនាទី', DEPARTMENT: 'នាយកដ្ឋាន', EMAIL: 'អ៊ីម៉ែល', PHONE: 'ទូរស័ព្ទ',
-  'Active (staff)': 'សកម្ម', Inactive: 'អសកម្ម', members: 'នាក់',
+  'Active (staff)': 'សកម្ម',
+  'Day type': 'ប្រភេទ', 'OT Hours': 'ម៉ោង', 'OT Rate': 'អត្រា', 'Project (col)': 'គម្រោង',
+  'Add New Staff': 'បន្ថែមបុគ្គលិក', 'Onboard a new team member': 'ចុះឈ្មោះបុគ្គលិកថ្មី',
+  'Basic Info': 'ព័ត៌មានមូលដ្ឋាន', 'CV Upload': 'បញ្ចូល CV', 'Preview & Submit': 'មើល · ដាក់ស្នើ',
+  'Personal details and account setup': 'ព័ត៌មានផ្ទាល់ខ្លួននិងការដំឡើងគណនី',
+  'Regenerate': '🔄 បង្កើតឡើងវិញ',
+  'Share this password with the new staff member': 'ចែករំលែកពាក្យសម្ងាត់ជាមួយបុគ្គលិកថ្មី',
+  'Select role...': 'ជ្រើសរើសតួនាទី...', 'Select department...': 'ជ្រើសរើសផ្នែក...',
+  'Next — CV Upload': 'បន្ទាប់ — CV →', 'Next — Skills': 'បន្ទាប់ — ជំនាញ →', 'Next — Preview': 'បន្ទាប់ — មើល →',
+  'Back to Staff List (add)': '← បញ្ជីបុគ្គលិក',
+  'Creating...': '⏳ កំពុងបង្កើត...', 'Create Staff Member': '🚀 បង្កើតបុគ្គលិក',
+  'CV not uploaded (optional)': 'មិនទាន់បញ្ចូល CV (ស្រេចចិត្ត)',
+  'No skills added (optional)': 'មិនទាន់បន្ថែមជំនាញ (ស្រេចចិត្ត)',
+  'already exists': 'មានរួចហើយ', 'Pending Review': '⏳ រង់ចាំពិនិត្យ',
+  'Login Credentials (add)': 'ព័ត៌មានចូល',
+  'Share with the new staff member to login': 'ចែករំលែកព័ត៌មានចូលជាមួយបុគ្គលិកថ្មី',
+  'Loading...': 'កំពុងផ្ទុក...', hrs: 'ម៉ោង', yrs: 'ឆ្នាំ', days: 'ថ្ងៃ', 'upload CV': 'គ្មាន CV', Holidays: 'ថ្ងៃឈប់', Inactive: 'អសកម្ម', members: 'នាក់',
   total: 'ចំនួន', '+ New': '+ ថ្មី',
   FROM: 'ចាប់ពី', TO: 'ដល់', Search: 'ស្វែងរក',
   ALL: 'ទាំងអស់', 'ACTIVE (ann)': 'សកម្ម', EXPIRED: 'ផុតកំណត់', PINNED: 'ដាក់ខ្ទាស់',
@@ -669,6 +751,7 @@ const km: Record<AppLabelKey, string> = {
   'Back to Staff List': '← ត្រឡប់',
   'years experience': 'ឆ្នាំបទពិសោធ',
   'LOGIN EMAIL': 'អ៊ីម៉ែលចូល', 'FULL NAME': 'ឈ្មោះពេញ',
+  'PASSWORD': 'ពាក្យសម្ងាត់', 'PREFERRED LANGUAGE': 'ភាសា​ដែល​ចូល​ចិត្ត',
   'LANGUAGE': 'ភាសា', 'STAFF ID': 'អត្តលេខ',
   'Update your account password': 'ធ្វើបច្ចុប្បន្នភាពពាក្យសម្ងាត់',
   'NEW PASSWORD': 'ពាក្យសម្ងាត់ថ្មី', 'CONFIRM PASSWORD': 'បញ្ជាក់ពាក្យសម្ងាត់',
@@ -762,7 +845,23 @@ const vi: Record<AppLabelKey, string> = {
   'Search name or email': 'Tìm tên hoặc email...',
   'All Departments': 'Tất cả phòng ban', 'All Roles': 'Tất cả vai trò', 'All Status': 'Tất cả trạng thái',
   NAME: 'TÊN', ROLE: 'VAI TRÒ', DEPARTMENT: 'PHÒNG BAN', EMAIL: 'EMAIL', PHONE: 'ĐIỆN THOẠI',
-  'Active (staff)': 'Hoạt động', Inactive: 'Không hoạt động', members: 'thành viên',
+  'Active (staff)': 'Hoạt động',
+  'Day type': 'Ngày', 'OT Hours': 'Giờ', 'OT Rate': 'Tỷ lệ', 'Project (col)': 'Dự án',
+  'Add New Staff': 'Thêm nhân viên', 'Onboard a new team member': 'Giới thiệu nhân viên mới',
+  'Basic Info': 'Cơ bản', 'CV Upload': 'Tải CV', 'Preview & Submit': 'Xem · Gửi',
+  'Personal details and account setup': 'Thông tin cá nhân và thiết lập tài khoản',
+  'Regenerate': '🔄 Tạo lại',
+  'Share this password with the new staff member': 'Chia sẻ mật khẩu với nhân viên mới',
+  'Select role...': 'Chọn chức vụ...', 'Select department...': 'Chọn phòng ban...',
+  'Next — CV Upload': 'Tiếp — CV →', 'Next — Skills': 'Tiếp — Kỹ năng →', 'Next — Preview': 'Tiếp — Xem →',
+  'Back to Staff List (add)': '← Danh sách nhân viên',
+  'Creating...': '⏳ Đang tạo...', 'Create Staff Member': '🚀 Tạo nhân viên',
+  'CV not uploaded (optional)': 'Chưa tải CV (tùy chọn)',
+  'No skills added (optional)': 'Chưa thêm kỹ năng (tùy chọn)',
+  'already exists': 'đã tồn tại', 'Pending Review': '⏳ Chờ xem xét',
+  'Login Credentials (add)': 'Thông tin đăng nhập',
+  'Share with the new staff member to login': 'Chia sẻ thông tin đăng nhập với nhân viên mới',
+  'Loading...': 'Đang tải...', hrs: 'giờ', yrs: 'năm', days: 'ngày', 'upload CV': 'Chưa CV', Holidays: 'Ngày nghỉ', Inactive: 'Không hoạt động', members: 'thành viên',
   total: 'tổng', '+ New': '+ Mới',
   FROM: 'TỪ', TO: 'ĐẾN', Search: 'Tìm kiếm',
   ALL: 'TẤT CẢ', 'ACTIVE (ann)': 'HOẠT ĐỘNG', EXPIRED: 'HẾT HẠN', PINNED: 'GHIM',
@@ -813,6 +912,7 @@ const vi: Record<AppLabelKey, string> = {
   'Back to Staff List': '← Danh sách NV',
   'years experience': 'năm kinh nghiệm',
   'LOGIN EMAIL': 'EMAIL ĐĂNG NHẬP', 'FULL NAME': 'HỌ TÊN',
+  'PASSWORD': 'Mật khẩu', 'PREFERRED LANGUAGE': 'Ngôn ngữ ưa thích',
   'LANGUAGE': 'NGÔN NGỮ', 'STAFF ID': 'MÃ NV',
   'Update your account password': 'Cập nhật mật khẩu tài khoản',
   'NEW PASSWORD': 'MẬT KHẨU MỚI', 'CONFIRM PASSWORD': 'XÁC NHẬN MẬT KHẨU',
@@ -903,7 +1003,23 @@ const ko: Record<AppLabelKey, string> = {
   'Search name or email': '이름 또는 이메일 검색...',
   'All Departments': '전체 부서', 'All Roles': '전체 역할', 'All Status': '전체 상태',
   NAME: '이름', ROLE: '역할', DEPARTMENT: '부서', EMAIL: '이메일', PHONE: '전화',
-  'Active (staff)': '활성', Inactive: '비활성', members: '명',
+  'Active (staff)': '활성',
+  'Day type': '구분', 'OT Hours': '시간', 'OT Rate': '비율', 'Project (col)': '프로젝트',
+  'Add New Staff': '직원 추가', 'Onboard a new team member': '신규 직원 온보딩',
+  'Basic Info': '기본 정보', 'CV Upload': 'CV 업로드', 'Preview & Submit': '확인 · 제출',
+  'Personal details and account setup': '개인 정보 및 계정 설정',
+  'Regenerate': '🔄 재생성',
+  'Share this password with the new staff member': '신규 직원에게 비밀번호를 공유하세요',
+  'Select role...': '역할 선택...', 'Select department...': '부서 선택...',
+  'Next — CV Upload': '다음 — CV →', 'Next — Skills': '다음 — 스킬 →', 'Next — Preview': '다음 — 확인 →',
+  'Back to Staff List (add)': '← 직원 목록',
+  'Creating...': '⏳ 생성 중...', 'Create Staff Member': '🚀 직원 생성',
+  'CV not uploaded (optional)': 'CV 미업로드 (선택)',
+  'No skills added (optional)': '스킬 미추가 (선택)',
+  'already exists': '이미 존재함', 'Pending Review': '⏳ 검토 대기',
+  'Login Credentials (add)': '로그인 정보',
+  'Share with the new staff member to login': '신규 직원에게 로그인 정보를 공유하세요',
+  'Loading...': '로딩...', hrs: '시간', yrs: '년', days: '일', 'upload CV': 'CV없음', Holidays: '공휴일', Inactive: '비활성', members: '명',
   total: '개', '+ New': '+ 새로',
   FROM: '시작', TO: '종료', Search: '검색',
   ALL: '전체', 'ACTIVE (ann)': '활성', EXPIRED: '만료', PINNED: '고정',
@@ -952,6 +1068,7 @@ const ko: Record<AppLabelKey, string> = {
   'View Payslip': '급여명세서', 'Attendance': '출결', 'View Attendance': '출결 확인',
   'Profile Tab': '프로필', 'Work': '업무', 'Salary (tab)': '급여',
   'Back to Staff List': '← 직원 목록',
+  'PASSWORD': '비밀번호', 'PREFERRED LANGUAGE': '선호 언어',
   'years experience': '년 경력',
   'LOGIN EMAIL': '로그인 이메일', 'FULL NAME': '이름',
   'LANGUAGE': '언어', 'STAFF ID': '직원 ID',

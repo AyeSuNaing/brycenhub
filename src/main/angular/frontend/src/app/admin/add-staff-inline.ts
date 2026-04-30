@@ -7,19 +7,19 @@ import { HttpClient } from '@angular/common/http';
 import { AuthService } from '../services/auth.service';
 import { environment } from '../../environments/environment';
 import { CustomSelectComponent, SelectOption } from '../shared/custom-select/custom-select.component';
+import { getLabel, AppLabelKey } from '../i18n/app-labels.i18n';
 
 const BASE = environment.apiBaseUrl;
 
-// Role → color mapping (matches CLAUDE.md badge colors)
 const ROLE_COLORS: Record<string, string> = {
-  BOSS:              '#eab308',   // yellow
-  COUNTRY_DIRECTOR:  '#a855f7',   // purple
-  ADMIN:             '#ec4899',   // pink
-  PROJECT_MANAGER:   '#16a34a',   // green
-  LEADER:            '#06b6d4',   // cyan
-  UI_UX:             '#3b82f6',   // blue
-  DEVELOPER:         '#6366f1',   // indigo
-  QA:                '#f97316',   // orange
+  BOSS:              '#eab308',
+  COUNTRY_DIRECTOR:  '#a855f7',
+  ADMIN:             '#ec4899',
+  PROJECT_MANAGER:   '#16a34a',
+  LEADER:            '#06b6d4',
+  UI_UX:             '#3b82f6',
+  DEVELOPER:         '#6366f1',
+  QA:                '#f97316',
 };
 
 @Component({
@@ -34,15 +34,11 @@ export class AddStaffInline implements OnInit {
   @Output() close   = new EventEmitter<void>();
   @Output() created = new EventEmitter<void>();
 
-  // Raw API lists
   departments: any[] = [];
   roles:       any[] = [];
-
-  // Mapped to SelectOption for custom-select
   roleOptions: SelectOption[] = [];
   deptOptions: SelectOption[] = [];
 
-  // ── Form ───────────────────────────────────
   form = {
     name:              '',
     email:             '',
@@ -55,9 +51,13 @@ export class AddStaffInline implements OnInit {
     profileImage:      '',
   };
 
-  // ── Password ───────────────────────────────
   copied      = false;
-  copiedField = '';   // 'email' | 'password' | 'both' | ''
+  copiedField = '';
+
+  // ── i18n ──────────────────────────────────
+  lbl(key: AppLabelKey): string {
+    return getLabel(this.auth.getUser()?.preferredLanguage, key);
+  }
 
   generatePassword() {
     const upper   = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
@@ -70,9 +70,7 @@ export class AddStaffInline implements OnInit {
     pwd += lower  [Math.floor(Math.random() * lower.length)];
     pwd += digits [Math.floor(Math.random() * digits.length)];
     pwd += symbols[Math.floor(Math.random() * symbols.length)];
-    for (let i = 4; i < 10; i++) {
-      pwd += all[Math.floor(Math.random() * all.length)];
-    }
+    for (let i = 4; i < 10; i++) pwd += all[Math.floor(Math.random() * all.length)];
     this.form.password = pwd.split('').sort(() => Math.random() - 0.5).join('');
     this.copied = false;
     this.cdr.detectChanges();
@@ -87,7 +85,6 @@ export class AddStaffInline implements OnInit {
     });
   }
 
-  // ── Credentials copy (Preview page) ──────────────────────────
   copyCredential(text: string, field: string) {
     if (!text) return;
     navigator.clipboard.writeText(text).then(() => {
@@ -106,33 +103,28 @@ export class AddStaffInline implements OnInit {
     });
   }
 
-  // ── CV Upload state ────────────────────────
   cvFile:        File | null = null;
   cvAnalyzing    = false;
   cvPreview:     any  = null;
   showCvPreview  = false;
 
-  // ── UI state ──────────────────────────────
   isSubmitting    = false;
-  activeSection   = 'basic';   // basic | cv | skills | preview
+  activeSection   = 'basic';
   errorMsg        = '';
   successMsg      = '';
-  showSuccessCard = false;     // success card after create
-  copyEmailDone   = false;     // email copied
-  copyPwdDone     = false;     // password copied
-  canGoToList     = false;     // both copied → Go to Staff List active
+  showSuccessCard = false;
+  copyEmailDone   = false;
+  copyPwdDone     = false;
+  canGoToList     = false;
 
-  // ── Email duplicate check ──────────────
   emailChecking   = false;
   emailExists     = false;
-  emailChecked    = false;   // blur ၁ ကြိမ်ပိတ်ဖူးရင် true
+  emailChecked    = false;
 
-  // ── Accordion state (preview page) ────────
   accordionBasic  = true;
   accordionCv     = true;
   accordionSkills = true;
 
-  // ── Skills ────────────────────────────────
   skillsInput: { name: string; level: string }[] = [];
 
   langs = [
@@ -144,7 +136,6 @@ export class AddStaffInline implements OnInit {
     { code: 'ko', label: '🇰🇷 Korean' },
   ];
 
-  // ── Phone country codes ────────────────────────────────────────
   phoneCodes = [
     { flag: '🇰🇭', code: '+855', country: 'KH', digits: 9  },
     { flag: '🇲🇲', code: '+95',  country: 'MM', digits: 9  },
@@ -156,7 +147,7 @@ export class AddStaffInline implements OnInit {
 
   selectedPhoneCode = { flag: '🇰🇭', code: '+855', country: 'KH', digits: 9 };
   showPhoneDropdown = false;
-  phoneDigits       = '';   // digits only (without country code)
+  phoneDigits       = '';
 
   constructor(
     private http: HttpClient,
@@ -170,30 +161,17 @@ export class AddStaffInline implements OnInit {
     this.generatePassword();
     this.loadDepartments();
     this.loadRoles();
-
-    // Close phone dropdown on outside click
     document.addEventListener('click', () => {
-      if (this.showPhoneDropdown) {
-        this.showPhoneDropdown = false;
-        this.cdr.detectChanges();
-      }
+      if (this.showPhoneDropdown) { this.showPhoneDropdown = false; this.cdr.detectChanges(); }
     });
   }
 
-  // ── Data Loading ──────────────────────────
-
   loadDepartments() {
-    this.http.get<any[]>(`${BASE}/departments/my-branch`,
-      { headers: this.auth.getHeaders() })
+    this.http.get<any[]>(`${BASE}/departments/my-branch`, { headers: this.auth.getHeaders() })
       .subscribe({
         next: list => {
           this.departments = list;
-          this.deptOptions = list.map(d => ({
-            id:    d.id,
-            label: d.description,
-            // Departments use a neutral color
-            color: '#64748b',
-          }));
+          this.deptOptions = list.map(d => ({ id: d.id, label: d.description, color: '#64748b' }));
           this.cdr.detectChanges();
         },
         error: () => {}
@@ -201,16 +179,13 @@ export class AddStaffInline implements OnInit {
   }
 
   loadRoles() {
-    this.http.get<any[]>(`${BASE}/user-roles`,
-      { headers: this.auth.getHeaders() })
+    this.http.get<any[]>(`${BASE}/user-roles`, { headers: this.auth.getHeaders() })
       .subscribe({
         next: list => {
-          // Exclude CLIENT role
           this.roles = list.filter(r => r.name !== 'CLIENT');
           this.roleOptions = this.roles.map(r => ({
-            id:         r.id,
-            label:      r.displayName || r.name,
-            color:      r.color || ROLE_COLORS[r.name] || '#64748b',
+            id: r.id, label: r.displayName || r.name,
+            color: r.color || ROLE_COLORS[r.name] || '#64748b',
             badgeLabel: this.getRoleShort(r.name),
           }));
           this.cdr.detectChanges();
@@ -221,71 +196,38 @@ export class AddStaffInline implements OnInit {
 
   getRoleShort(name: string): string {
     const map: Record<string, string> = {
-      BOSS:             'BOSS',
-      COUNTRY_DIRECTOR: 'DIR',
-      ADMIN:            'ADMIN',
-      PROJECT_MANAGER:  'PM',
-      LEADER:           'LEAD',
-      UI_UX:            'UI/UX',
-      DEVELOPER:        'DEV',
-      QA:               'QA',
+      BOSS: 'BOSS', COUNTRY_DIRECTOR: 'DIR', ADMIN: 'ADMIN',
+      PROJECT_MANAGER: 'PM', LEADER: 'LEAD', UI_UX: 'UI/UX',
+      DEVELOPER: 'DEV', QA: 'QA',
     };
     return map[name] || name.substring(0, 4).toUpperCase();
   }
 
-  // ── CV Upload ─────────────────────────────
   onCvSelected(event: Event) {
     const input = event.target as HTMLInputElement;
-    if (input.files?.length) {
-      this.cvFile        = input.files[0];
-      this.cvPreview     = null;
-      this.showCvPreview = false;
-    }
+    if (input.files?.length) { this.cvFile = input.files[0]; this.cvPreview = null; this.showCvPreview = false; }
   }
 
   analyzeCv() {
     if (!this.cvFile) return;
-    this.cvAnalyzing = true;
-    this.errorMsg    = '';
-
+    this.cvAnalyzing = true; this.errorMsg = '';
     const formData = new FormData();
     formData.append('file', this.cvFile);
-
-    this.http.post<any>(`${BASE}/cv/analyze`, formData)
-      .subscribe({
-        next: result => {
-          this.cvPreview     = result;
-          this.showCvPreview = true;
-          this.cvAnalyzing   = false;
-          if (result.skills?.length) {
-            this.skillsInput = result.skills.map((s: any) => ({
-              name:  s.skillNameEn || s.skillName,
-              level: s.skillLevel  || '',
-            }));
-          }
-          this.cdr.detectChanges();
-        },
-        error: () => {
-          this.cvAnalyzing = false;
-          this.errorMsg    = 'CV analysis failed. Please try again.';
-          this.cdr.detectChanges();
+    this.http.post<any>(`${BASE}/cv/analyze`, formData).subscribe({
+      next: result => {
+        this.cvPreview = result; this.showCvPreview = true; this.cvAnalyzing = false;
+        if (result.skills?.length) {
+          this.skillsInput = result.skills.map((s: any) => ({ name: s.skillNameEn || s.skillName, level: s.skillLevel || '' }));
         }
-      });
+        this.cdr.detectChanges();
+      },
+      error: () => { this.cvAnalyzing = false; this.errorMsg = 'CV analysis failed.'; this.cdr.detectChanges(); }
+    });
   }
 
-  confirmCvPreview() {
-    this.showCvPreview = false;
-    this.activeSection = 'skills';
-  }
+  confirmCvPreview() { this.showCvPreview = false; this.activeSection = 'skills'; }
 
-  // ── Preview helpers ─────────────────────────────────────────
-
-  goToPreview() {
-    this.accordionBasic  = true;
-    this.accordionCv     = true;
-    this.accordionSkills = true;
-    this.activeSection   = 'preview';
-  }
+  goToPreview() { this.accordionBasic = this.accordionCv = this.accordionSkills = true; this.activeSection = 'preview'; }
 
   toggleAccordion(key: string) {
     if (key === 'basic')  this.accordionBasic  = !this.accordionBasic;
@@ -293,248 +235,135 @@ export class AddStaffInline implements OnInit {
     if (key === 'skills') this.accordionSkills = !this.accordionSkills;
   }
 
-  getSelectedRole(): any {
-    return this.roleOptions.find(r => r.id == this.form.roleId) || null;
-  }
+  getSelectedRole(): any { return this.roleOptions.find(r => r.id == this.form.roleId) || null; }
+  getSelectedDept(): any { return this.deptOptions.find(d => d.id == this.form.departmentId) || null; }
+  getLangLabel(code: string): string { return this.langs.find(l => l.code === code)?.label || code; }
 
-  getSelectedDept(): any {
-    return this.deptOptions.find(d => d.id == this.form.departmentId) || null;
-  }
-
-  getLangLabel(code: string): string {
-    const found = this.langs.find(l => l.code === code);
-    return found ? found.label : code;
-  }
-
-  /** "A; B; C" → ["A", "B", "C"] — for education/experience display */
   splitEntries(text: string | null): string[] {
     if (!text) return [];
-    return text.split(';')
-      .map((s: string) => s.trim())
-      .filter((s: string) => s.length > 0);
+    return text.split(';').map((s: string) => s.trim()).filter((s: string) => s.length > 0);
   }
-
-  /** "Swift, Firebase, MVVM" → ["Swift", "Firebase", "MVVM"] — tech stack tags */
   splitTech(tech: string | null): string[] {
     if (!tech) return [];
-    return tech.split(',')
-      .map((s: string) => s.trim())
-      .filter((s: string) => s.length > 0);
+    return tech.split(',').map((s: string) => s.trim()).filter((s: string) => s.length > 0);
   }
-
-  /** Check if any social link exists */
   hasSocialLinks(social: any): boolean {
     if (!social) return false;
-    return !!(social.linkedin || social.github || social.twitter ||
-              social.facebook || social.website || social.other);
+    return !!(social.linkedin || social.github || social.twitter || social.facebook || social.website || social.other);
   }
-
-  /** Ensure URL has https:// prefix */
   toUrl(link: string): string {
     if (!link) return '#';
-    if (link.startsWith('http://') || link.startsWith('https://')) return link;
-    return 'https://' + link;
+    return link.startsWith('http') ? link : 'https://' + link;
   }
 
   getSkillColor(level: string | null): string {
-    switch (level) {
-      case 'SENIOR':   return '#a78bfa';
-      case 'MID':      return '#60a5fa';
-      case 'BEGINNER': return '#34d399';
-      default:         return '#94a3b8';
-    }
+    const m: Record<string, string> = { SENIOR: '#a78bfa', MID: '#60a5fa', BEGINNER: '#34d399' };
+    return m[level || ''] || '#94a3b8';
   }
-
   getSkillBg(level: string | null): string {
-    switch (level) {
-      case 'SENIOR':   return 'rgba(167,139,250,0.1)';
-      case 'MID':      return 'rgba(96,165,250,0.1)';
-      case 'BEGINNER': return 'rgba(52,211,153,0.1)';
-      default:         return 'rgba(148,163,184,0.1)';
-    }
+    const m: Record<string, string> = { SENIOR: 'rgba(167,139,250,0.1)', MID: 'rgba(96,165,250,0.1)', BEGINNER: 'rgba(52,211,153,0.1)' };
+    return m[level || ''] || 'rgba(148,163,184,0.1)';
   }
-
   getSkillBorder(level: string | null): string {
-    switch (level) {
-      case 'SENIOR':   return 'rgba(167,139,250,0.3)';
-      case 'MID':      return 'rgba(96,165,250,0.3)';
-      case 'BEGINNER': return 'rgba(52,211,153,0.3)';
-      default:         return 'rgba(148,163,184,0.2)';
-    }
+    const m: Record<string, string> = { SENIOR: 'rgba(167,139,250,0.3)', MID: 'rgba(96,165,250,0.3)', BEGINNER: 'rgba(52,211,153,0.3)' };
+    return m[level || ''] || 'rgba(148,163,184,0.2)';
   }
 
-  // ── Skills ───────────────────────────────
-  addSkill() {
-    this.skillsInput.push({ name: '', level: '' });
-  }
-  removeSkill(i: number) {
-    this.skillsInput.splice(i, 1);
-  }
+  addSkill() { this.skillsInput.push({ name: '', level: '' }); }
+  removeSkill(i: number) { this.skillsInput.splice(i, 1); }
 
-  // ── Submit ────────────────────────────────
-  // ── Phone helpers ────────────────────────────────────────────
-  selectPhoneCode(c: any) {
-    this.selectedPhoneCode = c;
-    this.showPhoneDropdown = false;
-    this.updatePhone();
-  }
-
+  selectPhoneCode(c: any) { this.selectedPhoneCode = c; this.showPhoneDropdown = false; this.updatePhone(); }
   updatePhone() {
     const digits = this.phoneDigits.replace(/\D/g, '');
     this.form.phone = digits ? this.selectedPhoneCode.code + ' ' + digits : '';
   }
-
   getPhoneError(): string | null {
-    if (!this.phoneDigits) return null;  // optional
+    if (!this.phoneDigits) return null;
     const digits = this.phoneDigits.replace(/\D/g, '');
     if (digits.length < 6) return 'Phone number too short';
     return null;
   }
+  isEmailValid(email: string): boolean { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email); }
 
-  isEmailValid(email: string): boolean {
-    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-  }
-
-  // ── Real-time email duplicate check ──────────────────────────
   checkEmailExists() {
     const email = this.form.email.trim();
-    if (!email || !this.isEmailValid(email)) {
-      this.emailExists  = false;
-      this.emailChecked = false;
-      return;
-    }
-
-    this.emailChecking = true;
-    this.emailChecked  = false;
-    this.emailExists   = false;
-
-    this.http.get<{ exists: boolean }>(
-      `${BASE}/users/check-email?email=${encodeURIComponent(email)}`,
-      { headers: this.auth.getHeaders() }
-    ).subscribe({
-      next: res => {
-        this.emailExists   = res.exists;
-        this.emailChecked  = true;
-        this.emailChecking = false;
-        this.cdr.detectChanges();
-      },
-      error: () => {
-        this.emailChecking = false;
-        this.emailChecked  = false;
-        this.cdr.detectChanges();
-      }
+    if (!email || !this.isEmailValid(email)) { this.emailExists = false; this.emailChecked = false; return; }
+    this.emailChecking = true; this.emailChecked = false; this.emailExists = false;
+    this.http.get<{ exists: boolean }>(`${BASE}/users/check-email?email=${encodeURIComponent(email)}`,
+      { headers: this.auth.getHeaders() }).subscribe({
+      next: res => { this.emailExists = res.exists; this.emailChecked = true; this.emailChecking = false; this.cdr.detectChanges(); },
+      error: () => { this.emailChecking = false; this.emailChecked = false; this.cdr.detectChanges(); }
     });
   }
 
-  // ── Name mismatch check ───────────────────────────────────────
   getNameMismatchWarning(): string | null {
     if (!this.cvPreview?.name || !this.form.name) return null;
-    const basicName = this.form.name.trim().toLowerCase();
-    const cvName    = this.cvPreview.name.trim().toLowerCase();
-    if (basicName !== cvName) {
+    if (this.form.name.trim().toLowerCase() !== this.cvPreview.name.trim().toLowerCase())
       return 'CV name "' + this.cvPreview.name + '" differs from Basic Info name. Basic Info name will be used.';
-    }
     return null;
   }
 
-  // ── Validation warnings (non-blocking) ───────────────────────
   getWarnings(): string[] {
     const w: string[] = [];
-    if (!this.cvPreview) w.push('No CV uploaded — staff can upload later');
-    if (this.skillsInput.length === 0) w.push('No skills added — you can add later');
-    const nameMismatch = this.getNameMismatchWarning();
-    if (nameMismatch) w.push(nameMismatch);
+    if (!this.cvPreview) w.push(this.lbl('CV not uploaded (optional)'));
+    if (this.skillsInput.length === 0) w.push(this.lbl('No skills added (optional)'));
+    const nm = this.getNameMismatchWarning();
+    if (nm) w.push(nm);
     return w;
   }
 
   submit() {
     this.errorMsg = '';
-
-    // ── Required field validation ──
     const errors: string[] = [];
     if (!this.form.name.trim())     errors.push('Full Name is required');
     if (!this.form.email.trim())     errors.push('Email is required');
     else if (!this.isEmailValid(this.form.email)) errors.push('Invalid email format');
     if (!this.form.password.trim()) errors.push('Password is required');
-    if (!this.form.roleId)            errors.push('Role is required');
-
-    // ── Phone format (optional but if entered must be valid) ──
+    if (!this.form.roleId)          errors.push('Role is required');
     const phoneErr = this.getPhoneError();
     if (phoneErr) errors.push(phoneErr);
-
-    if (errors.length > 0) {
-      this.errorMsg = errors.join(' · ');
-      return;
-    }
+    if (errors.length > 0) { this.errorMsg = errors.join(' · '); return; }
 
     this.isSubmitting = true;
-
-    const body = { ...this.form };
-    // role String မပို့ဘဲ roleId ပဲ ပို့မယ်
-    // Spring Boot UserDto မှာ role ဖြုတ်ပြီ → roleId @NotNull ပဲ လိုတယ်
-
-    this.http.post<any>(`${BASE}/users`, body,
-      { headers: this.auth.getHeaders() })
-      .subscribe({
-        next: user => {
-          if (this.cvFile) {
-            this.uploadCv(user.id);
-          } else if (this.skillsInput.length > 0) {
-            this.saveSkills(user.id);
-          } else {
-            this.onSuccess();
-          }
-        },
-        error: (err) => {
-          this.isSubmitting = false;
-          this.errorMsg     = err?.error?.message || 'Failed to create staff';
-          this.cdr.detectChanges();
-        }
-      });
+    this.http.post<any>(`${BASE}/users`, { ...this.form }, { headers: this.auth.getHeaders() }).subscribe({
+      next: user => {
+        if (this.cvFile) this.uploadCv(user.id);
+        else if (this.skillsInput.length > 0) this.saveSkills(user.id);
+        else this.onSuccess();
+      },
+      error: (err) => { this.isSubmitting = false; this.errorMsg = err?.error?.message || 'Failed to create staff'; this.cdr.detectChanges(); }
+    });
   }
 
   uploadCv(userId: number) {
     const formData = new FormData();
-    formData.append('file',   this.cvFile!);
+    formData.append('file', this.cvFile!);
     formData.append('userId', String(userId));
-
-    this.http.post(`${BASE}/cv/upload`, formData)
-      .subscribe({
-        next:  () => this.skillsInput.length > 0 ? this.saveSkills(userId) : this.onSuccess(),
-        error: () => this.onSuccess()
-      });
+    this.http.post(`${BASE}/cv/upload`, formData).subscribe({
+      next: () => this.skillsInput.length > 0 ? this.saveSkills(userId) : this.onSuccess(),
+      error: () => this.onSuccess()
+    });
   }
 
   saveSkills(userId: number) {
     const skills = this.skillsInput.filter(s => s.name.trim());
     if (!skills.length) { this.onSuccess(); return; }
-
-    this.http.post(`${BASE}/member-skills/bulk`, { userId, skills },
-      { headers: this.auth.getHeaders() })
-      .subscribe({
-        next:  () => this.onSuccess(),
-        error: () => this.onSuccess()
-      });
+    this.http.post(`${BASE}/member-skills/bulk`, { userId, skills }, { headers: this.auth.getHeaders() }).subscribe({
+      next: () => this.onSuccess(), error: () => this.onSuccess()
+    });
   }
 
-  onSuccess() {
-    this.isSubmitting   = false;
-    this.showSuccessCard = true;
-    this.cdr.detectChanges();
-  }
+  onSuccess() { this.isSubmitting = false; this.showSuccessCard = true; this.cdr.detectChanges(); }
 
   copySuccessField(text: string, field: 'email' | 'pwd') {
     if (!text) return;
     navigator.clipboard.writeText(text).then(() => {
       if (field === 'email') this.copyEmailDone = true;
       if (field === 'pwd')   this.copyPwdDone   = true;
-      // Both copied → enable Go to Staff List
       if (this.copyEmailDone && this.copyPwdDone) this.canGoToList = true;
       this.cdr.detectChanges();
     });
   }
 
-  goToStaffList() {
-    this.created.emit();
-  }
+  goToStaffList() { this.created.emit(); }
 }
