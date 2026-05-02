@@ -554,3 +554,35 @@
   .au-done-stats { border-color: #e2e8f0; }
   .au-empty-state { border-color: #cbd5e1; background: #f8fafc; }
 }
+
+/* ════════════════════════════════════════════════════
+   ADD THIS TO: attendance-upload-inline.scss (bottom)
+   Theme-aware preview bar + actions bar
+════════════════════════════════════════════════════ */
+
+/* Preview stats bar — light mode default (white bg) */
+.au-preview-bar {
+  background: #ffffff;
+}
+
+/* Preview stats bar — dark mode */
+:host-context(body.dark) .au-preview-bar {
+  background: #0d1424;
+}
+
+/* Actions/Save bar — light mode */
+.au-actions {
+  background: #ffffff !important;
+  backdrop-filter: none;
+}
+
+/* Actions/Save bar — dark mode */
+:host-context(body.dark) .au-actions {
+  background: #0d1424 !important;
+}
+
+/* au-btn-ghost — force visible in both modes */
+.au-btn-ghost {
+  color: inherit !important;
+  opacity: 1 !important;
+}

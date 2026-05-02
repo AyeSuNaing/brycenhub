@@ -35,15 +35,31 @@
   ════════════════════════════════════════ -->
   <ng-container *ngIf="mainTab==='upload'">
 
-    <!-- Step indicator -->
-    <div style="display:flex;align-items:center;gap:6px;padding:10px 20px;flex-shrink:0;">
-      <span class="au-dot" [class.au-dot-active]="step>=1">1</span>
-      <span class="au-dot-line"></span>
-      <span class="au-dot" [class.au-dot-active]="step>=2">2</span>
+    <!-- Step indicator with labels -->
+    <div style="display:flex;align-items:center;gap:8px;padding:10px 20px;flex-shrink:0;
+      border-bottom:1px solid rgba(255,255,255,0.05);">
+      <div style="display:flex;align-items:center;gap:6px;">
+        <div style="width:24px;height:24px;border-radius:50%;display:flex;align-items:center;
+          justify-content:center;font-size:11px;font-weight:800;transition:all 0.2s;"
+          [style.background]="step>=1?'#16a34a':'rgba(148,163,184,0.15)'"
+          [style.color]="step>=1?'white':'#64748b'">1</div>
+        <span style="font-size:11px;font-weight:600;"
+          [style.color]="step>=1?'#22c55e':'#64748b'">Upload & Preview</span>
+      </div>
+      <div style="flex:1;max-width:60px;height:2px;border-radius:2px;"
+        [style.background]="step>=2?'#16a34a':'rgba(148,163,184,0.2)'"></div>
+      <div style="display:flex;align-items:center;gap:6px;">
+        <div style="width:24px;height:24px;border-radius:50%;display:flex;align-items:center;
+          justify-content:center;font-size:11px;font-weight:800;transition:all 0.2s;"
+          [style.background]="step>=2?'#16a34a':'rgba(148,163,184,0.15)'"
+          [style.color]="step>=2?'white':'#64748b'">2</div>
+        <span style="font-size:11px;font-weight:600;"
+          [style.color]="step>=2?'#22c55e':'#64748b'">Done</span>
+      </div>
     </div>
 
     <!-- STEP 1 -->
-    <div *ngIf="step===1" class="au-step-body">
+    <div *ngIf="step===1" class="au-step-body" style="padding:0;">
 
       <!-- Dropzone -->
       <div *ngIf="!selectedFile" class="au-dropzone"
@@ -88,70 +104,112 @@
 
       <!-- Preview -->
       <div *ngIf="preview && !isParsing">
-        <!-- Summary chips -->
-        <div class="au-summary">
-          <div class="au-sum-card au-sum-total">
-            <div class="au-sum-label">Total</div>
-            <div class="au-sum-value">{{ preview.totalRows }}</div>
+
+        <!-- ── Stats + Controls bar ── -->
+        <div style="display:flex;align-items:center;gap:6px;padding:10px 16px;flex-shrink:0;
+          border-bottom:1px solid rgba(128,128,128,0.15);position:sticky;top:0;z-index:10;"
+          class="au-preview-bar">
+
+          <!-- Stats chips -->
+          <div style="display:flex;gap:6px;align-items:center;flex-shrink:0;">
+            <div style="display:flex;align-items:center;gap:5px;padding:5px 10px;border-radius:8px;
+              background:rgba(128,128,128,0.1);border:1px solid rgba(128,128,128,0.2);">
+              <span style="font-size:9px;font-weight:700;opacity:0.5;">TOTAL</span>
+              <span style="font-size:13px;font-weight:800;">{{ preview.totalRows }}</span>
+            </div>
+            <div (click)="setFilter('MATCHED')" style="display:flex;align-items:center;gap:5px;
+              padding:5px 10px;border-radius:8px;cursor:pointer;transition:all 0.15s;"
+              [style.background]="filterStatus==='MATCHED'?'rgba(34,197,94,0.2)':'rgba(34,197,94,0.08)'"
+              [style.border]="filterStatus==='MATCHED'?'1px solid rgba(34,197,94,0.5)':'1px solid rgba(34,197,94,0.2)'">
+              <span style="font-size:9px;color:#16a34a;font-weight:700;">✓ MATCHED</span>
+              <span style="font-size:13px;font-weight:800;color:#16a34a;">{{ preview.matchedCount }}</span>
+            </div>
+            <div (click)="setFilter('UNMATCHED')" *ngIf="preview.unmatchedCount > 0"
+              style="display:flex;align-items:center;gap:5px;padding:5px 10px;border-radius:8px;cursor:pointer;"
+              [style.background]="filterStatus==='UNMATCHED'?'rgba(239,68,68,0.2)':'rgba(239,68,68,0.08)'"
+              [style.border]="filterStatus==='UNMATCHED'?'1px solid rgba(239,68,68,0.5)':'1px solid rgba(239,68,68,0.2)'">
+              <span style="font-size:9px;color:#dc2626;font-weight:700;">✕ UNMATCHED</span>
+              <span style="font-size:13px;font-weight:800;color:#dc2626;">{{ preview.unmatchedCount }}</span>
+            </div>
+            <div (click)="setFilter('DUPLICATE')" *ngIf="preview.duplicateCount > 0"
+              style="display:flex;align-items:center;gap:5px;padding:5px 10px;border-radius:8px;cursor:pointer;"
+              [style.background]="filterStatus==='DUPLICATE'?'rgba(245,158,11,0.2)':'rgba(245,158,11,0.08)'"
+              [style.border]="filterStatus==='DUPLICATE'?'1px solid rgba(245,158,11,0.5)':'1px solid rgba(245,158,11,0.2)'">
+              <span style="font-size:9px;color:#d97706;font-weight:700;">⚠ DUP</span>
+              <span style="font-size:13px;font-weight:800;color:#d97706;">{{ preview.duplicateCount }}</span>
+            </div>
           </div>
-          <div class="au-sum-card" (click)="setFilter('MATCHED')" [class.au-sum-active]="filterStatus==='MATCHED'">
-            <div class="au-sum-label">✓ {{ lbl('MATCHED') }}</div>
-            <div class="au-sum-value" style="color:#22c55e;">{{ preview.matchedCount }}</div>
-          </div>
-          <div class="au-sum-card" (click)="setFilter('UNMATCHED')" [class.au-sum-active]="filterStatus==='UNMATCHED'">
-            <div class="au-sum-label">✕ {{ lbl('UNMATCHED') }}</div>
-            <div class="au-sum-value" style="color:#ef4444;">{{ preview.unmatchedCount }}</div>
-          </div>
-          <div class="au-sum-card" (click)="setFilter('DUPLICATE')" [class.au-sum-active]="filterStatus==='DUPLICATE'">
-            <div class="au-sum-label">⚠ {{ lbl('DUPLICATE') }}</div>
-            <div class="au-sum-value" style="color:#f59e0b;">{{ preview.duplicateCount }}</div>
-          </div>
-          <div class="au-sum-card" (click)="setFilter('INVALID')" [class.au-sum-active]="filterStatus==='INVALID'">
-            <div class="au-sum-label">✗ {{ lbl('INVALID (att)') }}</div>
-            <div class="au-sum-value" style="color:#94a3b8;">{{ preview.invalidCount }}</div>
-          </div>
+
+          <div style="width:1px;height:24px;background:rgba(128,128,128,0.2);flex-shrink:0;margin:0 2px;"></div>
+
+          <input [(ngModel)]="searchQuery" placeholder="Search name or email..."
+            style="flex:1;min-width:0;padding:6px 10px;border-radius:8px;font-size:11px;
+              border:1px solid rgba(128,128,128,0.25);background:rgba(128,128,128,0.06);
+              color:inherit;font-family:inherit;outline:none;"/>
+
+          <button class="au-btn-ghost" style="font-size:10px;white-space:nowrap;"
+            (click)="expandAll2()">⊞ Expand</button>
+          <button class="au-btn-ghost" style="font-size:10px;white-space:nowrap;"
+            (click)="collapseAll2()">⊟ Collapse</button>
+          <button class="au-btn-ghost" style="font-size:10px;white-space:nowrap;"
+            (click)="selectAllMatched()">✓ All</button>
+          <button class="au-btn-ghost" style="font-size:10px;white-space:nowrap;"
+            (click)="deselectAll()">✕ None</button>
         </div>
 
-        <!-- Toolbar -->
-        <div class="au-toolbar">
-          <input class="au-search" [(ngModel)]="searchQuery" placeholder="Search name, email..."/>
-          <button class="au-btn-ghost" style="font-size:10px;" (click)="expandAll2()">⊞ Expand</button>
-          <button class="au-btn-ghost" style="font-size:10px;" (click)="collapseAll2()">⊟ Collapse</button>
-          <span style="margin-left:auto;font-size:10px;opacity:0.5;">
-            {{ selectedCount }} rows selected
-          </span>
-          <button class="au-btn-ghost" style="font-size:10px;" (click)="selectAllMatched()">Select matched</button>
-          <button class="au-btn-ghost" style="font-size:10px;" (click)="deselectAll()">Deselect</button>
-        </div>
-
-        <!-- Staff cards -->
-        <div class="au-cards">
+        <!-- ── Staff cards ── -->
+        <div class="au-cards" style="padding:8px 16px;">
           <div *ngFor="let g of filteredGroups" class="au-card"
                [class.au-card-issue]="g.hasIssues"
                [class.au-card-expanded]="g.expanded">
             <div class="au-card-head" (click)="toggleExpand(g)">
-              <div class="au-card-left">
+
+              <!-- LEFT: checkbox + avatar + name/role/email -->
+              <div style="display:flex;align-items:center;flex:1;min-width:0;">
                 <input type="checkbox" [checked]="g.allSelected"
                        [disabled]="g.matchedDays===0"
                        (click)="toggleGroupSelection(g,$event)"
-                       style="margin-right:8px;cursor:pointer;">
-                <div class="au-card-dot" [style.background]="groupStatusDot(g.status)"></div>
-                <div class="au-card-info">
-                  <div class="au-card-name">{{ g.matchedName || g.email }}</div>
-                  <div class="au-card-meta">
-                    <span *ngIf="g.matchedRole" class="au-card-role">{{ g.matchedRole }}</span>
-                    <span *ngIf="g.matchedBranch" class="au-card-branch">· {{ g.matchedBranch }}</span>
-                    <span class="au-card-email">{{ g.email }}</span>
+                       style="margin-right:10px;cursor:pointer;width:14px;height:14px;flex-shrink:0;">
+
+                <!-- Avatar -->
+                <div style="width:36px;height:36px;border-radius:10px;flex-shrink:0;
+                  display:flex;align-items:center;justify-content:center;
+                  font-size:14px;font-weight:800;color:white;margin-right:12px;"
+                  [style.background]="groupStatusDot(g.status)==='#22c55e'
+                    ? 'linear-gradient(135deg,#14532d,#16a34a)'
+                    : 'linear-gradient(135deg,#7c2d12,#ef4444)'">
+                  {{ (g.matchedName || g.email || '?').charAt(0).toUpperCase() }}
+                </div>
+
+                <!-- Name + meta -->
+                <div style="flex:1;min-width:0;">
+                  <div style="font-size:12px;font-weight:700;white-space:nowrap;
+                    overflow:hidden;text-overflow:ellipsis;">
+                    {{ g.matchedName || g.email }}
+                  </div>
+                  <div style="font-size:10px;opacity:0.45;margin-top:2px;white-space:nowrap;
+                    overflow:hidden;text-overflow:ellipsis;">
+                    <span *ngIf="g.matchedRole">{{ g.matchedRole }}</span>
+                    <span *ngIf="g.matchedBranch"> · {{ g.matchedBranch }}</span>
+                    <span *ngIf="g.email"> · {{ g.email }}</span>
                   </div>
                 </div>
               </div>
-              <div class="au-card-right">
-                <span class="au-card-days">{{ g.matchedDays }}/{{ g.totalDays }} days</span>
+
+              <!-- RIGHT: days + badge + chevron -->
+              <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;margin-left:12px;">
+                <span style="font-size:12px;font-weight:700;opacity:0.75;white-space:nowrap;">
+                  {{ g.matchedDays }}/{{ g.totalDays }} days
+                </span>
                 <span class="au-card-status-badge"
                       [style.background]="statusBg(g.status)"
                       [style.color]="statusColor(g.status)">{{ g.status }}</span>
-                <div class="au-card-chevron">{{ g.expanded ? '▾' : '▸' }}</div>
+                <div style="width:26px;height:26px;display:flex;align-items:center;justify-content:center;
+                  border-radius:7px;background:rgba(255,255,255,0.05);font-size:13px;flex-shrink:0;">
+                  {{ g.expanded ? '▾' : '▸' }}
+                </div>
               </div>
+
             </div>
             <div *ngIf="g.expanded" class="au-card-body">
               <table class="au-day-table">
@@ -186,17 +244,31 @@
           </div>
         </div>
 
-        <div *ngIf="saveError" class="au-error">⚠️ {{ saveError }}</div>
-
-        <div class="au-actions">
-          <button class="au-btn-ghost" (click)="removeFile()">✕ Clear</button>
-          <button class="au-btn-primary"
-                  [disabled]="selectedCount===0 || isSaving"
-                  (click)="confirmSave()">
-            <span *ngIf="!isSaving">💾 {{ lbl('Save selected') }} ({{ selectedCount }})</span>
+        <!-- ── Save bar ── -->
+        <div class="au-actions" style="
+          border-top:1px solid rgba(128,128,128,0.15);
+          padding:10px 16px;display:flex;align-items:center;gap:10px;">
+          <span style="font-size:11px;opacity:0.5;">
+            <b style="color:#16a34a;">{{ selectedCount }}</b> / {{ preview.totalRows }} selected
+          </span>
+          <div style="flex:1;"></div>
+          <button style="padding:8px 16px;border-radius:9px;font-size:11px;font-weight:600;
+            cursor:pointer;background:rgba(128,128,128,0.1);
+            border:1px solid rgba(128,128,128,0.25);color:inherit;font-family:inherit;
+            transition:all 0.15s;"
+            (click)="clearAll()">✕ Clear</button>
+          <button style="padding:8px 20px;border-radius:9px;border:none;font-size:12px;font-weight:800;
+            cursor:pointer;color:white;font-family:inherit;transition:all 0.2s;
+            display:flex;align-items:center;gap:6px;"
+            [style.background]="selectedCount===0||isSaving?'rgba(22,163,74,0.35)':'#16a34a'"
+            [style.cursor]="selectedCount===0||isSaving?'not-allowed':'pointer'"
+            [disabled]="selectedCount===0 || isSaving"
+            (click)="confirmSave()">
+            <span *ngIf="!isSaving">💾 Save ({{ selectedCount }})</span>
             <span *ngIf="isSaving">⏳ Saving...</span>
           </button>
         </div>
+
       </div>
     </div>
 
@@ -221,8 +293,8 @@
           </div>
         </div>
         <div class="au-done-actions">
-          <button class="au-btn-ghost" (click)="back.emit()">{{ lbl('Back to Dashboard (att)') }}</button>
-          <button class="au-btn-primary" (click)="resetUpload()">{{ lbl('Upload another file') }}</button>
+          <button class="au-btn-ghost" (click)="resetUpload()">{{ lbl('Upload another file') }}</button>
+          <button class="au-btn-primary" (click)="setMainTab('view')">📊 View Attendance</button>
         </div>
       </div>
     </div>

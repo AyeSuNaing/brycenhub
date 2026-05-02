@@ -120,10 +120,11 @@
             <span class="nav-icon">⏰</span>
             <span>{{ lbl('OT Request') }}</span>
           </div>
-          <!-- All Projects -->
-          <div class="sidebar-item" [routerLink]="['/projects']">
-            <span class="nav-icon">📁</span>
-            <span>{{ lbl('All Projects') }}</span>
+          <!-- Attendance Log — ✅ closeProject() ထည့် -->
+          <div class="sidebar-item" [class.active]="activeView==='attendance'"
+            (click)="closeProject(); setView('attendance')">
+            <span class="nav-icon">📋</span>
+            <span>Attendance Log</span>
           </div>
           <!-- New Project -->
           <div *ngIf="canCreateProject()" (click)="openNewProject()"
@@ -227,6 +228,13 @@
     <app-change-password-inline *ngIf="activeView==='change-password'"
       (back)="setView('dashboard')">
     </app-change-password-inline>
+
+    <!-- ✅ Attendance Log — full width, no right sidebar -->
+    <app-member-attendance-inline
+      *ngIf="activeView==='attendance' && !showProjectDetail && !showNewProject"
+      (back)="setView('dashboard')"
+      style="flex:1;min-width:0;overflow:hidden;">
+    </app-member-attendance-inline>
 
     <!-- My Profile -->
     <app-staff-profile-inline *ngIf="activeView==='my-profile' && selectedStaffId > 0"
@@ -399,9 +407,11 @@
 
     </main>
 
-    <!-- RIGHT SIDEBAR -->
+    <!-- ✅ RIGHT SIDEBAR — attendance ပါထည့် -->
     <aside *ngIf="!showProjectDetail && !showNewProject &&
-      (activeView==='dashboard' || activeView==='leave' || activeView==='ot' || activeView==='announce' || activeView==='holidays' || activeView==='tax' || activeView==='change-password' || activeView==='my-profile')"
+      (activeView==='dashboard' || activeView==='leave' || activeView==='ot' ||
+       activeView==='announce' || activeView==='holidays' || activeView==='tax' ||
+       activeView==='change-password' || activeView==='my-profile' || activeView==='attendance')"
       class="right-sidebar" style="width:260px;min-width:260px;max-width:260px;">
 
       <!-- My Tasks -->

@@ -663,8 +663,9 @@ export class AttendanceUploadInline implements OnInit {
       { rows: payload }, { headers: this.auth.getHeaders() }).subscribe({
       next: res => {
         this.saveResult = res; this.isSaving = false; this.step = 2;
-        // ✅ Auto-create announcement after successful upload
-        this.createAttendanceAnnouncement(res.savedCount + res.updatedCount);
+        // ✅ Get actual pay period from uploaded rows
+        const allRows = this.groups.flatMap(g => g.rows.filter(r => r.selected));
+        this.createAttendanceAnnouncement(res.savedCount + res.updatedCount, allRows);
         this.cdr.detectChanges();
       },
       error: err => {
@@ -682,37 +683,52 @@ export class AttendanceUploadInline implements OnInit {
   }
 
   // ✅ Auto-create announcement after attendance upload
-  createAttendanceAnnouncement(totalRows: number): void {
-    const now      = new Date();
-    const month    = now.toLocaleString('en', { month: 'long', year: 'numeric' });
-    // Salary calculate time — next noon (12:00)
+  createAttendanceAnnouncement(totalRows: number, rows: ParsedRow[] = []): void {
+    // ✅ Detect pay period from actual uploaded dates
+    let month = new Date().toLocaleString('en', { month: 'long', year: 'numeric' });
+    let periodLabel = month;
+
+    if (rows.length > 0) {
+      // Get all work dates from uploaded rows
+      const dates = rows
+        .map(r => r.workDate)
+        .filter(d => !!d)
+        .sort();
+      if (dates.length > 0) {
+        const minDate = new Date(dates[0]);
+        const maxDate = new Date(dates[dates.length - 1]);
+        const minStr  = minDate.toLocaleDateString('en', { month: 'short', day: 'numeric', year: 'numeric' });
+        const maxStr  = maxDate.toLocaleDateString('en', { month: 'short', day: 'numeric', year: 'numeric' });
+        periodLabel   = `${minStr} – ${maxStr}`;
+
+        // Pay period month = month of maxDate (last date ရဲ့ month)
+        month = maxDate.toLocaleString('en', { month: 'long', year: 'numeric' });
+      }
+    }
+
     const calcTime = new Date();
     calcTime.setHours(12, 0, 0, 0);
-    if (calcTime <= now) calcTime.setDate(calcTime.getDate() + 1);
+    if (calcTime <= new Date()) calcTime.setDate(calcTime.getDate() + 1);
     const calcStr = calcTime.toLocaleString('en', {
       month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true
     });
 
     const title   = `📅 Attendance Upload Complete — ${month}`;
-    const content = `Fingerprint attendance data (${totalRows} records) has been uploaded successfully.\n\n` +
+    const content = `Fingerprint attendance data (${totalRows} records) for **${periodLabel}** has been uploaded successfully.\n\n` +
       `✅ Please review your attendance records and report any discrepancies.\n\n` +
       `💰 Salary calculation will be processed at ${calcStr}.\n\n` +
       `If you notice any errors in your attendance, contact HR before the calculation time.`;
 
+    const user     = this.auth.getUser();
+    const branchId = this.currentUser?.branchId || user?.branchId || 3;
+
     this.http.post(
       `${BASE}/announcements`,
-      {
-        title,
-        content,
-        priority:    'IMPORTANT',
-        targetScope: 'BRANCH',
-        targetId:    this.currentUser?.branchId,
-        expireDays:  1,   // 24 နာရီ expire
-      },
+      { title, content, priority: 'IMPORTANT', targetScope: 'BRANCH', targetId: branchId, expireDays: 1 },
       { headers: this.auth.getHeaders() }
     ).subscribe({
-      next: () => {},
-      error: () => {} // silently fail — main save already done
+      next:  (res) => console.log('[Attendance Announcement] created OK', res),
+      error: (err) => console.error('[Attendance Announcement] failed', err),
     });
   }
 }

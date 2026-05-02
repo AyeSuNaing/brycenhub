@@ -22,6 +22,7 @@ import { ChangePasswordInline } from '../shared/change-password/change-password-
 import { HolidaysInline } from '../admin/holidays-inline';
 import { TaxBracketsInline } from '../admin/tax-brackets-inline';
 import { StaffProfileInline } from '../admin/staff-profile-inline';
+import { MemberAttendanceInline } from '../shared/attendance-log/member-attendance-inline';
 // ✅ i18n
 import { getLabel, AppLabelKey } from '../i18n/app-labels.i18n';
 
@@ -53,6 +54,7 @@ const LOGO_SVG = `data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIiIGhlaWdodD0iMzIi
     HolidaysInline,        // ✅ NEW
     TaxBracketsInline,     // ✅ NEW
     StaffProfileInline,    // ✅ NEW
+    MemberAttendanceInline, // ✅ NEW
   ],
   templateUrl: './member-dashboard.html',
   styleUrl: './member-dashboard.scss'

@@ -1,0 +1,240 @@
+// member-attendance-inline.scss
+
+.mai-wrap {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+// ── Header ──────────────────────────────
+.mai-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  flex-shrink: 0;
+}
+
+.mai-back {
+  font-size: 11px;
+  opacity: 0.5;
+  background: none;
+  border: none;
+  color: inherit;
+  padding: 6px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  transition: opacity 0.15s;
+
+  &:hover { opacity: 1; }
+}
+
+.mai-title {
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.mai-subtitle {
+  font-size: 10px;
+  opacity: 0.4;
+  margin-top: 1px;
+}
+
+// ── Toolbar ──────────────────────────────
+.mai-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 20px;
+  flex-shrink: 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  flex-wrap: wrap;
+}
+
+.mai-period-wrap { display: flex; flex-direction: column; gap: 4px; }
+
+.mai-label {
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  opacity: 0.4;
+}
+
+.mai-select {
+  padding: 8px 12px;
+  border-radius: 9px;
+  font-size: 12px;
+  font-weight: 600;
+  border: 1px solid rgba(99, 102, 241, 0.3);
+  background: rgba(10, 15, 30, 0.95);
+  color: inherit;
+  font-family: inherit;
+  cursor: pointer;
+  min-width: 180px;
+  outline: none;
+  transition: border-color 0.15s;
+
+  &:focus { border-color: rgba(99, 102, 241, 0.6); }
+}
+
+// ── Stats ──────────────────────────────
+.mai-stats {
+  display: flex;
+  gap: 10px;
+}
+
+.mai-stat {
+  padding: 8px 14px;
+  border-radius: 9px;
+  text-align: center;
+  border: 1px solid;
+
+  &-green { background: rgba(34, 197, 94, 0.08); border-color: rgba(34, 197, 94, 0.2); }
+  &-yellow { background: rgba(245, 158, 11, 0.08); border-color: rgba(245, 158, 11, 0.2); }
+  &-red { background: rgba(239, 68, 68, 0.08); border-color: rgba(239, 68, 68, 0.2); }
+  &-gray { background: rgba(148, 163, 184, 0.08); border-color: rgba(148, 163, 184, 0.15); }
+}
+
+.mai-stat-val {
+  font-size: 18px;
+  font-weight: 800;
+  .mai-stat-green & { color: #22c55e; }
+  .mai-stat-yellow & { color: #f59e0b; }
+  .mai-stat-red & { color: #ef4444; }
+  .mai-stat-gray & { color: #94a3b8; }
+}
+
+.mai-stat-lbl {
+  font-size: 9px;
+  opacity: 0.5;
+  margin-top: 2px;
+}
+
+// ── Loading ──────────────────────────────
+.mai-loading {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 12px;
+  opacity: 0.4;
+}
+
+.mai-spinner {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 3px solid rgba(99, 102, 241, 0.3);
+  border-top-color: #6366f1;
+  animation: mai-spin 0.8s linear infinite;
+}
+
+@keyframes mai-spin {
+  to { transform: rotate(360deg); }
+}
+
+.mai-loading-text { font-size: 11px; }
+
+// ── Content ──────────────────────────────
+.mai-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 20px;
+}
+
+// ── Empty ──────────────────────────────
+.mai-empty {
+  text-align: center;
+  padding: 60px 20px;
+  opacity: 0.3;
+}
+
+.mai-empty-icon { font-size: 32px; margin-bottom: 10px; }
+.mai-empty-title { font-size: 13px; font-weight: 600; }
+.mai-empty-sub { font-size: 11px; margin-top: 4px; }
+
+// ── Table ──────────────────────────────
+.mai-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11px;
+}
+
+.mai-thead-row {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.mai-th {
+  padding: 8px 12px;
+  text-align: center;
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  opacity: 0.4;
+
+  &.mai-th-left { text-align: left; }
+}
+
+.mai-row {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  transition: background 0.1s;
+
+  &:hover { background: rgba(255, 255, 255, 0.03) !important; }
+  &.mai-row-alt { background: rgba(255, 255, 255, 0.015); }
+  &.mai-row-dayoff { opacity: 0.65; }
+  &.mai-row-absent td { opacity: 0.7; }
+}
+
+.mai-td {
+  padding: 9px 12px;
+
+  &-date { font-weight: 600; }
+  &-day { text-align: center; opacity: 0.45; font-size: 10px; }
+  &-center { text-align: center; }
+  &-mono { font-family: monospace; }
+  &-muted { opacity: 0.8; }
+  &-hours { opacity: 0.6; font-size: 10px; }
+}
+
+// ── Late badge ──────────────────────────
+.mai-late-badge {
+  font-size: 8px;
+  margin-left: 3px;
+  color: #f59e0b;
+  font-weight: 700;
+}
+
+// ── Status badge ──────────────────────────
+.mai-status-badge {
+  font-size: 10px;
+  padding: 2px 9px;
+  border-radius: 20px;
+  font-weight: 700;
+}
+
+// ── Source badge ──────────────────────────
+.mai-source-badge {
+  font-size: 9px;
+  padding: 2px 7px;
+  border-radius: 6px;
+  font-family: monospace;
+
+  &.mai-source-fp {
+    background: rgba(99, 102, 241, 0.1);
+    color: #818cf8;
+  }
+
+  &.mai-source-manual {
+    background: rgba(245, 158, 11, 0.1);
+    color: #f59e0b;
+  }
+}

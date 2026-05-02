@@ -1,0 +1,122 @@
+<div class="mai-wrap">
+
+  <!-- ── Header ── -->
+  <div class="mai-header">
+    <button class="mai-back" (click)="back.emit()">← Back</button>
+    <div>
+      <div class="mai-title">📋 Attendance Log</div>
+      <div class="mai-subtitle">My attendance history</div>
+    </div>
+  </div>
+
+  <!-- ── Period + Stats ── -->
+  <div class="mai-toolbar">
+    <div class="mai-period-wrap">
+      <div class="mai-label">PAY PERIOD</div>
+      <select class="mai-select" [(ngModel)]="selectedPeriod" (change)="loadLogs()">
+        <option *ngFor="let p of periods" [value]="p.value">{{ p.label }}</option>
+      </select>
+    </div>
+
+    <div class="mai-stats" *ngIf="!loading && logs.length > 0">
+      <div class="mai-stat mai-stat-green">
+        <div class="mai-stat-val">{{ presentCount }}</div>
+        <div class="mai-stat-lbl">PRESENT</div>
+      </div>
+      <div class="mai-stat mai-stat-yellow">
+        <div class="mai-stat-val">{{ absentCount }}</div>
+        <div class="mai-stat-lbl">ABSENT</div>
+      </div>
+      <div class="mai-stat mai-stat-red">
+        <div class="mai-stat-val">{{ dayoffCount }}</div>
+        <div class="mai-stat-lbl">DAY OFF</div>
+      </div>
+      <div class="mai-stat mai-stat-gray">
+        <div class="mai-stat-val">{{ avgTimeIn }}</div>
+        <div class="mai-stat-lbl">AVG TIME IN</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Loading ── -->
+  <div *ngIf="loading" class="mai-loading">
+    <div class="mai-spinner"></div>
+    <div class="mai-loading-text">Loading attendance...</div>
+  </div>
+
+  <!-- ── Content ── -->
+  <div *ngIf="!loading" class="mai-content">
+
+    <!-- Empty -->
+    <div *ngIf="logs.length === 0" class="mai-empty">
+      <div class="mai-empty-icon">📋</div>
+      <div class="mai-empty-title">No attendance records</div>
+      <div class="mai-empty-sub">for this pay period</div>
+    </div>
+
+    <!-- Table -->
+    <table *ngIf="logs.length > 0" class="mai-table">
+      <thead>
+        <tr class="mai-thead-row">
+          <th class="mai-th mai-th-left">DATE</th>
+          <th class="mai-th">DAY</th>
+          <th class="mai-th">TIME IN</th>
+          <th class="mai-th">TIME OUT</th>
+          <th class="mai-th">HOURS</th>
+          <th class="mai-th">STATUS</th>
+          <th class="mai-th">SOURCE</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let log of logs; let i=index"
+          class="mai-row"
+          [class.mai-row-alt]="i % 2 !== 0"
+          [class.mai-row-dayoff]="log.isDayoff"
+          [class.mai-row-absent]="!log.timeIn && !log.isDayoff">
+
+          <!-- Date -->
+          <td class="mai-td mai-td-date">{{ log.workDate }}</td>
+
+          <!-- Day -->
+          <td class="mai-td mai-td-day">{{ getDayName(log.workDate) }}</td>
+
+          <!-- Time In -->
+          <td class="mai-td mai-td-center mai-td-mono"
+            [style.color]="getTimeInColor(log)">
+            <span>{{ log.timeIn ? log.timeIn.substring(0,5) : '—' }}</span>
+            <span *ngIf="log.timeIn && isLate(log.timeIn)" class="mai-late-badge">LATE</span>
+          </td>
+
+          <!-- Time Out -->
+          <td class="mai-td mai-td-center mai-td-mono mai-td-muted">
+            {{ log.timeOut ? log.timeOut.substring(0,5) : '—' }}
+          </td>
+
+          <!-- Hours -->
+          <td class="mai-td mai-td-center mai-td-hours">{{ calcHours(log) }}</td>
+
+          <!-- Status -->
+          <td class="mai-td mai-td-center">
+            <span class="mai-status-badge"
+              [style.background]="getStatusBg(log)"
+              [style.color]="getStatusColor(log)">
+              {{ getStatus(log) }}
+            </span>
+          </td>
+
+          <!-- Source -->
+          <td class="mai-td mai-td-center">
+            <span class="mai-source-badge"
+              [class.mai-source-fp]="log.source === 'FINGERPRINT'"
+              [class.mai-source-manual]="log.source !== 'FINGERPRINT'">
+              {{ log.source || '—' }}
+            </span>
+          </td>
+
+        </tr>
+      </tbody>
+    </table>
+
+  </div>
+
+</div>
