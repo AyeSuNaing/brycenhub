@@ -21,7 +21,8 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Slf4j
 @RestController
@@ -66,7 +67,6 @@ public class PayrollController {
 
     // ═══════════════════════════════════════════════════════════
     // ③ PAYSLIP VIEW
-    // ✅ FIX: ADMIN + VP + COUNTRY_DIRECTOR + BOSS (same branch) access allowed
     // ═══════════════════════════════════════════════════════════
     @GetMapping("/payslip/{id}")
     public ResponseEntity<?> getPayslip(
@@ -75,11 +75,10 @@ public class PayrollController {
         if (caller == null) return forbidden();
         try {
             PayrollApprovalDto.PayslipResponse res = payrollService.getPayslip(id);
-            boolean self    = res.getUserId() != null && res.getUserId().equals(caller.getId());
-            boolean global  = isGlobalAdmin(caller);
-            boolean sameBr  = caller.getBranchId() != null
-                           && caller.getBranchId().equals(res.getBranchId());
-            // ✅ ADMIN + VP + COUNTRY_DIRECTOR + BOSS — same branch ရင် ကြည့်ခွင့်ရ
+            boolean self     = res.getUserId() != null && res.getUserId().equals(caller.getId());
+            boolean global   = isGlobalAdmin(caller);
+            boolean sameBr   = caller.getBranchId() != null
+                            && caller.getBranchId().equals(res.getBranchId());
             boolean managerR = isManagerRole(caller);
             if (!(self || global || (managerR && sameBr))) return forbidden();
             return ResponseEntity.ok(res);
@@ -88,7 +87,7 @@ public class PayrollController {
     }
 
     // ═══════════════════════════════════════════════════════════
-    // ④ HISTORY VIEW
+    // ④ HISTORY VIEW (Admin/VP/Boss)
     // ═══════════════════════════════════════════════════════════
     @GetMapping("/history")
     @PreAuthorize("hasAnyRole('ADMIN', 'VICE_PRESIDENT', 'COUNTRY_DIRECTOR', 'BOSS')")
@@ -101,6 +100,42 @@ public class PayrollController {
         try {
             return ResponseEntity.ok(payrollService.getHistory(branchId, payPeriod));
         } catch (Exception e) { log.error("[Payroll] history", e); return serverError(e.getMessage()); }
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // ④-B MY HISTORY — own payroll records (all roles)
+    // ✅ NEW: GET /api/payroll/my-history
+    // Member က မိမိ payroll records တွေ ကြည့်လို့ရ
+    // ═══════════════════════════════════════════════════════════
+    @GetMapping("/my-history")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<?> getMyHistory(@AuthenticationPrincipal User caller) {
+        try {
+            List<SalaryHistory> records =
+                historyRepo.findByUserIdOrderByPeriodEndDesc(caller.getId());
+
+            List<Map<String, Object>> rows = records.stream().map(r -> {
+                Map<String, Object> m = new LinkedHashMap<>();
+                m.put("id",          r.getId());
+                m.put("userId",      r.getUserId());
+                m.put("payPeriod",   r.getPayPeriod());
+                m.put("periodStart", r.getPeriodStart());
+                m.put("periodEnd",   r.getPeriodEnd());
+                m.put("grossSalary", r.getGrossSalary());
+                m.put("taxAmount",   r.getTaxAmount());
+                m.put("netSalary",   r.getNetSalary());
+                m.put("currency",    r.getCurrency() != null ? r.getCurrency() : "USD");
+                m.put("status",      r.getStatus());
+                m.put("paidAt",      r.getPaidAt());
+                m.put("branchId",    r.getBranchId());
+                return m;
+            }).collect(Collectors.toList());
+
+            return ResponseEntity.ok(rows);
+        } catch (Exception e) {
+            log.error("[Payroll] my-history", e);
+            return ResponseEntity.ok(Collections.emptyList());
+        }
     }
 
     // ═══════════════════════════════════════════════════════════
@@ -119,7 +154,7 @@ public class PayrollController {
     }
 
     // ═══════════════════════════════════════════════════════════
-    // ⑥ SUBMIT BATCH — DRAFT → PENDING_APPROVAL (ADMIN)
+    // ⑥ SUBMIT BATCH — DRAFT → PENDING (ADMIN)
     // ═══════════════════════════════════════════════════════════
     @PostMapping("/batch/submit")
     @PreAuthorize("hasAnyRole('ADMIN')")
@@ -135,7 +170,7 @@ public class PayrollController {
     }
 
     // ═══════════════════════════════════════════════════════════
-    // ⑦ APPROVE BATCH — PENDING_APPROVAL → CONFIRMED (VP/Dir/Boss)
+    // ⑦ APPROVE BATCH — PENDING → CONFIRMED (VP/Dir/Boss)
     // ═══════════════════════════════════════════════════════════
     @PostMapping("/batch/approve")
     @PreAuthorize("hasAnyRole('VICE_PRESIDENT', 'COUNTRY_DIRECTOR', 'BOSS')")
@@ -151,7 +186,7 @@ public class PayrollController {
     }
 
     // ═══════════════════════════════════════════════════════════
-    // ⑧ REJECT BATCH — PENDING_APPROVAL → DRAFT (VP/Dir/Boss)
+    // ⑧ REJECT BATCH — PENDING → DRAFT (VP/Dir/Boss)
     // ═══════════════════════════════════════════════════════════
     @PostMapping("/batch/reject")
     @PreAuthorize("hasAnyRole('VICE_PRESIDENT', 'COUNTRY_DIRECTOR', 'BOSS')")
@@ -214,16 +249,13 @@ public class PayrollController {
                 .orElse(false);
     }
 
-    // ✅ NEW — ADMIN + VP + COUNTRY_DIRECTOR + BOSS 全部 access allowed
     private boolean isManagerRole(User u) {
         if (u == null || u.getRoleId() == null) return false;
         return userRoleRepo.findById(u.getRoleId())
                 .map(r -> {
                     String n = r.getName();
-                    return "ADMIN".equals(n)
-                        || "VICE_PRESIDENT".equals(n)
-                        || "COUNTRY_DIRECTOR".equals(n)
-                        || "BOSS".equals(n);
+                    return "ADMIN".equals(n) || "VICE_PRESIDENT".equals(n)
+                        || "COUNTRY_DIRECTOR".equals(n) || "BOSS".equals(n);
                 })
                 .orElse(false);
     }
@@ -235,17 +267,12 @@ public class PayrollController {
     }
 
     private ResponseEntity<?> forbidden() {
-        return ResponseEntity.status(403)
-                .body(new AuthDto.MessageResponse("Access denied", false));
+        return ResponseEntity.status(403).body(new AuthDto.MessageResponse("Access denied", false));
     }
-
     private ResponseEntity<?> badRequest(String msg) {
-        return ResponseEntity.badRequest()
-                .body(new AuthDto.MessageResponse(msg, false));
+        return ResponseEntity.badRequest().body(new AuthDto.MessageResponse(msg, false));
     }
-
     private ResponseEntity<?> serverError(String msg) {
-        return ResponseEntity.status(500)
-                .body(new AuthDto.MessageResponse(msg, false));
+        return ResponseEntity.status(500).body(new AuthDto.MessageResponse(msg, false));
     }
 }

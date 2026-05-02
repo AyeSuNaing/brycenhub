@@ -190,9 +190,10 @@ public class UserController {
 
 	// ============================================================
 	// GET /api/users/{id}/full-profile?lang=en
+	// ✅ FIX: isAuthenticated() — all roles own profile ကြည့်လို့ရ
 	// ============================================================
 	@GetMapping("/{id}/full-profile")
-	@PreAuthorize("hasAnyRole('BOSS', 'COUNTRY_DIRECTOR', 'ADMIN', 'VICE_PRESIDENT')")
+	@PreAuthorize("isAuthenticated()")
 	public ResponseEntity<?> getFullProfile(@PathVariable Long id,
 			@RequestParam(value = "lang", defaultValue = "en") String lang) {
 		try {
@@ -208,9 +209,10 @@ public class UserController {
 
 	// ================================================================
 	// GET /api/users/{id}/current-work
+	// ✅ FIX: isAuthenticated() — all roles own work ကြည့်လို့ရ
 	// ================================================================
 	@GetMapping("/{id}/current-work")
-	@PreAuthorize("hasAnyRole('BOSS', 'COUNTRY_DIRECTOR', 'ADMIN', 'VICE_PRESIDENT')")
+	@PreAuthorize("isAuthenticated()")
 	public ResponseEntity<?> getCurrentWork(@PathVariable Long id) {
 	    try {
 	        List<Project> projects = projectService.getMyActiveProjects(id);
@@ -245,14 +247,29 @@ public class UserController {
 
 	// ================================================================
 	// GET /api/users/{id}/attendance?from=&to=
+	// ✅ FIX: isAuthenticated() — own user ကိုယ်တိုင် ကြည့်လို့ရ
 	// ================================================================
 	@GetMapping("/{id}/attendance")
-	@PreAuthorize("hasAnyRole('BOSS', 'COUNTRY_DIRECTOR', 'ADMIN', 'VICE_PRESIDENT')")
+	@PreAuthorize("isAuthenticated()")
 	public ResponseEntity<?> getAttendance(
 	        @PathVariable Long id,
 	        @RequestParam String from,
-	        @RequestParam String to) {
+	        @RequestParam String to,
+	        @AuthenticationPrincipal User caller) {
 	    try {
+	        // Permission: own user OR admin roles
+	        boolean isSelf = caller.getId().equals(id);
+	        String callerRole = "";
+	        if (caller.getRoleId() != null) {
+	            callerRole = userRoleRepository.findById(caller.getRoleId())
+	                .map(r -> r.getName()).orElse("");
+	        }
+	        boolean isAdmin = List.of("BOSS", "COUNTRY_DIRECTOR", "ADMIN", "VICE_PRESIDENT")
+	            .contains(callerRole);
+	        if (!isSelf && !isAdmin) {
+	            return ResponseEntity.status(403)
+	                .body(new AuthDto.MessageResponse("Access denied", false));
+	        }
 	        LocalDate fromDate = LocalDate.parse(from);
 	        LocalDate toDate   = LocalDate.parse(to);
 	        List<AttendanceLog> logs =
@@ -277,8 +294,6 @@ public class UserController {
 
 	// ================================================================
 	// PATCH /api/users/{id}/attendance/{date}
-	// Admin/Boss/CD → ဘယ် user မဆို edit ရ
-	// Member        → self ပဲ edit ရ
 	// ================================================================
 	@PatchMapping("/{id}/attendance/{date}")
 	@PreAuthorize("isAuthenticated()")
@@ -288,7 +303,6 @@ public class UserController {
 	        @RequestBody Map<String, Object> body,
 	        @AuthenticationPrincipal User caller) {
 	    try {
-	        // Permission check
 	        boolean isSelf = caller.getId().equals(id);
 	        String callerRoleName = "";
 	        if (caller.getRoleId() != null) {
@@ -303,7 +317,6 @@ public class UserController {
 	                .body(new AuthDto.MessageResponse("Access denied", false));
 	        }
 
-	        // Find or create
 	        LocalDate workDate = LocalDate.parse(date);
 	        AttendanceLog log = attendanceLogRepository
 	            .findByUserIdAndWorkDate(id, workDate)
@@ -316,7 +329,6 @@ public class UserController {
 	        }
 	        log.setSource("MANUAL");
 
-	        // Apply fields
 	        if (body.containsKey("timeIn")) {
 	            String v = (String) body.get("timeIn");
 	            log.setTimeIn(v != null && !v.isEmpty() ? LocalTime.parse(v) : null);

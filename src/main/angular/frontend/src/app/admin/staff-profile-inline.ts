@@ -21,29 +21,18 @@ const BASE = environment.apiBaseUrl;
 export class StaffProfileInline implements OnInit {
 
   @Input()  staffId!: number;
-  @Output() back     = new EventEmitter<void>();
-  @Output() edit     = new EventEmitter<any>();
+  @Output() back = new EventEmitter<void>();
+  @Output() edit = new EventEmitter<any>();
 
-  staff:         any = null;
-  profile:       any = null;
-  skills:        any[] = [];
+  staff:    any   = null;
+  profile:  any   = null;
+  skills:   any[] = [];
   isLoading      = true;
   isToggling     = false;
   copiedField    = '';
 
-  // ── Password Reset ─────────────────────────
-  showResetDialog  = false;
-  resetPassword    = '';
-  resetCopied      = false;
-  resetCopiedBoth  = false;
-  isResetting      = false;
-  resetDone        = false;
-  resetError       = '';
-
-  // ── Tab state ──────────────────────────────
   activeTab: 'profile' | 'work' | 'salary' = 'profile';
 
-  // accordion state
   accBasic    = true;
   accLogin    = true;
   accCv       = true;
@@ -52,38 +41,81 @@ export class StaffProfileInline implements OnInit {
   accSocial   = true;
   accDanger   = false;
 
-  // ── Work tab ───────────────────────────────
   currentProjects: any[] = [];
   currentTasks:    any[] = [];
 
-  // ── Salary tab ─────────────────────────────
   salaryStructure: any   = null;
   salaryHistory:   any[] = [];
   latestPayslip:   any   = null;
   loadingSalary          = false;
 
-  // ── Payslip modal ──────────────────────────
-  payslipOpen     = false;
+  payslipOpen      = false;
   payslipRecordId: number | null = null;
 
-  // ── Attendance modal ───────────────────────
-  attendanceOpen   = false;
-  attendanceLogs:  any[] = [];
-  attendancePeriod = '';
+  attendanceOpen    = false;
+  attendanceLogs:   any[] = [];
+  attendancePeriod  = '';
   loadingAttendance = false;
 
-  // ── Attendance edit ────────────────────────
   editingLog: any = null;
   editForm = { timeIn: '', timeOut: '', isDayoff: false, note: '' };
   savingEdit = false;
 
-  // ── Project Tasks Modal ────────────────────
   projectTasksOpen    = false;
   projectTasksLoading = false;
-  selectedProject:    any = null;
+  selectedProject:    any   = null;
   projectColumns:     any[] = [];
   projectAllTasks:    any[] = [];
   expandedTaskId:     number | null = null;
+
+  showResetModal   = false;
+  resetPassword    = '';
+  resetSaving      = false;
+  resetDone        = false;
+  resetCopiedField = '';
+
+  // ✅ HTML alias properties (staff-profile-inline.html ထဲ old names သုံးနေတာနဲ့ ကိုက်အောင်)
+  get showResetDialog(): boolean { return this.showResetModal; }
+  set showResetDialog(v: boolean) { this.showResetModal = v; }
+  get isResetting(): boolean { return this.resetSaving; }
+  get resetError(): string { return ''; }
+  get resetCopied(): boolean { return this.resetCopiedField === 'pwd'; }
+  get resetCopiedBoth(): boolean { return this.resetCopiedField === 'both'; }
+
+  closeResetDialog(): void { this.closeResetModal(); }
+  generateResetPassword(): void { this.regenerateResetPwd(); }
+  confirmReset(): void { this.saveResetPassword(); }
+  copyResetPassword(): void { this.copyResetField(this.resetPassword, 'pwd'); }
+  openResetDialog(): void { this.openResetModal(); }
+
+  // ── Attendance helpers (HTML ထဲ old method names) ──
+  getAttendanceWorkedDays(): number {
+    return this.attendanceLogs.filter(l => l.timeIn && !l.isDayoff).length;
+  }
+  getAttendanceAbsentDays(): number {
+    return this.attendanceLogs.filter(l => !l.timeIn && !l.isDayoff).length;
+  }
+  getAttendanceDayOffDays(): number {
+    return this.attendanceLogs.filter(l => l.isDayoff).length;
+  }
+  getAvgTimeIn(): string {
+    const logs = this.attendanceLogs.filter(l => l.timeIn && !l.isDayoff);
+    if (logs.length === 0) return '—';
+    const totalMins = logs.reduce((sum, l) => {
+      const [h, m] = l.timeIn.split(':').map(Number);
+      return sum + h * 60 + m;
+    }, 0);
+    const avg = Math.round(totalMins / logs.length);
+    return `${String(Math.floor(avg / 60)).padStart(2,'0')}:${String(avg % 60).padStart(2,'0')}`;
+  }
+  isLateArrival(timeIn: string): boolean {
+    if (!timeIn) return false;
+    const [h, m] = timeIn.split(':').map(Number);
+    return h > 9 || (h === 9 && m > 0);
+  }
+  calcHours(timeIn: string, timeOut: string): string {
+    return this.formatWorkTime(this.calcWorkMinutes({ timeIn, timeOut }));
+  }
 
   readonly DEFAULT_COLUMNS = [
     { name: 'Backlog',     statusKey: 'BACKLOG',     color: '#64748b' },
@@ -94,25 +126,16 @@ export class StaffProfileInline implements OnInit {
   ];
 
   constructor(
-    private http:  HttpClient,
-    private auth:  AuthService,
-    private cdr:   ChangeDetectorRef,
+    private http: HttpClient,
+    private auth: AuthService,
+    private cdr:  ChangeDetectorRef,
   ) {}
 
-  // ══════════════════════════════════════════
-  // i18n
-  // ══════════════════════════════════════════
   lbl(key: AppLabelKey): string {
     return getLabel(this.auth.getUser()?.preferredLanguage, key);
   }
 
-  ngOnInit() {
-    this.loadProfile();
-  }
-
-  // ══════════════════════════════════════════
-  // TAB HELPERS
-  // ══════════════════════════════════════════
+  ngOnInit() { this.loadProfile(); }
 
   setTab(tab: 'profile' | 'work' | 'salary'): void {
     this.activeTab = tab;
@@ -123,23 +146,38 @@ export class StaffProfileInline implements OnInit {
 
   canViewCurrentWork(): boolean {
     const staffRole = (this.staff?.roleName || this.staff?.role || '').toUpperCase();
-    const hideRoles = ['VICE_PRESIDENT', 'COUNTRY_DIRECTOR', 'BOSS', 'ADMIN'];
-    return !hideRoles.includes(staffRole);
+    return !['VICE_PRESIDENT', 'COUNTRY_DIRECTOR', 'BOSS', 'ADMIN'].includes(staffRole);
   }
 
   canViewDangerZone(): boolean {
-    const role = this.auth.getUser()?.role || '';
-    return role === 'ADMIN';
+    return (this.auth.getUser()?.role || '') === 'ADMIN';
   }
 
+  // ✅ FIX: Member မိမိ profile မှာ salary tab မြင်ရ
   canViewSalary(): boolean {
-    const role = this.auth.getUser()?.role || '';
-    return ['VICE_PRESIDENT', 'COUNTRY_DIRECTOR', 'BOSS', 'ADMIN'].includes(role);
+    const user = this.auth.getUser();
+    const role = user?.role || '';
+    if (['VICE_PRESIDENT', 'COUNTRY_DIRECTOR', 'BOSS', 'ADMIN'].includes(role)) return true;
+    const myId = user?.id || user?.userId;
+    return !!myId && Number(myId) === Number(this.staffId);
   }
 
-  // ══════════════════════════════════════════
-  // DATA LOADERS
-  // ══════════════════════════════════════════
+  // ✅ Own profile စစ်ဆေးသည်
+  isOwnProfile(): boolean {
+    const user = this.auth.getUser();
+    const myId = user?.id || user?.userId;
+    return !!myId && Number(myId) === Number(this.staffId);
+  }
+
+  toggleAcc(key: string) {
+    if (key === 'basic')    this.accBasic    = !this.accBasic;
+    if (key === 'login')    this.accLogin    = !this.accLogin;
+    if (key === 'cv')       this.accCv       = !this.accCv;
+    if (key === 'skills')   this.accSkills   = !this.accSkills;
+    if (key === 'projects') this.accProjects = !this.accProjects;
+    if (key === 'social')   this.accSocial   = !this.accSocial;
+    if (key === 'danger')   this.accDanger   = !this.accDanger;
+  }
 
   loadProfile() {
     this.isLoading = true;
@@ -149,57 +187,31 @@ export class StaffProfileInline implements OnInit {
       .subscribe({
         next: data => {
           this.staff = {
-            id:                data.id,
-            name:              data.name,
-            email:             data.email,
-            phone:             data.phone,
-            isActive:          data.isActive,
-            preferredLanguage: data.preferredLanguage,
-            profileImage:      data.profileImage,
-            lastSeen:          data.lastSeen,
-            roleId:            data.roleId,
-            roleName:          data.roleName,
-            roleDisplayName:   data.roleDisplayName,
-            roleColor:         data.roleColor,
-            departmentId:      data.departmentId,
-            departmentName:    data.departmentName,
+            id: data.id, name: data.name, email: data.email, phone: data.phone,
+            isActive: data.isActive, preferredLanguage: data.preferredLanguage,
+            profileImage: data.profileImage, lastSeen: data.lastSeen,
+            roleId: data.roleId, roleName: data.roleName,
+            roleDisplayName: data.roleDisplayName, roleColor: data.roleColor,
+            departmentId: data.departmentId, departmentName: data.departmentName,
           };
-
           if (data.cvAnalyzed !== null || data.cvFileUrl || data.educationEn) {
             let projects: any[] = [];
-            if (data.projectsJson) {
-              try { projects = JSON.parse(data.projectsJson); } catch (_) {}
-            }
+            if (data.projectsJson) { try { projects = JSON.parse(data.projectsJson); } catch (_) {} }
             let socialLinks: any = null;
-            if (data.socialLinksJson) {
-              try { socialLinks = JSON.parse(data.socialLinksJson); } catch (_) {}
-            }
+            if (data.socialLinksJson) { try { socialLinks = JSON.parse(data.socialLinksJson); } catch (_) {} }
             this.profile = {
-              cvAnalyzed:         data.cvAnalyzed,
-              cvFileUrl:          data.cvFileUrl,
-              experienceYears:    data.experienceYears,
-              educationEn:        data.educationEn,
+              cvAnalyzed: data.cvAnalyzed, cvFileUrl: data.cvFileUrl,
+              experienceYears: data.experienceYears, educationEn: data.educationEn,
               experienceDetailEn: data.experienceDetailEn,
-              cvOriginalLanguage: data.cvOriginalLanguage,
-              projects:           projects,
-              socialLinks:        socialLinks,
+              cvOriginalLanguage: data.cvOriginalLanguage, projects, socialLinks,
             };
-          } else {
-            this.profile = null;
-          }
-
+          } else { this.profile = null; }
           this.skills    = data.skills || [];
           this.isLoading = false;
           this.cdr.detectChanges();
-
-          if (this.canViewCurrentWork()) {
-            this.loadCurrentWork();
-          }
+          if (this.canViewCurrentWork()) { this.loadCurrentWork(); }
         },
-        error: () => {
-          this.isLoading = false;
-          this.cdr.detectChanges();
-        }
+        error: () => { this.isLoading = false; this.cdr.detectChanges(); }
       });
   }
 
@@ -216,43 +228,59 @@ export class StaffProfileInline implements OnInit {
       });
   }
 
+  // ✅ FIX: Own profile → /payroll/my-history endpoint သုံး
   loadSalaryData(): void {
     this.loadingSalary = true;
     const h = { headers: this.auth.getHeaders() };
 
+    // Salary structure
     this.http.get<any[]>(`${BASE}/salary-structures/history/${this.staffId}`, h)
       .subscribe({
         next: d => {
           const list = d || [];
           this.salaryStructure = list.length > 0 ? {
-            currency:            'USD',
-            baseSalary:          list[0].baseSalary,
-            otRatePerHour:       list[0].otRatePerHour || 0,
+            currency: 'USD', baseSalary: list[0].baseSalary,
+            otRatePerHour: list[0].otRatePerHour || 0,
             workingDaysPerMonth: list[0].workingDaysPerMonth || 26,
-            effectiveDate:       list[0].effectiveDate,
-            note:                list[0].note,
+            effectiveDate: list[0].effectiveDate, note: list[0].note,
           } : null;
           this.cdr.detectChanges();
         },
         error: () => { this.salaryStructure = null; this.cdr.detectChanges(); }
       });
 
+    // ✅ Own profile → /payroll/my-history (own records only)
+    if (this.isOwnProfile()) {
+      this.http.get<any[]>(`${BASE}/payroll/my-history`, h)
+        .subscribe({
+          next: rows => {
+            this.salaryHistory = rows || [];
+            this.latestPayslip = this.salaryHistory[0] || null;
+            this.loadingSalary = false;
+            this.cdr.detectChanges();
+          },
+          error: () => {
+            this.salaryHistory = [];
+            this.latestPayslip = null;
+            this.loadingSalary = false;
+            this.cdr.detectChanges();
+          }
+        });
+      return;
+    }
+
+    // Admin/VP/CD/Boss → full payroll history
     const branchId = this.auth.getUser()?.branchId || 3;
     this.http.get<any>(`${BASE}/payroll/history?branchId=${branchId}`, h)
       .subscribe({
         next: firstResp => {
           const periods: string[] = firstResp?.availablePeriods || [];
           if (periods.length === 0) {
-            this.salaryHistory = [];
-            this.latestPayslip = null;
-            this.loadingSalary = false;
-            this.cdr.detectChanges();
-            return;
+            this.salaryHistory = []; this.latestPayslip = null;
+            this.loadingSalary = false; this.cdr.detectChanges(); return;
           }
-
           const allRows: any[] = [];
           let remaining = periods.length;
-
           periods.forEach(period => {
             this.http.get<any>(
               `${BASE}/payroll/history?branchId=${branchId}&payPeriod=${period}`, h
@@ -261,24 +289,19 @@ export class StaffProfileInline implements OnInit {
                 const rows = (resp?.rows || []).filter(
                   (r: any) => Number(r.userId) === Number(this.staffId)
                 );
-                allRows.push(...rows);
-                remaining--;
+                allRows.push(...rows); remaining--;
                 if (remaining === 0) {
                   allRows.sort((a, b) => b.payPeriod.localeCompare(a.payPeriod));
-                  this.salaryHistory = allRows;
-                  this.latestPayslip = allRows[0] || null;
-                  this.loadingSalary = false;
-                  this.cdr.detectChanges();
+                  this.salaryHistory = allRows; this.latestPayslip = allRows[0] || null;
+                  this.loadingSalary = false; this.cdr.detectChanges();
                 }
               },
               error: () => {
                 remaining--;
                 if (remaining === 0) {
                   allRows.sort((a, b) => b.payPeriod.localeCompare(a.payPeriod));
-                  this.salaryHistory = allRows;
-                  this.latestPayslip = allRows[0] || null;
-                  this.loadingSalary = false;
-                  this.cdr.detectChanges();
+                  this.salaryHistory = allRows; this.latestPayslip = allRows[0] || null;
+                  this.loadingSalary = false; this.cdr.detectChanges();
                 }
               }
             });
@@ -288,90 +311,15 @@ export class StaffProfileInline implements OnInit {
       });
   }
 
-  // ══════════════════════════════════════════
-  // ACTIONS
-  // ══════════════════════════════════════════
-
   toggleActivation() {
     if (!this.staff) return;
     this.isToggling = true;
     const url = this.staff.isActive
       ? `${BASE}/users/${this.staffId}/deactivate`
       : `${BASE}/users/${this.staffId}/activate`;
-
-    this.http.put(url, {}, { headers: this.auth.getHeaders() })
-      .subscribe({
-        next: () => {
-          this.staff.isActive = !this.staff.isActive;
-          this.isToggling = false;
-          this.cdr.detectChanges();
-        },
-        error: () => { this.isToggling = false; }
-      });
-  }
-
-  // ── Password Reset ──────────────────────────
-  openResetDialog() {
-    this.showResetDialog = true;
-    this.resetDone       = false;
-    this.resetError      = '';
-    this.resetPassword   = 'password';
-    this.resetCopied     = false;
-    this.resetCopiedBoth = false;
-    this.cdr.detectChanges();
-  }
-
-  closeResetDialog() {
-    this.showResetDialog = false;
-    this.resetDone       = false;
-    this.resetError      = '';
-    this.cdr.detectChanges();
-  }
-
-  generateResetPassword() {
-    const upper = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
-    const lower = 'abcdefghjkmnpqrstuvwxyz';
-    const digits = '23456789';
-    const symbols = '@#$!';
-    const all = upper + lower + digits + symbols;
-    let pwd = '';
-    pwd += upper[Math.floor(Math.random() * upper.length)];
-    pwd += lower[Math.floor(Math.random() * lower.length)];
-    pwd += digits[Math.floor(Math.random() * digits.length)];
-    pwd += symbols[Math.floor(Math.random() * symbols.length)];
-    for (let i = 4; i < 10; i++) pwd += all[Math.floor(Math.random() * all.length)];
-    this.resetPassword   = pwd.split('').sort(() => Math.random() - 0.5).join('');
-    this.resetCopied     = false;
-    this.resetCopiedBoth = false;
-    this.cdr.detectChanges();
-  }
-
-  confirmReset() {
-    if (!this.resetPassword || !this.staffId) return;
-    this.isResetting = true;
-    this.resetError  = '';
-    this.cdr.detectChanges();
-    this.http.put(`${BASE}/users/${this.staffId}/change-password`,
-      { newPassword: this.resetPassword },
-      { headers: this.auth.getHeaders() }
-    ).subscribe({
-      next: () => { this.isResetting = false; this.resetDone = true; this.cdr.detectChanges(); },
-      error: (err) => { this.isResetting = false; this.resetError = err?.error?.message || 'Failed to reset password'; this.cdr.detectChanges(); }
-    });
-  }
-
-  copyResetPassword() {
-    navigator.clipboard.writeText(this.resetPassword).then(() => {
-      this.resetCopied = true; this.cdr.detectChanges();
-      setTimeout(() => { this.resetCopied = false; this.cdr.detectChanges(); }, 2500);
-    });
-  }
-
-  copyResetBoth() {
-    const text = `Email: ${this.staff.email}\nPassword: ${this.resetPassword}`;
-    navigator.clipboard.writeText(text).then(() => {
-      this.resetCopiedBoth = true; this.cdr.detectChanges();
-      setTimeout(() => { this.resetCopiedBoth = false; this.cdr.detectChanges(); }, 2500);
+    this.http.put(url, {}, { headers: this.auth.getHeaders() }).subscribe({
+      next: () => { this.staff.isActive = !this.staff.isActive; this.isToggling = false; this.cdr.detectChanges(); },
+      error: () => { this.isToggling = false; }
     });
   }
 
@@ -394,18 +342,173 @@ export class StaffProfileInline implements OnInit {
     });
   }
 
-  // ══════════════════════════════════════════
-  // HELPERS
-  // ══════════════════════════════════════════
+  openResetModal(): void {
+    this.showResetModal = true; this.resetPassword = this.generatePwd();
+    this.resetSaving = false; this.resetDone = false; this.resetCopiedField = '';
+    this.cdr.detectChanges();
+  }
+  closeResetModal(): void { this.showResetModal = false; this.cdr.detectChanges(); }
+
+  generatePwd(): string {
+    const u = 'ABCDEFGHJKLMNPQRSTUVWXYZ', l = 'abcdefghjkmnpqrstuvwxyz',
+          d = '23456789', s = '@#$!';
+    const all = u + l + d + s;
+    let p = u[Math.floor(Math.random()*u.length)] + l[Math.floor(Math.random()*l.length)]
+           + d[Math.floor(Math.random()*d.length)] + s[Math.floor(Math.random()*s.length)];
+    for (let i = 4; i < 10; i++) p += all[Math.floor(Math.random()*all.length)];
+    return p.split('').sort(() => Math.random()-0.5).join('');
+  }
+
+  regenerateResetPwd(): void { this.resetPassword = this.generatePwd(); this.resetCopiedField = ''; this.cdr.detectChanges(); }
+
+  copyResetField(text: string, field: string): void {
+    navigator.clipboard.writeText(text).then(() => {
+      this.resetCopiedField = field; this.cdr.detectChanges();
+      setTimeout(() => { this.resetCopiedField = ''; this.cdr.detectChanges(); }, 2000);
+    });
+  }
+
+  copyResetBoth(): void {
+    this.copyResetField('Email: ' + this.staff.email + '\nPassword: ' + this.resetPassword, 'both');
+  }
+
+  saveResetPassword(): void {
+    if (!this.staff?.id || this.resetSaving) return;
+    this.resetSaving = true;
+    this.http.put(`${BASE}/users/${this.staff.id}/change-password`,
+      { newPassword: this.resetPassword }, { headers: this.auth.getHeaders() })
+      .subscribe({
+        next: () => { this.resetSaving = false; this.resetDone = true; this.cdr.detectChanges(); },
+        error: () => { this.resetSaving = false; this.cdr.detectChanges(); }
+      });
+  }
+
+  openPayslip(id: number): void { this.payslipRecordId = id; this.payslipOpen = true; this.cdr.detectChanges(); }
+  closePayslip(): void { this.payslipOpen = false; this.payslipRecordId = null; this.cdr.detectChanges(); }
+
+  openAttendance(row: any): void {
+    this.attendancePeriod = row.payPeriod; this.attendanceLogs = [];
+    this.attendanceOpen = true; this.loadingAttendance = true; this.cdr.detectChanges();
+    const from = row.periodStart || (() => {
+      const [y, m] = row.payPeriod.split('-');
+      const pm = m === '01' ? 12 : Number(m) - 1;
+      const py = m === '01' ? Number(y) - 1 : Number(y);
+      return `${py}-${String(pm).padStart(2,'0')}-25`;
+    })();
+    const to = row.periodEnd || row.payPeriod + '-24';
+    this.http.get<any[]>(`${BASE}/users/${this.staffId}/attendance?from=${from}&to=${to}`,
+      { headers: this.auth.getHeaders() }).subscribe({
+      next: d => { this.attendanceLogs = d || []; this.loadingAttendance = false; this.cdr.detectChanges(); },
+      error: () => { this.loadingAttendance = false; this.cdr.detectChanges(); }
+    });
+  }
+
+  closeAttendance(): void { this.attendanceOpen = false; this.attendanceLogs = []; this.editingLog = null; this.cdr.detectChanges(); }
+
+  canEditAttendance(): boolean {
+    const role = this.auth.getUser()?.role || '';
+    const myId = this.auth.getUser()?.id || this.auth.getUser()?.userId;
+    if (Number(myId) === Number(this.staffId)) return true;
+    return ['ADMIN', 'BOSS', 'COUNTRY_DIRECTOR'].includes(role);
+  }
+
+  openEditLog(log: any): void {
+    this.editingLog = log;
+    this.editForm = {
+      timeIn:   log.timeIn  ? log.timeIn.substring(0, 5)  : '',
+      timeOut:  log.timeOut ? log.timeOut.substring(0, 5) : '',
+      isDayoff: log.isDayoff || false, note: log.note || '',
+    };
+    this.cdr.detectChanges();
+  }
+
+  closeEditLog(): void { this.editingLog = null; this.cdr.detectChanges(); }
+
+  saveEditLog(): void {
+    if (!this.editingLog || this.savingEdit) return;
+    this.savingEdit = true;
+    this.http.patch(`${BASE}/users/${this.staffId}/attendance/${this.editingLog.workDate}`,
+      this.editForm, { headers: this.auth.getHeaders() }).subscribe({
+      next: () => {
+        Object.assign(this.editingLog, {
+          timeIn: this.editForm.timeIn || null, timeOut: this.editForm.timeOut || null,
+          isDayoff: this.editForm.isDayoff, note: this.editForm.note,
+        });
+        this.savingEdit = false; this.editingLog = null; this.cdr.detectChanges();
+      },
+      error: () => { this.savingEdit = false; this.cdr.detectChanges(); }
+    });
+  }
+
+  getAttendanceSummary(): { present: number; dayoff: number; missing: number } {
+    return {
+      present: this.attendanceLogs.filter(l => l.timeIn && !l.isDayoff).length,
+      dayoff:  this.attendanceLogs.filter(l => l.isDayoff).length,
+      missing: this.attendanceLogs.filter(l => !l.timeIn && !l.isDayoff).length,
+    };
+  }
+
+  calcWorkMinutes(log: any): number {
+    if (!log.timeIn || !log.timeOut) return 0;
+    const [h1, m1] = log.timeIn.split(':').map(Number);
+    const [h2, m2] = log.timeOut.split(':').map(Number);
+    return (h2 * 60 + m2) - (h1 * 60 + m1);
+  }
+
+  formatWorkTime(mins: number): string {
+    if (mins <= 0) return '—';
+    return `${Math.floor(mins / 60)}h${mins % 60 ? ' ' + (mins % 60) + 'm' : ''}`;
+  }
+
+  getDayName(dateStr: string): string {
+    if (!dateStr) return '';
+    return ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][new Date(dateStr).getDay()];
+  }
+
+  openProjectTasks(project: any): void {
+    this.selectedProject = project; this.projectTasksOpen = true;
+    this.projectTasksLoading = true; this.projectColumns = []; this.projectAllTasks = [];
+    this.cdr.detectChanges();
+    const h = { headers: this.auth.getHeaders() };
+    this.http.get<any[]>(`${BASE}/project-board-columns/by-project/${project.id}`, h).subscribe({
+      next: cols => {
+        this.projectColumns = (cols && cols.length > 0)
+          ? cols.sort((a, b) => (a.position || 0) - (b.position || 0))
+          : this.DEFAULT_COLUMNS;
+        this.cdr.detectChanges();
+      },
+      error: () => { this.projectColumns = this.DEFAULT_COLUMNS; }
+    });
+    this.http.get<any[]>(`${BASE}/tasks/by-project/${project.id}`, h).subscribe({
+      next: tasks => { this.projectAllTasks = tasks || []; this.projectTasksLoading = false; this.cdr.detectChanges(); },
+      error: () => { this.projectTasksLoading = false; }
+    });
+  }
+
+  closeProjectTasks(): void { this.projectTasksOpen = false; this.selectedProject = null; this.projectAllTasks = []; this.cdr.detectChanges(); }
+
+  getColumnTasks(statusKey: string): any[] {
+    return this.projectAllTasks.filter(t =>
+      (t.status || '').toUpperCase() === statusKey.toUpperCase() &&
+      Number(t.assigneeId) === Number(this.staffId)
+    );
+  }
+
+  isMyTask(task: any): boolean { return Number(task.assigneeId) === Number(this.staffId); }
+  myProjectTasks(): any[] { return this.projectAllTasks.filter(t => Number(t.assigneeId) === Number(this.staffId)); }
+
+  getProjectName(projectId: number): string {
+    const p = this.currentProjects.find(p => Number(p.id) === Number(projectId));
+    return p?.title || p?.name || '';
+  }
+
+  toggleTask(id: number): void { this.expandedTaskId = this.expandedTaskId === id ? null : id; this.cdr.detectChanges(); }
 
   getAvatarColor(name: string): string {
     const c = ['#16a34a','#0284c7','#7c3aed','#db2777','#ea580c','#0891b2','#d97706'];
     return c[(name?.charCodeAt(0) || 0) % c.length];
   }
-
-  getInitial(name: string): string {
-    return name ? name.charAt(0).toUpperCase() : '?';
-  }
+  getInitial(name: string): string { return name ? name.charAt(0).toUpperCase() : '?'; }
 
   getSkillColor(level: string): string {
     switch (level) {
@@ -415,7 +518,6 @@ export class StaffProfileInline implements OnInit {
       default:         return '#94a3b8';
     }
   }
-
   getSkillBg(level: string): string {
     switch (level) {
       case 'SENIOR':   return 'rgba(167,139,250,0.1)';
@@ -447,13 +549,8 @@ export class StaffProfileInline implements OnInit {
     ];
   }
 
-  getSkillCount(level: string): number {
-    return this.skills.filter(s => s.skillLevel === level).length;
-  }
-
-  getInputTypeCount(type: string): number {
-    return this.skills.filter(s => s.inputType === type).length;
-  }
+  getSkillCount(level: string): number { return this.skills.filter(s => s.skillLevel === level).length; }
+  getInputTypeCount(type: string): number { return this.skills.filter(s => s.inputType === type).length; }
 
   splitTech(tech: string): string[] {
     if (!tech) return [];
@@ -471,231 +568,13 @@ export class StaffProfileInline implements OnInit {
     return link.startsWith('http') ? link : 'https://' + link;
   }
 
-  toggleAcc(key: string) {
-    if (key === 'basic')    this.accBasic    = !this.accBasic;
-    if (key === 'login')    this.accLogin    = !this.accLogin;
-    if (key === 'cv')       this.accCv       = !this.accCv;
-    if (key === 'skills')   this.accSkills   = !this.accSkills;
-    if (key === 'projects') this.accProjects = !this.accProjects;
-    if (key === 'social')   this.accSocial   = !this.accSocial;
-    if (key === 'danger')   this.accDanger   = !this.accDanger;
+  formatMoney(amount: number): string {
+    if (!amount) return '—';
+    return new Intl.NumberFormat('en-US', { minimumFractionDigits: 0 }).format(amount);
   }
 
-  openPayslip(id: number): void {
-    this.payslipRecordId = id;
-    this.payslipOpen     = true;
-    this.cdr.detectChanges();
-  }
-
-  closePayslip(): void {
-    this.payslipOpen     = false;
-    this.payslipRecordId = null;
-    this.cdr.detectChanges();
-  }
-
-  openAttendance(row: any): void {
-    this.attendancePeriod  = row.payPeriod;
-    this.attendanceLogs    = [];
-    this.attendanceOpen    = true;
-    this.loadingAttendance = true;
-    this.cdr.detectChanges();
-
-    const from = row.periodStart || (row.payPeriod + '-25').replace(/(\d{4}-\d{2})-(\d{2})/, (_, ym) => {
-      const [y, m] = ym.split('-');
-      const pm = m === '01' ? 12 : Number(m) - 1;
-      const py = m === '01' ? Number(y) - 1 : Number(y);
-      return `${py}-${String(pm).padStart(2,'0')}-25`;
-    });
-    const to = row.periodEnd || row.payPeriod + '-24';
-
-    this.http.get<any[]>(
-      `${BASE}/users/${this.staffId}/attendance?from=${from}&to=${to}`,
-      { headers: this.auth.getHeaders() }
-    ).subscribe({
-      next: d => {
-        this.attendanceLogs    = d || [];
-        this.loadingAttendance = false;
-        this.cdr.detectChanges();
-      },
-      error: () => { this.loadingAttendance = false; this.cdr.detectChanges(); }
-    });
-  }
-
-  closeAttendance(): void {
-    this.attendanceOpen = false;
-    this.attendanceLogs = [];
-    this.editingLog = null;
-    this.cdr.detectChanges();
-  }
-
-  canEditAttendance(): boolean {
-    const role = this.auth.getUser()?.role || '';
-    const myId = this.auth.getUser()?.id || this.auth.getUser()?.userId;
-    if (Number(myId) === Number(this.staffId)) return true;
-    return ['ADMIN', 'BOSS', 'COUNTRY_DIRECTOR'].includes(role);
-  }
-
-  openEditLog(log: any): void {
-    this.editingLog = log;
-    this.editForm = {
-      timeIn:   log.timeIn   ? log.timeIn.substring(0, 5)   : '',
-      timeOut:  log.timeOut  ? log.timeOut.substring(0, 5)  : '',
-      isDayoff: log.isDayoff || false,
-      note:     log.note     || '',
-    };
-    this.cdr.detectChanges();
-  }
-
-  closeEditLog(): void {
-    this.editingLog = null;
-    this.cdr.detectChanges();
-  }
-
-  saveEditLog(): void {
-    if (!this.editingLog) return;
-    this.savingEdit = true;
-    const body: any = {
-      timeIn:   this.editForm.timeIn   || null,
-      timeOut:  this.editForm.timeOut  || null,
-      isDayoff: this.editForm.isDayoff,
-      note:     this.editForm.note,
-    };
-    this.http.patch(
-      `${BASE}/users/${this.staffId}/attendance/${this.editingLog.workDate}`,
-      body,
-      { headers: this.auth.getHeaders() }
-    ).subscribe({
-      next: () => {
-        const idx = this.attendanceLogs.findIndex(
-          a => a.workDate === this.editingLog.workDate
-        );
-        if (idx > -1) {
-          this.attendanceLogs[idx] = {
-            ...this.attendanceLogs[idx],
-            timeIn:   body.timeIn   ? body.timeIn + ':00'   : null,
-            timeOut:  body.timeOut  ? body.timeOut + ':00'  : null,
-            isDayoff: body.isDayoff,
-            note:     body.note,
-            source:   'MANUAL',
-          };
-        }
-        this.savingEdit  = false;
-        this.editingLog  = null;
-        this.cdr.detectChanges();
-      },
-      error: () => { this.savingEdit = false; this.cdr.detectChanges(); }
-    });
-  }
-
-  getAttendanceWorkedDays(): number {
-    return this.attendanceLogs.filter(a => !a.isDayoff && a.timeIn).length;
-  }
-
-  getAttendanceAbsentDays(): number {
-    return this.attendanceLogs.filter(a => !a.isDayoff && !a.timeIn).length;
-  }
-
-  getAttendanceDayOffDays(): number {
-    return this.attendanceLogs.filter(a => a.isDayoff).length;
-  }
-
-  getAvgTimeIn(): string {
-    const logs = this.attendanceLogs.filter(a => !a.isDayoff && a.timeIn);
-    if (logs.length === 0) return '—';
-    const total = logs.reduce((sum, a) => {
-      const [h, m] = a.timeIn.split(':').map(Number);
-      return sum + h * 60 + m;
-    }, 0);
-    const avg = Math.round(total / logs.length);
-    return `${String(Math.floor(avg / 60)).padStart(2,'0')}:${String(avg % 60).padStart(2,'0')}`;
-  }
-
-  isLateArrival(timeIn: string): boolean {
-    if (!timeIn) return false;
-    const [h, m] = timeIn.split(':').map(Number);
-    return h > 9 || (h === 9 && m > 0);
-  }
-
-  calcHours(timeIn: string, timeOut: string): string {
-    if (!timeIn || !timeOut) return '—';
-    const [hi, mi] = timeIn.split(':').map(Number);
-    const [ho, mo] = timeOut.split(':').map(Number);
-    const mins = (ho * 60 + mo) - (hi * 60 + mi);
-    if (mins <= 0) return '—';
-    const h = Math.floor(mins / 60);
-    const m = mins % 60;
-    return `${h}h${m > 0 ? m + 'm' : ''}`;
-  }
-
-  getDayName(dateStr: string): string {
-    if (!dateStr) return '';
-    const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-    return days[new Date(dateStr).getDay()];
-  }
-
-  openProjectTasks(project: any): void {
-    this.selectedProject     = project;
-    this.projectTasksOpen    = true;
-    this.projectTasksLoading = true;
-    this.projectColumns      = [];
-    this.projectAllTasks     = [];
-    this.cdr.detectChanges();
-
-    const h = { headers: this.auth.getHeaders() };
-
-    this.http.get<any[]>(`${BASE}/project-board-columns/by-project/${project.id}`, h)
-      .subscribe({
-        next: cols => {
-          this.projectColumns = (cols && cols.length > 0)
-            ? cols.sort((a, b) => (a.position || 0) - (b.position || 0))
-            : this.DEFAULT_COLUMNS;
-          this.cdr.detectChanges();
-        },
-        error: () => { this.projectColumns = this.DEFAULT_COLUMNS; }
-      });
-
-    this.http.get<any[]>(`${BASE}/tasks/by-project/${project.id}`, h)
-      .subscribe({
-        next: tasks => {
-          this.projectAllTasks     = tasks || [];
-          this.projectTasksLoading = false;
-          this.cdr.detectChanges();
-        },
-        error: () => { this.projectTasksLoading = false; }
-      });
-  }
-
-  closeProjectTasks(): void {
-    this.projectTasksOpen = false;
-    this.selectedProject  = null;
-    this.projectAllTasks  = [];
-    this.cdr.detectChanges();
-  }
-
-  getColumnTasks(statusKey: string): any[] {
-    return this.projectAllTasks.filter(t =>
-      (t.status || '').toUpperCase() === statusKey.toUpperCase() &&
-      Number(t.assigneeId) === Number(this.staffId)
-    );
-  }
-
-  isMyTask(task: any): boolean {
-    return Number(task.assigneeId) === Number(this.staffId);
-  }
-
-  myProjectTasks(): any[] {
-    return this.projectAllTasks.filter(t =>
-      Number(t.assigneeId) === Number(this.staffId)
-    );
-  }
-
-  getProjectName(projectId: number): string {
-    const p = this.currentProjects.find(p => Number(p.id) === Number(projectId));
-    return p?.title || p?.name || '';
-  }
-
-  toggleTask(id: number): void {
-    this.expandedTaskId = this.expandedTaskId === id ? null : id;
-    this.cdr.detectChanges();
+  formatDate(d: string): string {
+    if (!d) return '—';
+    return new Date(d).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
   }
 }

@@ -48,7 +48,6 @@ public class SalaryStructureController {
         return "BOSS".equals(r) || "COUNTRY_DIRECTOR".equals(r);
     }
 
-    /** Resolve currency from branch → country */
     private String resolveCurrency(Long branchId) {
         if (branchId == null) return "USD";
         return branchRepo.findById(branchId)
@@ -58,11 +57,9 @@ public class SalaryStructureController {
                 .orElse("USD");
     }
 
-    /** Can this admin manage the given target user's salary? */
     private boolean canManageUser(User admin, User target) {
         if (admin == null || target == null) return false;
         if (isGlobalAdmin(admin)) return true;
-        // ADMIN/VP → same branch only
         return admin.getBranchId() != null
             && admin.getBranchId().equals(target.getBranchId());
     }
@@ -70,7 +67,6 @@ public class SalaryStructureController {
     // ═══════════════════════════════════════════════════
     // STAFF LIST (main table)
     // GET /api/salary-structures/staff-list
-    // Returns all branch staff + their current salary
     // ═══════════════════════════════════════════════════
     @GetMapping("/staff-list")
     @PreAuthorize("hasAnyRole('ADMIN', 'VP', 'COUNTRY_DIRECTOR', 'BOSS')")
@@ -80,35 +76,29 @@ public class SalaryStructureController {
         Long adminBranchId = admin.getBranchId();
         Long clientRoleId = 10L;
 
-        // Load users — for ADMIN/VP limit to their branch
         List<User> users;
         if (global) {
             users = userRepo.findAll();
         } else if (adminBranchId != null) {
-            // Use existing repo method that excludes CLIENT
             users = userRepo.findStaffByBranchIdAndRoleIdNot(adminBranchId, clientRoleId);
         } else {
             users = new ArrayList<>();
         }
 
-        // Filter: active + not CLIENT
         users = users.stream()
                 .filter(u -> Boolean.TRUE.equals(u.getIsActive()))
                 .filter(u -> u.getRoleId() == null || !u.getRoleId().equals(clientRoleId))
                 .collect(java.util.stream.Collectors.toList());
 
-        // Batch load all current salaries (company or branch-scoped)
         List<SalaryStructure> allCurrent = global
                 ? salaryRepo.findAllCurrent()
                 : (adminBranchId != null
                     ? salaryRepo.findAllCurrentByBranch(adminBranchId)
                     : new ArrayList<>());
 
-        // userId → current SalaryStructure
         Map<Long, SalaryStructure> currentByUser = new HashMap<>();
         for (SalaryStructure s : allCurrent) currentByUser.put(s.getUserId(), s);
 
-        // Build rows
         List<SalaryStructureDto.StaffSalaryRow> rows = new ArrayList<>();
         for (User u : users) {
             SalaryStructureDto.StaffSalaryRow r = new SalaryStructureDto.StaffSalaryRow();
@@ -116,7 +106,6 @@ public class SalaryStructureController {
             r.setName(u.getName());
             r.setBranchId(u.getBranchId());
 
-            // Role
             if (u.getRoleId() != null) {
                 roleRepo.findById(u.getRoleId()).ifPresent(role -> {
                     r.setRoleName(role.getName());
@@ -124,13 +113,9 @@ public class SalaryStructureController {
                     r.setRoleColor(role.getColor());
                 });
             }
-
-            // Department
             if (u.getDepartmentId() != null) {
                 deptRepo.findById(u.getDepartmentId()).ifPresent(d -> r.setDepartmentName(d.getName()));
             }
-
-            // Branch name + currency
             if (u.getBranchId() != null) {
                 branchRepo.findById(u.getBranchId()).ifPresent(b -> {
                     r.setBranchName(b.getName());
@@ -143,7 +128,6 @@ public class SalaryStructureController {
             }
             if (r.getCurrency() == null) r.setCurrency("USD");
 
-            // Current salary
             SalaryStructure cur = currentByUser.get(u.getId());
             if (cur != null) {
                 r.setCurrentId(cur.getId());
@@ -152,14 +136,11 @@ public class SalaryStructureController {
                 r.setCurrentNote(cur.getNote());
             }
 
-            // History count
             int hist = salaryRepo.findHistoryByUserId(u.getId()).size();
             r.setHistoryCount(hist);
-
             rows.add(r);
         }
 
-        // Default sort: name alphabetical (frontend will re-sort based on user choice)
         rows.sort((a, b) -> {
             String nameA = a.getName() != null ? a.getName() : "";
             String nameB = b.getName() != null ? b.getName() : "";
@@ -181,7 +162,6 @@ public class SalaryStructureController {
         Long branchId  = admin.getBranchId();
         Long clientRoleId = 10L;
 
-        // Total active non-client staff
         long totalStaff;
         if (global) {
             totalStaff = userRepo.countByIsActiveAndRoleIdNot(true, clientRoleId);
@@ -191,15 +171,12 @@ public class SalaryStructureController {
             totalStaff = 0;
         }
 
-        // Current salaries
         List<SalaryStructure> currents = global
                 ? salaryRepo.findAllCurrent()
                 : (branchId != null ? salaryRepo.findAllCurrentByBranch(branchId) : new ArrayList<>());
 
         BigDecimal total = BigDecimal.ZERO;
-        for (SalaryStructure s : currents) {
-            total = total.add(s.getBaseSalary());
-        }
+        for (SalaryStructure s : currents) { total = total.add(s.getBaseSalary()); }
         BigDecimal avg = currents.isEmpty()
                 ? BigDecimal.ZERO
                 : total.divide(BigDecimal.valueOf(currents.size()), 2, RoundingMode.HALF_UP);
@@ -218,9 +195,10 @@ public class SalaryStructureController {
     // ═══════════════════════════════════════════════════
     // HISTORY for one user
     // GET /api/salary-structures/history/{userId}
+    // ✅ FIX: isAuthenticated() — own user ကိုယ်တိုင် ကြည့်လို့ရ
     // ═══════════════════════════════════════════════════
     @GetMapping("/history/{userId}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'VP', 'COUNTRY_DIRECTOR', 'BOSS')")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<?> getHistory(
             @PathVariable Long userId,
             @AuthenticationPrincipal User admin) {
@@ -231,8 +209,11 @@ public class SalaryStructureController {
                     .body(new AuthDto.MessageResponse("User not found", false));
         }
 
-        if (!isGlobalAdmin(admin) && !canManageUser(admin, target)) {
-            // still allow VIEW within same branch
+        // ✅ Own user → always allow (member မိမိ salary ကြည့်ခွင့်)
+        if (admin.getId().equals(userId)) {
+            // fall through — no permission check needed
+        } else if (!isGlobalAdmin(admin) && !canManageUser(admin, target)) {
+            // Still allow VIEW within same branch
             if (admin.getBranchId() == null || !admin.getBranchId().equals(target.getBranchId())) {
                 return ResponseEntity.status(403)
                         .body(new AuthDto.MessageResponse("Access denied", false));
@@ -281,11 +262,9 @@ public class SalaryStructureController {
             return ResponseEntity.status(404)
                     .body(new AuthDto.MessageResponse("User not found", false));
         }
-
         if (!canManageUser(admin, target)) {
             return ResponseEntity.status(403)
-                    .body(new AuthDto.MessageResponse(
-                        "Access denied — not in your branch", false));
+                    .body(new AuthDto.MessageResponse("Access denied — not in your branch", false));
         }
 
         SalaryStructure s = new SalaryStructure();
@@ -301,7 +280,6 @@ public class SalaryStructureController {
     // ═══════════════════════════════════════════════════
     // DELETE one history record
     // DELETE /api/salary-structures/{id}
-    // Note: normally append-only, but allow delete for mistake correction
     // ═══════════════════════════════════════════════════
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'COUNTRY_DIRECTOR', 'BOSS')")
@@ -314,13 +292,11 @@ public class SalaryStructureController {
             return ResponseEntity.status(404)
                     .body(new AuthDto.MessageResponse("Not found", false));
         }
-
         User target = userRepo.findById(s.getUserId()).orElse(null);
         if (!canManageUser(admin, target)) {
             return ResponseEntity.status(403)
                     .body(new AuthDto.MessageResponse("Access denied", false));
         }
-
         salaryRepo.delete(s);
         return ResponseEntity.ok(new AuthDto.MessageResponse("Deleted", true));
     }

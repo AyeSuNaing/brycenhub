@@ -1,237 +1,633 @@
 <div class="attendance-upload-wrap">
 
-  <!-- HEADER -->
+  <!-- ═══ HEADER ═══ -->
   <div class="au-header">
     <button class="au-back" (click)="back.emit()">
-      <span>←</span>
-      <span>{{ lbl('Back to Dashboard (att)') }}</span>
+      <span>←</span><span>{{ lbl('Back to Dashboard (att)') }}</span>
     </button>
     <div class="au-title-wrap">
-      <div class="au-title">{{ lbl('Upload Attendance (title)') }}</div>
-      <div class="au-subtitle">{{ lbl('Fingerprint Excel file') }}</div>
-    </div>
-    <div class="au-step-dots">
-      <span class="au-dot" [class.au-dot-active]="step >= 1">1</span>
-      <span class="au-dot-line"></span>
-      <span class="au-dot" [class.au-dot-active]="step >= 2">2</span>
+      <div class="au-title">📅 Attendance</div>
+      <div class="au-subtitle">Upload fingerprint data or view history</div>
     </div>
   </div>
 
-  <!-- STEP 1 -->
-  <div *ngIf="step === 1" class="au-step-body">
+  <!-- ═══ MAIN TABS ═══ -->
+  <div style="display:flex;gap:2px;padding:12px 20px 0;flex-shrink:0;
+    border-bottom:1px solid rgba(255,255,255,0.06);">
+    <button (click)="setMainTab('upload')"
+      style="padding:8px 18px;border-radius:9px 9px 0 0;border:none;cursor:pointer;
+        font-size:12px;font-weight:700;font-family:inherit;transition:all 0.15s;"
+      [style.background]="mainTab==='upload'?'linear-gradient(135deg,#14532d,#16a34a)':'transparent'"
+      [style.color]="mainTab==='upload'?'white':'#94a3b8'">
+      📤 Upload Attendance
+    </button>
+    <button (click)="setMainTab('view')"
+      style="padding:8px 18px;border-radius:9px 9px 0 0;border:none;cursor:pointer;
+        font-size:12px;font-weight:700;font-family:inherit;transition:all 0.15s;"
+      [style.background]="mainTab==='view'?'linear-gradient(135deg,#1d4ed8,#3b82f6)':'transparent'"
+      [style.color]="mainTab==='view'?'white':'#94a3b8'">
+      📊 View Attendance
+    </button>
+  </div>
 
-    <!-- DROPZONE (no file yet) -->
-    <div *ngIf="!selectedFile" class="au-dropzone"
-         [class.au-drag]="isDragging"
-         (dragover)="onDragOver($event)"
-         (dragleave)="onDragLeave($event)"
-         (drop)="onDrop($event)">
-      <div class="au-drop-empty">
-        <div class="au-drop-icon">📄</div>
-        <div class="au-drop-title">{{ lbl('Drop Excel file here') }}</div>
-        <div class="au-drop-sub">{{ lbl('or (upload)') }}</div>
-        <label class="au-browse-btn">
-          {{ lbl('Choose file') }}
-          <input type="file" accept=".xlsx,.xls" (change)="onFileSelect($event)" style="display:none;">
-        </label>
-        <div class="au-drop-hint">
-          Required: <strong>Email</strong>, <strong>Date</strong>, <strong>Time In</strong>, <strong>Time Out</strong>
-          &nbsp;·&nbsp; .xlsx or .xls · Max {{ MAX_SIZE_MB }} MB
-        </div>
-      </div>
+  <!-- ════════════════════════════════════════
+       TAB 1: UPLOAD
+  ════════════════════════════════════════ -->
+  <ng-container *ngIf="mainTab==='upload'">
+
+    <!-- Step indicator -->
+    <div style="display:flex;align-items:center;gap:6px;padding:10px 20px;flex-shrink:0;">
+      <span class="au-dot" [class.au-dot-active]="step>=1">1</span>
+      <span class="au-dot-line"></span>
+      <span class="au-dot" [class.au-dot-active]="step>=2">2</span>
     </div>
 
-    <!-- FILE BAR (file selected) -->
-    <div *ngIf="selectedFile" class="au-file-bar">
-      <div class="au-file-icon">📊</div>
-      <div class="au-file-info">
-        <div class="au-file-name">{{ selectedFile.name }}</div>
-        <div class="au-file-size">{{ (selectedFile.size / 1024).toFixed(1) }} KB</div>
-      </div>
-      <button class="au-file-remove" (click)="removeFile()">✕</button>
-    </div>
+    <!-- STEP 1 -->
+    <div *ngIf="step===1" class="au-step-body">
 
-    <!-- PARSING SPINNER -->
-    <div *ngIf="isParsing" class="au-loading">
-      <div class="au-spinner"></div>
-      <div class="au-loading-text">{{ lbl('Parsing...') }}</div>
-    </div>
-
-    <!-- PARSE ERROR -->
-    <div *ngIf="parseError && !isParsing" class="au-error">⚠️ {{ parseError }}</div>
-
-    <!-- PREVIEW (inline after parse) -->
-    <div *ngIf="preview && !isParsing">
-
-      <!-- Summary chips -->
-      <div class="au-summary">
-        <div class="au-sum-card au-sum-total">
-          <div class="au-sum-label">Total</div>
-          <div class="au-sum-value">{{ preview.totalRows }}</div>
-        </div>
-        <div class="au-sum-card" (click)="setFilter('MATCHED')" [class.au-sum-active]="filterStatus === 'MATCHED'">
-          <div class="au-sum-label">✓ {{ lbl('MATCHED') }}</div>
-          <div class="au-sum-value" style="color:#22c55e;">{{ preview.matchedCount }}</div>
-        </div>
-        <div class="au-sum-card" (click)="setFilter('UNMATCHED')" [class.au-sum-active]="filterStatus === 'UNMATCHED'">
-          <div class="au-sum-label">✕ {{ lbl('UNMATCHED') }}</div>
-          <div class="au-sum-value" style="color:#ef4444;">{{ preview.unmatchedCount }}</div>
-        </div>
-        <div class="au-sum-card" (click)="setFilter('DUPLICATE')" [class.au-sum-active]="filterStatus === 'DUPLICATE'">
-          <div class="au-sum-label">⚠ {{ lbl('DUPLICATE') }}</div>
-          <div class="au-sum-value" style="color:#f59e0b;">{{ preview.duplicateCount }}</div>
-        </div>
-        <div class="au-sum-card" (click)="setFilter('INVALID')" [class.au-sum-active]="filterStatus === 'INVALID'">
-          <div class="au-sum-label">✕ {{ lbl('INVALID (att)') }}</div>
-          <div class="au-sum-value" style="color:#94a3b8;">{{ preview.invalidCount }}</div>
+      <!-- Dropzone -->
+      <div *ngIf="!selectedFile" class="au-dropzone"
+           [class.au-drag]="isDragging"
+           (dragover)="onDragOver($event)"
+           (dragleave)="onDragLeave($event)"
+           (drop)="onDrop($event)">
+        <div class="au-drop-empty">
+          <div class="au-drop-icon">📄</div>
+          <div class="au-drop-title">{{ lbl('Drop Excel file here') }}</div>
+          <div class="au-drop-sub">{{ lbl('or (upload)') }}</div>
+          <label class="au-browse-btn">
+            {{ lbl('Choose file') }}
+            <input type="file" accept=".xlsx,.xls" (change)="onFileSelect($event)" style="display:none;">
+          </label>
+          <div class="au-drop-hint">
+            Required: <strong>Email</strong>, <strong>Date</strong>,
+            <strong>Time In</strong>, <strong>Time Out</strong>
+            &nbsp;·&nbsp; .xlsx or .xls · Max {{ MAX_SIZE_MB }} MB
+          </div>
         </div>
       </div>
 
-      <!-- Toolbar -->
-      <div class="au-toolbar">
-        <div class="au-search">
-          <span class="au-search-icon">🔍</span>
-          <input type="text" placeholder="Search by name, email, role, branch..."
-                 [(ngModel)]="searchQuery">
-          <button *ngIf="searchQuery" class="au-search-clear" (click)="searchQuery=''">✕</button>
+      <!-- File bar -->
+      <div *ngIf="selectedFile" class="au-file-bar">
+        <div class="au-file-icon">📊</div>
+        <div class="au-file-info">
+          <div class="au-file-name">{{ selectedFile.name }}</div>
+          <div class="au-file-size">{{ (selectedFile.size / 1024).toFixed(1) }} KB</div>
         </div>
-        <div class="au-toolbar-actions">
-          <button class="au-link-btn" (click)="expandAll()">⊕ Expand</button>
-          <button class="au-link-btn" (click)="collapseAll()">⊖ Collapse</button>
-          <span class="au-toolbar-sep">|</span>
-          <button class="au-link-btn" (click)="selectAllMatched()">Select matched</button>
-          <button class="au-link-btn" (click)="deselectAll()">Deselect</button>
-        </div>
+        <button class="au-file-remove" (click)="removeFile()">✕</button>
       </div>
 
-      <div class="au-select-info">
-        <strong>{{ totalSelectedCount }}</strong> rows selected of {{ preview.matchedCount }} matched
-        <span *ngIf="filteredGroups.length !== groups.length" class="au-filter-info">
-          · Showing {{ filteredGroups.length }} of {{ groups.length }} staff
-        </span>
+      <!-- Parsing spinner -->
+      <div *ngIf="isParsing" class="au-loading">
+        <div class="au-spinner"></div>
+        <div class="au-loading-text">{{ lbl('Parsing...') }}</div>
       </div>
 
-      <!-- Staff cards -->
-      <div class="au-cards">
-        <div *ngFor="let g of filteredGroups" class="au-card"
-             [class.au-card-issue]="g.hasIssues"
-             [class.au-card-expanded]="g.expanded">
+      <!-- Parse error -->
+      <div *ngIf="parseError && !isParsing" class="au-error">⚠️ {{ parseError }}</div>
 
-          <!-- Card header -->
-          <div class="au-card-head" (click)="toggleExpand(g)">
-            <div class="au-card-left">
-              <input type="checkbox"
-                     [checked]="g.allSelected"
-                     [disabled]="g.matchedDays === 0"
-                     (click)="toggleGroupSelection(g, $event)"
-                     style="margin-right:8px;cursor:pointer;">
-              <div class="au-card-dot" [style.background]="groupStatusDot(g.status)"></div>
-              <div class="au-card-info">
-                <div class="au-card-name">{{ g.matchedName || g.email }}</div>
-                <div class="au-card-meta">
-                  <span *ngIf="g.matchedRole" class="au-card-role">{{ g.matchedRole }}</span>
-                  <span *ngIf="g.matchedBranch" class="au-card-branch">· {{ g.matchedBranch }}</span>
-                  <span class="au-card-email">{{ g.email }}</span>
+      <!-- Preview -->
+      <div *ngIf="preview && !isParsing">
+        <!-- Summary chips -->
+        <div class="au-summary">
+          <div class="au-sum-card au-sum-total">
+            <div class="au-sum-label">Total</div>
+            <div class="au-sum-value">{{ preview.totalRows }}</div>
+          </div>
+          <div class="au-sum-card" (click)="setFilter('MATCHED')" [class.au-sum-active]="filterStatus==='MATCHED'">
+            <div class="au-sum-label">✓ {{ lbl('MATCHED') }}</div>
+            <div class="au-sum-value" style="color:#22c55e;">{{ preview.matchedCount }}</div>
+          </div>
+          <div class="au-sum-card" (click)="setFilter('UNMATCHED')" [class.au-sum-active]="filterStatus==='UNMATCHED'">
+            <div class="au-sum-label">✕ {{ lbl('UNMATCHED') }}</div>
+            <div class="au-sum-value" style="color:#ef4444;">{{ preview.unmatchedCount }}</div>
+          </div>
+          <div class="au-sum-card" (click)="setFilter('DUPLICATE')" [class.au-sum-active]="filterStatus==='DUPLICATE'">
+            <div class="au-sum-label">⚠ {{ lbl('DUPLICATE') }}</div>
+            <div class="au-sum-value" style="color:#f59e0b;">{{ preview.duplicateCount }}</div>
+          </div>
+          <div class="au-sum-card" (click)="setFilter('INVALID')" [class.au-sum-active]="filterStatus==='INVALID'">
+            <div class="au-sum-label">✗ {{ lbl('INVALID (att)') }}</div>
+            <div class="au-sum-value" style="color:#94a3b8;">{{ preview.invalidCount }}</div>
+          </div>
+        </div>
+
+        <!-- Toolbar -->
+        <div class="au-toolbar">
+          <input class="au-search" [(ngModel)]="searchQuery" placeholder="Search name, email..."/>
+          <button class="au-btn-ghost" style="font-size:10px;" (click)="expandAll2()">⊞ Expand</button>
+          <button class="au-btn-ghost" style="font-size:10px;" (click)="collapseAll2()">⊟ Collapse</button>
+          <span style="margin-left:auto;font-size:10px;opacity:0.5;">
+            {{ selectedCount }} rows selected
+          </span>
+          <button class="au-btn-ghost" style="font-size:10px;" (click)="selectAllMatched()">Select matched</button>
+          <button class="au-btn-ghost" style="font-size:10px;" (click)="deselectAll()">Deselect</button>
+        </div>
+
+        <!-- Staff cards -->
+        <div class="au-cards">
+          <div *ngFor="let g of filteredGroups" class="au-card"
+               [class.au-card-issue]="g.hasIssues"
+               [class.au-card-expanded]="g.expanded">
+            <div class="au-card-head" (click)="toggleExpand(g)">
+              <div class="au-card-left">
+                <input type="checkbox" [checked]="g.allSelected"
+                       [disabled]="g.matchedDays===0"
+                       (click)="toggleGroupSelection(g,$event)"
+                       style="margin-right:8px;cursor:pointer;">
+                <div class="au-card-dot" [style.background]="groupStatusDot(g.status)"></div>
+                <div class="au-card-info">
+                  <div class="au-card-name">{{ g.matchedName || g.email }}</div>
+                  <div class="au-card-meta">
+                    <span *ngIf="g.matchedRole" class="au-card-role">{{ g.matchedRole }}</span>
+                    <span *ngIf="g.matchedBranch" class="au-card-branch">· {{ g.matchedBranch }}</span>
+                    <span class="au-card-email">{{ g.email }}</span>
+                  </div>
                 </div>
               </div>
+              <div class="au-card-right">
+                <span class="au-card-days">{{ g.matchedDays }}/{{ g.totalDays }} days</span>
+                <span class="au-card-status-badge"
+                      [style.background]="statusBg(g.status)"
+                      [style.color]="statusColor(g.status)">{{ g.status }}</span>
+                <div class="au-card-chevron">{{ g.expanded ? '▾' : '▸' }}</div>
+              </div>
             </div>
-            <div class="au-card-right">
-              <span class="au-card-days">{{ g.matchedDays }}/{{ g.totalDays }} days</span>
-              <span class="au-card-status-badge"
-                    [style.background]="statusBg(g.status)"
-                    [style.color]="statusColor(g.status)">
-                {{ g.status }}
+            <div *ngIf="g.expanded" class="au-card-body">
+              <table class="au-day-table">
+                <thead>
+                  <tr>
+                    <th style="width:32px;"></th>
+                    <th>Date</th><th>In</th><th>Out</th><th>Status</th><th>Note</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let r of g.rows" [class.au-row-issue]="r.status!=='MATCHED'">
+                    <td><input type="checkbox" [checked]="r.selected"
+                               [disabled]="r.status!=='MATCHED'"
+                               (click)="toggleRow(r,g,$event)"></td>
+                    <td class="au-day-date">{{ r.workDate || '—' }}</td>
+                    <td class="au-day-time">{{ r.timeIn || '—' }}</td>
+                    <td class="au-day-time">{{ r.timeOut || '—' }}</td>
+                    <td>
+                      <span class="au-day-status"
+                            [style.background]="statusBg(r.status)"
+                            [style.color]="statusColor(r.status)">{{ r.status }}</span>
+                    </td>
+                    <td class="au-day-msg">{{ r.message || '—' }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div *ngIf="filteredGroups.length===0" class="au-empty-state">
+            <div class="au-empty-icon">🔍</div>
+            <div class="au-empty-title">No staff match your filter</div>
+          </div>
+        </div>
+
+        <div *ngIf="saveError" class="au-error">⚠️ {{ saveError }}</div>
+
+        <div class="au-actions">
+          <button class="au-btn-ghost" (click)="removeFile()">✕ Clear</button>
+          <button class="au-btn-primary"
+                  [disabled]="selectedCount===0 || isSaving"
+                  (click)="confirmSave()">
+            <span *ngIf="!isSaving">💾 {{ lbl('Save selected') }} ({{ selectedCount }})</span>
+            <span *ngIf="isSaving">⏳ Saving...</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 2: Done -->
+    <div *ngIf="step===2 && saveResult" class="au-step-body">
+      <div class="au-done-card">
+        <div class="au-done-icon">✓</div>
+        <div class="au-done-title">{{ lbl('Attendance saved successfully') }}</div>
+        <div class="au-done-msg">{{ saveResult.message }}</div>
+        <div class="au-done-stats">
+          <div class="au-done-stat">
+            <div class="au-done-num" style="color:#22c55e;">{{ saveResult.savedCount }}</div>
+            <div class="au-done-lbl">{{ lbl('New records') }}</div>
+          </div>
+          <div class="au-done-stat">
+            <div class="au-done-num" style="color:#3b82f6;">{{ saveResult.updatedCount }}</div>
+            <div class="au-done-lbl">{{ lbl('Updated (att)') }}</div>
+          </div>
+          <div class="au-done-stat" *ngIf="saveResult.skippedCount>0">
+            <div class="au-done-num" style="color:#94a3b8;">{{ saveResult.skippedCount }}</div>
+            <div class="au-done-lbl">{{ lbl('Skipped (att)') }}</div>
+          </div>
+        </div>
+        <div class="au-done-actions">
+          <button class="au-btn-ghost" (click)="back.emit()">{{ lbl('Back to Dashboard (att)') }}</button>
+          <button class="au-btn-primary" (click)="resetUpload()">{{ lbl('Upload another file') }}</button>
+        </div>
+      </div>
+    </div>
+
+  </ng-container>
+  <!-- END UPLOAD TAB -->
+
+  <!-- ════════════════════════════════════════
+       TAB 2: VIEW ATTENDANCE
+  ════════════════════════════════════════ -->
+  <ng-container *ngIf="mainTab==='view'">
+    <div class="au-step-body">
+
+      <!-- Period selector + stats -->
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap;">
+        <div>
+          <div style="font-size:9px;font-weight:700;text-transform:uppercase;
+            letter-spacing:0.8px;opacity:0.4;margin-bottom:4px;">PAY PERIOD</div>
+          <select [(ngModel)]="viewPeriod" (change)="onViewPeriodChange()"
+            style="padding:8px 12px;border-radius:9px;font-size:12px;font-weight:600;
+              border:1px solid rgba(99,102,241,0.3);background:rgba(10,15,30,0.95);
+              color:inherit;font-family:inherit;cursor:pointer;min-width:180px;">
+            <option *ngFor="let p of viewPeriods" [value]="p.value">{{ p.label }}</option>
+          </select>
+        </div>
+
+        <!-- Summary stats -->
+        <ng-container *ngIf="!viewLoading && viewStaff.length>0">
+          <div style="display:flex;gap:10px;margin-left:8px;">
+            <div style="padding:8px 14px;border-radius:9px;background:rgba(34,197,94,0.08);
+              border:1px solid rgba(34,197,94,0.2);text-align:center;">
+              <div style="font-size:16px;font-weight:800;color:#22c55e;">{{ getTotalPresent() }}</div>
+              <div style="font-size:9px;opacity:0.5;margin-top:2px;">PRESENT</div>
+            </div>
+            <div style="padding:8px 14px;border-radius:9px;background:rgba(245,158,11,0.08);
+              border:1px solid rgba(245,158,11,0.2);text-align:center;">
+              <div style="font-size:16px;font-weight:800;color:#f59e0b;">{{ getTotalAbsent() }}</div>
+              <div style="font-size:9px;opacity:0.5;margin-top:2px;">ABSENT</div>
+            </div>
+            <div style="padding:8px 14px;border-radius:9px;background:rgba(239,68,68,0.08);
+              border:1px solid rgba(239,68,68,0.2);text-align:center;">
+              <div style="font-size:16px;font-weight:800;color:#ef4444;">{{ getTotalDayOff() }}</div>
+              <div style="font-size:9px;opacity:0.5;margin-top:2px;">DAY OFF</div>
+            </div>
+            <div style="padding:8px 14px;border-radius:9px;background:rgba(148,163,184,0.08);
+              border:1px solid rgba(148,163,184,0.15);text-align:center;">
+              <div style="font-size:16px;font-weight:800;color:#94a3b8;">{{ viewStaff.length }}</div>
+              <div style="font-size:9px;opacity:0.5;margin-top:2px;">STAFF</div>
+            </div>
+          </div>
+        </ng-container>
+
+        <!-- Toolbar right -->
+        <div style="margin-left:auto;display:flex;gap:8px;align-items:center;">
+          <input [(ngModel)]="viewSearch" placeholder="Search name, email, role..."
+            style="padding:7px 12px;border-radius:9px;font-size:11px;border:1px solid rgba(148,163,184,0.2);
+              background:rgba(255,255,255,0.04);color:inherit;font-family:inherit;width:200px;outline:none;"/>
+          <button class="au-btn-ghost" style="font-size:10px;" (click)="expandAll()">⊞ Expand All</button>
+          <button class="au-btn-ghost" style="font-size:10px;" (click)="collapseAll()">⊟ Collapse All</button>
+        </div>
+      </div>
+
+      <!-- Loading -->
+      <div *ngIf="viewLoading" class="au-loading">
+        <div class="au-spinner"></div>
+        <div class="au-loading-text">Loading attendance data...</div>
+      </div>
+
+      <!-- Error -->
+      <div *ngIf="viewError && !viewLoading" class="au-error">⚠️ {{ viewError }}</div>
+
+      <!-- Staff cards -->
+      <div *ngIf="!viewLoading && !viewError">
+        <div *ngFor="let s of filteredViewStaff"
+          style="margin-bottom:8px;border-radius:12px;overflow:hidden;
+            border:1px solid rgba(148,163,184,0.1);">
+
+          <!-- Card header -->
+          <div (click)="toggleViewStaff(s)"
+            style="display:flex;align-items:center;gap:12px;padding:12px 16px;
+              cursor:pointer;transition:background 0.15s;"
+            onmouseenter="this.style.background='rgba(255,255,255,0.03)'"
+            onmouseleave="this.style.background='transparent'">
+
+            <!-- Avatar -->
+            <div style="width:36px;height:36px;border-radius:10px;flex-shrink:0;
+              background:linear-gradient(135deg,#14532d,#16a34a);
+              display:flex;align-items:center;justify-content:center;
+              font-size:14px;font-weight:700;color:white;">
+              {{ s.name.charAt(0).toUpperCase() }}
+            </div>
+
+            <!-- Info -->
+            <div style="flex:1;min-width:0;">
+              <div style="font-size:12px;font-weight:700;">{{ s.name }}</div>
+              <div style="font-size:10px;opacity:0.45;margin-top:1px;">
+                {{ s.role }} · {{ s.email }}
+              </div>
+            </div>
+
+            <!-- Stats badges -->
+            <div style="display:flex;gap:8px;align-items:center;flex-shrink:0;">
+              <span style="font-size:10px;padding:3px 9px;border-radius:20px;font-weight:700;
+                background:rgba(34,197,94,0.1);color:#22c55e;border:1px solid rgba(34,197,94,0.2);">
+                ✓ {{ s.present }} present
               </span>
-              <div class="au-card-chevron">{{ g.expanded ? '▾' : '▸' }}</div>
+              <span *ngIf="s.absent>0"
+                style="font-size:10px;padding:3px 9px;border-radius:20px;font-weight:700;
+                  background:rgba(245,158,11,0.1);color:#f59e0b;border:1px solid rgba(245,158,11,0.2);">
+                ! {{ s.absent }} absent
+              </span>
+              <span *ngIf="s.dayoff>0"
+                style="font-size:10px;padding:3px 9px;border-radius:20px;font-weight:700;
+                  background:rgba(239,68,68,0.1);color:#ef4444;border:1px solid rgba(239,68,68,0.2);">
+                ✕ {{ s.dayoff }} off
+              </span>
+              <!-- ✅ Add button -->
+              <button (click)="openAdd(s); $event.stopPropagation()"
+                style="padding:3px 10px;border-radius:7px;font-size:10px;font-weight:700;
+                  background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.25);
+                  color:#22c55e;cursor:pointer;transition:all 0.15s;"
+                onmouseenter="this.style.background='rgba(34,197,94,0.2)'"
+                onmouseleave="this.style.background='rgba(34,197,94,0.1)'">
+                + Add
+              </button>
+              <span style="font-size:10px;font-weight:700;opacity:0.4;margin-left:4px;">
+                {{ s.expanded ? '▾' : '▸' }}
+              </span>
             </div>
           </div>
 
-          <!-- Card body -->
-          <div *ngIf="g.expanded" class="au-card-body">
-            <table class="au-day-table">
+          <!-- Expanded: day-by-day table -->
+          <div *ngIf="s.expanded"
+            style="border-top:1px solid rgba(148,163,184,0.08);overflow:hidden;">
+            <table style="width:100%;border-collapse:collapse;font-size:11px;">
               <thead>
-                <tr>
-                  <th style="width:32px;"></th>
-                  <th>Date</th>
-                  <th>In</th>
-                  <th>Out</th>
-                  <th>Status</th>
-                  <th>Note</th>
+                <tr style="background:rgba(0,0,0,0.15);">
+                  <th style="padding:7px 16px;text-align:left;font-size:9px;font-weight:700;
+                    text-transform:uppercase;letter-spacing:0.8px;opacity:0.4;">DATE</th>
+                  <th style="padding:7px 12px;text-align:center;font-size:9px;font-weight:700;
+                    text-transform:uppercase;letter-spacing:0.8px;opacity:0.4;">DAY</th>
+                  <th style="padding:7px 12px;text-align:center;font-size:9px;font-weight:700;
+                    text-transform:uppercase;letter-spacing:0.8px;opacity:0.4;">TIME IN</th>
+                  <th style="padding:7px 12px;text-align:center;font-size:9px;font-weight:700;
+                    text-transform:uppercase;letter-spacing:0.8px;opacity:0.4;">TIME OUT</th>
+                  <th style="padding:7px 12px;text-align:center;font-size:9px;font-weight:700;
+                    text-transform:uppercase;letter-spacing:0.8px;opacity:0.4;">HRS</th>
+                  <th style="padding:7px 12px;text-align:center;font-size:9px;font-weight:700;
+                    text-transform:uppercase;letter-spacing:0.8px;opacity:0.4;">STATUS</th>
+                  <th style="padding:7px 12px;text-align:left;font-size:9px;font-weight:700;
+                    text-transform:uppercase;letter-spacing:0.8px;opacity:0.4;">SOURCE</th>
+                  <th style="padding:7px 12px;width:50px;"></th>
                 </tr>
               </thead>
               <tbody>
-                <tr *ngFor="let r of g.rows" [class.au-row-issue]="r.status !== 'MATCHED'">
-                  <td>
-                    <input type="checkbox" [checked]="r.selected"
-                           [disabled]="r.status !== 'MATCHED'"
-                           (click)="toggleRow(r, g, $event)">
+                <ng-container *ngFor="let log of s.logs; let i=index">
+                  <!-- ─ VIEW ROW ─ -->
+                  <tr *ngIf="!isEditing(s.userId, log.workDate)"
+                    [style.background]="i%2===0?'transparent':'rgba(255,255,255,0.015)'">
+                    <td style="padding:7px 16px;font-weight:600;">{{ log.workDate }}</td>
+                    <td style="padding:7px 12px;text-align:center;opacity:0.45;font-size:10px;">
+                      {{ getDayName(log.workDate) }}
+                    </td>
+                    <td style="padding:7px 12px;text-align:center;font-family:monospace;"
+                      [style.color]="log.timeIn && !log.isDayoff ? (isLateArrival(log.timeIn||'') ? '#f59e0b' : '#22c55e') : 'inherit'">
+                      {{ log.timeIn ? log.timeIn.substring(0,5) : '—' }}
+                      <span *ngIf="log.timeIn && isLateArrival(log.timeIn)"
+                        style="font-size:8px;margin-left:2px;color:#f59e0b;">LATE</span>
+                    </td>
+                    <td style="padding:7px 12px;text-align:center;font-family:monospace;">
+                      {{ log.timeOut ? log.timeOut.substring(0,5) : '—' }}
+                    </td>
+                    <td style="padding:7px 12px;text-align:center;font-size:10px;opacity:0.7;">
+                      {{ calcHoursView(log.timeIn, log.timeOut) }}
+                    </td>
+                    <td style="padding:7px 12px;text-align:center;">
+                      <span style="font-size:10px;padding:2px 8px;border-radius:20px;font-weight:700;"
+                        [style.background]="getLogStatusColor(log)+'18'"
+                        [style.color]="getLogStatusColor(log)">
+                        {{ getLogStatus(log) }}
+                      </span>
+                    </td>
+                    <td style="padding:7px 12px;font-size:9px;opacity:0.35;font-family:monospace;">
+                      {{ log.source || '—' }}
+                    </td>
+                    <td style="padding:7px 12px;text-align:center;">
+                      <button (click)="openEdit(s, log)"
+                        style="background:rgba(99,102,241,0.1);border:1px solid rgba(99,102,241,0.25);
+                          color:#818cf8;border-radius:6px;cursor:pointer;padding:3px 8px;
+                          font-size:10px;font-weight:600;transition:all 0.15s;"
+                        onmouseenter="this.style.background='rgba(99,102,241,0.2)'"
+                        onmouseleave="this.style.background='rgba(99,102,241,0.1)'">
+                        ✏️
+                      </button>
+                    </td>
+                  </tr>
+
+                  <!-- ─ EDIT ROW ─ -->
+                  <tr *ngIf="isEditing(s.userId, log.workDate)"
+                    style="background:rgba(99,102,241,0.06);border-top:1px solid rgba(99,102,241,0.2);">
+                    <td style="padding:8px 16px;font-weight:700;color:#818cf8;">{{ log.workDate }}</td>
+                    <td style="padding:8px 12px;text-align:center;opacity:0.4;font-size:10px;">
+                      {{ getDayName(log.workDate) }}
+                    </td>
+                    <!-- Time In -->
+                    <td style="padding:6px 8px;text-align:center;">
+                      <input *ngIf="!editState!.isDayoff" [(ngModel)]="editState!.timeIn" type="time"
+                        style="width:90px;padding:4px 6px;border-radius:6px;font-size:11px;
+                          border:1px solid rgba(99,102,241,0.4);background:rgba(10,15,30,0.9);
+                          color:inherit;font-family:monospace;text-align:center;" />
+                      <span *ngIf="editState!.isDayoff" style="opacity:0.3;font-size:10px;">—</span>
+                    </td>
+                    <!-- Time Out -->
+                    <td style="padding:6px 8px;text-align:center;">
+                      <input *ngIf="!editState!.isDayoff" [(ngModel)]="editState!.timeOut" type="time"
+                        style="width:90px;padding:4px 6px;border-radius:6px;font-size:11px;
+                          border:1px solid rgba(99,102,241,0.4);background:rgba(10,15,30,0.9);
+                          color:inherit;font-family:monospace;text-align:center;" />
+                      <span *ngIf="editState!.isDayoff" style="opacity:0.3;font-size:10px;">—</span>
+                    </td>
+                    <!-- Hours placeholder -->
+                    <td style="padding:6px 12px;text-align:center;font-size:10px;opacity:0.4;">—</td>
+                    <!-- Day Off toggle -->
+                    <td style="padding:6px 12px;text-align:center;">
+                      <label style="display:flex;align-items:center;gap:5px;cursor:pointer;
+                        font-size:10px;justify-content:center;">
+                        <input type="checkbox" [(ngModel)]="editState!.isDayoff" />
+                        Day Off
+                      </label>
+                    </td>
+                    <!-- Note -->
+                    <td style="padding:6px 8px;">
+                      <input [(ngModel)]="editState!.note" type="text" placeholder="Note..."
+                        style="width:100%;padding:4px 7px;border-radius:6px;font-size:10px;
+                          border:1px solid rgba(148,163,184,0.2);background:rgba(255,255,255,0.04);
+                          color:inherit;font-family:inherit;" />
+                    </td>
+                    <!-- Actions -->
+                    <td style="padding:6px 8px;text-align:center;white-space:nowrap;">
+                      <button (click)="saveEdit(s, log)" [disabled]="editState!.saving"
+                        style="background:#16a34a;border:none;color:white;border-radius:6px;
+                          cursor:pointer;padding:4px 10px;font-size:10px;font-weight:700;
+                          margin-right:4px;transition:opacity 0.15s;"
+                        [style.opacity]="editState!.saving?'0.6':'1'">
+                        {{ editState!.saving ? '...' : '✓' }}
+                      </button>
+                      <button (click)="closeEdit()" [disabled]="editState!.saving"
+                        style="background:transparent;border:1px solid rgba(148,163,184,0.2);
+                          color:#94a3b8;border-radius:6px;cursor:pointer;padding:4px 8px;
+                          font-size:10px;transition:all 0.15s;">
+                        ✕
+                      </button>
+                    </td>
+                  </tr>
+                </ng-container>
+
+                <tr *ngIf="s.logs.length===0">
+                  <td colspan="8" style="padding:20px;text-align:center;opacity:0.3;font-size:11px;">
+                    No attendance records for this period
                   </td>
-                  <td class="au-day-date">{{ r.workDate || '—' }}</td>
-                  <td class="au-day-time">{{ r.timeIn || '—' }}</td>
-                  <td class="au-day-time">{{ r.timeOut || '—' }}</td>
-                  <td>
-                    <span class="au-day-status"
-                          [style.background]="statusBg(r.status)"
-                          [style.color]="statusColor(r.status)">
-                      {{ r.status }}
-                    </span>
-                  </td>
-                  <td class="au-day-msg">{{ r.message || '—' }}</td>
                 </tr>
               </tbody>
             </table>
           </div>
         </div>
 
-        <div *ngIf="filteredGroups.length === 0" class="au-empty-state">
-          <div class="au-empty-icon">🔍</div>
-          <div class="au-empty-title">No staff match your filter</div>
-          <div class="au-empty-desc">Try clearing search or changing status filter</div>
+        <!-- Empty state -->
+        <div *ngIf="filteredViewStaff.length===0 && !viewLoading" class="au-empty-state">
+          <div class="au-empty-icon">📋</div>
+          <div class="au-empty-title">No staff found</div>
         </div>
       </div>
 
-      <div *ngIf="saveError" class="au-error">⚠️ {{ saveError }}</div>
-
-      <!-- Save action bar -->
-      <div class="au-actions">
-        <button class="au-btn-ghost" (click)="clearAll()">✕ Clear</button>
-        <button class="au-btn-primary"
-                [disabled]="totalSelectedCount === 0 || isSaving"
-                (click)="confirmSave()">
-          <span *ngIf="!isSaving">💾 {{ lbl('Save selected') }} ({{ totalSelectedCount }})</span>
-          <span *ngIf="isSaving">⏳ {{ lbl('Parsing...') }}</span>
-        </button>
-      </div>
     </div>
+  </ng-container>
+  <!-- END VIEW TAB -->
 
-  </div>
-  <!-- END STEP 1 -->
+  <!-- ════════════════════════════════════════
+       ADD ATTENDANCE MODAL
+  ════════════════════════════════════════ -->
+  <div *ngIf="addState" style="position:fixed;inset:0;z-index:1000;
+    display:flex;align-items:center;justify-content:center;
+    background:rgba(0,0,0,0.55);backdrop-filter:blur(4px);"
+    (click)="closeAdd()">
 
-  <!-- STEP 2: DONE -->
-  <div *ngIf="step === 2 && saveResult" class="au-step-body">
-    <div class="au-done-card">
-      <div class="au-done-icon">✓</div>
-      <div class="au-done-title">{{ lbl('Attendance saved successfully') }}</div>
-      <div class="au-done-msg">{{ saveResult.message }}</div>
+    <div style="width:440px;border-radius:16px;overflow:hidden;
+      border:1px solid rgba(34,197,94,0.25);
+      box-shadow:0 24px 60px rgba(0,0,0,0.5);"
+      [style.background]="'#0f1a2e'"
+      (click)="$event.stopPropagation()">
 
-      <div class="au-done-stats">
-        <div class="au-done-stat">
-          <div class="au-done-num" style="color:#22c55e;">{{ saveResult.savedCount }}</div>
-          <div class="au-done-lbl">{{ lbl('New records') }}</div>
+      <!-- Modal header -->
+      <div style="display:flex;align-items:center;justify-content:space-between;
+        padding:16px 20px;border-bottom:1px solid rgba(34,197,94,0.12);
+        background:linear-gradient(135deg,rgba(20,83,45,0.4),rgba(22,163,74,0.15));">
+        <div>
+          <div style="font-size:13px;font-weight:800;color:#22c55e;">➕ Add Attendance</div>
+          <div style="font-size:10px;opacity:0.5;margin-top:2px;">
+            {{ getStaffName(addState.staffId) }}
+          </div>
         </div>
-        <div class="au-done-stat">
-          <div class="au-done-num" style="color:#3b82f6;">{{ saveResult.updatedCount }}</div>
-          <div class="au-done-lbl">{{ lbl('Updated (att)') }}</div>
-        </div>
-        <div class="au-done-stat" *ngIf="saveResult.skippedCount > 0">
-          <div class="au-done-num" style="color:#94a3b8;">{{ saveResult.skippedCount }}</div>
-          <div class="au-done-lbl">{{ lbl('Skipped (att)') }}</div>
-        </div>
+        <button (click)="closeAdd()"
+          style="width:28px;height:28px;border-radius:8px;border:none;
+            background:rgba(255,255,255,0.06);color:inherit;cursor:pointer;
+            font-size:14px;display:flex;align-items:center;justify-content:center;">✕</button>
       </div>
 
-      <div class="au-done-actions">
-        <button class="au-btn-ghost" (click)="back.emit()">{{ lbl('Back to Dashboard (att)') }}</button>
-        <button class="au-btn-primary" (click)="uploadAnother()">{{ lbl('Upload another file') }}</button>
+      <!-- Modal body -->
+      <div style="padding:20px;">
+
+        <!-- Date -->
+        <div style="margin-bottom:14px;">
+          <div style="font-size:9px;font-weight:700;text-transform:uppercase;
+            letter-spacing:0.8px;opacity:0.45;margin-bottom:5px;">DATE *</div>
+          <input [(ngModel)]="addState.workDate" type="date"
+            style="width:100%;padding:9px 12px;border-radius:9px;font-size:12px;
+              border:1px solid rgba(34,197,94,0.3);background:rgba(10,15,30,0.9);
+              color:inherit;font-family:inherit;box-sizing:border-box;outline:none;
+              transition:border-color 0.15s;"
+            onfocus="this.style.borderColor='rgba(34,197,94,0.6)'"
+            onblur="this.style.borderColor='rgba(34,197,94,0.3)'" />
+        </div>
+
+        <!-- Day Off toggle -->
+        <div style="margin-bottom:14px;">
+          <label style="display:flex;align-items:center;gap:10px;cursor:pointer;
+            padding:10px 14px;border-radius:9px;border:1px solid;transition:all 0.15s;"
+            [style.borderColor]="addState.isDayoff ? 'rgba(239,68,68,0.4)' : 'rgba(148,163,184,0.15)'"
+            [style.background]="addState.isDayoff ? 'rgba(239,68,68,0.06)' : 'rgba(255,255,255,0.02)'">
+            <input type="checkbox" [(ngModel)]="addState.isDayoff"
+              style="width:15px;height:15px;cursor:pointer;" />
+            <div>
+              <div style="font-size:12px;font-weight:600;"
+                [style.color]="addState.isDayoff ? '#ef4444' : 'inherit'">Day Off</div>
+              <div style="font-size:9px;opacity:0.4;margin-top:1px;">
+                Time In/Out will be blank
+              </div>
+            </div>
+          </label>
+        </div>
+
+        <!-- Time In / Time Out -->
+        <div *ngIf="!addState.isDayoff"
+          style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;">
+          <div>
+            <div style="font-size:9px;font-weight:700;text-transform:uppercase;
+              letter-spacing:0.8px;opacity:0.45;margin-bottom:5px;">TIME IN</div>
+            <input [(ngModel)]="addState.timeIn" type="time"
+              style="width:100%;padding:9px 12px;border-radius:9px;font-size:12px;
+                border:1px solid rgba(99,102,241,0.3);background:rgba(10,15,30,0.9);
+                color:inherit;font-family:monospace;box-sizing:border-box;outline:none;
+                transition:border-color 0.15s;"
+              onfocus="this.style.borderColor='rgba(99,102,241,0.6)'"
+              onblur="this.style.borderColor='rgba(99,102,241,0.3)'" />
+          </div>
+          <div>
+            <div style="font-size:9px;font-weight:700;text-transform:uppercase;
+              letter-spacing:0.8px;opacity:0.45;margin-bottom:5px;">TIME OUT</div>
+            <input [(ngModel)]="addState.timeOut" type="time"
+              style="width:100%;padding:9px 12px;border-radius:9px;font-size:12px;
+                border:1px solid rgba(99,102,241,0.3);background:rgba(10,15,30,0.9);
+                color:inherit;font-family:monospace;box-sizing:border-box;outline:none;
+                transition:border-color 0.15s;"
+              onfocus="this.style.borderColor='rgba(99,102,241,0.6)'"
+              onblur="this.style.borderColor='rgba(99,102,241,0.3)'" />
+          </div>
+        </div>
+
+        <!-- Note -->
+        <div style="margin-bottom:16px;">
+          <div style="font-size:9px;font-weight:700;text-transform:uppercase;
+            letter-spacing:0.8px;opacity:0.45;margin-bottom:5px;">NOTE (optional)</div>
+          <input [(ngModel)]="addState.note" type="text" placeholder="e.g. Late arrival, Medical"
+            style="width:100%;padding:9px 12px;border-radius:9px;font-size:12px;
+              border:1px solid rgba(148,163,184,0.15);background:rgba(255,255,255,0.04);
+              color:inherit;font-family:inherit;box-sizing:border-box;outline:none;" />
+        </div>
+
+        <!-- Error -->
+        <div *ngIf="addState.error"
+          style="margin-bottom:12px;padding:8px 12px;border-radius:8px;
+            background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);
+            color:#ef4444;font-size:11px;">
+          ⚠️ {{ addState.error }}
+        </div>
+
+        <!-- Action buttons -->
+        <div style="display:flex;gap:8px;">
+          <button (click)="closeAdd()"
+            style="flex:1;padding:10px;border-radius:9px;font-size:12px;font-weight:700;
+              cursor:pointer;border:1px solid rgba(148,163,184,0.2);
+              background:transparent;color:inherit;font-family:inherit;transition:all 0.15s;"
+            onmouseenter="this.style.background='rgba(148,163,184,0.08)'"
+            onmouseleave="this.style.background='transparent'">
+            Cancel
+          </button>
+          <button (click)="saveAdd(currentAddStaff!)" [disabled]="addState.saving"
+            style="flex:2;padding:10px;border-radius:9px;font-size:12px;font-weight:800;
+              cursor:pointer;border:none;color:white;font-family:inherit;transition:all 0.2s;"
+            [style.background]="addState.saving ? 'rgba(22,163,74,0.5)' : '#16a34a'"
+            [style.cursor]="addState.saving ? 'not-allowed' : 'pointer'">
+            {{ addState.saving ? '⏳ Saving...' : '✓ Save Record' }}
+          </button>
+        </div>
+
       </div>
     </div>
   </div>

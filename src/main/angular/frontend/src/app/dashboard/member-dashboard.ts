@@ -18,6 +18,12 @@ import { ChatPopupComponent, ChatMember } from '../shared/chat-popup/chat-popup.
 import { AnnouncementInline } from '../shared/announcement-inline';
 import { MyLeaveRequestComponent } from '../shared/my-leave-request/my-leave-request.component';
 import { MyOtRequestComponent }    from '../shared/my-ot-request/my-ot-request.component';
+import { ChangePasswordInline } from '../shared/change-password/change-password-inline';
+import { HolidaysInline } from '../admin/holidays-inline';
+import { TaxBracketsInline } from '../admin/tax-brackets-inline';
+import { StaffProfileInline } from '../admin/staff-profile-inline';
+// ✅ i18n
+import { getLabel, AppLabelKey } from '../i18n/app-labels.i18n';
 
 import {
   Announcement, Notification, ActiveProject, PortfolioProject,
@@ -43,6 +49,10 @@ const LOGO_SVG = `data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIiIGhlaWdodD0iMzIi
     AnnouncementInline,
     MyLeaveRequestComponent,
     MyOtRequestComponent,
+    ChangePasswordInline,  // ✅ NEW
+    HolidaysInline,        // ✅ NEW
+    TaxBracketsInline,     // ✅ NEW
+    StaffProfileInline,    // ✅ NEW
   ],
   templateUrl: './member-dashboard.html',
   styleUrl: './member-dashboard.scss'
@@ -82,6 +92,13 @@ export class MemberDashboard implements OnInit, AfterViewInit, OnDestroy {
   projectUnreadCounts: Record<number, number> = {};
   branchUnreadCount = 0;
   private _unreadPollTimer: any = null;
+
+  selectedStaffId = 0; // ✅ NEW — for own profile view
+
+  // ✅ i18n
+  lbl(key: AppLabelKey): string {
+    return getLabel(this.currentLangObj.code, key);
+  }
 
   setView(v: string): void {
     this.activeView = v;
@@ -209,10 +226,10 @@ export class MemberDashboard implements OnInit, AfterViewInit, OnDestroy {
     this.dataService.getTaskStats().subscribe({
       next: data => {
         this.donutData = [
-          { label: 'To Do', count: data.todo, color: '#6366f1' },
+          { label: 'To Do',       count: data.todo,       color: '#6366f1' },
           { label: 'In Progress', count: data.inProgress, color: '#3b82f6' },
-          { label: 'In Review', count: data.inReview, color: '#f59e0b' },
-          { label: 'Done', count: data.done, color: '#22c55e' },
+          { label: 'In Review',   count: data.inReview,   color: '#f59e0b' },
+          { label: 'Done',        count: data.done,       color: '#22c55e' },
         ];
         this.cdr.detectChanges();
       },
@@ -226,18 +243,11 @@ export class MemberDashboard implements OnInit, AfterViewInit, OnDestroy {
       next: data => { this.teamMembers = data; this.loading.team = false; this.cdr.detectChanges(); },
       error: () => { this.loading.team = false; this.cdr.detectChanges(); }
     });
-
-    // ✅ My Tasks — backend က lang param နဲ့ translate ပြန်ပေးတယ်
     const lang = this.authService.getUser()?.preferredLanguage || 'en';
     this.dataService.getMyTasks(lang).subscribe({
-      next: data => {
-        this.myTasks = data;
-        this.loading.tasks = false;
-        this.cdr.detectChanges();
-      },
+      next: data => { this.myTasks = data; this.loading.tasks = false; this.cdr.detectChanges(); },
       error: () => { this.loading.tasks = false; this.cdr.detectChanges(); }
     });
-
     this.dataService.getOverdueTasks().subscribe({
       next: data => { this.overdueTasks = data; this.loading.overdue = false; this.cdr.detectChanges(); },
       error: () => { this.loading.overdue = false; this.cdr.detectChanges(); }
@@ -274,9 +284,9 @@ export class MemberDashboard implements OnInit, AfterViewInit, OnDestroy {
     document.body.classList.toggle('light', !dark);
     localStorage.setItem('brycen-theme', dark ? 'dark' : 'light');
   }
-
   toggleTheme() { this.setTheme(!this.isDark); }
 
+  // ✅ lbl() ကို currentLangObj.code သုံး
   setLang(lang: any) {
     this.currentLangObj = lang;
     this.showLangMenu = false;
@@ -292,6 +302,36 @@ export class MemberDashboard implements OnInit, AfterViewInit, OnDestroy {
           window.location.reload();
         }
       });
+  }
+
+  // ✅ Settings > Profile → own profile
+  openMyProfile() {
+    const freshUser = this.authService.getUser();
+    console.log('[openMyProfile] freshUser:', freshUser);
+    const myId = freshUser?.id || freshUser?.userId;
+    console.log('[openMyProfile] myId:', myId);
+    if (!myId) {
+      this.authService.loadCurrentUser().subscribe({
+        next: () => {
+          const u = this.authService.getUser();
+          const id = u?.id || u?.userId;
+          console.log('[openMyProfile] after load — id:', id);
+          if (!id) return;
+          this.currentUser = u;
+          this.selectedStaffId = Number(id);
+          this.activeView = 'my-profile';
+          this.settingsOpen = false;
+          this.cdr.detectChanges();
+        }
+      });
+      return;
+    }
+    this.currentUser = freshUser;
+    this.selectedStaffId = Number(myId);
+    console.log('[openMyProfile] selectedStaffId:', this.selectedStaffId);
+    this.activeView = 'my-profile';
+    this.settingsOpen = false;
+    this.cdr.detectChanges();
   }
 
   getTotalTasks(): number { return this.donutData.reduce((sum, d) => sum + d.count, 0); }
@@ -316,12 +356,10 @@ export class MemberDashboard implements OnInit, AfterViewInit, OnDestroy {
   openProject(id: number) {
     this.router.navigate(['/dashboard/member'], { queryParams: { projectId: id } });
   }
-
   closeProject() {
     this.router.navigate(['/dashboard/member']);
     this.activeView = 'dashboard';
   }
-
   openNewProject() { this.showNewProject = true; this.showProjectDetail = false; }
   closeNewProject() { this.showNewProject = false; }
   onProjectCreated(project: any) {
@@ -367,127 +405,120 @@ export class MemberDashboard implements OnInit, AfterViewInit, OnDestroy {
     const myId = this.currentUser?.id || this.currentUser?.userId;
     if (myId) {
       this.http.put(
-        `${BASE}/chat/read-channel?type=DIRECT&channelId=${myId}`, {},
+        `${BASE}/chat/read-direct/${m.userId || m.id}`,
+        {},
         { headers: this.authService.getHeaders() }
       ).pipe(catchError(() => of(null))).subscribe(() => {
-        const memberId = m.userId || m.id;
-        this.memberUnreadCounts[memberId] = 0;
+        this.memberUnreadCounts[m.userId || m.id] = 0;
         this.cdr.detectChanges();
       });
     }
-  }
-
-  openBranchChat(): void {
-    const branchId = this.currentUser?.branchId;
-    this.selectedChatMember = {
-      id: branchId,
-      name: 'Branch Chat',
-      projectId: branchId,
-      projectName: 'Branch Chat',
-      color: '#3b82f6',
-    };
-    this.isGroupChat = true;
-    this.http.put(
-      `${BASE}/chat/read-channel?type=BRANCH&channelId=${branchId}`, {},
-      { headers: this.authService.getHeaders() }
-    ).pipe(catchError(() => of(null))).subscribe(() => {
-      this.branchUnreadCount = 0;
-      this.cdr.detectChanges();
-    });
     this.cdr.detectChanges();
   }
 
   openProjectChat(p: any) {
     this.selectedChatMember = {
       id: p.id,
-      name: p.name || p.title || 'Group Chat',
-      projectId: p.id,
-      projectName: p.name || p.title || 'Group Chat',
+      name: p.name,
+      role: 'PROJECT',
       color: p.color || '#16a34a',
+      initial: p.name?.[0]?.toUpperCase() || 'P',
+      online: true,
+      projectName: p.name,
+      projectId: p.id,
     };
     this.isGroupChat = true;
     this.http.put(
-      `${BASE}/chat/read-channel?type=PROJECT&channelId=${p.id}`, {},
+      `${BASE}/chat/read-group/${p.id}`,
+      {},
       { headers: this.authService.getHeaders() }
     ).pipe(catchError(() => of(null))).subscribe(() => {
       this.projectUnreadCounts[p.id] = 0;
       this.cdr.detectChanges();
     });
+    this.cdr.detectChanges();
   }
 
-  closeChatPopup() {
+  openBranchChat() {
+    const branchId = this.currentUser?.branchId;
+    if (!branchId) return;
+    this.selectedChatMember = {
+      id: branchId,
+      name: 'Branch Chat',
+      role: 'BRANCH',
+      color: '#3b82f6',
+      initial: 'B',
+      online: true,
+      projectName: 'Branch Chat',
+      projectId: branchId,
+    };
+    this.isGroupChat = true;
+    this.branchUnreadCount = 0;
+    this.cdr.detectChanges();
+  }
+
+  closeChat() {
     this.selectedChatMember = null;
-    this.isGroupChat = false;
+    this.cdr.detectChanges();
   }
 
-  @HostListener('document:click', ['$event'])
-  onDocClick(e: MouseEvent) {
-    const t = e.target as HTMLElement;
-    if (!t.closest('.lang-wrap')) this.showLangMenu = false;
-    if (!t.closest('.settings-wrap')) this.settingsOpen = false;
-  }
-
-  getVisibleTeamCount(): number {
-    return this.teamMembers.filter(m =>
-      m.role !== 'Country Director' &&
-      m.role !== 'Vice President' &&
-      m.role !== 'Admin'
-    ).length;
-  }
-
-  startUnreadPolling(): void {
-    this.stopUnreadPolling();
+  startUnreadPolling() {
     this.ngZone.runOutsideAngular(() => {
       this._unreadPollTimer = setInterval(() => {
-        this.ngZone.run(() => {
-          this.loadMemberUnreadCounts();
-          this.loadProjectUnreadCounts();
-        });
+        this.loadUnreadCounts();
       }, 10000);
     });
   }
 
-  stopUnreadPolling(): void {
+  stopUnreadPolling() {
     if (this._unreadPollTimer) {
       clearInterval(this._unreadPollTimer);
       this._unreadPollTimer = null;
     }
   }
 
-  loadMemberUnreadCounts(): void {
+  loadUnreadCounts() {
     const myId = this.currentUser?.id || this.currentUser?.userId;
     if (!myId) return;
+
+    const projectIds = this.activeProjects.map(p => p.id);
+    if (projectIds.length > 0) {
+      this.http.get<any[]>(
+        `${BASE}/chat/unread-batch?type=PROJECT&channelIds=${projectIds.join(',')}`,
+        { headers: this.authService.getHeaders() }
+      ).pipe(catchError(() => of([]))).subscribe(counts => {
+        this.ngZone.run(() => {
+          counts.forEach((c: any) => {
+            if (c.channelId && c.unreadCount !== undefined) {
+              this.projectUnreadCounts[c.channelId] = c.unreadCount;
+            }
+          });
+          this.cdr.detectChanges();
+        });
+      });
+    }
+
     this.http.get<any[]>(
       `${BASE}/chat/direct-unread-by-sender?userId=${myId}`,
       { headers: this.authService.getHeaders() }
-    ).pipe(catchError(() => of([]))).subscribe(res => {
-      this.memberUnreadCounts = {};
-      (res || []).forEach((r: any) => {
-        this.memberUnreadCounts[r.senderId] = r.unreadCount;
-      });
-      this.cdr.detectChanges();
-    });
-    const branchId = this.currentUser?.branchId;
-    if (branchId) {
-      this.http.get<any>(
-        `${BASE}/chat/unread?type=BRANCH&channelId=${branchId}`,
-        { headers: this.authService.getHeaders() }
-      ).pipe(catchError(() => of({ unreadCount: 0 }))).subscribe(res => {
-        this.branchUnreadCount = res?.unreadCount || 0;
+    ).pipe(catchError(() => of([]))).subscribe(counts => {
+      this.ngZone.run(() => {
+        counts.forEach((c: any) => {
+          if (c.senderId && c.unreadCount !== undefined) {
+            this.memberUnreadCounts[c.senderId] = c.unreadCount;
+          }
+        });
         this.cdr.detectChanges();
       });
-    }
+    });
   }
 
-  loadProjectUnreadCounts(): void {
-    this.activeProjects.forEach(p => {
-      this.http.get<any>(
-        `${BASE}/chat/unread?type=PROJECT&channelId=${p.id}`,
-        { headers: this.authService.getHeaders() }
-      ).pipe(catchError(() => of({ unreadCount: 0 }))).subscribe(res => {
-        this.projectUnreadCounts[p.id] = res?.unreadCount || 0;
-        this.cdr.detectChanges();
-      });
-    });
+  getInitialFromName(name: string): string {
+    return name ? name.charAt(0).toUpperCase() : '?';
+  }
+
+  getAvatarColor(name: string): string {
+    const c = ['#16a34a', '#0284c7', '#7c3aed', '#db2777', '#ea580c', '#0891b2'];
+    return c[(name?.charCodeAt(0) || 0) % c.length];
   }
 }
