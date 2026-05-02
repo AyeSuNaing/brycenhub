@@ -19,6 +19,16 @@ interface LogRow {
   note:     string | null;
 }
 
+interface EditState {
+  workDate: string;
+  timeIn:   string;
+  timeOut:  string;
+  isDayoff: boolean;
+  note:     string;
+  saving:   boolean;
+  error:    string;
+}
+
 @Component({
   selector: 'app-member-attendance-inline',
   standalone: true,
@@ -33,9 +43,17 @@ export class MemberAttendanceInline implements OnInit {
 
   periods: { value: string; label: string }[] = [];
   selectedPeriod = '';
-  logs:    LogRow[] = [];
-  loading  = false;
+  logs:     LogRow[] = [];
+  loading   = false;
   currentUser: any = null;
+
+  // ── Salary calculated check ──
+  // canEdit = true  → salary_history ထဲမှာ ဒီ period record မရှိသေး
+  // canEdit = false → salary calculate ပြီးပြီ (record ရှိပြီ) → lock
+  salaryCalculated = false;
+  checkingPayroll  = false;
+
+  editState: EditState | null = null;
 
   lbl(key: AppLabelKey): string {
     return getLabel(this.currentUser?.preferredLanguage, key);
@@ -75,18 +93,122 @@ export class MemberAttendanceInline implements OnInit {
     const prevY  = m === 1 ? y - 1 : y;
     const from   = `${prevY}-${String(prevM).padStart(2,'0')}-25`;
     const to     = `${y}-${String(m).padStart(2,'0')}-24`;
-    this.loading = true;
-    this.logs    = [];
+    this.loading          = true;
+    this.logs             = [];
+    this.editState        = null;
+    this.salaryCalculated = false;
     this.cdr.detectChanges();
+
     this.http.get<LogRow[]>(
       `${BASE}/users/${myId}/attendance?from=${from}&to=${to}`,
       { headers: this.auth.getHeaders() }
     ).subscribe({
-      next: d => { this.logs = d || []; this.loading = false; this.cdr.detectChanges(); },
+      next: d => {
+        this.logs    = d || [];
+        this.loading = false;
+        this.cdr.detectChanges();
+        this.checkSalaryCalculated();
+      },
       error: () => { this.loading = false; this.cdr.detectChanges(); }
     });
   }
 
+  // ── salary_history မှာ ဒီ period record ရှိ/မရှိ စစ်မယ် ──
+  // record ရှိပြီ = salary calculate ပြီးပြီ → edit မရ
+  checkSalaryCalculated(): void {
+    this.checkingPayroll  = true;
+    this.salaryCalculated = false;
+    this.cdr.detectChanges();
+
+    this.http.get<any[]>(
+      `${BASE}/payroll/my-history`,
+      { headers: this.auth.getHeaders() }
+    ).subscribe({
+      next: rows => {
+        // ဒီ period record ရှိပြီဆိုရင် salary calculate ပြီးပြီ
+        const hasRecord = (rows || []).some(r => r.payPeriod === this.selectedPeriod);
+        this.salaryCalculated = hasRecord;
+        this.checkingPayroll  = false;
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        // API error ဖြစ်ရင် safe side အနေနဲ့ edit ခွင့်ပေး
+        this.salaryCalculated = false;
+        this.checkingPayroll  = false;
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  // salary calculate မလုပ်ရသေး → edit ရ
+  get canEdit(): boolean {
+    return !this.salaryCalculated;
+  }
+
+  startEdit(log: LogRow): void {
+    if (!this.canEdit) return;
+    this.editState = {
+      workDate: log.workDate,
+      timeIn:   log.timeIn  ? log.timeIn.substring(0, 5)  : '',
+      timeOut:  log.timeOut ? log.timeOut.substring(0, 5) : '',
+      isDayoff: log.isDayoff,
+      note:     log.note || '',
+      saving:   false,
+      error:    '',
+    };
+    this.cdr.detectChanges();
+  }
+
+  cancelEdit(): void {
+    this.editState = null;
+    this.cdr.detectChanges();
+  }
+
+  isEditing(workDate: string): boolean {
+    return this.editState?.workDate === workDate;
+  }
+
+  saveEdit(log: LogRow): void {
+    if (!this.editState || this.editState.saving) return;
+    const myId = this.currentUser?.id || this.currentUser?.userId;
+    if (!myId) return;
+
+    this.editState.error  = '';
+    this.editState.saving = true;
+    this.cdr.detectChanges();
+
+    const body = {
+      timeIn:   this.editState.isDayoff ? null : (this.editState.timeIn  || null),
+      timeOut:  this.editState.isDayoff ? null : (this.editState.timeOut || null),
+      isDayoff: this.editState.isDayoff,
+      note:     this.editState.note || null,
+    };
+
+    this.http.patch(
+      `${BASE}/users/${myId}/attendance/${this.editState.workDate}`,
+      body,
+      { headers: this.auth.getHeaders() }
+    ).subscribe({
+      next: () => {
+        const fmt = (t: string | null) =>
+          t ? (t.length === 5 ? t + ':00' : t) : null;
+        log.timeIn   = fmt(body.timeIn);
+        log.timeOut  = fmt(body.timeOut);
+        log.isDayoff = body.isDayoff;
+        log.note     = body.note;
+        log.source   = 'MANUAL';
+        this.editState = null;
+        this.cdr.detectChanges();
+      },
+      error: (e) => {
+        this.editState!.error  = e?.error?.message || 'Failed to save.';
+        this.editState!.saving = false;
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  // ── Stats ──
   get presentCount(): number { return this.logs.filter(l => l.timeIn && !l.isDayoff).length; }
   get absentCount():  number { return this.logs.filter(l => !l.timeIn && !l.isDayoff).length; }
   get dayoffCount():  number { return this.logs.filter(l => l.isDayoff).length; }
@@ -107,7 +229,6 @@ export class MemberAttendanceInline implements OnInit {
   }
 
   isLate(timeIn: string): boolean {
-    if (!timeIn) return false;
     const [h, m] = timeIn.split(':').map(Number);
     return h > 9 || (h === 9 && m > 0);
   }

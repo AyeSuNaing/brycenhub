@@ -2,17 +2,33 @@
 
   <!-- ── Header ── -->
   <div class="mai-header">
-    <button class="mai-back" (click)="back.emit()">← Back</button>
+    <button class="mai-back" (click)="back.emit()">← {{ lbl('Back') }}</button>
     <div>
-      <div class="mai-title">📋 Attendance Log</div>
-      <div class="mai-subtitle">My attendance history</div>
+      <div class="mai-title">📋 {{ lbl('Attendance Log') }}</div>
+      <div class="mai-subtitle">{{ lbl('My attendance history') }}</div>
+    </div>
+
+    <!-- Lock badge: salary calculate ပြီးပြီ -->
+    <div *ngIf="salaryCalculated && !checkingPayroll"
+      style="margin-left:auto;display:flex;align-items:center;gap:6px;
+        background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);
+        border-radius:8px;padding:5px 10px;font-size:10px;font-weight:700;color:#f87171;">
+      🔒 Salary Calculated — Read Only
+    </div>
+
+    <!-- Editable badge: salary မ calculate ရသေး -->
+    <div *ngIf="!salaryCalculated && !checkingPayroll && logs.length > 0"
+      style="margin-left:auto;display:flex;align-items:center;gap:6px;
+        background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.2);
+        border-radius:8px;padding:5px 10px;font-size:10px;font-weight:700;color:#4ade80;">
+      ✏️ Editable
     </div>
   </div>
 
   <!-- ── Period + Stats ── -->
   <div class="mai-toolbar">
     <div class="mai-period-wrap">
-      <div class="mai-label">PAY PERIOD</div>
+      <div class="mai-label">{{ lbl('PAY PERIOD') }}</div>
       <select class="mai-select" [(ngModel)]="selectedPeriod" (change)="loadLogs()">
         <option *ngFor="let p of periods" [value]="p.value">{{ p.label }}</option>
       </select>
@@ -21,19 +37,19 @@
     <div class="mai-stats" *ngIf="!loading && logs.length > 0">
       <div class="mai-stat mai-stat-green">
         <div class="mai-stat-val">{{ presentCount }}</div>
-        <div class="mai-stat-lbl">PRESENT</div>
+        <div class="mai-stat-lbl">{{ lbl('PRESENT') }}</div>
       </div>
       <div class="mai-stat mai-stat-yellow">
         <div class="mai-stat-val">{{ absentCount }}</div>
-        <div class="mai-stat-lbl">ABSENT</div>
+        <div class="mai-stat-lbl">{{ lbl('ABSENT') }}</div>
       </div>
       <div class="mai-stat mai-stat-red">
         <div class="mai-stat-val">{{ dayoffCount }}</div>
-        <div class="mai-stat-lbl">DAY OFF</div>
+        <div class="mai-stat-lbl">{{ lbl('DAY OFF') }}</div>
       </div>
       <div class="mai-stat mai-stat-gray">
         <div class="mai-stat-val">{{ avgTimeIn }}</div>
-        <div class="mai-stat-lbl">AVG TIME IN</div>
+        <div class="mai-stat-lbl">{{ lbl('AVG TIME IN') }}</div>
       </div>
     </div>
   </div>
@@ -41,7 +57,7 @@
   <!-- ── Loading ── -->
   <div *ngIf="loading" class="mai-loading">
     <div class="mai-spinner"></div>
-    <div class="mai-loading-text">Loading attendance...</div>
+    <div class="mai-loading-text">{{ lbl('Loading attendance...') }}</div>
   </div>
 
   <!-- ── Content ── -->
@@ -50,73 +66,168 @@
     <!-- Empty -->
     <div *ngIf="logs.length === 0" class="mai-empty">
       <div class="mai-empty-icon">📋</div>
-      <div class="mai-empty-title">No attendance records</div>
-      <div class="mai-empty-sub">for this pay period</div>
+      <div class="mai-empty-title">{{ lbl('No attendance records') }}</div>
+      <div class="mai-empty-sub">{{ lbl('for this pay period') }}</div>
     </div>
 
     <!-- Table -->
     <table *ngIf="logs.length > 0" class="mai-table">
       <thead>
         <tr class="mai-thead-row">
-          <th class="mai-th mai-th-left">DATE</th>
-          <th class="mai-th">DAY</th>
-          <th class="mai-th">TIME IN</th>
-          <th class="mai-th">TIME OUT</th>
-          <th class="mai-th">HOURS</th>
-          <th class="mai-th">STATUS</th>
-          <th class="mai-th">SOURCE</th>
+          <th class="mai-th mai-th-left">{{ lbl('DATE') }}</th>
+          <th class="mai-th">{{ lbl('DAY') }}</th>
+          <th class="mai-th">{{ lbl('TIME IN') }}</th>
+          <th class="mai-th">{{ lbl('TIME OUT') }}</th>
+          <th class="mai-th">{{ lbl('HOURS') }}</th>
+          <th class="mai-th">{{ lbl('STATUS') }}</th>
+          <th class="mai-th">{{ lbl('SOURCE') }}</th>
+          <!-- Edit column: salary မ calculate ရသေးရင်ပဲ ပြ -->
+          <th class="mai-th" *ngIf="canEdit" style="width:48px;"></th>
         </tr>
       </thead>
       <tbody>
-        <tr *ngFor="let log of logs; let i=index"
-          class="mai-row"
-          [class.mai-row-alt]="i % 2 !== 0"
-          [class.mai-row-dayoff]="log.isDayoff"
-          [class.mai-row-absent]="!log.timeIn && !log.isDayoff">
+        <ng-container *ngFor="let log of logs; let i=index">
 
-          <!-- Date -->
-          <td class="mai-td mai-td-date">{{ log.workDate }}</td>
+          <!-- ── VIEW ROW ── -->
+          <tr *ngIf="!isEditing(log.workDate)"
+            class="mai-row"
+            [class.mai-row-alt]="i % 2 !== 0"
+            [class.mai-row-dayoff]="log.isDayoff"
+            [class.mai-row-absent]="!log.timeIn && !log.isDayoff">
 
-          <!-- Day -->
-          <td class="mai-td mai-td-day">{{ getDayName(log.workDate) }}</td>
+            <td class="mai-td mai-td-date">{{ log.workDate }}</td>
+            <td class="mai-td mai-td-day">{{ getDayName(log.workDate) }}</td>
 
-          <!-- Time In -->
-          <td class="mai-td mai-td-center mai-td-mono"
-            [style.color]="getTimeInColor(log)">
-            <span>{{ log.timeIn ? log.timeIn.substring(0,5) : '—' }}</span>
-            <span *ngIf="log.timeIn && isLate(log.timeIn)" class="mai-late-badge">LATE</span>
-          </td>
+            <td class="mai-td mai-td-center mai-td-mono"
+              [style.color]="getTimeInColor(log)">
+              {{ log.timeIn ? log.timeIn.substring(0,5) : '—' }}
+              <span *ngIf="log.timeIn && isLate(log.timeIn)"
+                style="font-size:8px;margin-left:3px;color:#f59e0b;
+                  background:rgba(245,158,11,0.15);border-radius:3px;padding:1px 3px;">
+                LATE
+              </span>
+            </td>
 
-          <!-- Time Out -->
-          <td class="mai-td mai-td-center mai-td-mono mai-td-muted">
-            {{ log.timeOut ? log.timeOut.substring(0,5) : '—' }}
-          </td>
+            <td class="mai-td mai-td-center mai-td-mono">
+              {{ log.timeOut ? log.timeOut.substring(0,5) : '—' }}
+            </td>
 
-          <!-- Hours -->
-          <td class="mai-td mai-td-center mai-td-hours">{{ calcHours(log) }}</td>
+            <td class="mai-td mai-td-center" style="font-size:11px;opacity:0.65;">
+              {{ calcHours(log) }}
+            </td>
 
-          <!-- Status -->
-          <td class="mai-td mai-td-center">
-            <span class="mai-status-badge"
-              [style.background]="getStatusBg(log)"
-              [style.color]="getStatusColor(log)">
-              {{ getStatus(log) }}
-            </span>
-          </td>
+            <td class="mai-td mai-td-center">
+              <span style="font-size:10px;font-weight:700;padding:3px 8px;border-radius:5px;"
+                [style.color]="getStatusColor(log)"
+                [style.background]="getStatusBg(log)">
+                {{ getStatus(log) }}
+              </span>
+            </td>
 
-          <!-- Source -->
-          <td class="mai-td mai-td-center">
-            <span class="mai-source-badge"
-              [class.mai-source-fp]="log.source === 'FINGERPRINT'"
-              [class.mai-source-manual]="log.source !== 'FINGERPRINT'">
-              {{ log.source || '—' }}
-            </span>
-          </td>
+            <td class="mai-td mai-td-center" style="font-size:10px;opacity:0.5;">
+              {{ log.source }}
+            </td>
 
-        </tr>
+            <!-- ✏️ Edit button — salary calculate မလုပ်ရသေးရင်ပဲ ပြ -->
+            <td class="mai-td mai-td-center" *ngIf="canEdit">
+              <button (click)="startEdit(log)"
+                style="background:rgba(99,102,241,0.12);border:none;border-radius:6px;
+                  color:#818cf8;cursor:pointer;padding:4px 8px;font-size:11px;
+                  transition:all 0.15s;"
+                title="Edit">
+                ✏️
+              </button>
+            </td>
+          </tr>
+
+          <!-- ── EDIT ROW (inline expand) ── -->
+          <tr *ngIf="isEditing(log.workDate)"
+            style="background:rgba(99,102,241,0.06);border-left:3px solid #6366f1;">
+            <td colspan="8" style="padding:14px 16px;">
+              <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+
+                <!-- Date label -->
+                <div style="font-size:12px;font-weight:700;min-width:90px;">
+                  {{ editState!.workDate }}
+                  <div style="font-size:9px;opacity:0.45;font-weight:400;margin-top:2px;">
+                    {{ getDayName(editState!.workDate) }}
+                  </div>
+                </div>
+
+                <!-- Day Off toggle -->
+                <label style="display:flex;align-items:center;gap:6px;cursor:pointer;
+                  font-size:11px;font-weight:600;">
+                  <input type="checkbox" [(ngModel)]="editState!.isDayoff"
+                    style="accent-color:#ef4444;width:14px;height:14px;">
+                  Day Off
+                </label>
+
+                <!-- Time In -->
+                <div *ngIf="!editState!.isDayoff"
+                  style="display:flex;flex-direction:column;gap:3px;">
+                  <label style="font-size:9px;opacity:0.5;font-weight:700;
+                    text-transform:uppercase;letter-spacing:0.5px;">Time In</label>
+                  <input type="time" [(ngModel)]="editState!.timeIn"
+                    style="background:rgba(15,20,40,0.8);border:1px solid rgba(99,102,241,0.35);
+                      border-radius:7px;color:inherit;font-family:monospace;font-size:12px;
+                      padding:5px 8px;outline:none;width:112px;">
+                </div>
+
+                <!-- Time Out -->
+                <div *ngIf="!editState!.isDayoff"
+                  style="display:flex;flex-direction:column;gap:3px;">
+                  <label style="font-size:9px;opacity:0.5;font-weight:700;
+                    text-transform:uppercase;letter-spacing:0.5px;">Time Out</label>
+                  <input type="time" [(ngModel)]="editState!.timeOut"
+                    style="background:rgba(15,20,40,0.8);border:1px solid rgba(99,102,241,0.35);
+                      border-radius:7px;color:inherit;font-family:monospace;font-size:12px;
+                      padding:5px 8px;outline:none;width:112px;">
+                </div>
+
+                <!-- Note -->
+                <div style="display:flex;flex-direction:column;gap:3px;flex:1;min-width:120px;">
+                  <label style="font-size:9px;opacity:0.5;font-weight:700;
+                    text-transform:uppercase;letter-spacing:0.5px;">Note</label>
+                  <input type="text" [(ngModel)]="editState!.note"
+                    placeholder="Optional note..."
+                    style="background:rgba(15,20,40,0.8);border:1px solid rgba(148,163,184,0.2);
+                      border-radius:7px;color:inherit;font-family:inherit;font-size:12px;
+                      padding:5px 8px;outline:none;">
+                </div>
+
+                <!-- Save / Cancel buttons -->
+                <div style="display:flex;gap:8px;align-items:center;">
+                  <button (click)="saveEdit(log)"
+                    [disabled]="editState!.saving"
+                    [style.opacity]="editState!.saving ? '0.6' : '1'"
+                    style="background:linear-gradient(135deg,#4f46e5,#6366f1);border:none;
+                      border-radius:8px;color:white;cursor:pointer;font-size:11px;
+                      font-weight:700;font-family:inherit;padding:7px 16px;">
+                    {{ editState!.saving ? '⏳' : '✓ Save' }}
+                  </button>
+                  <button (click)="cancelEdit()"
+                    [disabled]="editState!.saving"
+                    style="background:rgba(148,163,184,0.1);border:1px solid rgba(148,163,184,0.15);
+                      border-radius:8px;color:inherit;cursor:pointer;font-size:11px;
+                      font-weight:600;font-family:inherit;padding:7px 12px;opacity:0.7;">
+                    ✕ Cancel
+                  </button>
+                </div>
+              </div>
+
+              <!-- Error message -->
+              <div *ngIf="editState!.error"
+                style="margin-top:8px;color:#f87171;font-size:10px;
+                  background:rgba(239,68,68,0.08);border-radius:6px;padding:5px 10px;">
+                ⚠ {{ editState!.error }}
+              </div>
+            </td>
+          </tr>
+
+        </ng-container>
       </tbody>
     </table>
 
-  </div>
+  </div><!-- /mai-content -->
 
-</div>
+</div><!-- /mai-wrap -->

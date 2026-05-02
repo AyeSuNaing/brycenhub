@@ -57,7 +57,7 @@
             class="action-text action-dim">⏳ Waiting for approval...
       </span>
       <span *ngIf="batchStatus.paidCount === data?.totalRecords && batchStatus.paidCount > 0"
-            class="action-text action-done">✅ {{ lbl('All paid') }}
+            class="action-text action-done">{{ lbl('All paid') }}
       </span>
     </div>
   </div>
