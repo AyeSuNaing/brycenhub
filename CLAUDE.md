@@ -4818,9 +4818,8 @@ INFO:    Public Holidays, Tax Brackets
 - **Build cache:** If errors persist → `rm -rf .angular/cache` + restart `ng serve`
 
 *Last updated: 2026-04-30 — Translation Session*
-
 # 🔄 BrycenHub PMS — Session Handover
-**Date:** 2026-05-02 (Saturday)  
+**Date:** 2026-05-03 (Sunday)  
 **Stack:** Angular 21 + Spring Boot 2.7.18 + MySQL `asn_db`  
 **Path:** `/Users/brycen_cambodia_2/Documents/1ASNworkspace/welcome/`  
 **GitHub:** `AyeSuNaing/brycenhub` (main)  
@@ -4831,103 +4830,55 @@ INFO:    Public Holidays, Tax Brackets
 
 ## ✅ THIS SESSION — COMPLETED
 
-### 1. Upload Attendance — Card Layout (Left/Right Align)
+### 1. attendance-upload-inline.html — Remaining Hardcodes → lbl()
 **File:** `src/app/admin/attendance-upload-inline.html`
 
-```
-LEFT:  [☑] [A avatar] Admin of Cambodia
-                       Admin · Phnom Penh · admin1@brycen.co.kh
-RIGHT:                                      22/22 days  MATCHED  ▸
-```
+| Before (hardcode) | After lbl() |
+|---|---|
+| `Upload fingerprint data or view history` | `lbl('Fingerprint Excel file')` |
+| `📤 Upload Attendance` | `lbl('Upload Attendance')` |
+| `📊 View Attendance` (tab + done card) | `lbl('View Attendance')` |
+| `Upload & Preview` (step label) | `lbl('Upload & Preview')` |
+| `PAY PERIOD` | `lbl('PAY PERIOD')` |
+| `PRESENT / ABSENT / DAY OFF / STAFF` | `lbl('PRESENT')` etc |
+| `Search name, email, role...` | `lbl('Search name or email')` |
+| `Expand All / Collapse All` | `lbl('Expand All')` / `lbl('Collapse All')` |
+| `DATE / DAY / TIME IN / TIME OUT / HRS / STATUS / SOURCE` | `lbl('DATE')` etc |
 
-- Avatar circle: initial letter, green gradient (matched) / red gradient (unmatched)
-- `display:flex;align-items:center;flex:1` → horizontal row ✅
-- RIGHT: `flex-shrink:0;margin-left:12px` → push right ✅
-
----
-
-### 2. Light Mode Fix
-**Files:** `attendance-upload-inline.html` + `attendance-upload-inline.scss`
-
-Stats bar — dark bg hardcode ဖြစ်နေတာ fix:
-- Stats chips: `rgba(128,128,128,0.x)` → both modes
-- Search input: neutral border/bg
-- Clear button: `rgba(128,128,128,0.1)` visible in light
-- Save bar: neutral colors
-
-**SCSS ထည့်ရမဲ့ code** — `attendance-upload-inline.scss` ရဲ့ **bottom** မှာ paste:
-
-```scss
-.au-preview-bar { background: #ffffff; }
-:host-context(body.dark) .au-preview-bar { background: #0d1424; }
-.au-actions { background: #ffffff !important; }
-:host-context(body.dark) .au-actions { background: #0d1424 !important; }
-```
+**Output:** `/mnt/user-data/outputs/attendance-upload-inline.html`
 
 ---
 
-### 3. Done Card — "View Attendance" Button
-**File:** `attendance-upload-inline.html`
-
-```
-Before:  [← Back to Dashboard]   [Upload another file]
-After:   [Upload another file]    [📊 View Attendance]
-```
-
-Click → `setMainTab('view')` → View Attendance tab auto-load ✅
-
----
-
-### 4. Announcement — Pay Period Month Fix
-**File:** `attendance-upload-inline.ts`
-
-**Problem:** Upload date (May) ကိုသုံးနေတာ → "May 2026" ပြနေတယ်  
-**Fix:** Excel rows ထဲက actual `workDate` min/max ကနေ month ဆုံးဖြတ်
-
-```typescript
-// confirmSave() inside next: callback
-const allRows = this.groups.flatMap(g => g.rows.filter(r => r.selected));
-this.createAttendanceAnnouncement(res.savedCount + res.updatedCount, allRows);
-
-// Method signature changed:
-createAttendanceAnnouncement(totalRows: number, rows: ParsedRow[] = []): void {
-  const dates = rows.map(r => r.workDate).filter(d => !!d).sort();
-  const maxDate = new Date(dates[dates.length - 1]);
-  const month = maxDate.toLocaleString('en', { month: 'long', year: 'numeric' });
-  // → April excel = "April 2026" ✅
-}
-```
-
----
-
-### 5. i18n — Attendance Log Keys (6 Languages)
+### 2. app-labels.i18n.ts — SOURCE key ထည့်
 **File:** `src/app/i18n/app-labels.i18n.ts`
 
-**New AppLabelKey entries (21 keys):**
-```typescript
-| 'Attendance Log' | 'My attendance history' | 'PAY PERIOD'
-| 'PRESENT' | 'ABSENT' | 'DAY OFF' | 'AVG TIME IN'
-| 'No attendance records' | 'for this pay period'
-| 'DATE' | 'DAY' | 'TIME IN' | 'TIME OUT' | 'HOURS'
-| 'Present' | 'Day Off' | 'Loading attendance...'
-| 'Upload & Preview' | 'Search name or email...'
-| 'Expand All' | 'Collapse All'
-```
+- `'SOURCE'` key 6 languages ထည့်ပြီ
+  - EN: `SOURCE` | JA: `ソース` | MY: `ရင်းမြစ်` | KM: `ប្រភព` | VI: `Nguồn` | KO: `출처`
+- KM section duplicate keys (`Inactive`, `members`, `Holidays`) fix လုပ်ပြီ
+- KM section payroll keys (50+ keys) ထည့်ပြီ
+- 6 languages × 344 keys — duplicate မရှိ ✅
 
-**Translations added (6 languages):**
+**Output:** `/mnt/user-data/outputs/app-labels.i18n.ts` (1,046 lines)
 
-| Key | EN | JA | MY | KM | VI | KO |
-|---|---|---|---|---|---|---|
-| Attendance Log | Attendance Log | 出勤記録 | တက်ရောက်မှုမှတ်တမ်း | កំណត់ត្រាចូលធ្វើការ | Nhật ký chấm công | 출근 기록 |
-| PRESENT | PRESENT | 出勤 | တက်ရောက် | មានមុខ | CÓ MẶT | 출근 |
-| ABSENT | ABSENT | 欠勤 | မတက်ရောက် | អវត្តមាន | VẮNG MẶT | 결근 |
-| DAY OFF | DAY OFF | 休日 | ရက်ပိတ် | ថ្ងៃឈប់ | NGÀY NGHỈ | 휴일 |
-| TIME IN | TIME IN | 出勤時刻 | ဝင်ချိန် | ម៉ោងចូល | GIỜ VÀO | 출근 시간 |
-| Expand All | Expand All | 全て展開 | အားလုံးဖွင့် | ពង្រីកទាំងអស់ | Mở rộng tất cả | 모두 펼치기 |
-| Collapse All | Collapse All | 全て折りたたむ | အားလုံးပိတ် | បង្រួមទាំងអស់ | Thu gọn tất cả | 모두 접기 |
+---
 
-**Output file:** `/mnt/user-data/outputs/app-labels.i18n.ts` (1,201 lines)  
-**Apply to:** `src/app/i18n/app-labels.i18n.ts`
+### 3. Member Attendance Log — Edit Feature
+**Files:** `src/app/shared/attendance-log/member-attendance-inline.ts/.html`
+
+**Logic:**
+- `GET /payroll/my-history` → ဒီ period record ရှိ/မရှိ check
+- **record မရှိ** (salary calculate မလုပ်ရသေး) → ✏️ Edit ခွင့်ရ — ✏️ Editable badge (green)
+- **record ရှိပြီ** (salary calculate ပြီးပြီ) → 🔒 Read Only — 🔒 Salary Calculated badge (red)
+
+**Edit UX:**
+- ✏️ button click → row inline expand
+- Time In / Time Out picker, Day Off checkbox, Note field
+- ✓ Save → `PATCH /users/{id}/attendance/{workDate}` → local update (source = MANUAL)
+- ✕ Cancel → close
+
+**Output:**
+- `/mnt/user-data/outputs/member-attendance-inline.ts`
+- `/mnt/user-data/outputs/member-attendance-inline.html`
 
 ---
 
@@ -4937,7 +4888,8 @@ createAttendanceAnnouncement(totalRows: number, rows: ParsedRow[] = []): void {
 |---|---|
 | `app-labels.i18n.ts` | `src/app/i18n/app-labels.i18n.ts` |
 | `attendance-upload-inline.html` | `src/app/admin/attendance-upload-inline.html` |
-| `attendance-upload-inline.ts` | `src/app/admin/attendance-upload-inline.ts` |
+| `member-attendance-inline.ts` | `src/app/shared/attendance-log/member-attendance-inline.ts` |
+| `member-attendance-inline.html` | `src/app/shared/attendance-log/member-attendance-inline.html` |
 
 ---
 
@@ -4945,7 +4897,7 @@ createAttendanceAnnouncement(totalRows: number, rows: ParsedRow[] = []): void {
 
 ### Priority 1: PM Dashboard CSS Fix
 - Current focus per CLAUDE.md
-- Not started this session
+- Not started
 - Route: `/dashboard/pm`
 
 ### Priority 2: Boss Dashboard (Phase 13)
@@ -4954,7 +4906,7 @@ createAttendanceAnnouncement(totalRows: number, rows: ParsedRow[] = []): void {
 - Not started
 
 ### Priority 3: SCSS Manual Apply
-ဒါကို project မှာ manually ထည့်ရမယ် (outputs folder မှာ မထုတ်ထားဘူး):
+Project မှာ manually ထည့်ရမယ် (outputs folder မှာ မထုတ်ထားဘူး):
 
 ```scss
 /* attendance-upload-inline.scss ရဲ့ bottom မှာ ထည့် */
@@ -4964,8 +4916,15 @@ createAttendanceAnnouncement(totalRows: number, rows: ParsedRow[] = []): void {
 :host-context(body.dark) .au-actions { background: #0d1424 !important; }
 ```
 
-### Priority 4: VP Dashboard Translation Gaps
-- Remaining keys မပြည့်သေး
+### Priority 4: attendance-upload-inline.ts — Title Hardcode
+```html
+<!-- attendance-upload-inline.html line 9 -->
+<!-- Before: -->
+<div class="au-title">📅 Attendance</div>
+<!-- After: -->
+<div class="au-title">{{ lbl('Upload Attendance (title)') }}</div>
+```
+*(output file မှာ fix ပြီးပြီ — project မှာ apply လုပ်ရန်)*
 
 ---
 
@@ -4973,7 +4932,8 @@ createAttendanceAnnouncement(totalRows: number, rows: ParsedRow[] = []): void {
 
 ### Pay Period
 ```
-Mar 25 ~ Apr 24 (Mon–Fri working days only)
+25th prev month ~ 24th current month (Mon–Fri working days only)
+e.g. Mar 25 ~ Apr 24
 ```
 
 ### Auth Fields
@@ -4988,17 +4948,30 @@ attendance_logs: id, user_id, work_date, time_in, time_out,
                  is_dayoff, source(FINGERPRINT/MANUAL),
                  note, uploaded_by, created_at, updated_at
 UNIQUE(user_id, work_date)
+
+salary_history: pay_period, user_id, status(DRAFT/PENDING_APPROVAL/CONFIRMED/PAID)
+```
+
+### Member Attendance Edit Logic
+```typescript
+// salary_history မှာ ဒီ period record မရှိ → canEdit = true
+// salary_history မှာ ဒီ period record ရှိပြီ → canEdit = false (lock)
+checkSalaryCalculated() {
+  GET /payroll/my-history
+  → rows.some(r => r.payPeriod === selectedPeriod)
+  → salaryCalculated = true/false
+}
 ```
 
 ### Key Component Paths
 ```
-src/app/admin/attendance-upload-inline.ts         ← Upload/View tabs
+src/app/admin/attendance-upload-inline.ts         ← Admin Upload/View tabs
 src/app/admin/attendance-upload-inline.html
 src/app/shared/attendance-log/
-  member-attendance-inline.ts                     ← Member view
+  member-attendance-inline.ts                     ← Member view + edit
   member-attendance-inline.html
   member-attendance-inline.scss
-src/app/i18n/app-labels.i18n.ts                  ← i18n (6 langs)
+src/app/i18n/app-labels.i18n.ts                  ← i18n (6 langs, 344 keys)
 ```
 
 ### Branch 3 Users (26 users)
@@ -5006,40 +4979,40 @@ src/app/i18n/app-labels.i18n.ts                  ← i18n (6 langs)
 admin1@brycen.co.kh, vp@brycen.co.kh, thida@brycen.kh,
 heinhtetko@brycen.co.kh, zayarmin@brycen.co.kh,
 shunleihmue@brycen.co.kh, myanpaingmin@brycen.co.kh,
-phyonainghtun@brycen.co.kh (gh confirmed),
-supyaemaung@brycen.co.kh, zinminmyat@breycen.co.kh,
-pm1@brycen.co.kh, pm2@brycen.co.kh, ayesunaing@brycen.co.kh,
-daravann@brycen.co.kh, sreyneang@brycen.co.kh,
-pisethheng@brycen.co.kh, sophealim@brycen.co.kh,
-bophanoun@brycen.co.kh, visalouk@brycen.co.kh,
-rathasok@brycen.co.kh, vannakchea@brycen.co.kh,
-linachhun@brycen.co.kh, kosalkim@brycen.co.kh,
-malistep@brycen.co.kh, chendaly@brycen.co.kh, nitaphan@brycen.co.kh
+phyonainghtun@brycen.co.kh, supyaemaung@brycen.co.kh,
+zinminmyat@breycen.co.kh, pm1@brycen.co.kh, pm2@brycen.co.kh,
+ayesunaing@brycen.co.kh, daravann@brycen.co.kh,
+sreyneang@brycen.co.kh, pisethheng@brycen.co.kh,
+sophealim@brycen.co.kh, bophanoun@brycen.co.kh,
+visalouk@brycen.co.kh, rathasok@brycen.co.kh,
+vannakchea@brycen.co.kh, linachhun@brycen.co.kh,
+kosalkim@brycen.co.kh, malistep@brycen.co.kh,
+chendaly@brycen.co.kh, nitaphan@brycen.co.kh
 ```
 
 ---
 
-## ✅ VERIFIED WORKING (Screenshots Confirmed)
+## ✅ VERIFIED WORKING
 
 | Feature | Status |
 |---|---|
-| Upload tab: avatar + LEFT/RIGHT layout | ✅ |
-| Light mode: all buttons/stats visible | ✅ |
-| Dark mode: backgrounds correct | ✅ |
-| Done card → View Attendance button | ✅ |
-| Announcement month: "April 2026" for April data | ✅ |
-| Japanese announcement: 出席状況アップロード完了 — 2026年4月 | ✅ |
-| i18n: 6 languages × 21 attendance keys | ✅ |
-| April attendance: 576 records saved | ✅ |
-| Member Attendance Log page | ✅ |
+| Upload tab: avatar + LEFT/RIGHT layout | ✅ (prev session) |
+| Light/dark mode: backgrounds correct | ✅ (prev session) |
+| Done card → View Attendance button | ✅ (prev session) |
+| Announcement month: "April 2026" for April data | ✅ (prev session) |
+| i18n: 6 languages × 344 keys (no duplicates) | ✅ |
+| attendance-upload-inline: all hardcodes → lbl() | ✅ |
+| Member Attendance Log — edit feature (lock logic) | ✅ |
+| April attendance: 576 records saved | ✅ (prev session) |
 
 ---
 
-## 🗒️ PREVIOUS SESSIONS SUMMARY
+## 🗒️ SESSIONS SUMMARY
 
 | Session | Key Work |
 |---|---|
 | Session 5 | Member Attendance Log component, Admin Upload/View tabs UI |
-| Session 6 (today) | Card layout fix, light mode, announcement month fix, i18n attendance keys |
+| Session 6 | Card layout fix, light mode, announcement month fix, i18n attendance keys |
+| Session 7 (today) | attendance-upload-inline hardcodes→lbl(), app-labels KM fix+SOURCE key, member attendance edit feature |
 
 **Transcript files:** `/mnt/transcripts/`
