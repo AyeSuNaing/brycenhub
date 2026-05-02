@@ -4,7 +4,6 @@
   <div class="hist-header">
     <button class="btn-back" (click)="back.emit()">{{ lbl('Back to Dashboard') }}</button>
     <div class="hist-title">
-      <span class="hist-icon">📊</span>
       <span>{{ lbl('Payroll History (title)') }}</span>
     </div>
     <div class="period-selector" *ngIf="data?.availablePeriods?.length">

@@ -3,11 +3,11 @@
   <!-- ═══ HEADER ═══ -->
   <div class="au-header">
     <button class="au-back" (click)="back.emit()">
-      <span>←</span><span>{{ lbl('Back to Dashboard (att)') }}</span>
+      <span>{{ lbl('Back to Dashboard (att)') }}</span>
     </button>
     <div class="au-title-wrap">
-      <div class="au-title">📅 Attendance</div>
-      <div class="au-subtitle">Upload fingerprint data or view history</div>
+      <div class="au-title">📅 {{ lbl('Attendance') }}</div>
+      <div class="au-subtitle">{{ lbl('Fingerprint Excel file') }}</div>
     </div>
   </div>
 
@@ -19,14 +19,14 @@
         font-size:12px;font-weight:700;font-family:inherit;transition:all 0.15s;"
       [style.background]="mainTab==='upload'?'linear-gradient(135deg,#14532d,#16a34a)':'transparent'"
       [style.color]="mainTab==='upload'?'white':'#94a3b8'">
-      📤 Upload Attendance
+      📤 {{ lbl('Upload Attendance') }}
     </button>
     <button (click)="setMainTab('view')"
       style="padding:8px 18px;border-radius:9px 9px 0 0;border:none;cursor:pointer;
         font-size:12px;font-weight:700;font-family:inherit;transition:all 0.15s;"
       [style.background]="mainTab==='view'?'linear-gradient(135deg,#1d4ed8,#3b82f6)':'transparent'"
       [style.color]="mainTab==='view'?'white':'#94a3b8'">
-      📊 View Attendance
+      📊 {{ lbl('View Attendance') }}
     </button>
   </div>
 
@@ -44,7 +44,7 @@
           [style.background]="step>=1?'#16a34a':'rgba(148,163,184,0.15)'"
           [style.color]="step>=1?'white':'#64748b'">1</div>
         <span style="font-size:11px;font-weight:600;"
-          [style.color]="step>=1?'#22c55e':'#64748b'">Upload & Preview</span>
+          [style.color]="step>=1?'#22c55e':'#64748b'">{{ lbl('Upload & Preview') }}</span>
       </div>
       <div style="flex:1;max-width:60px;height:2px;border-radius:2px;"
         [style.background]="step>=2?'#16a34a':'rgba(148,163,184,0.2)'"></div>
@@ -294,7 +294,7 @@
         </div>
         <div class="au-done-actions">
           <button class="au-btn-ghost" (click)="resetUpload()">{{ lbl('Upload another file') }}</button>
-          <button class="au-btn-primary" (click)="setMainTab('view')">📊 View Attendance</button>
+          <button class="au-btn-primary" (click)="setMainTab('view')">📊 {{ lbl('View Attendance') }}</button>
         </div>
       </div>
     </div>
@@ -312,7 +312,7 @@
       <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap;">
         <div>
           <div style="font-size:9px;font-weight:700;text-transform:uppercase;
-            letter-spacing:0.8px;opacity:0.4;margin-bottom:4px;">PAY PERIOD</div>
+            letter-spacing:0.8px;opacity:0.4;margin-bottom:4px;">{{ lbl('PAY PERIOD') }}</div>
           <select [(ngModel)]="viewPeriod" (change)="onViewPeriodChange()"
             style="padding:8px 12px;border-radius:9px;font-size:12px;font-weight:600;
               border:1px solid rgba(99,102,241,0.3);background:rgba(10,15,30,0.95);
@@ -327,33 +327,33 @@
             <div style="padding:8px 14px;border-radius:9px;background:rgba(34,197,94,0.08);
               border:1px solid rgba(34,197,94,0.2);text-align:center;">
               <div style="font-size:16px;font-weight:800;color:#22c55e;">{{ getTotalPresent() }}</div>
-              <div style="font-size:9px;opacity:0.5;margin-top:2px;">PRESENT</div>
+              <div style="font-size:9px;opacity:0.5;margin-top:2px;">{{ lbl('PRESENT') }}</div>
             </div>
             <div style="padding:8px 14px;border-radius:9px;background:rgba(245,158,11,0.08);
               border:1px solid rgba(245,158,11,0.2);text-align:center;">
               <div style="font-size:16px;font-weight:800;color:#f59e0b;">{{ getTotalAbsent() }}</div>
-              <div style="font-size:9px;opacity:0.5;margin-top:2px;">ABSENT</div>
+              <div style="font-size:9px;opacity:0.5;margin-top:2px;">{{ lbl('ABSENT') }}</div>
             </div>
             <div style="padding:8px 14px;border-radius:9px;background:rgba(239,68,68,0.08);
               border:1px solid rgba(239,68,68,0.2);text-align:center;">
               <div style="font-size:16px;font-weight:800;color:#ef4444;">{{ getTotalDayOff() }}</div>
-              <div style="font-size:9px;opacity:0.5;margin-top:2px;">DAY OFF</div>
+              <div style="font-size:9px;opacity:0.5;margin-top:2px;">{{ lbl('DAY OFF') }}</div>
             </div>
             <div style="padding:8px 14px;border-radius:9px;background:rgba(148,163,184,0.08);
               border:1px solid rgba(148,163,184,0.15);text-align:center;">
               <div style="font-size:16px;font-weight:800;color:#94a3b8;">{{ viewStaff.length }}</div>
-              <div style="font-size:9px;opacity:0.5;margin-top:2px;">STAFF</div>
+              <div style="font-size:9px;opacity:0.5;margin-top:2px;">{{ lbl('TOTAL STAFF') }}</div>
             </div>
           </div>
         </ng-container>
 
         <!-- Toolbar right -->
         <div style="margin-left:auto;display:flex;gap:8px;align-items:center;">
-          <input [(ngModel)]="viewSearch" placeholder="Search name, email, role..."
+          <input [(ngModel)]="viewSearch" placeholder="{{ lbl('Search name or email') }}"
             style="padding:7px 12px;border-radius:9px;font-size:11px;border:1px solid rgba(148,163,184,0.2);
               background:rgba(255,255,255,0.04);color:inherit;font-family:inherit;width:200px;outline:none;"/>
-          <button class="au-btn-ghost" style="font-size:10px;" (click)="expandAll()">⊞ Expand All</button>
-          <button class="au-btn-ghost" style="font-size:10px;" (click)="collapseAll()">⊟ Collapse All</button>
+          <button class="au-btn-ghost" style="font-size:10px;" (click)="expandAll()">⊞ {{ lbl('Expand All') }}</button>
+          <button class="au-btn-ghost" style="font-size:10px;" (click)="collapseAll()">⊟ {{ lbl('Collapse All') }}</button>
         </div>
       </div>
 
@@ -399,12 +399,12 @@
             <div style="display:flex;gap:8px;align-items:center;flex-shrink:0;">
               <span style="font-size:10px;padding:3px 9px;border-radius:20px;font-weight:700;
                 background:rgba(34,197,94,0.1);color:#22c55e;border:1px solid rgba(34,197,94,0.2);">
-                ✓ {{ s.present }} present
+                ✓ {{ s.present }} {{ lbl('Present') }}
               </span>
               <span *ngIf="s.absent>0"
                 style="font-size:10px;padding:3px 9px;border-radius:20px;font-weight:700;
                   background:rgba(245,158,11,0.1);color:#f59e0b;border:1px solid rgba(245,158,11,0.2);">
-                ! {{ s.absent }} absent
+                ! {{ s.absent }} {{ lbl('ABSENT') }}
               </span>
               <span *ngIf="s.dayoff>0"
                 style="font-size:10px;padding:3px 9px;border-radius:20px;font-weight:700;
@@ -433,19 +433,19 @@
               <thead>
                 <tr style="background:rgba(0,0,0,0.15);">
                   <th style="padding:7px 16px;text-align:left;font-size:9px;font-weight:700;
-                    text-transform:uppercase;letter-spacing:0.8px;opacity:0.4;">DATE</th>
+                    text-transform:uppercase;letter-spacing:0.8px;opacity:0.4;">{{ lbl('DATE') }}</th>
                   <th style="padding:7px 12px;text-align:center;font-size:9px;font-weight:700;
-                    text-transform:uppercase;letter-spacing:0.8px;opacity:0.4;">DAY</th>
+                    text-transform:uppercase;letter-spacing:0.8px;opacity:0.4;">{{ lbl('DAY') }}</th>
                   <th style="padding:7px 12px;text-align:center;font-size:9px;font-weight:700;
-                    text-transform:uppercase;letter-spacing:0.8px;opacity:0.4;">TIME IN</th>
+                    text-transform:uppercase;letter-spacing:0.8px;opacity:0.4;">{{ lbl('TIME IN') }}</th>
                   <th style="padding:7px 12px;text-align:center;font-size:9px;font-weight:700;
-                    text-transform:uppercase;letter-spacing:0.8px;opacity:0.4;">TIME OUT</th>
+                    text-transform:uppercase;letter-spacing:0.8px;opacity:0.4;">{{ lbl('TIME OUT') }}</th>
                   <th style="padding:7px 12px;text-align:center;font-size:9px;font-weight:700;
-                    text-transform:uppercase;letter-spacing:0.8px;opacity:0.4;">HRS</th>
+                    text-transform:uppercase;letter-spacing:0.8px;opacity:0.4;">{{ lbl('HOURS') }}</th>
                   <th style="padding:7px 12px;text-align:center;font-size:9px;font-weight:700;
-                    text-transform:uppercase;letter-spacing:0.8px;opacity:0.4;">STATUS</th>
+                    text-transform:uppercase;letter-spacing:0.8px;opacity:0.4;">{{ lbl('STATUS') }}</th>
                   <th style="padding:7px 12px;text-align:left;font-size:9px;font-weight:700;
-                    text-transform:uppercase;letter-spacing:0.8px;opacity:0.4;">SOURCE</th>
+                    text-transform:uppercase;letter-spacing:0.8px;opacity:0.4;">{{ lbl('SOURCE') }}</th>
                   <th style="padding:7px 12px;width:50px;"></th>
                 </tr>
               </thead>
@@ -608,7 +608,7 @@
         <!-- Date -->
         <div style="margin-bottom:14px;">
           <div style="font-size:9px;font-weight:700;text-transform:uppercase;
-            letter-spacing:0.8px;opacity:0.45;margin-bottom:5px;">DATE *</div>
+            letter-spacing:0.8px;opacity:0.45;margin-bottom:5px;">{{ lbl('DATE') }} *</div>
           <input [(ngModel)]="addState.workDate" type="date"
             style="width:100%;padding:9px 12px;border-radius:9px;font-size:12px;
               border:1px solid rgba(34,197,94,0.3);background:rgba(10,15,30,0.9);
@@ -641,7 +641,7 @@
           style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;">
           <div>
             <div style="font-size:9px;font-weight:700;text-transform:uppercase;
-              letter-spacing:0.8px;opacity:0.45;margin-bottom:5px;">TIME IN</div>
+              letter-spacing:0.8px;opacity:0.45;margin-bottom:5px;">{{ lbl('TIME IN') }}</div>
             <input [(ngModel)]="addState.timeIn" type="time"
               style="width:100%;padding:9px 12px;border-radius:9px;font-size:12px;
                 border:1px solid rgba(99,102,241,0.3);background:rgba(10,15,30,0.9);
@@ -652,7 +652,7 @@
           </div>
           <div>
             <div style="font-size:9px;font-weight:700;text-transform:uppercase;
-              letter-spacing:0.8px;opacity:0.45;margin-bottom:5px;">TIME OUT</div>
+              letter-spacing:0.8px;opacity:0.45;margin-bottom:5px;">{{ lbl('TIME OUT') }}</div>
             <input [(ngModel)]="addState.timeOut" type="time"
               style="width:100%;padding:9px 12px;border-radius:9px;font-size:12px;
                 border:1px solid rgba(99,102,241,0.3);background:rgba(10,15,30,0.9);

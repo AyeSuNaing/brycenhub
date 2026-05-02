@@ -177,6 +177,14 @@ export type AppLabelKey =
   | 'Departments (title)' | 'departments' | 'Add Department' | 'Edit Department'
   | 'No departments yet' | 'Dept name placeholder' | 'Dept desc placeholder'
   | 'Name *' | 'Description' | 'Create' | 'Update' | 'Cancel'
+  // ── ATTENDANCE LOG (member view) ──
+  | 'Attendance Log' | 'My attendance history' | 'PAY PERIOD'
+  | 'PRESENT' | 'ABSENT' | 'DAY OFF' | 'AVG TIME IN'
+  | 'No attendance records' | 'for this pay period'
+  | 'DATE' | 'DAY' | 'TIME IN' | 'TIME OUT' | 'HOURS'
+  | 'Present' | 'Day Off' | 'Loading attendance...'
+  | 'Upload & Preview' | 'Search name or email...'
+  | 'Expand All' | 'Collapse All' | 'SOURCE'
   | 'Delete confirm' | 'members (dept)';
 
 
@@ -357,8 +365,15 @@ const en: Record<AppLabelKey, string> = {
   'Dept desc placeholder': 'Optional description',
   'Name *': 'Name *', 'Description': 'Description',
   'Create': 'Create', 'Update': 'Update', 'Cancel': 'Cancel',
-  'Delete confirm': 'Delete this department?',
-  'members (dept)': 'members',
+
+  // ── ATTENDANCE LOG ──
+  'PAY PERIOD': 'PAY PERIOD', 'PRESENT': 'PRESENT', 'ABSENT': 'ABSENT', 'DAY OFF': 'DAY OFF', 'AVG TIME IN': 'AVG TIME IN',
+  'No attendance records': 'No attendance records', 'for this pay period': 'for this pay period',
+  'DATE': 'DATE', 'DAY': 'DAY', 'TIME IN': 'TIME IN', 'TIME OUT': 'TIME OUT', 'HOURS': 'HOURS', 'SOURCE': 'SOURCE',
+  'Present': 'Present', 'Day Off': 'Day Off', 'Loading attendance...': 'Loading attendance...',
+  'Upload & Preview': 'Upload & Preview', 'Search name or email...': 'Search name or email...',
+  'Expand All': 'Expand All', 'Collapse All': 'Collapse All',
+  'Delete confirm': 'Delete this department?', 'members (dept)': 'members',
 };
 
 // ═══════════════════════════════════════════════════════════════
@@ -534,8 +549,16 @@ const ja: Record<AppLabelKey, string> = {
   'Dept desc placeholder': '説明（任意）',
   'Name *': '名前 *', 'Description': '説明',
   'Create': '作成', 'Update': '更新', 'Cancel': 'キャンセル',
-  'Delete confirm': 'この部署を削除しますか？',
-  'members (dept)': 'メンバー',
+
+  // ── ATTENDANCE LOG ──
+  'Attendance Log': '出勤記録', 'My attendance history': '自分の出勤履歴',
+  'PAY PERIOD': '給与期間', 'PRESENT': '出勤', 'ABSENT': '欠勤', 'DAY OFF': '休日', 'AVG TIME IN': '平均出勤時刻',
+  'No attendance records': '出勤記録なし', 'for this pay period': 'この給与期間',
+  'DATE': '日付', 'DAY': '曜日', 'TIME IN': '出勤時刻', 'TIME OUT': '退勤時刻', 'HOURS': '時間', 'SOURCE': 'ソース',
+  'Present': '出勤', 'Day Off': '休日', 'Loading attendance...': '読み込み中...',
+  'Upload & Preview': 'アップロード & プレビュー', 'Search name or email...': '名前・メールで検索...',
+  'Expand All': '全て展開', 'Collapse All': '全て折りたたむ',
+  'Delete confirm': 'この部署を削除しますか？', 'members (dept)': 'メンバー',
 };
 
 // ═══════════════════════════════════════════════════════════════
@@ -714,8 +737,15 @@ const my: Record<AppLabelKey, string> = {
   'Dept desc placeholder': 'ဖော်ပြချက် (ချန်ထားနိုင်)',
   'Name *': 'အမည် *', 'Description': 'ဖော်ပြချက်',
   'Create': 'ဖန်တီး', 'Update': 'ပြင်မည်', 'Cancel': 'ပယ်မည်',
-  'Delete confirm': 'ဌာနကို ဖျက်မည်လား?',
-  'members (dept)': 'ဦး',
+  // ── ATTENDANCE LOG ──
+  'Attendance Log': 'တက်ရောက်မှုမှတ်တမ်း', 'My attendance history': 'ကျွန်တော်/မ တက်ရောက်မှုမှတ်တမ်း',
+  'PAY PERIOD': 'လစာကာလ', 'PRESENT': 'တက်ရောက်', 'ABSENT': 'မတက်ရောက်', 'DAY OFF': 'ရက်ပိတ်', 'AVG TIME IN': 'ပျမ်းမျှဝင်ချိန်',
+  'No attendance records': 'တက်ရောက်မှုမှတ်တမ်းမရှိ', 'for this pay period': 'ဤလစာကာလတွင်',
+  'DATE': 'ရက်စွဲ', 'DAY': 'နေ့', 'TIME IN': 'ဝင်ချိန်', 'TIME OUT': 'ထွက်ချိန်', 'HOURS': 'နာရီ', 'SOURCE': 'ရင်းမြစ်',
+  'Present': 'တက်ရောက်', 'Day Off': 'ရက်ပိတ်', 'Loading attendance...': 'ဖတ်နေသည်...',
+  'Upload & Preview': 'တင်ပြီး ကြိုကြည့်', 'Search name or email...': 'အမည်/အီးမေးလ် ရှာပါ...',
+  'Expand All': 'အားလုံးဖွင့်', 'Collapse All': 'အားလုံးပိတ်',
+  'Delete confirm': 'ဌာနကို ဖျက်မည်လား?', 'members (dept)': 'ဦး',
 };
 
 // ═══════════════════════════════════════════════════════════════
@@ -879,8 +909,17 @@ const km: Record<AppLabelKey, string> = {
   'Dept desc placeholder': 'ពណ៌នា (ស្រេចចិត្ត)',
   'Name *': 'ឈ្មោះ *', 'Description': 'ពណ៌នា',
   'Create': 'បង្កើត', 'Update': 'ធ្វើបច្ចុប្បន្នភាព', 'Cancel': 'បោះបង់',
-  'Delete confirm': 'លុបនាយកដ្ឋាននេះ?',
-  'members (dept)': 'នាក់',
+
+  // ── ATTENDANCE LOG ──
+  'Attendance Log': 'កំណត់ត្រាចូលធ្វើការ', 'My attendance history': 'ប្រវត្តិចូលធ្វើការរបស់ខ្ញុំ',
+  'PAY PERIOD': 'រយៈពេលបើកប្រាក់', 'PRESENT': 'មានមុខ', 'ABSENT': 'អវត្តមាន', 'DAY OFF': 'ថ្ងៃឈប់', 'AVG TIME IN': 'ម៉ោងចូលមធ្យម',
+  'No attendance records': 'គ្មានកំណត់ត្រាចូលធ្វើការ', 'for this pay period': 'សម្រាប់រយៈពេលនេះ',
+  'DATE': 'កាលបរិច្ឆេទ', 'DAY': 'ថ្ងៃ', 'TIME IN': 'ម៉ោងចូល', 'TIME OUT': 'ម៉ោងចេញ', 'HOURS': 'ម៉ោង', 'SOURCE': 'ប្រភព',
+  'Present': 'មានមុខ', 'Day Off': 'ថ្ងៃឈប់', 'Loading attendance...': 'កំពុងផ្ទុក...',
+  'Upload & Preview': 'បញ្ចូល & មើលជាមុន', 'Search name or email...': 'ស្វែងរកឈ្មោះ ឬអ៊ីមែល...',
+  'Expand All': 'ពង្រីកទាំងអស់', 'Collapse All': 'បង្រួមទាំងអស់',
+  'Delete confirm': 'លុ?', 'members (dept)': 'នាក់',
+
 };
 
 // ═══════════════════════════════════════════════════════════════
@@ -1045,8 +1084,19 @@ const vi: Record<AppLabelKey, string> = {
   'Dept desc placeholder': 'Mô tả (tùy chọn)',
   'Name *': 'Tên *', 'Description': 'Mô tả',
   'Create': 'Tạo', 'Update': 'Cập nhật', 'Cancel': 'Hủy',
-  'Delete confirm': 'Xóa phòng ban này?',
-  'members (dept)': 'thành viên',
+
+  // ── ATTENDANCE LOG ──
+  'Attendance Log': 'Nhật ký chấm công', 'My attendance history': 'Lịch sử chấm công của tôi',
+  'PAY PERIOD': 'KỲ LƯƠNG', 'PRESENT': 'CÓ MẶT', 'ABSENT': 'VẮNG MẶT',
+  'DAY OFF': 'NGÀY NGHỈ', 'AVG TIME IN': 'GIỜ VÀO TB',
+  'No attendance records': 'Không có dữ liệu chấm công', 'for this pay period': 'trong kỳ lương này',
+  'DATE': 'NGÀY', 'DAY': 'THỨ', 'TIME IN': 'GIỜ VÀO', 'TIME OUT': 'GIỜ RA', 'HOURS': 'SỐ GIỜ',
+  'SOURCE': 'Nguồn',
+  'Present': 'Có mặt', 'Day Off': 'Ngày nghỉ', 'Loading attendance...': 'Đang tải...',
+  'Upload & Preview': 'Tải lên & Xem trước', 'Search name or email...': 'Tìm tên hoặc email...',
+  'Expand All': 'Mở rộng tất cả', 'Collapse All': 'Thu gọn tất cả',
+  'Delete confirm': 'Xóa phòng ban này?', 'members (dept)': 'thành viên',
+  
 };
 
 // ═══════════════════════════════════════════════════════════════
@@ -1208,8 +1258,18 @@ const ko: Record<AppLabelKey, string> = {
   'Dept desc placeholder': '설명 (선택사항)',
   'Name *': '이름 *', 'Description': '설명',
   'Create': '생성', 'Update': '수정', 'Cancel': '취소',
-  'Delete confirm': '이 부서를 삭제하시겠습니까?',
-  'members (dept)': '명',
+
+  // ── ATTENDANCE LOG ──
+  'Attendance Log': '출근 기록', 'My attendance history': '내 출근 이력',
+  'PAY PERIOD': '급여 기간', 'PRESENT': '출근', 'ABSENT': '결근',
+  'DAY OFF': '휴일', 'AVG TIME IN': '평균 출근 시간',
+  'No attendance records': '출근 기록 없음', 'for this pay period': '이 급여 기간',
+  'DATE': '날짜', 'DAY': '요일', 'TIME IN': '출근 시간', 'TIME OUT': '퇴근 시간', 'HOURS': '시간',
+  'SOURCE': '출처',
+  'Present': '출근', 'Day Off': '휴일', 'Loading attendance...': '로딩 중...',
+  'Upload & Preview': '업로드 & 미리보기', 'Search name or email...': '이름 또는 이메일 검색...',
+  'Expand All': '모두 펼치기', 'Collapse All': '모두 접기',
+  'Delete confirm': '이 부서를 삭제하시겠습니까?', 'members (dept)': '명',
 };
 
 // ═══════════════════════════════════════════════════════════════
