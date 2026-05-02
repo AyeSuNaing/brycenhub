@@ -367,6 +367,7 @@ const en: Record<AppLabelKey, string> = {
   'Create': 'Create', 'Update': 'Update', 'Cancel': 'Cancel',
 
   // ── ATTENDANCE LOG ──
+  'Attendance Log': 'Attendance Log', 'My attendance history': 'My attendance history',
   'PAY PERIOD': 'PAY PERIOD', 'PRESENT': 'PRESENT', 'ABSENT': 'ABSENT', 'DAY OFF': 'DAY OFF', 'AVG TIME IN': 'AVG TIME IN',
   'No attendance records': 'No attendance records', 'for this pay period': 'for this pay period',
   'DATE': 'DATE', 'DAY': 'DAY', 'TIME IN': 'TIME IN', 'TIME OUT': 'TIME OUT', 'HOURS': 'HOURS', 'SOURCE': 'SOURCE',
