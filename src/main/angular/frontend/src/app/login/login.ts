@@ -53,7 +53,7 @@ export class Login implements OnDestroy {
   getDashboardRoute(role: string): string {
     switch (role) {
       case 'BOSS':             return '/dashboard/boss';
-      case 'COUNTRY_DIRECTOR': return '/dashboard/director';
+      case 'COUNTRY_DIRECTOR': return '/dashboard/boss';   // DR → Boss Dashboard
       case 'VICE_PRESIDENT':   return '/dashboard/vp';
       case 'ADMIN':            return '/dashboard/admin';
       case 'PROJECT_MANAGER':  return '/dashboard/pm';

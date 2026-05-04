@@ -13,8 +13,8 @@ export const routes: Routes = [
     path: 'dashboard',
     canActivate: [authGuard],
     children: [
-      { path: 'boss',      loadComponent: () => import('./dashboard/boss-dashboard').then(m => m.BossDashboard) },
-      // { path: 'director',  loadComponent: () => import('./dashboard/director-dashboard').then(m => m.DirectorDashboard) },
+      { path: 'boss', loadComponent: () => import('./dashboard/boss-dashboard/boss-dashboard').then(m => m.BossDashboard) },
+      { path: 'director', loadComponent: () => import('./dashboard/boss-dashboard/boss-dashboard').then(m => m.BossDashboard) },
       { path: 'vp',        loadComponent: () => import('./dashboard/vp-dashboard/vp-dashboard').then(m => m.VpDashboardComponent) },
       { path: 'admin',     loadComponent: () => import('./dashboard/admin-dashboard').then(m => m.AdminDashboard) },
       { path: 'pm',        loadComponent: () => import('./dashboard/member-dashboard').then(m => m.MemberDashboard) },

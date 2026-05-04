@@ -1150,12 +1150,17 @@ export class ProjectInlineComponent implements OnInit, OnChanges {
   // ══════════════════════════════════════════════════════════════════
   // CHAT
   // ══════════════════════════════════════════════════════════════════
-
   // ✅ Save project state then navigate — back button restores project inline
   private saveAndNavigate(route: any[]): void {
     const role = this.auth.getUser()?.role || '';
-    const managerRoles = ['VICE_PRESIDENT', 'COUNTRY_DIRECTOR', 'BOSS', 'ADMIN'];
-    const dashboard = managerRoles.includes(role) ? 'vp' : 'member';
+    let dashboard: string;
+    if (['BOSS', 'COUNTRY_DIRECTOR'].includes(role)) {
+      dashboard = 'boss';
+    } else if (['VICE_PRESIDENT', 'ADMIN'].includes(role)) {
+      dashboard = 'vp';
+    } else {
+      dashboard = 'member';
+    }
     this.navState.saveProjectState(this.projectId, dashboard);
     this.router.navigate(route);
   }

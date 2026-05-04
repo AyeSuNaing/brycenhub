@@ -1,0 +1,760 @@
+<div class="app-shell" [class.dark]="isDark" [class.light]="!isDark">
+
+  <!-- ══ TOPBAR — VP exact ══ -->
+  <header class="topbar" style="overflow:visible;">
+    <div class="logo-wrap" style="cursor:pointer;" (click)="setView('dashboard')">
+      <img class="logo-img" src="logo.jpg" alt="Brycen"/>
+      <div>
+        <div class="logo-text">Brycen Hub</div>
+        <div class="logo-slogan">One Group. One Platform. Full Visibility.</div>
+      </div>
+    </div>
+    <div class="topbar-spacer"></div>
+
+    <!-- Search -->
+    <div class="search-box">
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+      </svg>
+      <input placeholder="Search staff, projects..." [(ngModel)]="searchQuery"/>
+    </div>
+
+    <!-- Language switcher -->
+    <div class="lang-btn" (click)="showLangMenu=!showLangMenu;$event.stopPropagation()" style="position:relative;user-select:none;">
+      <span>{{ currentLangObj.flag || '🇺🇸' }}</span>
+      <span style="font-weight:600">{{ currentLangObj.display || 'EN' }}</span>
+      <span style="font-size:9px;opacity:0.6">▾</span>
+      <div *ngIf="showLangMenu"
+        style="position:absolute;top:calc(100% + 6px);right:0;min-width:180px;border-radius:10px;border:1px solid;z-index:9999;padding:4px;"
+        (click)="$event.stopPropagation()"
+        [style.background]="isDark?'#131929':'white'"
+        [style.borderColor]="isDark?'#1e2d4a':'#e2e8f0'">
+        <div *ngFor="let lang of langs" (click)="selectLang(lang)"
+          style="display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:7px;cursor:pointer;font-size:11px;"
+          [style.background]="currentLangObj.code===lang.code?(isDark?'#14532d33':'#f0fdf4'):'transparent'"
+          [style.color]="currentLangObj.code===lang.code?'#22c55e':''">
+          <span style="font-size:14px">{{ lang.flag }}</span>
+          <span style="font-weight:600">{{ lang.display }}</span>
+          <span style="opacity:0.5;font-size:10px">{{ lang.name }}</span>
+          <span *ngIf="currentLangObj.code===lang.code" style="margin-left:auto;color:#22c55e">✓</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Dark/Light toggle -->
+    <div class="icon-btn" (click)="toggleTheme()">
+      <span style="font-size:13px">{{ isDark ? '🌙' : '☀️' }}</span>
+    </div>
+
+    <!-- Bell -->
+    <app-bell-notification></app-bell-notification>
+  </header>
+
+  <app-announcement-bar></app-announcement-bar>
+
+  <!-- ══ MAIN ROW ══ -->
+  <div class="main-row">
+
+    <!-- ══ LEFT SIDEBAR ══ -->
+    <aside class="left-sidebar">
+      <div class="sidebar-scroll">
+
+        <div class="profile-section" style="cursor:pointer;" (click)="openMyProfile()">
+          <div class="avatar-wrap">
+            <div class="avatar-circle" style="display:flex;align-items:center;justify-content:center;">
+              <svg viewBox="0 0 64 64" width="58" height="58" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="32" cy="32" r="30" fill="#eab308"/>
+                <path d="M10 26 Q15 10 32 8 Q49 10 54 26 L54 18 Q32 0 10 18 Z" fill="#1a0a00"/>
+                <ellipse cx="32" cy="34" rx="14" ry="16" fill="#f4c89a"/>
+                <ellipse cx="26" cy="29" rx="2.5" ry="2.8" fill="white"/>
+                <ellipse cx="38" cy="29" rx="2.5" ry="2.8" fill="white"/>
+                <ellipse cx="26.5" cy="29.5" rx="1.5" ry="1.8" fill="#1a0a00"/>
+                <ellipse cx="38.5" cy="29.5" rx="1.5" ry="1.8" fill="#1a0a00"/>
+                <path d="M28 37 Q32 40 36 37" stroke="#c47b55" stroke-width="1.2" fill="none" stroke-linecap="round"/>
+              </svg>
+            </div>
+            <div class="online-dot"></div>
+          </div>
+          <div class="profile-name">{{ currentUser?.name }}</div>
+          <div class="role-badge"
+            [style.background]="isBoss?'rgba(234,179,8,0.15)':isDR?'rgba(168,85,247,0.15)':'rgba(14,165,233,0.15)'"
+            [style.color]="isBoss?'#eab308':isDR?'#a855f7':'#0ea5e9'">
+            {{ isBoss?'👑 BOSS':isDR?'🌏 DIRECTOR':'💼 VP' }}
+          </div>
+          <div class="member-badge">⭐ Brycen Group</div>
+        </div>
+        <hr class="profile-divider"/>
+
+        <div style="margin-top:6px;">
+          <div class="proj-section-label">MAIN</div>
+          <div class="sidebar-item" [class.active]="activeView==='dashboard'" (click)="setView('dashboard')">
+            <span class="nav-icon">📊</span><span>Dashboard</span>
+          </div>
+          <div class="sidebar-item" [class.active]="activeView==='members'||activeView==='member-profile'" (click)="setView('members')">
+            <span class="nav-icon">👥</span><span>All Staff</span>
+          </div>
+          <div class="sidebar-item" [class.active]="activeView==='announcements'" (click)="setView('announcements')">
+            <span class="nav-icon">📢</span><span>Announcements</span>
+          </div>
+          <div class="sidebar-item" [class.active]="activeView==='holidays'" (click)="setView('holidays')">
+            <span class="nav-icon">🗓️</span><span>Public Holidays</span>
+          </div>
+          <div class="sidebar-item" [class.active]="activeView==='tax'" (click)="setView('tax')">
+            <span class="nav-icon">📊</span><span>Tax Brackets</span>
+          </div>
+          <hr class="section-divider"/>
+        </div>
+
+        <!-- APPROVALS — DR/VP only -->
+        <div *ngIf="showApprovals" style="margin-top:6px;">
+          <div class="proj-section-label">APPROVALS</div>
+          <div class="sidebar-item" [class.active]="activeView==='view-leave'" (click)="setView('view-leave')">
+            <span class="nav-icon">🗓</span><span>Leave</span>
+            <span *ngIf="approvalCounts.LEAVE>0"
+              style="margin-left:auto;min-width:18px;height:18px;border-radius:20px;background:#ef4444;color:white;font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center;padding:0 4px;">
+              {{ approvalCounts.LEAVE }}
+            </span>
+          </div>
+          <div class="sidebar-item" [class.active]="activeView==='view-ot'" (click)="setView('view-ot')">
+            <span class="nav-icon">⏰</span><span>OT</span>
+            <span *ngIf="approvalCounts.OT>0"
+              style="margin-left:auto;min-width:18px;height:18px;border-radius:20px;background:#ef4444;color:white;font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center;padding:0 4px;">
+              {{ approvalCounts.OT }}
+            </span>
+          </div>
+          <div class="sidebar-item" [class.active]="activeView==='salary-approvals'" (click)="setView('salary-approvals')">
+            <span class="nav-icon">💵</span><span>Salary</span>
+            <span *ngIf="approvalCounts.SALARY>0"
+              style="margin-left:auto;min-width:18px;height:18px;border-radius:20px;background:rgba(245,158,11,0.2);color:#f59e0b;font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center;padding:0 4px;">
+              {{ approvalCounts.SALARY }}
+            </span>
+          </div>
+          <hr class="section-divider"/>
+        </div>
+        <div style="margin-top:6px;">
+          <div class="proj-section-label">BRANCHES</div>
+
+          <!-- Loading -->
+          <div *ngIf="loadingCountries" style="font-size:10px;opacity:0.3;padding:6px 12px;">Loading...</div>
+
+          <!-- Branch list -->
+          <div *ngFor="let b of branches"
+            class="sidebar-item"
+            [class.active]="selectedBranchId===b.id&&activeView==='branch-detail'"
+            (click)="selectBranch(b)"
+            style="gap:7px;">
+            <span style="font-size:14px;flex-shrink:0;">{{ b.countryFlag||'🌐' }}</span>
+            <span style="flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:12px;">{{ b.name }}</span>
+            <span style="font-size:9px;padding:1px 5px;border-radius:8px;flex-shrink:0;"
+              [style.background]="b.activeProjects>0?'rgba(34,197,94,0.15)':'rgba(148,163,184,0.1)'"
+              [style.color]="b.activeProjects>0?'#22c55e':'#64748b'">
+              {{ b.activeProjects||0 }}
+            </span>
+          </div>
+
+          <div *ngIf="!loadingCountries&&branches.length===0" style="font-size:10px;opacity:0.3;padding:6px 12px;">No branches</div>
+        </div>
+
+      </div><!-- /sidebar-scroll -->
+      <div class="sidebar-bottom">
+        <div class="settings-wrap">
+          <div *ngIf="settingsOpen" class="settings-submenu">
+            <div class="sub-item" style="cursor:pointer;" (click)="openMyProfile()"><span>👤</span><span>Profile</span></div>
+            <div class="sub-item" style="cursor:pointer;" (click)="setView('change-password');settingsOpen=false"><span>🔒</span><span>Change Password</span></div>
+            <div class="sub-item" style="cursor:pointer;" (click)="setView('branches');settingsOpen=false"><span>🏢</span><span>Office Address</span></div>
+            <div class="sub-item signout-item" (click)="signOut()"><span>🚪</span><span>Sign out</span></div>
+          </div>
+          <div class="sidebar-item" (click)="settingsOpen=!settingsOpen;$event.stopPropagation()">
+            <span class="nav-icon">⚙️</span><span>Settings</span>
+            <span style="margin-left:auto;font-size:10px;opacity:0.5;">{{ settingsOpen ? '▲' : '▼' }}</span>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- ══ MAIN CONTENT ══ -->
+    <main class="main-content">
+
+      <!-- Project inline overlay -->
+      <app-project-inline
+        *ngIf="showProjectDetail && selectedProjectId"
+        [projectId]="selectedProjectId!"
+        [hidePanel]="true"
+        (close)="closeProject()">
+      </app-project-inline>
+
+      <!-- Sub-views -->
+      <app-change-password-inline *ngIf="activeView==='change-password'" (back)="setView('dashboard')"></app-change-password-inline>
+      <app-announcement-inline    *ngIf="activeView==='announcements'"></app-announcement-inline>
+      <app-branch-projects-inline *ngIf="activeView==='all-projects'" [hidePanel]="true" (back)="setView('dashboard')"></app-branch-projects-inline>
+      <app-staff-list-inline      *ngIf="activeView==='members'" (viewProfile)="onViewProfile($event)" (addStaff)="setView('members')" (back)="setView('dashboard')"></app-staff-list-inline>
+      <app-staff-profile-inline   *ngIf="activeView==='member-profile'" [staffId]="$any(selectedStaffId)" (back)="setView('members')"></app-staff-profile-inline>
+      <app-holidays-inline        *ngIf="activeView==='holidays'"></app-holidays-inline>
+      <app-tax-brackets-inline    *ngIf="activeView==='tax'"></app-tax-brackets-inline>
+
+      <!-- Approval views — DR/VP only -->
+      <app-leave-approval-inline *ngIf="activeView==='view-leave'&&showApprovals" role="vp" (back)="setView('dashboard')"></app-leave-approval-inline>
+      <app-ot-approval-inline    *ngIf="activeView==='view-ot'&&showApprovals"    role="vp" (back)="setView('dashboard')"></app-ot-approval-inline>
+
+      <!-- Countries -->
+      <div *ngIf="activeView==='countries'" style="padding:16px;display:flex;flex-direction:column;gap:10px;overflow-y:auto;height:100%;">
+        <div style="font-size:14px;font-weight:700;margin-bottom:4px;">🌏 Countries Overview</div>
+        <div *ngIf="loadingCountries" style="text-align:center;padding:40px;opacity:0.4;font-size:12px;">Loading...</div>
+        <div *ngFor="let c of countries" class="card" style="padding:14px 18px;cursor:pointer;transition:border-color 0.12s;"
+          (click)="selectCountry(c)"
+          (mouseenter)="$any($event.currentTarget).style.borderColor='rgba(34,197,94,0.3)'"
+          (mouseleave)="$any($event.currentTarget).style.borderColor=''">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+            <span style="font-size:22px;">{{ c.flag }}</span>
+            <div>
+              <div style="font-size:13px;font-weight:600;">{{ c.name }}</div>
+              <div style="font-size:10px;opacity:0.4;">{{ c.branches.length }} branch(es)</div>
+            </div>
+            <div style="margin-left:auto;text-align:right;">
+              <div style="font-size:11px;color:#22c55e;font-weight:600;">{{ c.totalProjects }} projects</div>
+              <div style="font-size:10px;opacity:0.4;">{{ c.totalStaff }} staff</div>
+            </div>
+          </div>
+          <div *ngFor="let b of c.branches" style="background:rgba(148,163,184,0.07);border-radius:8px;padding:10px 12px;margin-top:6px;font-size:11px;">
+            <div style="font-weight:600;margin-bottom:2px;">{{ b.name }}</div>
+            <div style="opacity:0.45;">📍 {{ b.address || 'No address' }}</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Country Detail View -->
+      <div *ngIf="activeView==='country-detail' && selectedCountry" style="padding:16px;display:flex;flex-direction:column;gap:12px;overflow-y:auto;height:100%;">
+        <!-- Header -->
+        <div style="display:flex;align-items:center;gap:12px;">
+          <button style="background:none;border:none;cursor:pointer;font-size:20px;opacity:0.45;padding:0;line-height:1;" (click)="setView('countries')">←</button>
+          <span style="font-size:28px;flex-shrink:0;">{{ selectedCountry.flag }}</span>
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:18px;font-weight:700;line-height:1.2;">{{ selectedCountry.name }}</div>
+            <div style="font-size:11px;opacity:0.4;margin-top:3px;">{{ selectedCountry.branches.length }} branches · {{ selectedCountry.totalStaff }} staff</div>
+          </div>
+          <div style="display:flex;gap:8px;flex-shrink:0;">
+            <div style="background:rgba(34,197,94,0.12);border:1px solid rgba(34,197,94,0.2);color:#22c55e;padding:5px 14px;border-radius:20px;font-size:12px;font-weight:600;text-align:center;">
+              <div style="font-size:16px;font-weight:800;line-height:1;">{{ selectedCountry.totalProjects }}</div>
+              <div style="font-size:9px;opacity:0.7;">projects</div>
+            </div>
+            <div style="background:rgba(59,130,246,0.12);border:1px solid rgba(59,130,246,0.2);color:#60a5fa;padding:5px 14px;border-radius:20px;font-size:12px;font-weight:600;text-align:center;">
+              <div style="font-size:16px;font-weight:800;line-height:1;">{{ selectedCountry.totalStaff }}</div>
+              <div style="font-size:9px;opacity:0.7;">staff</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Branches in this country -->
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.7px;opacity:0.45;margin-bottom:0;">Branches</div>
+        <div *ngFor="let b of selectedCountry.branches" class="card"
+          style="padding:14px 18px;cursor:pointer;transition:border-color 0.12s;display:flex;align-items:center;gap:14px;"
+          (click)="selectBranch(b)"
+          (mouseenter)="$any($event.currentTarget).style.borderColor='rgba(34,197,94,0.3)'"
+          (mouseleave)="$any($event.currentTarget).style.borderColor=''">
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:13px;font-weight:600;margin-bottom:3px;">{{ b.name }}</div>
+            <div style="font-size:11px;opacity:0.4;">📍 {{ b.address || 'No address on record' }}</div>
+          </div>
+          <div style="display:flex;gap:16px;flex-shrink:0;text-align:center;">
+            <div>
+              <div style="font-size:14px;font-weight:700;" [style.color]="(b.activeProjects||0)>0?'#22c55e':'#64748b'">{{ b.activeProjects||0 }}</div>
+              <div style="font-size:9px;opacity:0.4;">projects</div>
+            </div>
+            <div>
+              <div style="font-size:14px;font-weight:700;color:#60a5fa;">{{ b.staffCount||0 }}</div>
+              <div style="font-size:9px;opacity:0.4;">staff</div>
+            </div>
+          </div>
+          <span style="font-size:16px;opacity:0.3;">→</span>
+        </div>
+      </div>
+
+      <!-- Office Address -->
+      <div *ngIf="activeView==='branches'" style="padding:16px;display:flex;flex-direction:column;gap:10px;overflow-y:auto;height:100%;">
+        <div style="font-size:14px;font-weight:700;margin-bottom:4px;">🏢 Office Addresses</div>
+        <div *ngFor="let b of branches" class="card" style="padding:14px 18px;">
+          <div style="font-size:12px;font-weight:700;margin-bottom:6px;">{{ b.name }}</div>
+          <div style="font-size:11px;opacity:0.55;">📍 {{ b.address || 'No address on record' }}</div>
+        </div>
+      </div>
+
+      <!-- Branch Detail -->
+      <div *ngIf="activeView==='branch-detail' && !showProjectDetail" style="padding:16px;display:flex;flex-direction:column;gap:12px;overflow-y:auto;height:100%;">
+        <ng-container *ngIf="getSelectedBranch() as b">
+
+          <!-- Header -->
+          <div style="display:flex;align-items:center;gap:12px;">
+            <button style="background:none;border:none;cursor:pointer;font-size:20px;opacity:0.45;padding:0;line-height:1;" (click)="setView(_prevView||'dashboard')">←</button>
+            <span style="font-size:24px;flex-shrink:0;">{{ b.countryFlag||'🌐' }}</span>
+            <div style="flex:1;min-width:0;">
+              <div style="font-size:18px;font-weight:700;line-height:1.2;">{{ b.name }}</div>
+              <div style="font-size:11px;opacity:0.4;margin-top:3px;">📍 {{ b.address||'No address on record' }}</div>
+            </div>
+            <div style="display:flex;gap:8px;flex-shrink:0;">
+              <div style="background:rgba(34,197,94,0.12);border:1px solid rgba(34,197,94,0.2);color:#22c55e;padding:5px 14px;border-radius:20px;font-size:12px;font-weight:600;text-align:center;">
+                <div style="font-size:16px;font-weight:800;line-height:1;">{{ b.activeProjects||0 }}</div>
+                <div style="font-size:9px;opacity:0.7;">projects</div>
+              </div>
+              <div style="background:rgba(59,130,246,0.12);border:1px solid rgba(59,130,246,0.2);color:#60a5fa;padding:5px 14px;border-radius:20px;font-size:12px;font-weight:600;text-align:center;">
+                <div style="font-size:16px;font-weight:800;line-height:1;">{{ b.staffCount||0 }}</div>
+                <div style="font-size:9px;opacity:0.7;">staff</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Projects table -->
+          <div class="card" style="padding:0;">
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px 10px;">
+              <span style="font-size:13px;font-weight:700;">Projects</span>
+              <span *ngIf="loadingBranchDetail" style="font-size:11px;opacity:0.4;">Loading...</span>
+              <span *ngIf="!loadingBranchDetail" style="font-size:10px;opacity:0.4;">{{ branchDetailProjects.length }} projects</span>
+            </div>
+
+            <!-- Table header — PROJECT / STATUS / PROGRESS vs TIMELINE / PM / TEAM / DUE / HEALTH -->
+            <div style="display:grid;grid-template-columns:2fr 1fr 2fr 1fr 0.6fr 0.8fr 0.8fr;gap:8px;padding:0 18px 7px;border-bottom:1px solid rgba(255,255,255,0.06);">
+              <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.4;">PROJECT</span>
+              <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.4;">STATUS</span>
+              <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.4;">PROGRESS vs TIMELINE</span>
+              <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.4;">PM</span>
+              <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.4;">TEAM</span>
+              <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.4;">DUE</span>
+              <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.4;">HEALTH</span>
+            </div>
+
+            <!-- Loading skeleton -->
+            <div *ngIf="loadingBranchDetail" style="text-align:center;padding:28px;font-size:11px;opacity:0.3;">Loading projects...</div>
+
+            <!-- Rows -->
+            <div *ngFor="let p of branchDetailProjects; let last=last; trackBy:trackById"
+              [style.border-bottom]="last?'none':'1px solid rgba(255,255,255,0.04)'"
+              [style.border-left]="isDelayed(p)?'2px solid #ef4444':'2px solid transparent'"
+              style="display:grid;grid-template-columns:2fr 1fr 2fr 1fr 0.6fr 0.8fr 0.8fr;gap:8px;padding:10px 18px;align-items:center;cursor:pointer;transition:background 0.12s;"
+              (click)="openProject(p.id)"
+              (mouseenter)="$any($event.currentTarget).style.background='rgba(148,163,184,0.04)'"
+              (mouseleave)="$any($event.currentTarget).style.background=''">
+
+              <!-- PROJECT name + dates -->
+              <div>
+                <div style="font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ p.title }}</div>
+                <div *ngIf="p.startDate" style="font-size:9px;opacity:0.35;margin-top:2px;">{{ p.startDate | date:'MMM d' }} – {{ p.endDate ? (p.endDate|date:'MMM d') : '?' }}</div>
+              </div>
+
+              <!-- STATUS -->
+              <div style="display:flex;align-items:center;gap:5px;font-size:11px;font-weight:500;"
+                [style.color]="isDelayed(p)?'#ef4444':p.status==='ACTIVE'?'#22c55e':p.status==='PLANNING'?'#60a5fa':'#94a3b8'">
+                <span style="width:7px;height:7px;border-radius:50%;flex-shrink:0;"
+                  [style.background]="isDelayed(p)?'#ef4444':p.status==='ACTIVE'?'#22c55e':p.status==='PLANNING'?'#60a5fa':'#94a3b8'"></span>
+                {{ isDelayed(p)?'Delayed':p.status==='ACTIVE'?'On Track':p.status==='PLANNING'?'Planning':'On Hold' }}
+              </div>
+
+              <!-- PROGRESS vs TIMELINE -->
+              <div style="display:flex;flex-direction:column;gap:3px;min-width:0;">
+                <div style="display:flex;align-items:center;gap:6px;">
+                  <div style="flex:1;height:4px;background:rgba(148,163,184,0.15);border-radius:3px;overflow:hidden;">
+                    <div [style.width]="(p.progress||0)+'%'" [style.background]="getProgressColor(p.progress||0)" style="height:100%;border-radius:3px;"></div>
+                  </div>
+                  <span style="font-size:10px;opacity:0.5;min-width:24px;text-align:right;">{{ p.progress||0 }}%</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:6px;">
+                  <div style="flex:1;height:3px;background:rgba(148,163,184,0.08);border-radius:3px;overflow:hidden;">
+                    <div [style.width]="getTimeElapsed(p.startDate,p.endDate)+'%'"
+                      [style.background]="getTimeElapsedColor(p.progress||0,getTimeElapsed(p.startDate,p.endDate))"
+                      style="height:100%;border-radius:3px;opacity:0.45;"></div>
+                  </div>
+                  <span style="font-size:9px;min-width:24px;text-align:right;opacity:0.7;"
+                    [style.color]="getTimeElapsedColor(p.progress||0,getTimeElapsed(p.startDate,p.endDate))">
+                    {{ getTimeElapsed(p.startDate,p.endDate) }}%
+                  </span>
+                </div>
+                <div style="font-size:9px;opacity:0.3;">{{ p.progress||0 }}% done · {{ getTimeElapsed(p.startDate,p.endDate) }}% time</div>
+              </div>
+
+              <!-- PM + Client -->
+              <div style="display:flex;flex-direction:column;gap:2px;">
+                <div style="display:flex;align-items:center;gap:5px;">
+                  <div *ngIf="p.pmName" style="width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;flex-shrink:0;"
+                    [style.background]="p.pmColor||'#16a34a'">{{ p.pmInitial||p.pmName?.charAt(0) }}</div>
+                  <span style="font-size:10px;opacity:0.7;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ p.pmName||'—' }}</span>
+                </div>
+                <div *ngIf="p.clientName" style="font-size:9px;opacity:0.4;padding-left:29px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                  🏢 {{ p.clientName }}
+                </div>
+              </div>
+
+              <!-- TEAM -->
+              <div style="font-size:11px;text-align:center;">
+                <span style="background:rgba(148,163,184,0.1);padding:2px 7px;border-radius:10px;font-weight:500;">{{ p.staffCount||0 }}</span>
+              </div>
+
+              <!-- DUE DATE -->
+              <div style="font-size:11px;" [style.color]="isDelayed(p)?'#ef4444':'rgba(148,163,184,0.6)'">
+                {{ p.endDate ? (p.endDate|date:'MMM d') : '—' }}
+                <span *ngIf="isDelayed(p)"> ⚠</span>
+              </div>
+
+              <!-- HEALTH dots -->
+              <div style="display:flex;gap:3px;">
+                <span *ngFor="let d of [0,1,2,3,4]" style="width:8px;height:8px;border-radius:50%;display:inline-block;"
+                  [style.background]="d<(p.progress>=80?5:p.progress>=60?4:p.progress>=40?3:p.progress>=20?2:1)?getProgressColor(p.progress||0):'rgba(148,163,184,0.15)'">
+                </span>
+              </div>
+            </div>
+
+            <div *ngIf="!loadingBranchDetail&&branchDetailProjects.length===0"
+              style="text-align:center;padding:28px;font-size:11px;opacity:0.3;">No projects in this branch</div>
+          </div>
+
+        </ng-container>
+      </div>
+
+      <!-- ════════════ DASHBOARD VIEW ════════════ -->
+      <ng-container *ngIf="activeView==='dashboard' && !showProjectDetail">
+
+        <!-- Page Header -->
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+          <div>
+            <div style="font-size:20px;font-weight:700;color:var(--text,#e2e8f0);">Company Overview</div>
+            <div style="font-size:12px;opacity:0.45;margin-top:3px;">Brycen Group · All Branches · Global View</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:6px;background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.2);border-radius:20px;padding:5px 14px;font-size:11px;color:#22c55e;font-weight:500;">
+            <div style="width:7px;height:7px;background:#22c55e;border-radius:50%;"></div>
+            System Live
+          </div>
+        </div>
+
+        <!-- Stats 3-col with trend arrows -->
+        <div class="stats-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:10px;">
+          <div class="stat-card">
+            <div style="display:flex;align-items:flex-start;justify-content:space-between;">
+              <div>
+                <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1px;opacity:0.5;margin-bottom:6px;">Active Projects</div>
+                <div style="font-size:28px;font-weight:800;line-height:1;margin-bottom:4px;">{{ loadingStats ? '—' : stats.activeProjects }}</div>
+                <div style="font-size:11px;opacity:0.5;">{{ stats.totalBranches || 0 }} branches</div>
+              </div>
+              <div style="font-size:11px;color:#22c55e;background:rgba(34,197,94,0.1);padding:2px 7px;border-radius:10px;margin-top:2px;">📁</div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div style="display:flex;align-items:flex-start;justify-content:space-between;">
+              <div>
+                <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1px;opacity:0.5;margin-bottom:6px;">Total Staff</div>
+                <div style="font-size:28px;font-weight:800;line-height:1;margin-bottom:4px;">{{ loadingStats ? '—' : stats.totalStaff }}</div>
+                <div style="font-size:11px;color:#22c55e;">● Active worldwide</div>
+              </div>
+              <div style="font-size:11px;color:#60a5fa;background:rgba(59,130,246,0.1);padding:2px 7px;border-radius:10px;margin-top:2px;">👥</div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div style="display:flex;align-items:flex-start;justify-content:space-between;">
+              <div>
+                <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1px;opacity:0.5;margin-bottom:6px;">Total Branches</div>
+                <div style="font-size:28px;font-weight:800;line-height:1;margin-bottom:4px;">{{ loadingStats ? '—' : stats.totalBranches }}</div>
+                <div style="font-size:11px;opacity:0.5;">6 countries</div>
+              </div>
+              <div style="font-size:11px;color:#a855f7;background:rgba(168,85,247,0.1);padding:2px 7px;border-radius:10px;margin-top:2px;">🌏</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Branch Analysis -->
+        <div class="card" style="padding:0;">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px 10px;">
+            <span style="font-size:13px;font-weight:700;">🌏 Branch Analysis</span>
+            <span style="font-size:10px;opacity:0.4;">{{ branches.length }} branches worldwide</span>
+          </div>
+          <div style="display:grid;grid-template-columns:2fr 0.7fr 0.7fr 2fr;gap:8px;padding:0 18px 7px;border-bottom:1px solid rgba(255,255,255,0.06);">
+            <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.45;">BRANCH</span>
+            <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.45;text-align:center;">STAFF</span>
+            <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.45;text-align:center;">PROJECTS</span>
+            <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.45;">PROJECT LOAD</span>
+          </div>
+          <div *ngFor="let b of branches; let last=last; trackBy:trackById"
+            [style.border-bottom]="last?'none':'1px solid rgba(255,255,255,0.04)'"
+            style="display:grid;grid-template-columns:2fr 0.7fr 0.7fr 2fr;gap:8px;padding:10px 18px;align-items:center;cursor:pointer;transition:background 0.12s;"
+            (click)="selectBranch(b)"
+            (mouseenter)="$any($event.currentTarget).style.background='rgba(148,163,184,0.04)'"
+            (mouseleave)="$any($event.currentTarget).style.background=''">
+            <div style="display:flex;align-items:center;gap:8px;min-width:0;">
+              <span style="font-size:15px;flex-shrink:0;">{{ b.countryFlag||'🌐' }}</span>
+              <div style="min-width:0;">
+                <div style="font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ b.name }}</div>
+                <div style="font-size:9px;opacity:0.35;margin-top:1px;">{{ b.countryName }}</div>
+              </div>
+            </div>
+            <div style="text-align:center;">
+              <span style="font-size:13px;font-weight:700;" [style.color]="(b.staffCount||0)>0?'#60a5fa':'#64748b'">{{ b.staffCount||0 }}</span>
+            </div>
+            <div style="text-align:center;">
+              <span style="font-size:13px;font-weight:700;" [style.color]="(b.activeProjects||0)>0?'#22c55e':'#64748b'">{{ b.activeProjects||0 }}</span>
+            </div>
+            <div>
+              <div style="display:flex;align-items:center;gap:8px;">
+                <div style="flex:1;height:6px;background:rgba(148,163,184,0.12);border-radius:4px;overflow:hidden;">
+                  <div style="height:100%;border-radius:4px;"
+                    [style.width]="getMaxBranchProjects()>0?((b.activeProjects||0)/getMaxBranchProjects()*100)+'%':'0%'"
+                    [style.background]="(b.activeProjects||0)>0?'linear-gradient(90deg,#22c55e,#16a34a)':'rgba(148,163,184,0.1)'">
+                  </div>
+                </div>
+                <span style="font-size:10px;font-weight:600;min-width:14px;text-align:right;"
+                  [style.color]="(b.activeProjects||0)>0?'#22c55e':'#64748b'">{{ b.activeProjects||0 }}</span>
+              </div>
+            </div>
+          </div>
+          <div *ngIf="branches.length===0" style="text-align:center;padding:24px;font-size:11px;opacity:0.3;">Loading...</div>
+        </div>
+
+        <!-- Project Health Summary + Upcoming Deadlines (2-col) -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
+
+          <!-- Health Summary -->
+          <div class="card" style="padding:14px 18px;">
+            <div style="font-size:12px;font-weight:700;margin-bottom:12px;">📊 Project Health</div>
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;">
+              <div style="text-align:center;padding:8px 4px;border-radius:10px;background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.15);">
+                <div style="font-size:22px;font-weight:800;color:#22c55e;line-height:1;">{{ getHealthCount('onTrack') }}</div>
+                <div style="font-size:9px;color:#22c55e;margin-top:3px;opacity:0.8;">On Track</div>
+              </div>
+              <div style="text-align:center;padding:8px 4px;border-radius:10px;background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.15);">
+                <div style="font-size:22px;font-weight:800;color:#f59e0b;line-height:1;">{{ getHealthCount('atRisk') }}</div>
+                <div style="font-size:9px;color:#f59e0b;margin-top:3px;opacity:0.8;">At Risk</div>
+              </div>
+              <div style="text-align:center;padding:8px 4px;border-radius:10px;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.15);">
+                <div style="font-size:22px;font-weight:800;color:#ef4444;line-height:1;">{{ getHealthCount('delayed') }}</div>
+                <div style="font-size:9px;color:#ef4444;margin-top:3px;opacity:0.8;">Delayed</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Upcoming Deadlines -->
+          <div class="card" style="padding:14px 18px;">
+            <div style="font-size:12px;font-weight:700;margin-bottom:12px;">📅 Upcoming Deadlines <span style="font-size:10px;opacity:0.4;font-weight:400;">(next 30 days)</span></div>
+            <div *ngIf="getUpcomingDeadlines().length === 0" style="font-size:11px;opacity:0.3;text-align:center;padding:12px 0;">No deadlines in next 30 days</div>
+            <!-- max 3 rows visible, scroll if more -->
+            <div style="max-height:84px;overflow-y:auto;">
+              <div *ngFor="let p of getUpcomingDeadlines(); let last=last"
+                [style.border-bottom]="last?'none':'1px solid rgba(148,163,184,0.07)'"
+                style="display:flex;align-items:center;justify-content:space-between;padding:7px 0;cursor:pointer;"
+                (click)="openProject(p.id)">
+                <div style="flex:1;min-width:0;margin-right:8px;">
+                  <div style="font-size:12px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ p.title }}</div>
+                  <div style="font-size:9px;opacity:0.45;margin-top:1px;">{{ p.branchName || '—' }}</div>
+                </div>
+                <div style="text-align:right;flex-shrink:0;">
+                  <div style="font-size:11px;font-weight:600;"
+                    [style.color]="getDaysUntil(p.endDate) <= 7 ? '#ef4444' : getDaysUntil(p.endDate) <= 14 ? '#f59e0b' : '#22c55e'">
+                    {{ getDaysUntil(p.endDate) }}d left
+                  </div>
+                  <div style="font-size:9px;opacity:0.4;">{{ p.endDate | date:'MMM d' }}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Delayed alert banner (if any delayed) -->
+        <div *ngIf="getDelayedProjects().length > 0"
+          style="display:flex;align-items:center;gap:10px;padding:10px 16px;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);border-radius:10px;margin-bottom:10px;">
+          <span style="font-size:16px;flex-shrink:0;">⚠️</span>
+          <div style="flex:1;font-size:12px;color:#ef4444;font-weight:500;">
+            {{ getDelayedProjects().length }} project{{ getDelayedProjects().length > 1 ? 's' : '' }} need{{ getDelayedProjects().length === 1 ? 's' : '' }} immediate attention
+          </div>
+          <button style="font-size:11px;padding:4px 12px;border-radius:20px;background:rgba(239,68,68,0.15);color:#ef4444;border:1px solid rgba(239,68,68,0.3);cursor:pointer;font-family:inherit;font-weight:500;" (click)="filterView='delayed';showAllProjects=false">View delayed</button>
+        </div>
+
+        <!-- Active Projects Table — All -->
+        <div class="card" style="padding:0;">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px 10px;">
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+              <span style="font-size:13px;font-weight:700;">Active Projects</span>
+              <span style="font-size:10px;opacity:0.45;">{{ filteredProjects.length }} projects</span>
+              <!-- Filter chips -->
+              <div style="display:flex;gap:5px;margin-left:4px;">
+                <button style="font-size:10px;padding:2px 9px;border-radius:20px;border:1px solid;cursor:pointer;font-family:inherit;font-weight:500;transition:all 0.12s;"
+                  [style.background]="filterView==='all'?'rgba(148,163,184,0.15)':'transparent'"
+                  [style.border-color]="filterView==='all'?'rgba(148,163,184,0.3)':'rgba(148,163,184,0.15)'"
+                  [style.color]="filterView==='all'?'var(--text)':'rgba(148,163,184,0.6)'"
+                  (click)="filterView='all';showAllProjects=false">All {{ recentProjects.length }}</button>
+                <button style="font-size:10px;padding:2px 9px;border-radius:20px;border:1px solid;cursor:pointer;font-family:inherit;font-weight:500;transition:all 0.12s;"
+                  [style.background]="filterView==='onTrack'?'rgba(34,197,94,0.12)':'transparent'"
+                  [style.border-color]="filterView==='onTrack'?'rgba(34,197,94,0.3)':'rgba(148,163,184,0.15)'"
+                  [style.color]="filterView==='onTrack'?'#22c55e':'rgba(148,163,184,0.6)'"
+                  (click)="filterView='onTrack';showAllProjects=false">● On Track {{ getHealthCount('onTrack') }}</button>
+                <button style="font-size:10px;padding:2px 9px;border-radius:20px;border:1px solid;cursor:pointer;font-family:inherit;font-weight:500;transition:all 0.12s;"
+                  [style.background]="filterView==='delayed'?'rgba(239,68,68,0.12)':'transparent'"
+                  [style.border-color]="filterView==='delayed'?'rgba(239,68,68,0.3)':'rgba(148,163,184,0.15)'"
+                  [style.color]="filterView==='delayed'?'#ef4444':'rgba(148,163,184,0.6)'"
+                  (click)="filterView='delayed';showAllProjects=false">⚠ Delayed {{ getHealthCount('delayed') }}</button>
+              </div>
+            </div>
+            <button style="font-size:12px;color:#22c55e;background:none;border:none;cursor:pointer;font-family:inherit;"
+              (click)="showAllProjects=!showAllProjects">
+              {{ showAllProjects ? 'Show less ↑' : 'See all →' }}
+            </button>
+          </div>
+          <!-- Table header — 7 cols -->
+          <div style="display:grid;grid-template-columns:1.8fr 1fr 1.2fr 2fr 1fr 1fr 1fr;gap:8px;padding:0 18px 7px;border-bottom:1px solid rgba(255,255,255,0.06);">
+            <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.45;">PROJECT</span>
+            <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.45;">BRANCH</span>
+            <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.45;">STATUS</span>
+            <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.45;">PROGRESS vs TIMELINE</span>
+            <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.45;">OWNER</span>
+            <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.45;">DUE DATE</span>
+            <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.45;">HEALTH</span>
+          </div>
+          <!-- Table rows -->
+          <div *ngFor="let p of displayedProjects; let last=last; trackBy:trackById"
+            [style.border-bottom]="last?'none':'1px solid rgba(255,255,255,0.04)'"
+            [style.border-left]="isDelayed(p)?'2px solid #ef4444':'2px solid transparent'"
+            style="display:grid;grid-template-columns:1.8fr 1fr 1.2fr 2fr 1fr 1fr 1fr;gap:8px;padding:9px 18px;align-items:center;cursor:pointer;transition:background 0.12s;"
+            (click)="openProject(p.id)"
+            (mouseenter)="$any($event.currentTarget).style.background='rgba(148,163,184,0.04)'"
+            (mouseleave)="$any($event.currentTarget).style.background=''">
+            <!-- PROJECT -->
+            <div style="min-width:0;">
+              <div style="font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;" [title]="p.title">{{ p.title }}</div>
+            </div>
+            <!-- BRANCH -->
+            <div style="display:flex;align-items:center;gap:4px;min-width:0;">
+              <span style="font-size:13px;flex-shrink:0;">{{ p.countryFlag||'🌐' }}</span>
+              <span style="font-size:10px;opacity:0.65;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                {{ p.branchName ? (p.branchName.replace(' Office','').replace(' Branch','').replace(' HQ','')) : '—' }}
+              </span>
+            </div>
+            <!-- STATUS -->
+            <div style="display:flex;align-items:center;gap:5px;font-size:11px;font-weight:500;"
+              [style.color]="p.status==='ACTIVE'?'#22c55e':p.status==='PLANNING'?'#60a5fa':p.status==='ON_HOLD'?'#f59e0b':'#ef4444'">
+              <span style="width:7px;height:7px;border-radius:50%;flex-shrink:0;"
+                [style.background]="p.status==='ACTIVE'?'#22c55e':p.status==='PLANNING'?'#60a5fa':p.status==='ON_HOLD'?'#f59e0b':'#ef4444'"></span>
+              {{ p.status==='ACTIVE'?'On Track':p.status==='PLANNING'?'Planning':p.status==='ON_HOLD'?'On Hold':'Delayed' }}
+            </div>
+            <!-- PROGRESS vs TIMELINE -->
+            <div style="display:flex;flex-direction:column;gap:3px;min-width:0;">
+              <!-- Progress bar -->
+              <div style="display:flex;align-items:center;gap:6px;">
+                <div style="flex:1;height:4px;background:rgba(148,163,184,0.15);border-radius:3px;overflow:hidden;">
+                  <div [style.width]="(p.progress||0)+'%'"
+                    [style.background]="getProgressColor(p.progress||0)"
+                    style="height:100%;border-radius:3px;"></div>
+                </div>
+                <span style="font-size:10px;opacity:0.5;min-width:24px;text-align:right;">{{ p.progress||0 }}%</span>
+              </div>
+              <!-- Time elapsed bar -->
+              <div style="display:flex;align-items:center;gap:6px;">
+                <div style="flex:1;height:3px;background:rgba(148,163,184,0.08);border-radius:3px;overflow:hidden;">
+                  <div [style.width]="getTimeElapsed(p.startDate,p.endDate)+'%'"
+                    [style.background]="getTimeElapsedColor(p.progress||0, getTimeElapsed(p.startDate,p.endDate))"
+                    style="height:100%;border-radius:3px;opacity:0.45;"></div>
+                </div>
+                <span style="font-size:9px;min-width:24px;text-align:right;"
+                  [style.color]="getTimeElapsedColor(p.progress||0, getTimeElapsed(p.startDate,p.endDate))"
+                  style="opacity:0.7;">{{ getTimeElapsed(p.startDate,p.endDate) }}%</span>
+              </div>
+              <div style="font-size:9px;opacity:0.3;">{{ p.progress||0 }}% done · {{ getTimeElapsed(p.startDate,p.endDate) }}% time</div>
+            </div>
+            <!-- OWNER (PM + Client) -->
+            <div style="display:flex;flex-direction:column;gap:2px;">
+              <div style="display:flex;align-items:center;gap:5px;">
+                <div *ngIf="p.pmName||p.ownerName"
+                  style="width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;flex-shrink:0;"
+                  [style.background]="p.pmColor||p.ownerColor||'#16a34a'">
+                  {{ (p.pmInitial||p.ownerInitial||(p.pmName||p.ownerName||'?').charAt(0)).toUpperCase() }}
+                </div>
+                <span style="font-size:10px;opacity:0.6;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ p.pmName||p.ownerName||'—' }}</span>
+              </div>
+              <div *ngIf="p.clientName" style="font-size:9px;opacity:0.4;padding-left:27px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                🏢 {{ p.clientName }}
+              </div>
+            </div>
+            <!-- DUE DATE -->
+            <div style="font-size:11px;"
+              [style.color]="isDelayed(p)?'#ef4444':'rgba(148,163,184,0.6)'">
+              {{ p.endDate ? (p.endDate | date:'MMM d') : '—' }}
+              <span *ngIf="isDelayed(p)"> ⚠</span>
+            </div>
+            <!-- HEALTH dots -->
+            <div style="display:flex;gap:3px;">
+              <span *ngFor="let d of [0,1,2,3,4]" style="width:8px;height:8px;border-radius:50%;display:inline-block;"
+                [style.background]="d<(p.progress>=80?5:p.progress>=60?4:p.progress>=40?3:p.progress>=20?2:1)?getProgressColor(p.progress||0):'rgba(148,163,184,0.15)'">
+              </span>
+            </div>
+          </div>
+          <div *ngIf="recentProjects.length===0&&!loadingProjects" style="text-align:center;padding:24px 18px;font-size:11px;opacity:0.3;">No active projects</div>
+          <div *ngIf="loadingProjects" style="text-align:center;padding:24px 18px;font-size:11px;opacity:0.4;">Loading...</div>
+        </div>
+
+      </ng-container>
+    </main>
+
+    <!-- ══ RIGHT SIDEBAR ══ -->
+    <aside class="right-sidebar" style="width:260px;overflow-y:auto;overflow-x:hidden;display:flex;flex-direction:column;">
+
+      <ng-container *ngIf="managementMembers.length > 0">
+        <div style="padding:14px 10px 8px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+            <span style="font-size:10px;font-weight:700;letter-spacing:0.5px;" [style.color]="isDark?'#a855f7':'#7c3aed'">MANAGEMENT</span>
+            <span style="font-size:9px;padding:1px 7px;border-radius:20px;background:rgba(168,85,247,0.12);color:#a855f7;font-weight:700;border:1px solid rgba(168,85,247,0.25);">{{ managementMembers.length }}</span>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:4px;">
+            <div *ngFor="let m of managementMembers; let i=index"
+              class="member-card" style="cursor:pointer;border-left:2px solid #a855f733;"
+              [style.background]="isDark?'':'#f8fafc'"
+              (click)="openDirectChat(m)">
+              <div class="member-avatar" [style.background]="m.avatarColor||getMemberColor(i)">{{ getMemberInitial(m) }}</div>
+              <div class="member-info-wrap">
+                <div class="member-name" [style.color]="isDark?'#e2e8f0':'#1e293b'">{{ m.name }}</div>
+                <div class="member-info"><span style="padding:1px 5px;border-radius:20px;font-size:7px;font-weight:700;background:rgba(168,85,247,0.15);color:#a855f7;">{{ m.roleDisplay || m.role }}</span></div>
+              </div>
+              <span *ngIf="memberUnreadCounts[m.userId||m.id]>0"
+                style="flex-shrink:0;min-width:16px;height:16px;border-radius:20px;background:#ef4444;color:white;font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center;padding:0 4px;">
+                {{ memberUnreadCounts[m.userId||m.id]>99?'99+':memberUnreadCounts[m.userId||m.id] }}
+              </span>
+              <div style="width:10px;height:10px;border-radius:50%;flex-shrink:0;margin-left:2px;"
+                [style.background]="m.online?'#22c55e':'#334155'"
+                [style.boxShadow]="m.online?'0 0 5px #22c55e88':'none'"
+                [style.border]="isDark?'none':'1.5px solid #cbd5e1'"></div>
+            </div>
+          </div>
+        </div>
+        <div style="height:1px;background:rgba(255,255,255,0.06);margin:0 10px;"></div>
+      </ng-container>
+
+      <div *ngIf="managementMembers.length===0" style="padding:14px 10px;font-size:11px;opacity:0.3;text-align:center;">Loading...</div>
+
+      <div style="padding:10px 10px 8px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+          <span style="font-size:10px;font-weight:700;letter-spacing:0.5px;" [style.color]="isDark?'#22c55e':'#16a34a'">GROUP CHATS</span>
+          <span style="font-size:9px;padding:1px 7px;border-radius:20px;background:rgba(34,197,94,0.12);color:#22c55e;font-weight:700;border:1px solid rgba(34,197,94,0.25);">{{ recentProjects.length }}</span>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:4px;">
+          <div *ngFor="let p of recentProjects.slice(0,8)"
+            style="display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:9px;cursor:pointer;transition:all 0.15s;"
+            [style.background]="isDark?'rgba(22,163,74,0.06)':'#f0fdf4'"
+            [style.border]="isDark?'1px solid rgba(34,197,94,0.2)':'1px solid #86efac66'"
+            (click)="openProjectGroupChat(p)"
+            (mouseenter)="$any($event.currentTarget).style.background=isDark?'rgba(22,163,74,0.12)':'#dcfce7'"
+            (mouseleave)="$any($event.currentTarget).style.background=isDark?'rgba(22,163,74,0.06)':'#f0fdf4'">
+            <div style="width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;flex-shrink:0;"
+              [style.background]="getProgressColor(p.progress||0)">
+              {{ (p.title||'?').charAt(0).toUpperCase() }}
+            </div>
+            <div style="flex:1;min-width:0;">
+              <div style="font-size:11px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"
+                [style.color]="isDark?'#93c5fd':'#1d4ed8'">{{ p.title }}</div>
+              <div style="font-size:9px;opacity:0.55;" [style.color]="isDark?'#94a3b8':'#64748b'">
+                <span style="display:inline-block;width:6px;height:6px;border-radius:50%;margin-right:3px;"
+                  [style.background]="p.status==='ACTIVE'?'#22c55e':p.status==='ON_HOLD'?'#f59e0b':'#94a3b8'"></span>
+                {{ p.status==='ACTIVE'?'On Track':p.status==='PLANNING'?'Planning':p.status==='ON_HOLD'?'On Hold':'—' }} · {{ p.progress||0 }}%
+              </div>
+            </div>
+          </div>
+          <div *ngIf="recentProjects.length===0" style="font-size:11px;opacity:0.3;text-align:center;padding:8px 0;">No projects</div>
+        </div>
+      </div>
+
+    </aside>
+
+  </div>
+
+</div>
+
+<app-chat-popup *ngIf="selectedChatMember" [member]="selectedChatMember" [isGroup]="isGroupChat" (close)="closeChatPopup()"></app-chat-popup>

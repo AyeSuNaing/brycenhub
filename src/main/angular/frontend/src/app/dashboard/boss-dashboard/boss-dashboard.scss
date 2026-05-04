@@ -1,0 +1,12 @@
+/* ═══════════════════════════════════════════════════
+   👑 Boss Dashboard — SCSS
+   VP Dashboard global classes (styles.css) ကို reuse
+   Boss-specific overrides ပဲ ဒီမှာ ထားတယ်
+═══════════════════════════════════════════════════ */
+
+:host {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+}
