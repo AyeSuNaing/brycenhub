@@ -1,0 +1,106 @@
+<!-- 💵 Salary Approval Inline -->
+<div style="padding:16px;display:flex;flex-direction:column;gap:10px;overflow-y:auto;height:100%;">
+
+  <!-- Header -->
+  <div style="display:flex;align-items:center;gap:10px;flex-shrink:0;margin-bottom:4px;">
+    <button
+      style="background:none;border:none;cursor:pointer;font-size:20px;opacity:0.45;padding:0;"
+      (click)="back.emit()">←</button>
+    <div style="font-size:14px;font-weight:700;">💵 {{ lbl('Salary Approvals') }}</div>
+    <span style="font-size:10px;opacity:0.4;">{{ periods.length }} periods</span>
+  </div>
+
+  <!-- Loading -->
+  <div *ngIf="loading"
+    style="text-align:center;padding:48px;font-size:12px;opacity:0.4;">
+    {{ lbl('Loading...') }}
+  </div>
+
+  <!-- Empty -->
+  <div *ngIf="!loading && periods.length===0"
+    style="text-align:center;padding:48px;font-size:12px;opacity:0.4;">
+    📭 {{ lbl('No pending salary approvals') }}
+  </div>
+
+  <!-- Period cards -->
+  <ng-container *ngIf="!loading && periods.length>0">
+    <div *ngFor="let p of periods"
+      class="card"
+      style="padding:0;flex-shrink:0;border-width:1px;border-style:solid;transition:border-color 0.2s;"
+      [style.borderColor]="getBorderColor(p.status)"
+      [style.background]="getBgColor(p.status)">
+
+      <!-- Header row -->
+      <div style="display:flex;align-items:center;gap:8px;padding:12px 16px;flex-wrap:wrap;">
+
+        <!-- Period label -->
+        <div style="font-size:13px;font-weight:700;">{{ formatPeriodLabel(p.payPeriod) }}</div>
+
+        <!-- Staff count badge -->
+        <span style="font-size:9px;padding:1px 7px;border-radius:20px;
+          background:rgba(96,165,250,0.15);color:#60a5fa;font-weight:600;">
+          {{ p.staffCount }} {{ lbl('Staff') }}
+        </span>
+
+        <!-- Status badge -->
+        <span style="font-size:9px;font-weight:700;padding:2px 9px;border-radius:20px;white-space:nowrap;"
+          [style.background]="getBadgeBg(p.status)"
+          [style.color]="getBadgeColor(p.status)">
+          {{ getStatusLabel(p.status) }}
+        </span>
+
+        <!-- Approve / Reject — PENDING_APPROVAL only -->
+        <div *ngIf="p.status==='PENDING_APPROVAL'"
+          style="margin-left:auto;display:flex;gap:6px;">
+          <button
+            (click)="doReject(p)"
+            [disabled]="acting[p.payPeriod]"
+            [style.opacity]="acting[p.payPeriod] ? '0.5' : '1'"
+            style="padding:4px 12px;border-radius:6px;
+              border:1px solid rgba(239,68,68,0.3);
+              background:rgba(239,68,68,0.08);
+              color:#ef4444;font-size:10px;font-weight:600;
+              cursor:pointer;font-family:inherit;white-space:nowrap;">
+            {{ lbl('Reject') }}
+          </button>
+          <button
+            (click)="doApprove(p)"
+            [disabled]="acting[p.payPeriod]"
+            [style.opacity]="acting[p.payPeriod] ? '0.5' : '1'"
+            style="padding:4px 16px;border-radius:6px;border:none;
+              background:linear-gradient(135deg,#14532d,#16a34a);
+              color:white;font-size:10px;font-weight:700;
+              cursor:pointer;font-family:inherit;white-space:nowrap;">
+            {{ acting[p.payPeriod] ? '...' : lbl('Approve') }}
+          </button>
+        </div>
+      </div>
+
+      <!-- Stats row -->
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:0 14px 12px;">
+        <div style="border-radius:7px;padding:7px 12px;"
+          [style.background]="getStatBg(p.status)">
+          <div style="font-size:8px;opacity:0.4;text-transform:uppercase;
+            letter-spacing:0.7px;margin-bottom:2px;">{{ lbl('Gross') }}</div>
+          <div style="font-size:12px;font-weight:700;">{{ fmt(p.currency, p.totalGross) }}</div>
+        </div>
+        <div style="border-radius:7px;padding:7px 12px;"
+          [style.background]="getStatBg(p.status)">
+          <div style="font-size:8px;opacity:0.4;text-transform:uppercase;
+            letter-spacing:0.7px;margin-bottom:2px;">{{ lbl('Tax') }}</div>
+          <div style="font-size:12px;font-weight:700;color:#ef4444;">
+            -{{ fmt(p.currency, p.totalTax) }}
+          </div>
+        </div>
+        <div style="border-radius:7px;padding:7px 12px;"
+          [style.background]="getStatBg(p.status)">
+          <div style="font-size:8px;opacity:0.4;text-transform:uppercase;
+            letter-spacing:0.7px;margin-bottom:2px;">{{ lbl('Net') }}</div>
+          <div style="font-size:12px;font-weight:700;">{{ fmt(p.currency, p.totalNet) }}</div>
+        </div>
+      </div>
+
+    </div>
+  </ng-container>
+
+</div>

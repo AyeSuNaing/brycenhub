@@ -20,7 +20,7 @@ import java.util.function.BiFunction;
 
 @RestController
 @RequestMapping("/api/vp/dashboard")
-@PreAuthorize("hasRole('VICE_PRESIDENT')")
+@PreAuthorize("hasAnyRole('VICE_PRESIDENT', 'COUNTRY_DIRECTOR', 'BOSS')")
 public class VpDashboardController {
 
     @Autowired private UserRepository          userRepository;
@@ -33,20 +33,69 @@ public class VpDashboardController {
     @Autowired private TaskRepository          taskRepository;
     @Autowired private SalaryHistoryRepository salaryHistoryRepository;
     @Autowired private DepartmentRepository    departmentRepository;
+    @Autowired private DirectorCountryRepository directorCountryRepository;
 
     // ── Helpers ──────────────────────────────────────────────────
     private String getInitial(String name) {
         return (name != null && !name.isEmpty())
                 ? String.valueOf(name.charAt(0)).toUpperCase() : "?";
     }
+ // ── DR helpers ──
+    private String getRoleName(User user) {
+        if (user.getRoleId() == null) return "";
+        return userRoleRepository.findById(user.getRoleId())
+                .map(UserRole::getName).orElse("");
+    }
+
+    private List<Long> getDrBranchIds(User dr) {
+        List<Long> branchIds = new ArrayList<>();
+        directorCountryRepository.findByDirectorId(dr.getId()).forEach(dc ->
+            branchRepository.findByCountryId(dc.getCountryId())
+                .forEach(b -> branchIds.add(b.getId()))
+        );
+        return branchIds;
+    }
+
+    private List<Long> getScopedUserIds(User caller) {
+        if ("COUNTRY_DIRECTOR".equals(getRoleName(caller))) {
+            List<Long> userIds = new ArrayList<>();
+            for (Long bid : getDrBranchIds(caller)) {
+                userRepository.findByBranchId(bid).stream().map(User::getId).forEach(userIds::add);
+            }
+            return userIds;
+        }
+        Long branchId = caller.getBranchId();
+        if (branchId == null) return Collections.emptyList();
+        return userRepository.findByBranchId(branchId).stream().map(User::getId).collect(Collectors.toList());
+    }
+    
+    private List<Long> getScopedBranchIds(User caller) {
+        String role = getRoleName(caller);
+        if ("BOSS".equals(role)) {
+            return branchRepository.findAll().stream()
+                .map(Branch::getId)
+                .collect(Collectors.toList());
+        }
+        if ("COUNTRY_DIRECTOR".equals(role)) {
+            return getDrBranchIds(caller);
+        }
+        Long branchId = caller.getBranchId();
+        return branchId != null
+            ? Collections.singletonList(branchId)
+            : Collections.emptyList();
+    }
+    
     private String getAvatarColor(Long id) {
         String[] colors = { "#16a34a", "#0284c7", "#7c3aed", "#db2777", "#ea580c", "#0891b2" };
         return colors[(int) (Math.abs(id == null ? 0 : id) % colors.length)];
     }
     private boolean sameBranch(User vp, Long targetUserId) {
-        if (vp.getBranchId() == null) return false;
         User target = userRepository.findById(targetUserId).orElse(null);
-        return target != null && vp.getBranchId().equals(target.getBranchId());
+        if (target == null) return false;
+        if ("COUNTRY_DIRECTOR".equals(getRoleName(vp))) {
+            return getDrBranchIds(vp).contains(target.getBranchId());
+        }
+        return vp.getBranchId() != null && vp.getBranchId().equals(target.getBranchId());
     }
     private boolean sameExpenseBranch(User vp, BranchExpense exp) {
         return vp.getBranchId() != null && vp.getBranchId().equals(exp.getBranchId());
@@ -74,7 +123,8 @@ public class VpDashboardController {
             List<SalaryHistory> rows, Long branchId) {
 
         Map<String, List<SalaryHistory>> grouped = rows.stream()
-            .collect(Collectors.groupingBy(SalaryHistory::getPayPeriod));
+        		.collect(Collectors.groupingBy(s ->
+        	    s.getPayPeriod() + "|" + (s.getBranchId() != null ? s.getBranchId() : 0)));
 
         return grouped.entrySet().stream().map(entry -> {
             String period   = entry.getKey();
@@ -163,11 +213,7 @@ public class VpDashboardController {
             @RequestParam(required = false) String from,
             @RequestParam(required = false) String to) {
 
-        Long branchId = vp.getBranchId();
-        if (branchId == null) return ResponseEntity.ok(Collections.emptyList());
-
-        List<Long> branchUserIds = userRepository.findByBranchId(branchId)
-            .stream().map(User::getId).collect(Collectors.toList());
+        List<Long> branchUserIds = getScopedUserIds(vp);
         if (branchUserIds.isEmpty()) return ResponseEntity.ok(Collections.emptyList());
 
         LocalDate fromDate = (from != null && !from.isEmpty()) ? LocalDate.parse(from) : null;
@@ -233,11 +279,7 @@ public class VpDashboardController {
             @RequestParam(required = false) String from,
             @RequestParam(required = false) String to) {
 
-        Long branchId = vp.getBranchId();
-        if (branchId == null) return ResponseEntity.ok(Collections.emptyList());
-
-        List<Long> branchUserIds = userRepository.findByBranchId(branchId)
-            .stream().map(User::getId).collect(Collectors.toList());
+    	List<Long> branchUserIds = getScopedUserIds(vp);
         if (branchUserIds.isEmpty()) return ResponseEntity.ok(Collections.emptyList());
 
         LocalDate fromDate = (from != null && !from.isEmpty()) ? LocalDate.parse(from) : null;
@@ -476,14 +518,14 @@ public class VpDashboardController {
     @GetMapping("/salary-approvals")
     public ResponseEntity<List<SalaryPeriodSummary>> getSalaryApprovals(
             @AuthenticationPrincipal User vp) {
-        Long branchId = vp.getBranchId();
-        if (branchId == null) return ResponseEntity.ok(Collections.emptyList());
+    	List<Long> branchIds = getScopedBranchIds(vp);
+        if (branchIds.isEmpty()) return ResponseEntity.ok(Collections.emptyList());
         List<SalaryHistory> pending = salaryHistoryRepository.findAll().stream()
-            .filter(s -> branchId.equals(s.getBranchId()))
+            .filter(s -> branchIds.contains(s.getBranchId()))
             .filter(s -> "PENDING_APPROVAL".equals(s.getStatus()))
             .collect(Collectors.toList());
         if (pending.isEmpty()) return ResponseEntity.ok(Collections.emptyList());
-        return ResponseEntity.ok(groupToPeriodSummary(pending, branchId));
+        return ResponseEntity.ok(groupToPeriodSummary(pending, branchIds.get(0)));
     }
 
     // ============================================================
@@ -492,13 +534,14 @@ public class VpDashboardController {
     @GetMapping("/salary-history")
     public ResponseEntity<List<SalaryPeriodSummary>> getSalaryHistory(
             @AuthenticationPrincipal User vp) {
-        Long branchId = vp.getBranchId();
-        if (branchId == null) return ResponseEntity.ok(Collections.emptyList());
+    	List<Long> branchIds = getScopedBranchIds(vp);
+        if (branchIds.isEmpty()) return ResponseEntity.ok(Collections.emptyList());
         List<SalaryHistory> all = salaryHistoryRepository.findAll().stream()
-            .filter(s -> branchId.equals(s.getBranchId()))
+            .filter(s -> branchIds.contains(s.getBranchId()))
+//            .filter(s -> "PENDING_APPROVAL".equals(s.getStatus())) 
             .collect(Collectors.toList());
         if (all.isEmpty()) return ResponseEntity.ok(Collections.emptyList());
-        return ResponseEntity.ok(groupToPeriodSummary(all, branchId));
+        return ResponseEntity.ok(groupToPeriodSummary(all, branchIds.get(0)));
     }
 
     // ============================================================

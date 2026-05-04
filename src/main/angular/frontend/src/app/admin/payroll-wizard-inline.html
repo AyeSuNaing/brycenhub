@@ -48,10 +48,10 @@
       </div>
 
       <div class="info-box">
-        <div class="info-item"><span>📊</span>{{ lbl('Base = salary_structures') }}</div>
-        <div class="info-item"><span>📅</span>{{ lbl('Actual days = attendance_logs') }}</div>
-        <div class="info-item"><span>💪</span>{{ lbl('OT = approved ot_requests') }}</div>
-        <div class="info-item"><span>🧾</span>{{ lbl('Tax = progressive from tax_brackets') }}</div>
+        <div class="info-item">{{ lbl('Base = salary_structures') }}</div>
+        <div class="info-item">{{ lbl('Actual days = attendance_logs') }}</div>
+        <div class="info-item">{{ lbl('OT = approved ot_requests') }}</div>
+        <div class="info-item">{{ lbl('Tax = progressive from tax_brackets') }}</div>
       </div>
     </div>
   </div>
@@ -110,46 +110,67 @@
       </div>
     </div>
 
-    <div class="preview-table-wrap">
-      <table class="preview-table">
+    <!-- ✅ Fixed: table-wrap + payroll-table -->
+    <div class="table-wrap">
+      <table class="payroll-table" style="table-layout:fixed;width:100%;">
+        <colgroup>
+          <col style="width:40px;">
+          <col style="width:220px;">
+          <col style="width:120px;">
+          <col style="width:90px;">
+          <col style="width:120px;">
+          <col style="width:100px;">
+          <col style="width:110px;">
+          <col style="width:120px;">
+          <col style="width:100px;">
+        </colgroup>
         <thead>
           <tr>
-            <th style="width:36px;"></th>
+            <th></th>
             <th>{{ lbl('NAME') }}</th>
-            <th>{{ lbl('Base Salary') }}</th>
-            <th>{{ lbl('Days') }}</th>
-            <th>{{ lbl('Gross') }}</th>
-            <th>OT</th>
-            <th>{{ lbl('Tax') }}</th>
-            <th>{{ lbl('Net Salary') }}</th>
-            <th>Status</th>
+            <th style="text-align:right;">{{ lbl('Base Salary') }}</th>
+            <th style="text-align:center;">{{ lbl('Days') }}</th>
+            <th style="text-align:right;">{{ lbl('Gross') }}</th>
+            <th style="text-align:right;">OT</th>
+            <th style="text-align:right;">{{ lbl('Tax') }}</th>
+            <th style="text-align:right;">{{ lbl('Net Salary') }}</th>
+            <th style="text-align:center;">Status</th>
           </tr>
         </thead>
         <tbody>
           <tr *ngFor="let r of visibleRows"
-              [class.row-warning]="r.warning !== 'NONE'"
-              [class.row-ok]="r.warning === 'NONE'">
-            <td>
+              [class.row-warn]="r.warning !== 'NONE'">
+            <td style="text-align:center;">
               <input type="checkbox"
                      [checked]="r.selected"
                      [disabled]="r.warning !== 'NONE'"
                      (change)="r.selected = !r.selected; cdr.detectChanges()">
             </td>
-            <td class="td-name">
-              <div class="name-line">{{ r.userName }}</div>
-              <div class="meta-line">{{ r.roleDisplayName }} · {{ r.departmentName }}</div>
-            </td>
-            <td class="td-money">{{ currencyPrefix(r.currency) }}{{ formatMoney(r.baseSalary) }}</td>
-            <td class="td-days">
-              <span [class.day-warn]="r.actualDays < r.workingDays">{{ r.actualDays }}</span>/{{ r.workingDays }}
-            </td>
-            <td class="td-money">{{ currencyPrefix(r.currency) }}{{ formatMoney(r.grossSalary) }}</td>
-            <td class="td-money ot">{{ r.otAmount > 0 ? '+' + currencyPrefix(r.currency) + formatMoney(r.otAmount) : '—' }}</td>
-            <td class="td-money tax">-{{ currencyPrefix(r.currency) }}{{ formatMoney(r.taxAmount) }}</td>
-            <td class="td-money net">{{ currencyPrefix(r.currency) }}{{ formatMoney(r.netSalary) }}</td>
+            <!-- ✅ Fixed: staff-cell / staff-name / staff-sub -->
             <td>
-              <span *ngIf="r.warning === 'NONE'" class="badge-ok">✓ {{ lbl('Ready (filter)') }}</span>
-              <span *ngIf="r.warning !== 'NONE'" class="badge-warn" [title]="r.warningMessage">⚠ {{ r.warning }}</span>
+              <div class="staff-cell">
+                <div class="staff-meta">
+                  <div class="staff-name">{{ r.userName }}</div>
+                  <div class="staff-sub">{{ r.roleDisplayName }} · {{ r.departmentName }}</div>
+                </div>
+              </div>
+            </td>
+            <!-- ✅ Fixed: money class -->
+            <td class="money" style="text-align:right;">{{ currencyPrefix(r.currency) }}{{ formatMoney(r.baseSalary) }}</td>
+            <!-- ✅ Fixed: days-cell / days-actual / days-sep / days-working -->
+            <td class="days-cell" style="text-align:center;">
+              <span class="days-actual" [class.days-zero]="r.actualDays === 0">{{ r.actualDays }}</span>
+              <span class="days-sep">/</span>
+              <span class="days-working">{{ r.workingDays }}</span>
+            </td>
+            <td class="money" style="text-align:right;">{{ currencyPrefix(r.currency) }}{{ formatMoney(r.grossSalary) }}</td>
+            <td class="money muted" style="text-align:right;">{{ r.otAmount > 0 ? '+' + currencyPrefix(r.currency) + formatMoney(r.otAmount) : '—' }}</td>
+            <td class="money tax" style="text-align:right;">-{{ currencyPrefix(r.currency) }}{{ formatMoney(r.taxAmount) }}</td>
+            <td class="money net bold" style="text-align:right;">{{ currencyPrefix(r.currency) }}{{ formatMoney(r.netSalary) }}</td>
+            <!-- ✅ Fixed: badge badge-ok / badge badge-warn -->
+            <td style="text-align:center;">
+              <span *ngIf="r.warning === 'NONE'" class="badge badge-ok"> {{ lbl('Ready (filter)') }}</span>
+              <span *ngIf="r.warning !== 'NONE'" class="badge badge-warn" [title]="r.warningMessage"> {{ r.warning }}</span>
             </td>
           </tr>
         </tbody>

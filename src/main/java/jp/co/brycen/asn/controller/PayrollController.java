@@ -35,9 +35,7 @@ public class PayrollController {
     private final SalaryHistoryRepository  historyRepo;
     private final UserRoleRepository       userRoleRepo;
 
-    // ═══════════════════════════════════════════════════════════
     // ① PREVIEW
-    // ═══════════════════════════════════════════════════════════
     @PostMapping("/preview")
     @PreAuthorize("hasAnyRole('ADMIN', 'VICE_PRESIDENT', 'COUNTRY_DIRECTOR', 'BOSS')")
     public ResponseEntity<?> preview(
@@ -50,9 +48,7 @@ public class PayrollController {
           catch (Exception e) { log.error("[Payroll] preview", e); return serverError(e.getMessage()); }
     }
 
-    // ═══════════════════════════════════════════════════════════
     // ② SAVE
-    // ═══════════════════════════════════════════════════════════
     @PostMapping("/save")
     @PreAuthorize("hasAnyRole('ADMIN', 'VICE_PRESIDENT', 'COUNTRY_DIRECTOR', 'BOSS')")
     public ResponseEntity<?> save(
@@ -65,9 +61,7 @@ public class PayrollController {
           catch (Exception e) { log.error("[Payroll] save", e); return serverError(e.getMessage()); }
     }
 
-    // ═══════════════════════════════════════════════════════════
     // ③ PAYSLIP VIEW
-    // ═══════════════════════════════════════════════════════════
     @GetMapping("/payslip/{id}")
     public ResponseEntity<?> getPayslip(
             @PathVariable Long id,
@@ -86,9 +80,7 @@ public class PayrollController {
           catch (Exception e) { log.error("[Payroll] payslip", e); return serverError(e.getMessage()); }
     }
 
-    // ═══════════════════════════════════════════════════════════
-    // ④ HISTORY VIEW (Admin/VP/Boss)
-    // ═══════════════════════════════════════════════════════════
+    // ④ HISTORY VIEW
     @GetMapping("/history")
     @PreAuthorize("hasAnyRole('ADMIN', 'VICE_PRESIDENT', 'COUNTRY_DIRECTOR', 'BOSS')")
     public ResponseEntity<?> getHistory(
@@ -102,18 +94,13 @@ public class PayrollController {
         } catch (Exception e) { log.error("[Payroll] history", e); return serverError(e.getMessage()); }
     }
 
-    // ═══════════════════════════════════════════════════════════
-    // ④-B MY HISTORY — own payroll records (all roles)
-    // ✅ NEW: GET /api/payroll/my-history
-    // Member က မိမိ payroll records တွေ ကြည့်လို့ရ
-    // ═══════════════════════════════════════════════════════════
+    // ④-B MY HISTORY
     @GetMapping("/my-history")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<?> getMyHistory(@AuthenticationPrincipal User caller) {
         try {
             List<SalaryHistory> records =
                 historyRepo.findByUserIdOrderByPeriodEndDesc(caller.getId());
-
             List<Map<String, Object>> rows = records.stream().map(r -> {
                 Map<String, Object> m = new LinkedHashMap<>();
                 m.put("id",          r.getId());
@@ -130,7 +117,6 @@ public class PayrollController {
                 m.put("branchId",    r.getBranchId());
                 return m;
             }).collect(Collectors.toList());
-
             return ResponseEntity.ok(rows);
         } catch (Exception e) {
             log.error("[Payroll] my-history", e);
@@ -138,9 +124,7 @@ public class PayrollController {
         }
     }
 
-    // ═══════════════════════════════════════════════════════════
     // ⑤ BATCH STATUS
-    // ═══════════════════════════════════════════════════════════
     @GetMapping("/batch-status")
     @PreAuthorize("hasAnyRole('ADMIN', 'VICE_PRESIDENT', 'COUNTRY_DIRECTOR', 'BOSS')")
     public ResponseEntity<?> getBatchStatus(
@@ -153,9 +137,7 @@ public class PayrollController {
         } catch (Exception e) { log.error("[Payroll] batch-status", e); return serverError(e.getMessage()); }
     }
 
-    // ═══════════════════════════════════════════════════════════
-    // ⑥ SUBMIT BATCH — DRAFT → PENDING (ADMIN)
-    // ═══════════════════════════════════════════════════════════
+    // ⑥ SUBMIT BATCH — DRAFT → PENDING_APPROVAL (ADMIN)
     @PostMapping("/batch/submit")
     @PreAuthorize("hasAnyRole('ADMIN')")
     public ResponseEntity<?> submitBatch(
@@ -169,9 +151,7 @@ public class PayrollController {
           catch (Exception e) { log.error("[Payroll] submit batch", e); return serverError(e.getMessage()); }
     }
 
-    // ═══════════════════════════════════════════════════════════
-    // ⑦ APPROVE BATCH — PENDING → CONFIRMED (VP/Dir/Boss)
-    // ═══════════════════════════════════════════════════════════
+    // ⑦ APPROVE BATCH — PENDING_APPROVAL → CONFIRMED (VP/Dir/Boss)
     @PostMapping("/batch/approve")
     @PreAuthorize("hasAnyRole('VICE_PRESIDENT', 'COUNTRY_DIRECTOR', 'BOSS')")
     public ResponseEntity<?> approveBatch(
@@ -185,9 +165,7 @@ public class PayrollController {
           catch (Exception e) { log.error("[Payroll] approve batch", e); return serverError(e.getMessage()); }
     }
 
-    // ═══════════════════════════════════════════════════════════
-    // ⑧ REJECT BATCH — PENDING → DRAFT (VP/Dir/Boss)
-    // ═══════════════════════════════════════════════════════════
+    // ⑧ REJECT BATCH — PENDING_APPROVAL → DRAFT (VP/Dir/Boss)
     @PostMapping("/batch/reject")
     @PreAuthorize("hasAnyRole('VICE_PRESIDENT', 'COUNTRY_DIRECTOR', 'BOSS')")
     public ResponseEntity<?> rejectBatch(
@@ -201,9 +179,7 @@ public class PayrollController {
           catch (Exception e) { log.error("[Payroll] reject batch", e); return serverError(e.getMessage()); }
     }
 
-    // ═══════════════════════════════════════════════════════════
     // ⑨ MARK BATCH PAID — CONFIRMED → PAID (ADMIN)
-    // ═══════════════════════════════════════════════════════════
     @PostMapping("/batch/mark-paid")
     @PreAuthorize("hasAnyRole('ADMIN')")
     public ResponseEntity<?> markBatchPaid(
@@ -217,9 +193,7 @@ public class PayrollController {
           catch (Exception e) { log.error("[Payroll] mark batch paid", e); return serverError(e.getMessage()); }
     }
 
-    // ═══════════════════════════════════════════════════════════
     // ⑩ PENDING BATCHES — VP/Dir/Boss inbox
-    // ═══════════════════════════════════════════════════════════
     @GetMapping("/pending-batches")
     @PreAuthorize("hasAnyRole('VICE_PRESIDENT', 'COUNTRY_DIRECTOR', 'BOSS')")
     public ResponseEntity<?> getPendingBatches(@AuthenticationPrincipal User approver) {
@@ -232,14 +206,15 @@ public class PayrollController {
     // ═══════════════════════════════════════════════════════════
     // Helpers
     // ═══════════════════════════════════════════════════════════
+
     private boolean isGlobalAdmin(User admin) {
         if (admin == null) return false;
-        if (admin.getBranchId() == null) return true;
         Long roleId = admin.getRoleId();
         if (roleId == null) return false;
+        // ✅ branchId null check ဖယ် — DR မှာ branchId ရှိနိုင်တယ်
         return userRoleRepo.findById(roleId)
-                .map(r -> "BOSS".equals(r.getName()) || "COUNTRY_DIRECTOR".equals(r.getName()))
-                .orElse(false);
+            .map(r -> "BOSS".equals(r.getName()) || "COUNTRY_DIRECTOR".equals(r.getName()))
+            .orElse(false);
     }
 
     private boolean isAdminRole(User u) {
@@ -262,7 +237,15 @@ public class PayrollController {
 
     private boolean canAccessBranch(User admin, Long branchId) {
         if (admin == null) return false;
-        if (isGlobalAdmin(admin)) return true;
+        Long roleId = admin.getRoleId();
+        String role = (roleId != null)
+            ? userRoleRepo.findById(roleId).map(r -> r.getName()).orElse("")
+            : "";
+        // ✅ BOSS — all branches
+        if ("BOSS".equals(role)) return true;
+        // ✅ COUNTRY_DIRECTOR — all branches (scope VpDashboardController ထဲ handle ပြီး)
+        if ("COUNTRY_DIRECTOR".equals(role)) return true;
+        // VP / ADMIN — own branch only
         return admin.getBranchId() != null && admin.getBranchId().equals(branchId);
     }
 

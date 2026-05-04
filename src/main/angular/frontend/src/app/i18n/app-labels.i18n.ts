@@ -185,7 +185,13 @@ export type AppLabelKey =
   | 'Present' | 'Day Off' | 'Loading attendance...'
   | 'Upload & Preview' | 'Search name or email...'
   | 'Expand All' | 'Collapse All' | 'SOURCE'
-  | 'Delete confirm' | 'members (dept)';
+  | 'Delete confirm' | 'members (dept)' | 'Company Overview' | 'All Branches Global View' | 'System Live'
+  | 'Active worldwide' | 'Total Branches' | 'countries'
+  | 'Branch Analysis' | 'branches worldwide' | 'PROJECT LOAD'
+  | 'PROGRESS VS TIMELINE' | 'View delayed'
+  | 'project needs attention' | 'projects need attention'
+  | 'No deadlines in next 30 days' | 'Upcoming Deadlines' | 'Project Health'
+  | 'BRANCH' | 'PROJECTS';
 
 
 // ═══════════════════════════════════════════════════════════════
@@ -375,6 +381,25 @@ const en: Record<AppLabelKey, string> = {
   'Upload & Preview': 'Upload & Preview', 'Search name or email...': 'Search name or email...',
   'Expand All': 'Expand All', 'Collapse All': 'Collapse All',
   'Delete confirm': 'Delete this department?', 'members (dept)': 'members',
+  // -- Boss Dashboard -- 
+  'Company Overview': 'Company Overview',
+  'All Branches Global View': 'Brycen Group · All Branches · Global View',
+  'System Live': '● System Live',
+  'Active worldwide': '● Active worldwide',
+  'Total Branches': 'Total Branches',
+  countries: 'countries',
+  'Branch Analysis': '🌏 Branch Analysis',
+  'branches worldwide': 'branches worldwide',
+  'PROJECT LOAD': 'PROJECT LOAD',
+  'PROGRESS VS TIMELINE': 'PROGRESS VS TIMELINE',
+  'View delayed': 'View delayed',
+  'project needs attention': 'project needs immediate attention',
+  'projects need attention': 'projects need immediate attention',
+  'No deadlines in next 30 days': 'No deadlines in next 30 days',
+  'Upcoming Deadlines': 'Upcoming Deadlines',
+  'Project Health': 'Project Health',
+  BRANCH: 'BRANCH',
+  PROJECTS: 'PROJECTS',
 };
 
 // ═══════════════════════════════════════════════════════════════
@@ -560,6 +585,25 @@ const ja: Record<AppLabelKey, string> = {
   'Upload & Preview': 'アップロード & プレビュー', 'Search name or email...': '名前・メールで検索...',
   'Expand All': '全て展開', 'Collapse All': '全て折りたたむ',
   'Delete confirm': 'この部署を削除しますか？', 'members (dept)': 'メンバー',
+  // -- Boss Dashboarc --
+  'Company Overview': '会社概要',
+  'All Branches Global View': 'ブライセングループ · 全支店 · グローバルビュー',
+  'System Live': '● システム稼働中',
+  'Active worldwide': '● 世界中で稼働中',
+  'Total Branches': '総支店数',
+  countries: 'か国',
+  'Branch Analysis': '🌏 支店分析',
+  'branches worldwide': '支店（全世界）',
+  'PROJECT LOAD': 'プロジェクト負荷',
+  'PROGRESS VS TIMELINE': '進捗 vs タイムライン',
+  'View delayed': '遅延を確認',
+  'project needs attention': '件のプロジェクトが要対応',
+  'projects need attention': '件のプロジェクトが要対応',
+  'No deadlines in next 30 days': '今後30日以内に期限はありません',
+  'Upcoming Deadlines': '期限が近いプロジェクト',
+  'Project Health': 'プロジェクト健全性',
+  BRANCH: '支店',
+  PROJECTS: 'プロジェクト',
 };
 
 // ═══════════════════════════════════════════════════════════════
@@ -747,6 +791,25 @@ const my: Record<AppLabelKey, string> = {
   'Upload & Preview': 'တင်ပြီး ကြိုကြည့်', 'Search name or email...': 'အမည်/အီးမေးလ် ရှာပါ...',
   'Expand All': 'အားလုံးဖွင့်', 'Collapse All': 'အားလုံးပိတ်',
   'Delete confirm': 'ဌာနကို ဖျက်မည်လား?', 'members (dept)': 'ဦး',
+  //-- Boss Dashboard -- 
+  'Company Overview': 'ကုမ္ပဏီ အကျဉ်း',
+  'All Branches Global View': 'Brycen Group · ဌာနခွဲအားလုံး · ကမ္ဘာ့မြင်ကွင်း',
+  'System Live': '● စနစ်လည်ပတ်နေသည်',
+  'Active worldwide': '● ကမ္ဘာလုံး တက်ကြွနေ',
+  'Total Branches': 'ဌာနခွဲစုစုပေါင်း',
+  countries: 'နိုင်ငံ',
+  'Branch Analysis': '🌏 ဌာနခွဲ ခွဲခြမ်းစိတ်ဖြာ',
+  'branches worldwide': 'ဌာနခွဲ (ကမ္ဘာ)',
+  'PROJECT LOAD': 'ပရောဂျက်ဝန်',
+  'PROGRESS VS TIMELINE': 'တိုးတက်မှု vs အချိန်ဇယား',
+  'View delayed': 'နောက်ကျသောပြ',
+  'project needs attention': 'ပရောဂျက် အရေးတကြီးသတိပြုရန်',
+  'projects need attention': 'ပရောဂျက်များ အရေးတကြီးသတိပြုရန်',
+  'No deadlines in next 30 days': 'နောက် ၃၀ ရက်အတွင်း သတ်မှတ်ရက်မရှိ',
+  'Upcoming Deadlines': 'ကျေနပ်ရက်နီးနေသောပရောဂျက်',
+  'Project Health': 'ပရောဂျက်ကျန်းမာရေး',
+  BRANCH: 'ဌာနခွဲ',
+  PROJECTS: 'ပရောဂျက်',
 };
 
 // ═══════════════════════════════════════════════════════════════
@@ -920,6 +983,26 @@ const km: Record<AppLabelKey, string> = {
   'Upload & Preview': 'បញ្ចូល & មើលជាមុន', 'Search name or email...': 'ស្វែងរកឈ្មោះ ឬអ៊ីមែល...',
   'Expand All': 'ពង្រីកទាំងអស់', 'Collapse All': 'បង្រួមទាំងអស់',
   'Delete confirm': 'លុ?', 'members (dept)': 'នាក់',
+
+  // -- Boss Dashboard -- 
+  'Company Overview': 'ទិដ្ឋភាពក្រុមហ៊ុន',
+  'All Branches Global View': 'Brycen Group · គ្រប់សាខា · ទិដ្ឋភាពពិភពលោក',
+  'System Live': '● ប្រព័ន្ធដំណើរការ',
+  'Active worldwide': '● សកម្មនៅទូទាំងពិភពលោក',
+  'Total Branches': 'សាខាសរុប',
+  countries: 'ប្រទេស',
+  'Branch Analysis': '🌏 ការវិភាគសាខា',
+  'branches worldwide': 'សាខា (ទូទាំងពិភពលោក)',
+  'PROJECT LOAD': 'បន្ទុកគម្រោង',
+  'PROGRESS VS TIMELINE': 'វឌ្ឍនភាព vs ពេលវេលា',
+  'View delayed': 'មើលការយឺត',
+  'project needs attention': 'គម្រោងត្រូវការការយកចិត្តទុកដាក់',
+  'projects need attention': 'គម្រោងត្រូវការការយកចិត្តទុកដាក់',
+  'No deadlines in next 30 days': 'គ្មានថ្ងៃកំណត់ក្នុង 30 ថ្ងៃ',
+  'Upcoming Deadlines': 'ថ្ងៃកំណត់ខាងមុខ',
+  'Project Health': 'សុខភាពគម្រោង',
+  BRANCH: 'សាខា',
+  PROJECTS: 'គម្រោង',
 
 };
 
@@ -1097,6 +1180,25 @@ const vi: Record<AppLabelKey, string> = {
   'Upload & Preview': 'Tải lên & Xem trước', 'Search name or email...': 'Tìm tên hoặc email...',
   'Expand All': 'Mở rộng tất cả', 'Collapse All': 'Thu gọn tất cả',
   'Delete confirm': 'Xóa phòng ban này?', 'members (dept)': 'thành viên',
+  //-- Boss Dashboard -- 
+  'Company Overview': 'Tổng quan công ty',
+  'All Branches Global View': 'Brycen Group · Tất cả chi nhánh · Toàn cầu',
+  'System Live': '● Hệ thống hoạt động',
+  'Active worldwide': '● Hoạt động toàn cầu',
+  'Total Branches': 'Tổng chi nhánh',
+  countries: 'quốc gia',
+  'Branch Analysis': '🌏 Phân tích chi nhánh',
+  'branches worldwide': 'chi nhánh (toàn cầu)',
+  'PROJECT LOAD': 'Tải dự án',
+  'PROGRESS VS TIMELINE': 'Tiến độ vs Thời gian',
+  'View delayed': 'Xem trễ',
+  'project needs attention': 'dự án cần chú ý ngay',
+  'projects need attention': 'dự án cần chú ý ngay',
+  'No deadlines in next 30 days': 'Không có hạn chót trong 30 ngày',
+  'Upcoming Deadlines': 'Hạn chót sắp đến',
+  'Project Health': 'Sức khỏe dự án',
+  BRANCH: 'Chi nhánh',
+  PROJECTS: 'Dự án',
   
 };
 
@@ -1271,6 +1373,26 @@ const ko: Record<AppLabelKey, string> = {
   'Upload & Preview': '업로드 & 미리보기', 'Search name or email...': '이름 또는 이메일 검색...',
   'Expand All': '모두 펼치기', 'Collapse All': '모두 접기',
   'Delete confirm': '이 부서를 삭제하시겠습니까?', 'members (dept)': '명',
+  //-- Boss Dashboard --
+  'Company Overview': '회사 개요',
+  'All Branches Global View': 'Brycen Group · 전체 지점 · 글로벌 뷰',
+  'System Live': '● 시스템 운영 중',
+  'Active worldwide': '● 전 세계 활성',
+  'Total Branches': '총 지점',
+  countries: '개국',
+  'Branch Analysis': '🌏 지점 분석',
+  'branches worldwide': '지점 (전 세계)',
+  'PROJECT LOAD': '프로젝트 부하',
+  'PROGRESS VS TIMELINE': '진행률 vs 타임라인',
+  'View delayed': '지연 보기',
+  'project needs attention': '개 프로젝트 즉시 확인 필요',
+  'projects need attention': '개 프로젝트 즉시 확인 필요',
+  'No deadlines in next 30 days': '30일 내 마감일 없음',
+  'Upcoming Deadlines': '마감일 임박',
+  'Project Health': '프로젝트 건강도',
+  BRANCH: '지점',
+  PROJECTS: '프로젝트',
+
 };
 
 // ═══════════════════════════════════════════════════════════════

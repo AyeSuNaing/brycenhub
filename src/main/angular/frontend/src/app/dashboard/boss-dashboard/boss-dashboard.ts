@@ -23,6 +23,7 @@ import { ChangePasswordInline } from '../../shared/change-password/change-passwo
 import { LeaveApprovalInline } from '../../shared/leave-approval/leave-approval-inline';
 import { OtApprovalInline } from '../../shared/ot-approval/ot-approval-inline';
 import { BranchProjectsInline } from '../../shared/branch-projects-inline';
+import { SalaryApprovalInline } from '../../shared/salary-approval/salary-approval-inline';
 
 import { getLabel, AppLabelKey } from '../../i18n/app-labels.i18n';
 
@@ -76,6 +77,7 @@ export interface CountryOverview {
     LeaveApprovalInline,
     OtApprovalInline,
     BranchProjectsInline,
+    SalaryApprovalInline,
   ],
   templateUrl: './boss-dashboard.html',
   styleUrl: './boss-dashboard.scss',
@@ -263,13 +265,6 @@ export class BossDashboard implements OnInit, OnDestroy {
 
   // ── Approval counts ──
   approvalCounts = { LEAVE: 0, OT: 0, SALARY: 0 };
-
-  // ── Salary approval ──
-  salaryHistoryPeriods: any[] = [];
-  loadingSalary = false;
-  selectedSalaryPeriod: any = null;
-  salaryDetailRows: any[] = [];
-  loadingSalaryDetail = false;
 
   // ── Recent projects ──
   recentProjects: any[] = [];
@@ -627,73 +622,19 @@ export class BossDashboard implements OnInit, OnDestroy {
 
   loadApprovalCounts() {
     const h = { headers: this.auth.getHeaders() };
-    // Leave + OT — DR only (BOSS မသုံး)
+    // Leave + OT counts — VP endpoint (DR/BOSS both use vp/dashboard)
     if (this.showApprovals) {
-      this.http.get<any[]>(`${BASE}/staff-requests/leave?status=PENDING`, h)
+      this.http.get<any[]>(`${VP_BASE}/leave-requests?status=PENDING`, h)
         .pipe(catchError(() => of([]))).subscribe(items => {
-          this.approvalCounts.LEAVE = items.length;
+          this.approvalCounts.LEAVE = (items || []).length;
           this.cdr.detectChanges();
         });
-      this.http.get<any[]>(`${BASE}/staff-requests/ot?status=PENDING`, h)
+      this.http.get<any[]>(`${VP_BASE}/ot-requests?status=PENDING`, h)
         .pipe(catchError(() => of([]))).subscribe(items => {
-          this.approvalCounts.OT = items.length;
+          this.approvalCounts.OT = (items || []).length;
           this.cdr.detectChanges();
         });
     }
-  }
-
-  loadSalaryPeriods() {
-    this.loadingSalary = true;
-    const h = { headers: this.auth.getHeaders() };
-    this.http.get<any[]>(`${BASE}/payroll/pending-batches`, h)
-      .pipe(catchError(() => of([]))).subscribe(items => {
-        this.salaryHistoryPeriods = items;
-        this.loadingSalary = false;
-        this.cdr.detectChanges();
-      });
-  }
-
-  openSalaryDetail(period: any) {
-    this.selectedSalaryPeriod = period;
-    this.loadingSalaryDetail = true;
-    const h = { headers: this.auth.getHeaders() };
-    this.http.get<any[]>(`${BASE}/payroll/history?branchId=${period.branchId}&payPeriod=${period.payPeriod}`, h)
-      .pipe(catchError(() => of([]))).subscribe(rows => {
-        this.salaryDetailRows = rows;
-        this.loadingSalaryDetail = false;
-        this.cdr.detectChanges();
-      });
-  }
-
-  closeSalaryDetail() {
-    this.selectedSalaryPeriod = null;
-    this.salaryDetailRows = [];
-  }
-
-  approveSalaryBatch(period: any) {
-    const h = { headers: this.auth.getHeaders() };
-    this.http.post(`${BASE}/payroll/batch/approve`, {
-      branchId: period.branchId,
-      payPeriod: period.payPeriod,
-    }, h).pipe(catchError(() => of(null))).subscribe(() => {
-      this.closeSalaryDetail();
-      this.loadSalaryPeriods();
-      this.loadApprovalCounts();
-    });
-  }
-
-  rejectSalaryBatch(period: any, reason: string) {
-    if (!reason?.trim()) return;
-    const h = { headers: this.auth.getHeaders() };
-    this.http.post(`${BASE}/payroll/batch/reject`, {
-      branchId: period.branchId,
-      payPeriod: period.payPeriod,
-      rejectReason: reason,
-    }, h).pipe(catchError(() => of(null))).subscribe(() => {
-      this.closeSalaryDetail();
-      this.loadSalaryPeriods();
-      this.loadApprovalCounts();
-    });
   }
 
   loadUnreadCounts() {
@@ -787,6 +728,19 @@ export class BossDashboard implements OnInit, OnDestroy {
 
   formatMoney(currency: string, amt: number): string {
     return `${currency || 'USD'} ${(amt || 0).toLocaleString()}`;
+  }
+
+  formatPeriodLabel(period: string): string {
+    if (!period) return '';
+    // "2026-03" → "March 2026"
+    const parts = period.split('-');
+    if (parts.length === 2) {
+      const months = ['January','February','March','April','May','June',
+                      'July','August','September','October','November','December'];
+      const m = parseInt(parts[1], 10) - 1;
+      return `${months[m] || parts[1]} ${parts[0]}`;
+    }
+    return period;
   }
 
   getMemberInitial(m: any): string {

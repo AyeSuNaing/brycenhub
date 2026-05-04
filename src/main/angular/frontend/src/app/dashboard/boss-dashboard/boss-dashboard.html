@@ -86,44 +86,44 @@
         <hr class="profile-divider"/>
 
         <div style="margin-top:6px;">
-          <div class="proj-section-label">MAIN</div>
+          <div class="proj-section-label">{{ lbl('MAIN') }}</div>
           <div class="sidebar-item" [class.active]="activeView==='dashboard'" (click)="setView('dashboard')">
-            <span class="nav-icon">📊</span><span>Dashboard</span>
+            <span class="nav-icon">📊</span><span>{{ lbl('Dashboard') }}</span>
           </div>
           <div class="sidebar-item" [class.active]="activeView==='members'||activeView==='member-profile'" (click)="setView('members')">
-            <span class="nav-icon">👥</span><span>All Staff</span>
+            <span class="nav-icon">👥</span><span>{{ lbl('Staff List') }}</span>
           </div>
           <div class="sidebar-item" [class.active]="activeView==='announcements'" (click)="setView('announcements')">
-            <span class="nav-icon">📢</span><span>Announcements</span>
+            <span class="nav-icon">📢</span><span>{{ lbl('Announcements') }}</span>
           </div>
           <div class="sidebar-item" [class.active]="activeView==='holidays'" (click)="setView('holidays')">
-            <span class="nav-icon">🗓️</span><span>Public Holidays</span>
+            <span class="nav-icon">🗓️</span><span>{{ lbl('Public Holidays') }}</span>
           </div>
           <div class="sidebar-item" [class.active]="activeView==='tax'" (click)="setView('tax')">
-            <span class="nav-icon">📊</span><span>Tax Brackets</span>
+            <span class="nav-icon">📊</span><span>{{ lbl('Tax Brackets') }}</span>
           </div>
           <hr class="section-divider"/>
         </div>
 
         <!-- APPROVALS — DR/VP only -->
         <div *ngIf="showApprovals" style="margin-top:6px;">
-          <div class="proj-section-label">APPROVALS</div>
+          <div class="proj-section-label">{{ lbl('APPROVALS') }}</div>
           <div class="sidebar-item" [class.active]="activeView==='view-leave'" (click)="setView('view-leave')">
-            <span class="nav-icon">🗓</span><span>Leave</span>
+            <span class="nav-icon">🗓</span><span>{{ lbl('Leave') }}</span>
             <span *ngIf="approvalCounts.LEAVE>0"
               style="margin-left:auto;min-width:18px;height:18px;border-radius:20px;background:#ef4444;color:white;font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center;padding:0 4px;">
               {{ approvalCounts.LEAVE }}
             </span>
           </div>
           <div class="sidebar-item" [class.active]="activeView==='view-ot'" (click)="setView('view-ot')">
-            <span class="nav-icon">⏰</span><span>OT</span>
+            <span class="nav-icon">⏰</span><span>{{ lbl('OT') }}</span>
             <span *ngIf="approvalCounts.OT>0"
               style="margin-left:auto;min-width:18px;height:18px;border-radius:20px;background:#ef4444;color:white;font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center;padding:0 4px;">
               {{ approvalCounts.OT }}
             </span>
           </div>
           <div class="sidebar-item" [class.active]="activeView==='salary-approvals'" (click)="setView('salary-approvals')">
-            <span class="nav-icon">💵</span><span>Salary</span>
+            <span class="nav-icon">💵</span><span>{{ lbl('Salary') }}</span>
             <span *ngIf="approvalCounts.SALARY>0"
               style="margin-left:auto;min-width:18px;height:18px;border-radius:20px;background:rgba(245,158,11,0.2);color:#f59e0b;font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center;padding:0 4px;">
               {{ approvalCounts.SALARY }}
@@ -159,13 +159,13 @@
       <div class="sidebar-bottom">
         <div class="settings-wrap">
           <div *ngIf="settingsOpen" class="settings-submenu">
-            <div class="sub-item" style="cursor:pointer;" (click)="openMyProfile()"><span>👤</span><span>Profile</span></div>
-            <div class="sub-item" style="cursor:pointer;" (click)="setView('change-password');settingsOpen=false"><span>🔒</span><span>Change Password</span></div>
-            <div class="sub-item" style="cursor:pointer;" (click)="setView('branches');settingsOpen=false"><span>🏢</span><span>Office Address</span></div>
-            <div class="sub-item signout-item" (click)="signOut()"><span>🚪</span><span>Sign out</span></div>
+            <div class="sub-item" style="cursor:pointer;" (click)="openMyProfile()"><span>👤</span><span>{{ lbl('Profile') }}</span></div>
+            <div class="sub-item" style="cursor:pointer;" (click)="setView('change-password');settingsOpen=false"><span>🔒</span><span>{{ lbl('Change Password') }}</span></div>
+            <div class="sub-item" style="cursor:pointer;" (click)="setView('branches');settingsOpen=false"><span>🏢</span><span>{{ lbl('Office Address') }}</span></div>
+            <div class="sub-item signout-item" (click)="signOut()"><span>🚪</span><span>{{ lbl('Sign out') }}</span></div>
           </div>
           <div class="sidebar-item" (click)="settingsOpen=!settingsOpen;$event.stopPropagation()">
-            <span class="nav-icon">⚙️</span><span>Settings</span>
+            <span class="nav-icon">⚙️</span><span>{{ lbl('Settings') }}</span>
             <span style="margin-left:auto;font-size:10px;opacity:0.5;">{{ settingsOpen ? '▲' : '▼' }}</span>
           </div>
         </div>
@@ -195,6 +195,14 @@
       <!-- Approval views — DR/VP only -->
       <app-leave-approval-inline *ngIf="activeView==='view-leave'&&showApprovals" role="vp" (back)="setView('dashboard')"></app-leave-approval-inline>
       <app-ot-approval-inline    *ngIf="activeView==='view-ot'&&showApprovals"    role="vp" (back)="setView('dashboard')"></app-ot-approval-inline>
+
+      <!-- ════ SALARY APPROVALS — shared inline component ════ -->
+      <app-salary-approval-inline
+        *ngIf="activeView==='salary-approvals'"
+        (back)="setView('dashboard')"
+        (approved)="loadApprovalCounts()"
+        (rejected)="loadApprovalCounts()">
+      </app-salary-approval-inline>
 
       <!-- Countries -->
       <div *ngIf="activeView==='countries'" style="padding:16px;display:flex;flex-direction:column;gap:10px;overflow-y:auto;height:100%;">
@@ -413,12 +421,12 @@
         <!-- Page Header -->
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
           <div>
-            <div style="font-size:20px;font-weight:700;color:var(--text,#e2e8f0);">Company Overview</div>
-            <div style="font-size:12px;opacity:0.45;margin-top:3px;">Brycen Group · All Branches · Global View</div>
+            <div style="font-size:20px;font-weight:700;color:var(--text,#e2e8f0);">{{ lbl('Company Overview') }}</div>
+            <div style="font-size:12px;opacity:0.45;margin-top:3px;">{{ lbl('All Branches Global View') }}</div>
           </div>
           <div style="display:flex;align-items:center;gap:6px;background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.2);border-radius:20px;padding:5px 14px;font-size:11px;color:#22c55e;font-weight:500;">
             <div style="width:7px;height:7px;background:#22c55e;border-radius:50%;"></div>
-            System Live
+            {{ lbl('System Live') }}
           </div>
         </div>
 
@@ -427,7 +435,7 @@
           <div class="stat-card">
             <div style="display:flex;align-items:flex-start;justify-content:space-between;">
               <div>
-                <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1px;opacity:0.5;margin-bottom:6px;">Active Projects</div>
+                <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1px;opacity:0.5;margin-bottom:6px;">{{ lbl('Active Projects') }}</div>
                 <div style="font-size:28px;font-weight:800;line-height:1;margin-bottom:4px;">{{ loadingStats ? '—' : stats.activeProjects }}</div>
                 <div style="font-size:11px;opacity:0.5;">{{ stats.totalBranches || 0 }} branches</div>
               </div>
@@ -437,9 +445,9 @@
           <div class="stat-card">
             <div style="display:flex;align-items:flex-start;justify-content:space-between;">
               <div>
-                <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1px;opacity:0.5;margin-bottom:6px;">Total Staff</div>
+                <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1px;opacity:0.5;margin-bottom:6px;">{{ lbl('Total Staff') }}</div>
                 <div style="font-size:28px;font-weight:800;line-height:1;margin-bottom:4px;">{{ loadingStats ? '—' : stats.totalStaff }}</div>
-                <div style="font-size:11px;color:#22c55e;">● Active worldwide</div>
+                <div style="font-size:11px;color:#22c55e;">{{ lbl('Active worldwide') }}</div>
               </div>
               <div style="font-size:11px;color:#60a5fa;background:rgba(59,130,246,0.1);padding:2px 7px;border-radius:10px;margin-top:2px;">👥</div>
             </div>
@@ -447,9 +455,9 @@
           <div class="stat-card">
             <div style="display:flex;align-items:flex-start;justify-content:space-between;">
               <div>
-                <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1px;opacity:0.5;margin-bottom:6px;">Total Branches</div>
+                <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1px;opacity:0.5;margin-bottom:6px;">{{ lbl('Total Branches') }}</div>
                 <div style="font-size:28px;font-weight:800;line-height:1;margin-bottom:4px;">{{ loadingStats ? '—' : stats.totalBranches }}</div>
-                <div style="font-size:11px;opacity:0.5;">6 countries</div>
+                <div style="font-size:11px;opacity:0.5;">{{ countries.length }} {{ lbl('countries') }}</div>
               </div>
               <div style="font-size:11px;color:#a855f7;background:rgba(168,85,247,0.1);padding:2px 7px;border-radius:10px;margin-top:2px;">🌏</div>
             </div>
@@ -459,14 +467,14 @@
         <!-- Branch Analysis -->
         <div class="card" style="padding:0;">
           <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px 10px;">
-            <span style="font-size:13px;font-weight:700;">🌏 Branch Analysis</span>
-            <span style="font-size:10px;opacity:0.4;">{{ branches.length }} branches worldwide</span>
+            <span style="font-size:13px;font-weight:700;">{{ lbl('Branch Analysis') }}</span>
+            <span style="font-size:10px;opacity:0.4;">{{ branches.length }} {{ lbl('branches worldwide') }}</span>
           </div>
           <div style="display:grid;grid-template-columns:2fr 0.7fr 0.7fr 2fr;gap:8px;padding:0 18px 7px;border-bottom:1px solid rgba(255,255,255,0.06);">
-            <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.45;">BRANCH</span>
-            <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.45;text-align:center;">STAFF</span>
-            <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.45;text-align:center;">PROJECTS</span>
-            <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.45;">PROJECT LOAD</span>
+            <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.45;">{{ lbl('BRANCH') }}</span>
+            <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.45;text-align:center;">{{ lbl('STAFF') }}</span>
+            <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.45;text-align:center;">{{ lbl('PROJECTS') }}</span>
+            <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.45;">{{ lbl('PROJECT LOAD') }}</span>
           </div>
           <div *ngFor="let b of branches; let last=last; trackBy:trackById"
             [style.border-bottom]="last?'none':'1px solid rgba(255,255,255,0.04)'"
@@ -508,28 +516,27 @@
 
           <!-- Health Summary -->
           <div class="card" style="padding:14px 18px;">
-            <div style="font-size:12px;font-weight:700;margin-bottom:12px;">📊 Project Health</div>
+            <div style="font-size:12px;font-weight:700;margin-bottom:12px;">📊 {{ lbl('Project Health') }}</div>
             <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;">
               <div style="text-align:center;padding:8px 4px;border-radius:10px;background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.15);">
                 <div style="font-size:22px;font-weight:800;color:#22c55e;line-height:1;">{{ getHealthCount('onTrack') }}</div>
-                <div style="font-size:9px;color:#22c55e;margin-top:3px;opacity:0.8;">On Track</div>
+                <div style="font-size:9px;color:#22c55e;margin-top:3px;opacity:0.8;">{{ lbl('On Track') }}</div>
               </div>
               <div style="text-align:center;padding:8px 4px;border-radius:10px;background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.15);">
                 <div style="font-size:22px;font-weight:800;color:#f59e0b;line-height:1;">{{ getHealthCount('atRisk') }}</div>
-                <div style="font-size:9px;color:#f59e0b;margin-top:3px;opacity:0.8;">At Risk</div>
+                <div style="font-size:9px;color:#f59e0b;margin-top:3px;opacity:0.8;">{{ lbl('At Risk') }}</div>
               </div>
               <div style="text-align:center;padding:8px 4px;border-radius:10px;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.15);">
                 <div style="font-size:22px;font-weight:800;color:#ef4444;line-height:1;">{{ getHealthCount('delayed') }}</div>
-                <div style="font-size:9px;color:#ef4444;margin-top:3px;opacity:0.8;">Delayed</div>
+                <div style="font-size:9px;color:#ef4444;margin-top:3px;opacity:0.8;">{{ lbl('Delayed') }}</div>
               </div>
             </div>
           </div>
 
           <!-- Upcoming Deadlines -->
           <div class="card" style="padding:14px 18px;">
-            <div style="font-size:12px;font-weight:700;margin-bottom:12px;">📅 Upcoming Deadlines <span style="font-size:10px;opacity:0.4;font-weight:400;">(next 30 days)</span></div>
-            <div *ngIf="getUpcomingDeadlines().length === 0" style="font-size:11px;opacity:0.3;text-align:center;padding:12px 0;">No deadlines in next 30 days</div>
-            <!-- max 3 rows visible, scroll if more -->
+            <div style="font-size:12px;font-weight:700;margin-bottom:12px;">📅 {{ lbl('Upcoming Deadlines') }} <span style="font-size:10px;opacity:0.4;font-weight:400;">(next 30 days)</span></div>
+            <div *ngIf="getUpcomingDeadlines().length === 0" style="font-size:11px;opacity:0.3;text-align:center;padding:12px 0;">{{ lbl('No deadlines in next 30 days') }}</div>
             <div style="max-height:84px;overflow-y:auto;">
               <div *ngFor="let p of getUpcomingDeadlines(); let last=last"
                 [style.border-bottom]="last?'none':'1px solid rgba(148,163,184,0.07)'"
@@ -551,39 +558,41 @@
           </div>
         </div>
 
-        <!-- Delayed alert banner (if any delayed) -->
+        <!-- Delayed alert banner -->
         <div *ngIf="getDelayedProjects().length > 0"
           style="display:flex;align-items:center;gap:10px;padding:10px 16px;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);border-radius:10px;margin-bottom:10px;">
           <span style="font-size:16px;flex-shrink:0;">⚠️</span>
           <div style="flex:1;font-size:12px;color:#ef4444;font-weight:500;">
-            {{ getDelayedProjects().length }} project{{ getDelayedProjects().length > 1 ? 's' : '' }} need{{ getDelayedProjects().length === 1 ? 's' : '' }} immediate attention
+            {{ getDelayedProjects().length }}
+            {{ getDelayedProjects().length === 1 ? lbl('project needs attention') : lbl('projects need attention') }}
           </div>
-          <button style="font-size:11px;padding:4px 12px;border-radius:20px;background:rgba(239,68,68,0.15);color:#ef4444;border:1px solid rgba(239,68,68,0.3);cursor:pointer;font-family:inherit;font-weight:500;" (click)="filterView='delayed';showAllProjects=false">View delayed</button>
+          <button style="font-size:11px;padding:4px 12px;border-radius:20px;background:rgba(239,68,68,0.15);color:#ef4444;border:1px solid rgba(239,68,68,0.3);cursor:pointer;font-family:inherit;font-weight:500;"
+            (click)="filterView='delayed';showAllProjects=false">{{ lbl('View delayed') }}</button>
         </div>
 
-        <!-- Active Projects Table — All -->
+        <!-- Active Projects Table -->
         <div class="card" style="padding:0;">
           <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px 10px;">
             <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-              <span style="font-size:13px;font-weight:700;">Active Projects</span>
-              <span style="font-size:10px;opacity:0.45;">{{ filteredProjects.length }} projects</span>
+              <span style="font-size:13px;font-weight:700;">{{ lbl('Active Projects') }}</span>
+              <span style="font-size:10px;opacity:0.45;">{{ filteredProjects.length }} {{ lbl('projects') }}</span>
               <!-- Filter chips -->
               <div style="display:flex;gap:5px;margin-left:4px;">
                 <button style="font-size:10px;padding:2px 9px;border-radius:20px;border:1px solid;cursor:pointer;font-family:inherit;font-weight:500;transition:all 0.12s;"
                   [style.background]="filterView==='all'?'rgba(148,163,184,0.15)':'transparent'"
                   [style.border-color]="filterView==='all'?'rgba(148,163,184,0.3)':'rgba(148,163,184,0.15)'"
                   [style.color]="filterView==='all'?'var(--text)':'rgba(148,163,184,0.6)'"
-                  (click)="filterView='all';showAllProjects=false">All {{ recentProjects.length }}</button>
+                  (click)="filterView='all';showAllProjects=false">{{ lbl('All') }} {{ recentProjects.length }}</button>
                 <button style="font-size:10px;padding:2px 9px;border-radius:20px;border:1px solid;cursor:pointer;font-family:inherit;font-weight:500;transition:all 0.12s;"
                   [style.background]="filterView==='onTrack'?'rgba(34,197,94,0.12)':'transparent'"
                   [style.border-color]="filterView==='onTrack'?'rgba(34,197,94,0.3)':'rgba(148,163,184,0.15)'"
                   [style.color]="filterView==='onTrack'?'#22c55e':'rgba(148,163,184,0.6)'"
-                  (click)="filterView='onTrack';showAllProjects=false">● On Track {{ getHealthCount('onTrack') }}</button>
+                  (click)="filterView='onTrack';showAllProjects=false">● {{ lbl('On Track') }} {{ getHealthCount('onTrack') }}</button>
                 <button style="font-size:10px;padding:2px 9px;border-radius:20px;border:1px solid;cursor:pointer;font-family:inherit;font-weight:500;transition:all 0.12s;"
                   [style.background]="filterView==='delayed'?'rgba(239,68,68,0.12)':'transparent'"
                   [style.border-color]="filterView==='delayed'?'rgba(239,68,68,0.3)':'rgba(148,163,184,0.15)'"
                   [style.color]="filterView==='delayed'?'#ef4444':'rgba(148,163,184,0.6)'"
-                  (click)="filterView='delayed';showAllProjects=false">⚠ Delayed {{ getHealthCount('delayed') }}</button>
+                  (click)="filterView='delayed';showAllProjects=false">⚠ {{ lbl('Delayed') }} {{ getHealthCount('delayed') }}</button>
               </div>
             </div>
             <button style="font-size:12px;color:#22c55e;background:none;border:none;cursor:pointer;font-family:inherit;"
@@ -591,15 +600,15 @@
               {{ showAllProjects ? 'Show less ↑' : 'See all →' }}
             </button>
           </div>
-          <!-- Table header — 7 cols -->
+          <!-- Table header -->
           <div style="display:grid;grid-template-columns:1.8fr 1fr 1.2fr 2fr 1fr 1fr 1fr;gap:8px;padding:0 18px 7px;border-bottom:1px solid rgba(255,255,255,0.06);">
-            <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.45;">PROJECT</span>
-            <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.45;">BRANCH</span>
-            <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.45;">STATUS</span>
-            <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.45;">PROGRESS vs TIMELINE</span>
-            <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.45;">OWNER</span>
-            <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.45;">DUE DATE</span>
-            <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.45;">HEALTH</span>
+            <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.45;">{{ lbl('PROJECT') }}</span>
+            <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.45;">{{ lbl('BRANCH') }}</span>
+            <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.45;">{{ lbl('STATUS') }}</span>
+            <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.45;">{{ lbl('PROGRESS VS TIMELINE') }}</span>
+            <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.45;">{{ lbl('OWNER') }}</span>
+            <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.45;">{{ lbl('DUE DATE') }}</span>
+            <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.45;">{{ lbl('HEALTH') }}</span>
           </div>
           <!-- Table rows -->
           <div *ngFor="let p of displayedProjects; let last=last; trackBy:trackById"
@@ -678,7 +687,7 @@
               </span>
             </div>
           </div>
-          <div *ngIf="recentProjects.length===0&&!loadingProjects" style="text-align:center;padding:24px 18px;font-size:11px;opacity:0.3;">No active projects</div>
+          <div *ngIf="recentProjects.length===0&&!loadingProjects" style="text-align:center;padding:24px 18px;font-size:11px;opacity:0.3;">{{ lbl('No active projects') }}</div>
           <div *ngIf="loadingProjects" style="text-align:center;padding:24px 18px;font-size:11px;opacity:0.4;">Loading...</div>
         </div>
 
