@@ -10,6 +10,7 @@ import lombok.Data;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
@@ -18,7 +19,7 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/boss/dashboard")
-@PreAuthorize("hasRole('BOSS')")
+@PreAuthorize("hasAnyRole('BOSS', 'COUNTRY_DIRECTOR')")
 public class BossDashboardController {
 
     @Autowired private UserRepository          userRepository;
@@ -27,9 +28,10 @@ public class BossDashboardController {
     @Autowired private CountryRepository       countryRepository;
     @Autowired private ProjectRepository       projectRepository;
     @Autowired private BranchExpenseRepository    branchExpenseRepository;
-    @Autowired private jp.co.brycen.asn.repository.SalaryHistoryRepository salaryHistoryRepository;
-    @Autowired private jp.co.brycen.asn.repository.TaskRepository          taskRepository;
-    @Autowired private jp.co.brycen.asn.repository.ClientRepository        clientRepository;
+    @Autowired private jp.co.brycen.asn.repository.SalaryHistoryRepository   salaryHistoryRepository;
+    @Autowired private jp.co.brycen.asn.repository.TaskRepository             taskRepository;
+    @Autowired private jp.co.brycen.asn.repository.ClientRepository           clientRepository;
+    @Autowired private jp.co.brycen.asn.repository.DirectorCountryRepository  directorCountryRepository;
 
     private static final Long CLIENT_ROLE_ID = 10L;
 
@@ -66,12 +68,38 @@ public class BossDashboardController {
         return lastSeen.isAfter(LocalDateTime.now().minusMinutes(5));
     }
 
+    // DR → assigned countries ရဲ့ branches / BOSS → all branches
+    private List<Long> getScopedBranchIds(User caller) {
+        String role = "";
+        if (caller.getRoleId() != null) {
+            role = userRoleRepository.findById(caller.getRoleId())
+                .map(jp.co.brycen.asn.model.UserRole::getName).orElse("");
+        }
+        if ("COUNTRY_DIRECTOR".equals(role)) {
+            List<Long> branchIds = new java.util.ArrayList<>();
+            directorCountryRepository.findByDirectorId(caller.getId()).forEach(dc ->
+                branchRepository.findByCountryId(dc.getCountryId())
+                    .forEach(b -> branchIds.add(b.getId()))
+            );
+            return branchIds;
+        }
+        // BOSS → all branches
+        return branchRepository.findAll().stream()
+            .map(jp.co.brycen.asn.model.Branch::getId)
+            .collect(Collectors.toList());
+    }
+
     // ① stats
     @GetMapping("/stats")
-    public ResponseEntity<StatsResponse> getStats() {
-        long totalStaff     = userRepository.countByIsActiveAndRoleIdNot(true, CLIENT_ROLE_ID);
-        long totalBranches  = branchRepository.count();
-        long activeProjects = projectRepository.findByStatus("ACTIVE").size();
+    public ResponseEntity<StatsResponse> getStats(@AuthenticationPrincipal User caller) {
+        List<Long> branchIds = getScopedBranchIds(caller);
+        long totalStaff = branchIds.stream()
+            .mapToLong(bid -> userRepository.countByBranchIdAndIsActiveAndRoleIdNot(bid, true, CLIENT_ROLE_ID))
+            .sum();
+        long totalBranches  = branchIds.size();
+        long activeProjects = branchIds.stream()
+            .flatMap(bid -> projectRepository.findByBranchId(bid).stream())
+            .filter(p -> "ACTIVE".equals(p.getStatus())).count();
         StatsResponse res = new StatsResponse();
         res.setTotalStaff(totalStaff);
         res.setTotalBranches(totalBranches);
@@ -127,11 +155,15 @@ public class BossDashboardController {
 
     // ③ branches-with-stats
     @GetMapping("/branches-with-stats")
-    public ResponseEntity<List<BranchRow>> getBranchesWithStats() {
+    public ResponseEntity<List<BranchRow>> getBranchesWithStats(@AuthenticationPrincipal User caller) {
         Map<Long, Country> countryCache = new HashMap<>();
         countryRepository.findAll().forEach(c -> countryCache.put(c.getId(), c));
 
-        List<BranchRow> result = branchRepository.findAll().stream().map(b -> {
+        List<Long> scopedBranchIds = getScopedBranchIds(caller);
+
+        List<BranchRow> result = branchRepository.findAll().stream()
+            .filter(b -> scopedBranchIds.contains(b.getId()))
+            .map(b -> {
             long staffCount = userRepository.countByBranchIdAndIsActiveAndRoleIdNot(
                 b.getId(), true, CLIENT_ROLE_ID);
             long activeProjCount = projectRepository.findByBranchId(b.getId()).stream()

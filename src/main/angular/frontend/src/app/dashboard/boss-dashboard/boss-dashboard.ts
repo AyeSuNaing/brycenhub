@@ -312,6 +312,13 @@ export class BossDashboard implements OnInit, OnDestroy {
     const userLang = this.currentUser?.preferredLanguage || 'en';
     this.currentLangObj = this.langs.find(l => l.code === userLang) || this.langs[0];
 
+    // Restore view after language reload
+    const savedView = localStorage.getItem('brycen-active-view');
+    if (savedView) {
+      this.activeView = savedView;
+      localStorage.removeItem('brycen-active-view');
+    }
+
     // Restore nav state if back from kanban/design/api-docs etc.
     const saved = this.navState.restoreProjectState();
 
@@ -360,11 +367,23 @@ export class BossDashboard implements OnInit, OnDestroy {
   selectLang(lang: any) {
     this.currentLangObj = lang;
     this.showLangMenu = false;
-    if (this.currentUser) {
-      const h = { headers: this.auth.getHeaders() };
-      this.http.patch(`${BASE}/users/me/language`, { language: lang.code }, h)
-        .pipe(catchError(() => of(null))).subscribe();
-    }
+    // localStorage ထဲ user preferredLanguage update
+    try {
+      const stored = localStorage.getItem('user');
+      if (stored) {
+        const u = JSON.parse(stored);
+        u.preferredLanguage = lang.code;
+        localStorage.setItem('user', JSON.stringify(u));
+      }
+    } catch(e) {}
+    // Backend save + reload
+    const h = { headers: this.auth.getHeaders() };
+    this.http.put(`${BASE}/auth/language`, { language: lang.code }, h)
+      .pipe(catchError(() => of(null)))
+      .subscribe(() => {
+        localStorage.setItem('brycen-active-view', this.activeView);
+        window.location.reload();
+      });
   }
 
   toggleTheme() {
