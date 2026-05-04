@@ -31,27 +31,52 @@
       [style.background]="getBgColor(p.status)">
 
       <!-- Header row -->
-      <div style="display:flex;align-items:center;gap:8px;padding:12px 16px;flex-wrap:wrap;">
+      <div style="display:flex;align-items:flex-start;gap:8px;padding:12px 16px 6px;flex-wrap:wrap;">
 
-        <!-- Period label -->
-        <div style="font-size:13px;font-weight:700;">{{ formatPeriodLabel(p.payPeriod) }}</div>
+        <div style="display:flex;flex-direction:column;gap:4px;flex:1;min-width:0;">
 
-        <!-- Staff count badge -->
-        <span style="font-size:9px;padding:1px 7px;border-radius:20px;
-          background:rgba(96,165,250,0.15);color:#60a5fa;font-weight:600;">
-          {{ p.staffCount }} {{ lbl('Staff') }}
-        </span>
+          <!-- Period + badges row -->
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+            <!-- Period label -->
+            <div style="font-size:13px;font-weight:700;">{{ formatPeriodLabel(p.payPeriod) }}</div>
 
-        <!-- Status badge -->
-        <span style="font-size:9px;font-weight:700;padding:2px 9px;border-radius:20px;white-space:nowrap;"
-          [style.background]="getBadgeBg(p.status)"
-          [style.color]="getBadgeColor(p.status)">
-          {{ getStatusLabel(p.status) }}
-        </span>
+            <!-- Staff count badge -->
+            <span style="font-size:9px;padding:1px 7px;border-radius:20px;
+              background:rgba(96,165,250,0.15);color:#60a5fa;font-weight:600;">
+              {{ p.staffCount }} {{ lbl('Staff') }}
+            </span>
+
+            <!-- Status badge -->
+            <span style="font-size:9px;font-weight:700;padding:2px 9px;border-radius:20px;white-space:nowrap;"
+              [style.background]="getBadgeBg(p.status)"
+              [style.color]="getBadgeColor(p.status)">
+              {{ getStatusLabel(p.status) }}
+            </span>
+          </div>
+
+          <!-- ✅ Approved by row — CONFIRMED / PAID မှာ ပြ -->
+          <div *ngIf="p.confirmedByName && (p.status === 'CONFIRMED' || p.status === 'PAID')"
+            style="display:flex;align-items:center;gap:5px;flex-wrap:wrap;">
+            <span style="font-size:10px;opacity:0.55;">✓ Approved by</span>
+            <span style="font-size:10px;font-weight:600;color:#86efac;">{{ p.confirmedByName }}</span>
+            <span *ngIf="p.confirmedByRole"
+              style="font-size:9px;font-weight:600;color:#86efac;
+                background:rgba(134,239,172,0.12);
+                border:1px solid rgba(134,239,172,0.2);
+                border-radius:10px;padding:1px 6px;">
+              {{ p.confirmedByRole }}
+            </span>
+            <span *ngIf="p.confirmedAt"
+              style="font-size:9px;opacity:0.4;">
+              · {{ formatConfirmedAt(p.confirmedAt) }}
+            </span>
+          </div>
+
+        </div>
 
         <!-- Approve / Reject — PENDING_APPROVAL only -->
         <div *ngIf="p.status==='PENDING_APPROVAL'"
-          style="margin-left:auto;display:flex;gap:6px;">
+          style="display:flex;gap:6px;flex-shrink:0;">
           <button
             (click)="doReject(p)"
             [disabled]="acting[p.payPeriod]"
@@ -74,6 +99,7 @@
             {{ acting[p.payPeriod] ? '...' : lbl('Approve') }}
           </button>
         </div>
+
       </div>
 
       <!-- Stats row -->

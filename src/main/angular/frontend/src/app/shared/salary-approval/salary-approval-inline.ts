@@ -153,4 +153,19 @@ export class SalaryApprovalInline implements OnInit {
     }
     return period;
   }
+
+  // ✅ Approver date format
+  formatConfirmedAt(dateStr: string): string {
+    if (!dateStr) return '';
+    try {
+      const d   = new Date(dateStr);
+      const now  = new Date();
+      const diffH = Math.floor((now.getTime() - d.getTime()) / 3_600_000);
+      const diffD = Math.floor(diffH / 24);
+      if (diffH < 1)  return 'Just now';
+      if (diffH < 24) return `${diffH}h ago`;
+      if (diffD < 7)  return `${diffD}d ago`;
+      return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    } catch { return ''; }
+  }
 }

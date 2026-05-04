@@ -118,16 +118,19 @@ public class VpDashboardController {
         }
     }
 
-    // ── Shared helper: group SalaryHistory list → SalaryPeriodSummary list ──
     private List<SalaryPeriodSummary> groupToPeriodSummary(
-            List<SalaryHistory> rows, Long branchId) {
+            List<SalaryHistory> rows, Long fallbackBranchId) {
 
         Map<String, List<SalaryHistory>> grouped = rows.stream()
-        		.collect(Collectors.groupingBy(s ->
-        	    s.getPayPeriod() + "|" + (s.getBranchId() != null ? s.getBranchId() : 0)));
+                .collect(Collectors.groupingBy(s ->
+                    s.getPayPeriod() + "|" + (s.getBranchId() != null ? s.getBranchId() : 0)));
 
         return grouped.entrySet().stream().map(entry -> {
-            String period   = entry.getKey();
+            String compositeKey = entry.getKey();
+            String[] parts      = compositeKey.split("\\|");
+            String realPeriod   = parts[0];
+            Long   realBranchId = parts.length > 1 ? parseLong(parts[1]) : fallbackBranchId;
+
             List<SalaryHistory> periodRows = entry.getValue();
             String currency = periodRows.get(0).getCurrency() != null
                 ? periodRows.get(0).getCurrency() : "USD";
@@ -144,20 +147,49 @@ public class VpDashboardController {
                 .map(s -> s.getNetSalary() != null ? s.getNetSalary() : BigDecimal.ZERO)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-            SalaryPeriodSummary s = new SalaryPeriodSummary();
-            s.setBranchId(branchId);
-            s.setPayPeriod(period);
-            s.setCurrency(currency);
-            s.setStatus(status);
-            s.setStaffCount(periodRows.size());
-            s.setTotalGross(totalGross);
-            s.setTotalTax(totalTax);
-            s.setTotalNet(totalNet);
-            return s;
+            SalaryPeriodSummary sum = new SalaryPeriodSummary();
+            sum.setBranchId(realBranchId);
+            sum.setPayPeriod(realPeriod);
+            sum.setCurrency(currency);
+            sum.setStatus(status);
+            sum.setStaffCount(periodRows.size());
+            sum.setTotalGross(totalGross);
+            sum.setTotalTax(totalTax);
+            sum.setTotalNet(totalNet);
+
+            // ✅ Approver info — CONFIRMED / PAID status မှာ ပြ
+            Long approverId = periodRows.stream()
+                .map(SalaryHistory::getConfirmedBy)
+                .filter(Objects::nonNull)
+                .findFirst().orElse(null);
+            if (approverId != null) {
+                userRepository.findById(approverId).ifPresent(approver -> {
+                    sum.setConfirmedByName(approver.getName());
+                    // Role name ရယူ
+                    if (approver.getRoleId() != null) {
+                        userRoleRepository.findById(approver.getRoleId()).ifPresent(role ->
+                            sum.setConfirmedByRole(role.getDisplayName()));
+                    }
+                });
+                // confirmedAt — first non-null
+                periodRows.stream()
+                    .map(SalaryHistory::getConfirmedAt)
+                    .filter(Objects::nonNull)
+                    .findFirst()
+                    .ifPresent(ca -> sum.setConfirmedAt(ca.toString()));
+            }
+
+            return sum;
         })
         .sorted(Comparator.comparing(SalaryPeriodSummary::getPayPeriod).reversed())
         .collect(Collectors.toList());
     }
+
+    // ✅ Helper — parseLong (မရှိသေးရင် ထည့်)
+    private Long parseLong(String s) {
+        try { return Long.parseLong(s); } catch (NumberFormatException e) { return null; }
+    }
+    
 
     // ============================================================
     // ① STATS
@@ -800,6 +832,10 @@ public class VpDashboardController {
         private BigDecimal totalGross = BigDecimal.ZERO;
         private BigDecimal totalTax   = BigDecimal.ZERO;
         private BigDecimal totalNet   = BigDecimal.ZERO;
+
+        private String confirmedByName;
+        private String confirmedByRole;
+        private String confirmedAt;
     }
 
     @Data public static class SalaryDetailRow {
