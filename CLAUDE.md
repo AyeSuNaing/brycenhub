@@ -5016,3 +5016,132 @@ chendaly@brycen.co.kh, nitaphan@brycen.co.kh
 | Session 7 (today) | attendance-upload-inline hardcodes→lbl(), app-labels KM fix+SOURCE key, member attendance edit feature |
 
 **Transcript files:** `/mnt/transcripts/`
+
+# SESSION HANDOVER — 2026-05-04
+# Boss Dashboard Phase 13 — Session 6
+
+---
+
+## ✅ COMPLETED THIS SESSION
+
+### Salary Approval Shared Component
+- Created `src/app/shared/salary-approval/salary-approval-inline.ts`
+- Created `src/app/shared/salary-approval/salary-approval-inline.html`
+- Created `src/app/shared/salary-approval/salary-approval-inline.scss`
+- VP Dashboard + Boss Dashboard salary section → replaced with `<app-salary-approval-inline>`
+- Boss Dashboard TS: removed `salaryHistoryPeriods`, `loadingSalary`, `approveSalaryBatch()`, `rejectSalaryBatch()`, `loadSalaryPeriods()`
+
+### VpDashboardController.java Fixes
+- `@PreAuthorize` → added `'BOSS'` role
+- `getScopedBranchIds()` → BOSS case: return all branches
+- `groupToPeriodSummary()` → group by `payPeriod|branchId` (multi-branch support)
+- Each period's actual `branchId` used instead of `branchIds.get(0)`
+
+### PayrollController.java Fixes
+- `isGlobalAdmin()` → removed `branchId==null` check → DR မှာ branchId ရှိနိုင်
+- `canAccessBranch()` → BOSS/DR → true, VP/ADMIN → own branch only
+
+### Payroll Wizard (Monthly Payroll)
+- `payroll-wizard-inline.html` → class names fixed (`table-wrap`, `payroll-table`, `staff-cell`, `money`, `days-cell`, `badge badge-ok`)
+- `payroll-wizard-inline.ts` → `catchError` fix → save button no longer stuck
+- Column alignment: `table-layout:fixed` + `colgroup`
+
+### VP Dashboard HTML
+- Salary section replaced with `<app-salary-approval-inline>`
+- `(approved)="loadSalaryDashboard(); loadStats()"` 
+- `(rejected)="loadSalaryDashboard(); loadStats()"`
+
+### Boss Dashboard HTML + TS
+- Salary section replaced with `<app-salary-approval-inline>`
+- `(approved)="loadApprovalCounts()"`
+- `(rejected)="loadApprovalCounts()"`
+
+### Salary Card Colors (VP + Boss Dashboard)
+| Status | Border | Badge |
+|--------|--------|-------|
+| DRAFT | violet 0.6 | `#a78bfa` |
+| PENDING_APPROVAL | amber 0.7 | `#fbbf24` |
+| CONFIRMED | blue 0.6 | `#93c5fd` |
+| PAID | gray 0.2 (muted) | `#94a3b8` |
+
+---
+
+## 📁 OUTPUT FILES THIS SESSION
+
+```
+/mnt/user-data/outputs/
+├── salary-approval/
+│   ├── salary-approval-inline.ts    ← NEW shared component
+│   ├── salary-approval-inline.html
+│   └── salary-approval-inline.scss
+├── boss-dashboard/
+│   ├── boss-dashboard.ts            ← SalaryApprovalInline imported, salary methods removed
+│   └── boss-dashboard.html          ← <app-salary-approval-inline> used
+├── vp-dashboard.html                ← <app-salary-approval-inline> used
+├── VpDashboardController.java       ← BOSS role + getScopedBranchIds fix
+├── PayrollController.java           ← canAccessBranch fix
+├── payroll-wizard-inline.ts         ← catchError fix
+└── payroll-wizard-inline.html       ← CSS class fix + colgroup
+```
+
+---
+
+## ⚠️ PENDING / KNOWN ISSUES
+
+### Flow စစ်ရန်
+```
+Admin → Payroll History → Submit for Approval → PENDING_APPROVAL
+VP/DR/BOSS → Salary sidebar → Approve → CONFIRMED
+Admin → Mark as Paid → PAID
+```
+
+**April 2026 data DRAFT ဖြစ်နေသေး** — Submit မလုပ်ရသေးဘူး:
+```sql
+-- Test အတွက် manual update:
+UPDATE salary_history 
+SET status = 'PENDING_APPROVAL'
+WHERE pay_period = '2026-04' AND status = 'DRAFT';
+```
+
+### Boss Dashboard Approve မအလုပ်ဖြစ်ဘဲ ကျန်နေရင်
+- `VpDashboardController.java` restart ပြီးပြီလားစစ်
+- BOSS role `@PreAuthorize` ထဲ ပါပြီးလားစစ်
+- Console log: `[SalaryApproval] doApprove:` → `branchId` ပါလားစစ်
+
+### DR Approve ပြဿနာ (ခင်ဆဲ)
+- `PayrollController.canAccessBranch()` → DR → true ✅
+- `VpDashboardController.getScopedBranchIds()` → DR → getDrBranchIds() ✅
+
+---
+
+## 🗄️ DB STATE
+
+```sql
+-- March 2026: 25 records PAID (branch_id=3)
+-- April 2026:  26 records DRAFT (branch_id=3) ← Submit မလုပ်ရသေးဘူး
+SELECT pay_period, status, COUNT(*) FROM salary_history GROUP BY pay_period, status;
+```
+
+---
+
+## 🔜 NEXT SESSION PRIORITIES
+
+1. **April 2026 Submit for Approval** → test full flow DRAFT→PENDING→CONFIRMED→PAID
+2. **Boss Dashboard Approve test** → verify BOSS role works after VpDashboardController fix
+3. **PM Dashboard CSS fix** — original system prompt focus (မသုံးရသေး!)
+4. **app.routes.ts** — `director` path → `/dashboard/boss` verify
+
+---
+
+## 🔑 KEY LOGINS
+- Admin: `admin@asn.com` (Cambodia, branch_id=3)
+- VP Cambodia: `vp@brycen.co.kh` (VICE_PRESIDENT)
+- DR Vietnam: `director@brycen.co.vn` (COUNTRY_DIRECTOR, id=30)
+- Boss: Admin Boss (BOSS role)
+
+## 📂 PROJECT PATH
+`/Users/brycen_cambodia_2/Documents/1ASNworkspace/welcome/`
+
+## Stack
+Angular 21 + Spring Boot 2.7.18 + MySQL (asn_db)
+Deadline: May 18, 2026
