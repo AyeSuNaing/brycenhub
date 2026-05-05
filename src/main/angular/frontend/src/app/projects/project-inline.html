@@ -723,7 +723,7 @@
           <div style="position:relative;margin-bottom:10px;">
             <span style="position:absolute;left:11px;top:50%;transform:translateY(-50%);font-size:12px;opacity:0.4;pointer-events:none;">🔍</span>
             <input [(ngModel)]="memberSearchQuery" (ngModelChange)="filterStaff()"
-              placeholder="Search staff by name or role..."
+              placeholder="Search by name, email or role..."
               style="width:100%;padding:8px 12px 8px 32px;border-radius:9px;font-size:11px;border:1px solid var(--color-border,#1e2d4a);background:var(--input-bg,#0d1424);color:var(--input-text,#e2e8f0);outline:none;box-sizing:border-box;">
           </div>
 
@@ -742,7 +742,11 @@
               </div>
               <div style="flex:1;min-width:0;">
                 <div style="font-size:11px;font-weight:600;">{{ s.name }}</div>
-                <div style="font-size:9px;opacity:0.55;margin-top:2px;">{{ getRoleDisplayName(s.roleDto?.name || s.roleName || s.role) || 'Staff' }}</div>
+                <div style="font-size:9px;opacity:0.55;margin-top:1px;">{{ getRoleDisplayName(s.roleDto?.name || s.roleName || s.role) || 'Staff' }}</div>
+                <div *ngIf="s.email"
+                  style="font-size:9px;opacity:0.35;margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+                  {{ s.email }}
+                </div>
               </div>
               <button *ngIf="!isAlreadyMember(s.id)" (click)="addMember(s)"
                 style="padding:4px 12px;border-radius:7px;border:1px solid #22c55e;background:transparent;color:#22c55e;font-size:10px;font-weight:700;cursor:pointer;transition:all 0.15s;"

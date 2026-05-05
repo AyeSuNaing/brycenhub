@@ -1274,8 +1274,10 @@ export class ProjectInlineComponent implements OnInit, OnChanges {
         displayRole.toLowerCase(),                // "ui/ux designer"
       ];
 
-      const name = (s.name || '').toLowerCase();
-      return name.includes(q) || variants.some(v => v.includes(q));
+      const name  = (s.name  || '').toLowerCase();
+      const email = (s.email || '').toLowerCase(); // ✅ email ထည့်
+
+      return name.includes(q) || email.includes(q) || variants.some(v => v.includes(q));
     });
     this.cdr.detectChanges();
   }
