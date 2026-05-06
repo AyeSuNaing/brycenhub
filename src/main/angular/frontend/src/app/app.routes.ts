@@ -71,5 +71,11 @@ export const routes: Routes = [
     loadComponent: () => import('./chat/chat').then(m => m.Chat),
   },
 
+  // ── Voice / Video Call — authGuard မထည့်ရ (new tab မှာ token pass မဖြစ်) ──
+  {
+    path: 'call',
+    loadComponent: () => import('./call/call').then(m => m.CallComponent),
+  },
+
   { path: '**', redirectTo: 'login' },
 ];
