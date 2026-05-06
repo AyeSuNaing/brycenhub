@@ -206,6 +206,20 @@ function renderComponent(
   const fontSize     = parsePx(style.fontSize) || 14;
 
   switch (type) {
+    case 'image': {
+      const src = props.src || '';
+      const br  = borderRadius * scale;
+      const isBase64 = src.startsWith('data:');
+      const isUrl    = src.startsWith('http');
+      if (isBase64 || isUrl) {
+        return `<image href="${isBase64 ? src : src}" x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${w.toFixed(1)}" height="${h.toFixed(1)}" preserveAspectRatio="xMidYMid slice" clip-path="inset(0 round ${br.toFixed(1)}px)"/>`;
+      }
+      // No src → placeholder box
+      return `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${w.toFixed(1)}" height="${h.toFixed(1)}" fill="#c5cae9" rx="${br.toFixed(1)}"/>
+              <line x1="${x.toFixed(1)}" y1="${y.toFixed(1)}" x2="${(x+w).toFixed(1)}" y2="${(y+h).toFixed(1)}" stroke="#9fa8da" stroke-width="0.5"/>
+              <line x1="${(x+w).toFixed(1)}" y1="${y.toFixed(1)}" x2="${x.toFixed(1)}" y2="${(y+h).toFixed(1)}" stroke="#9fa8da" stroke-width="0.5"/>`;
+    }
+
     case 'circle': {
       const r  = Math.min(w, h) / 2;
       const cx = x + w / 2;
@@ -233,12 +247,12 @@ function renderComponent(
       <text x="${(x + w/2).toFixed(1)}" y="${(y + h * 0.7).toFixed(1)}" font-size="${scaledFontSize.toFixed(1)}" fill="${labelColor}" text-anchor="middle" font-family="sans-serif" font-weight="600">${escapeXml(truncate(displayText, 18))}</text>`;
     }
 
-    case 'image': {
-      const imgStroke = '#9CA3AF';
-      return `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${w.toFixed(1)}" height="${h.toFixed(1)}" fill="#E5E7EB" stroke="${imgStroke}" stroke-width="0.4" rx="1"/>
-      <line x1="${x.toFixed(1)}" y1="${y.toFixed(1)}" x2="${(x+w).toFixed(1)}" y2="${(y+h).toFixed(1)}" stroke="${imgStroke}" stroke-width="0.4"/>
-      <line x1="${(x+w).toFixed(1)}" y1="${y.toFixed(1)}" x2="${x.toFixed(1)}" y2="${(y+h).toFixed(1)}" stroke="${imgStroke}" stroke-width="0.4"/>`;
-    }
+    // case 'image': {
+    //   const imgStroke = '#9CA3AF';
+    //   return `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${w.toFixed(1)}" height="${h.toFixed(1)}" fill="#E5E7EB" stroke="${imgStroke}" stroke-width="0.4" rx="1"/>
+    //   <line x1="${x.toFixed(1)}" y1="${y.toFixed(1)}" x2="${(x+w).toFixed(1)}" y2="${(y+h).toFixed(1)}" stroke="${imgStroke}" stroke-width="0.4"/>
+    //   <line x1="${(x+w).toFixed(1)}" y1="${y.toFixed(1)}" x2="${x.toFixed(1)}" y2="${(y+h).toFixed(1)}" stroke="${imgStroke}" stroke-width="0.4"/>`;
+    // }
 
     case 'icon': {
       const iconColor = sanitizeColor(style.color) || '#6b7280';

@@ -551,7 +551,7 @@
     }
 
     .df.active-frame {
-      outline: 2px solid rgba(108, 99, 255, .6);
+      outline: none;
     }
 
     /* frame action bar shown on hover */
@@ -631,7 +631,7 @@
     }
 
     .cc.sel .inner {
-      outline: 2px solid var(--acc) !important;
+      outline: none !important;
     }
 
     .cc.sel .rh {
@@ -2151,6 +2151,17 @@
               </div>
             </div>
 
+             <!-- Alignment buttons -->
+              <div class="spc-group-lbl" style="margin-top:10px">Alignment</div>
+              <div class="align-grid">
+                <div class="align-btn" onclick="alignComp('top')"    title="Align Top">↑</div>
+                <div class="align-btn" onclick="alignComp('right')"  title="Align Right">→</div>
+                <div class="align-btn" onclick="alignComp('bottom')" title="Align Bottom">↓</div>
+                <div class="align-btn" onclick="alignComp('left')"   title="Align Left">←</div>
+                <div class="align-btn" onclick="alignComp('centerH')" title="Center Horizontal">⇔</div>
+                <div class="align-btn" onclick="alignComp('centerV')" title="Center Vertical">⇕</div>
+              </div>
+
             <!-- ACTIONS -->
             <div id="actionsSec" style="padding:12px 14px;box-sizing:border-box;">
               <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1.4px;color:var(--t2);margin-bottom:8px;">Actions</div>
@@ -2158,6 +2169,7 @@
                 <button class="abt abt-dup" style="flex:1;" onclick="dupSel()">⎘ Duplicate</button>
                 <button class="abt abt-del" style="flex:1;" onclick="delSel()">✕ Delete</button>
               </div>
+              
             </div>
 
           </div><!-- /pane-attr -->
@@ -2239,16 +2251,7 @@
                 <input class="pi spc-row-inp" id="pd-l" type="number" value="0" oninput="setSpc('paddingLeft',+this.value)">
               </div>
 
-              <!-- Alignment buttons -->
-              <div class="spc-group-lbl" style="margin-top:10px">Alignment</div>
-              <div class="align-grid">
-                <div class="align-btn" onclick="alignComp('top')"    title="Align Top">↑</div>
-                <div class="align-btn" onclick="alignComp('right')"  title="Align Right">→</div>
-                <div class="align-btn" onclick="alignComp('bottom')" title="Align Bottom">↓</div>
-                <div class="align-btn" onclick="alignComp('left')"   title="Align Left">←</div>
-                <div class="align-btn" onclick="alignComp('centerH')" title="Center Horizontal">⇔</div>
-                <div class="align-btn" onclick="alignComp('centerV')" title="Center Vertical">⇕</div>
-              </div>
+             
 
               <!-- Preview diagram (readonly) -->
               <div class="spc-group-lbl" style="margin-top:10px">Preview</div>
@@ -2382,8 +2385,9 @@
           const bw = parseInt(gs(c,'borderWidth','0')) || 0;
           const bs = gs(c,'boxShadow','none');
           const br = gs(c,'borderRadius','8px');
-          const isWhiteOrEmpty = bg === '#ffffff' || bg === 'transparent' || bg === 'rgba(0,0,0,0)';
-          const outline = isWhiteOrEmpty && bs === 'none' ? 'outline:1.5px dashed #94a3b8;' : '';
+          // const isWhiteOrEmpty = bg === '#ffffff' || bg === 'transparent' || bg === 'rgba(0,0,0,0)';
+          // const outline = isWhiteOrEmpty && bs === 'none' ? 'outline:1.5px dashed #94a3b8;' : '';
+          const outline = '';
           return `<div style="width:100%;height:100%;background:${bg};border-radius:${br};border:${bw}px solid ${gs(c,'borderColor','#60a5fa')};box-sizing:border-box;${outline}"></div>`;
         }
       },
@@ -2393,8 +2397,9 @@
           const bg = gs(c,'backgroundColor','#86efac');
           const bw = parseInt(gs(c,'borderWidth','0')) || 0;
           const bs = gs(c,'boxShadow','none');
-          const isWhiteOrEmpty = bg === '#ffffff' || bg === 'transparent' || bg === 'rgba(0,0,0,0)';
-          const outline = isWhiteOrEmpty && bs === 'none' ? 'outline:1.5px dashed #94a3b8;' : '';
+          // const isWhiteOrEmpty = bg === '#ffffff' || bg === 'transparent' || bg === 'rgba(0,0,0,0)';
+          // const outline = isWhiteOrEmpty && bs === 'none' ? 'outline:1.5px dashed #94a3b8;' : '';
+          const outline = '';
           return `<div style="width:100%;height:100%;background:${bg};border-radius:50%;border:${bw}px solid ${gs(c,'borderColor','#4ade80')};box-sizing:border-box;${outline}"></div>`;
         }
       },
@@ -2408,7 +2413,23 @@
       },
       label: {
         n: 'Label', d: 'Small caption label', dw: 120, dh: 28, txt: true,
-        r: c => { const ta=gs(c,'textAlign','left'); const jc=ta==='center'?'center':ta==='right'?'flex-end':'flex-start'; return `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:${jc};padding:0 8px;font-size:${gs(c,'fontSize','11px')};color:${gs(c,'color','#64748b')};font-family:'${gs(c,'fontFamily','Inter')}',sans-serif;font-weight:${gs(c,'fontWeight','600')};letter-spacing:.6px;box-shadow:${gs(c,'boxShadow','0 1px 3px rgba(0,0,0,.08)')};background:${gs(c,'backgroundColor','#f8fafc')};border:1px solid ${gs(c,'borderColor','#e2e8f0')};border-radius:${gs(c,'borderRadius','4px')};box-sizing:border-box;overflow:hidden;">${c.props.content||'Label'}</div>`; }
+        r: c => {
+          const ta=gs(c,'textAlign','left');
+          const jc=ta==='center'?'center':ta==='right'?'flex-end':'flex-start';
+          const bw=parseInt(gs(c,'borderWidth','0'))||0;
+          const border=bw>0?`${bw}px solid ${gs(c,'borderColor','#e2e8f0')}`:'none';
+          
+          const rawContent = c.props.content || 'Label';
+          const htmlContent = rawContent
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/\n/g, '<br>');
+          const isMulti = rawContent.length > 60 || rawContent.includes('\n');
+          return `<div style="width:100%;height:100%;display:flex;align-items:${isMulti?'flex-start':'center'};justify-content:${jc};padding:${isMulti?'6px 8px':'0 8px'};font-size:${gs(c,'fontSize','14px')};color:${gs(c,'color','#111111')};font-family:'${gs(c,'fontFamily','Inter')}',sans-serif;font-weight:${gs(c,'fontWeight','400')};letter-spacing:0;line-height:1.6;box-shadow:${gs(c,'boxShadow','none')};background:${gs(c,'backgroundColor','transparent')});border:${border};border-radius:${gs(c,'borderRadius','0px')};box-sizing:border-box;overflow:auto;word-break:break-word;">${htmlContent}</div>`;
+
+
+        }
       },
 
       // ══ CONTROLS ═════════════════════════════════════════════
@@ -2631,7 +2652,15 @@
         } else {
           const cr = document.getElementById('CA').getBoundingClientRect();
           G.marquee = { x: e.clientX - cr.left, y: e.clientY - cr.top };
-          selComp(null);
+          // Frame area click → deselect component, show frame panel
+          if (t.classList.contains('df') || t.classList.contains('df-lbl')) {
+            G.selId = null;
+            document.querySelectorAll('.cc.sel').forEach(el => el.classList.remove('sel'));
+            const f = G.frames.find(f => 'df-' + f.id === (t.id || t.closest('.df')?.id));
+            if (f) showFramePanel(f);
+          } else {
+            selComp(null);
+          }
         }
         e.preventDefault();
       }
@@ -2924,9 +2953,37 @@
     </div>
     <span class="df-lbl" ondblclick="event.stopPropagation();renameFrame('${f.id}')" title="Double-click to rename">${f.name} — ${f.w} × ${f.h}</span>`;
       // click on frame background selects the frame
+      // el.addEventListener('mousedown', e => {
+      //   if (e.target === el || e.target.classList.contains('df-lbl')) {
+      //     setActiveFrame(f.id);
+      //   }
+      // });
       el.addEventListener('mousedown', e => {
         if (e.target === el || e.target.classList.contains('df-lbl')) {
           setActiveFrame(f.id);
+          if (!_space && e.button === 0) {
+            e.stopPropagation();
+            const startX = e.clientX, startY = e.clientY;
+            const origX = f.x, origY = f.y;
+            let moved = false;
+            const onMove = mv => {
+              const dx = (mv.clientX - startX) / G.zoom;
+              const dy = (mv.clientY - startY) / G.zoom;
+              if (!moved && Math.abs(dx) < 3 && Math.abs(dy) < 3) return;
+              moved = true;
+              f.x = Math.round((origX + dx) / 4) * 4;
+              f.y = Math.round((origY + dy) / 4) * 4;
+              el.style.left = f.x + 'px';
+              el.style.top  = f.y + 'px';
+            };
+            const onUp = () => {
+              document.removeEventListener('mousemove', onMove);
+              document.removeEventListener('mouseup', onUp);
+              if (moved) pushH();
+            };
+            document.addEventListener('mousemove', onMove);
+            document.addEventListener('mouseup', onUp);
+          }
         }
       });
       // dragover/drop directly on frame
@@ -2942,9 +2999,13 @@
         const cr = ca.getBoundingClientRect();
         const worldX = (e.clientX - cr.left - G.panX) / G.zoom;
         const worldY = (e.clientY - cr.top - G.panY) / G.zoom;
-        const relX = Math.round((worldX - f.x - def.dw / 2) / 4) * 4;
-        const relY = Math.round((worldY - f.y - def.dh / 2) / 4) * 4;
-        addC(type, Math.max(0, relX), Math.max(0, relY), f.id);
+        // const relX = Math.round((worldX - f.x - def.dw / 2) / 4) * 4;
+        // const relY = Math.round((worldY - f.y - def.dh / 2) / 4) * 4;
+        // addC(type, Math.max(0, relX), Math.max(0, relY), f.id);
+        // Pass frame-local drop coords (NOT centered) so container detection works
+        const dropLocalX = Math.round((worldX - f.x) / 4) * 4;
+        const dropLocalY = Math.round((worldY - f.y) / 4) * 4;
+        addC(type, dropLocalX, dropLocalY, f.id);
       });
       ct.appendChild(el);
     }
@@ -3092,12 +3153,18 @@
       // Coordinates: if parented into container
       let cx, cy, cw = def.dw, ch = def.dh;
       if (parent && CONTAINERS.has(parent.type)) {
-        // All → center inside container, image 100×100
-        const cmpW = type === 'image' ? 100 : def.dw;
-        const cmpH = type === 'image' ? 100 : def.dh;
-        cx = Math.round((parent.w / 2 - cmpW / 2) / 4) * 4;
-        cy = Math.round((parent.h / 2 - cmpH / 2) / 4) * 4;
         if (type === 'image') { cw = 100; ch = 100; }
+        if (dropX != null) {
+          // Use actual drop position relative to parent
+          cx = Math.round((dropX - getAbsX(parent)) / 4) * 4;
+          cy = Math.round((dropY - getAbsY(parent)) / 4) * 4;
+        } else {
+          // Click from library → center
+          const cmpW = type === 'image' ? 100 : def.dw;
+          const cmpH = type === 'image' ? 100 : def.dh;
+          cx = Math.round((parent.w / 2 - cmpW / 2) / 4) * 4;
+          cy = Math.round((parent.h / 2 - cmpH / 2) / 4) * 4;
+        }
       } else if (dropX != null) {
         cx = parent ? dropX - parent.x : dropX;
         cy = parent ? dropY - parent.y : dropY;
@@ -3114,7 +3181,7 @@
         id: 'c' + (G.nextId++), type, frameId: fid, parentId: pid || null, name: def.n,
         x: cx, y: cy, w: cw, h: ch, rotation: 0, visible: true,
         style: {
-          backgroundColor: type === 'rectangle' ? '#93c5fd' : type === 'circle' ? '#86efac' : type === 'button' ? '#16a34a' : '#ffffff',
+          backgroundColor: type === 'rectangle' ? '#93c5fd' : type === 'circle' ? '#86efac' : type === 'button' ? '#16a34a' : type === 'label' ? 'transparent' : '#ffffff',
           color: type === 'button' ? '#ffffff' : '#333333',
           borderRadius: type === 'circle' ? '50%' : ['button', 'modal', 'toastc', 'carousel'].includes(type) ? '8px' : ['navbar', 'section'].includes(type) ? '0px' : '8px',
           fontSize: '14px', fontFamily: 'Inter', fontWeight: '400', textAlign: 'left',
@@ -3235,9 +3302,11 @@
       w.style.opacity   = parseFloat(c.style.opacity) || 1;
       w.style.display   = c.visible === false ? 'none' : 'block';
       w.style.backgroundColor = c.style.backgroundColor || 'transparent';
+      w.style.outline = '';
       w.style.borderColor = c.style.borderColor || 'transparent';
       w.style.borderWidth = c.style.borderWidth || '0px';
       w.style.borderStyle = 'solid';
+      w.style.outline = 'none';
       w.style.borderRadius = c.type === 'circle' ? '50%' : (c.style.borderRadius || '0px');
 
       // Box shadow on wrapper (so it's not clipped by inner)
@@ -3405,8 +3474,18 @@
       document.querySelectorAll('.cc.sel').forEach(el => el.classList.remove('sel'));
       G.selId = id;
       // Hide frame panel when selecting component
+      // const fp = document.getElementById('FRAME_PANEL');
+      // if (id && fp) fp.style.display = 'none';
+      // ✅ Always hide frame panel + show component panel
       const fp = document.getElementById('FRAME_PANEL');
-      if (id && fp) fp.style.display = 'none';
+      if (fp) fp.style.display = 'none';
+      document.getElementById('NOSEL').style.display = 'none';
+      document.getElementById('inspTabs').style.display = id ? 'flex' : 'none';
+      var _prps = document.getElementById('PRPS');
+      if (_prps) _prps.style.cssText = id
+        ? 'display:flex;flex:1;flex-direction:column;overflow:hidden;min-height:0;'
+        : 'display:none;flex:0;flex-direction:column;overflow:hidden;min-height:0;';
+
       if (!id) {
         document.getElementById('RN').textContent = 'No Selection';
         document.getElementById('RS').textContent = 'Click a component to edit';
@@ -3697,13 +3776,17 @@
       const el = document.getElementById('LTREE'); let html = '';
       G.frames.forEach(f => {
         const rootComps = f.comps.filter(c => !c.parentId);
+        const isFrameCollapsed = G.collapsed.has('frame_' + f.id);
         html += `<div class="lgrp">
-      <div class="lgrph" onclick="setActiveFrame('${f.id}')">
-        ${f.w <= 500 ? '📱' : '🖥'} ${f.name}<span class="cnt">(${f.comps.length})</span>
-        <span class="ldel" onclick="event.stopPropagation();deleteFrame('${f.id}')" title="Delete frame">✕</span>
-      </div>`;
-        if (!f.comps.length) { html += `<div class="lempty">Empty frame</div>`; }
-        else {
+          <div class="lgrph" onclick="setActiveFrame('${f.id}')">
+            <span onclick="event.stopPropagation();toggleFrameCollapse('${f.id}')" 
+                  style="cursor:pointer;font-size:10px;color:var(--t2);margin-right:2px;display:inline-block;transition:transform .15s;transform:rotate(${isFrameCollapsed?'-90':'0'}deg)">▼</span>
+            ${f.w <= 500 ? '📱' : '🖥'} ${f.name}<span class="cnt">(${f.comps.length})</span>
+            <span class="ldel" onclick="event.stopPropagation();deleteFrame('${f.id}')" title="Delete frame">✕</span>
+          </div>`;
+          if (isFrameCollapsed) { html += ''; }
+          else if (!f.comps.length) { html += `<div class="lempty">Empty frame</div>`; }
+          else {
           function renderCompTree(comps, parentId, depth) {
             const items = comps.filter(c => (parentId ? c.parentId === parentId : !c.parentId));
             items.forEach((c, idx) => {
@@ -3759,6 +3842,12 @@
       renderLayers();
     }
 
+    function toggleFrameCollapse(frameId) {
+      const key = 'frame_' + frameId;
+      if (G.collapsed.has(key)) G.collapsed.delete(key);
+      else G.collapsed.add(key);
+      renderLayers();
+    }
     // ── Layer panel drag & drop ────────────────────────────────
     function layerDragStart(e, id) {
       G.layerDrag = id;
@@ -3876,80 +3965,80 @@
     
 
     // ── EDIT MODE setMode ──
-    function setMode(m) {
-      G.mode = 'edit';
-      document.getElementById('smd').textContent = 'Edit';
-      document.querySelectorAll('.cc').forEach(el => el.style.cursor = 'move');
-    }
+    // function setMode(m) {
+    //   G.mode = 'edit';
+    //   document.getElementById('smd').textContent = 'Edit';
+    //   document.querySelectorAll('.cc').forEach(el => el.style.cursor = 'move');
+    // }
 
     // ═══════════════════════════════════════════════
     // PROPERTIES PANEL
     // ═══════════════════════════════════════════════
-    function fillProps(c) {
-      document.getElementById('NOSEL').style.display = 'none';
-      // ✅ Reset PRPS fully — flex:1 so it fills EP
-      var prps = document.getElementById('PRPS');
-      if (prps) prps.style.cssText = 'display:flex;flex:1;flex-direction:column;overflow:hidden;min-height:0;';
-      document.getElementById('inspTabs').style.display = 'flex';
-      document.getElementById('RN').textContent = c.name;
-      const parentComp = c.parentId ? getComp(c.parentId) : null;
-      document.getElementById('RS').textContent = c.type + ' · ' + c.id + (parentComp ? ' ∈ ' + parentComp.name : '');
+    // function fillProps(c) {
+    //   document.getElementById('NOSEL').style.display = 'none';
+    //   // ✅ Reset PRPS fully — flex:1 so it fills EP
+    //   var prps = document.getElementById('PRPS');
+    //   if (prps) prps.style.cssText = 'display:flex;flex:1;flex-direction:column;overflow:hidden;min-height:0;';
+    //   document.getElementById('inspTabs').style.display = 'flex';
+    //   document.getElementById('RN').textContent = c.name;
+    //   const parentComp = c.parentId ? getComp(c.parentId) : null;
+    //   document.getElementById('RS').textContent = c.type + ' · ' + c.id + (parentComp ? ' ∈ ' + parentComp.name : '');
 
-      document.getElementById('px').value = Math.round(c.x);
-      document.getElementById('py').value = Math.round(c.y);
-      document.getElementById('pw').value = Math.round(c.w);
-      document.getElementById('ph').value = Math.round(c.h);
-      document.getElementById('prot').value = c.rotation || 0;
+    //   document.getElementById('px').value = Math.round(c.x);
+    //   document.getElementById('py').value = Math.round(c.y);
+    //   document.getElementById('pw').value = Math.round(c.w);
+    //   document.getElementById('ph').value = Math.round(c.h);
+    //   document.getElementById('prot').value = c.rotation || 0;
 
-      const bgh = toHex(c.style.backgroundColor || '#ffffff');
-      document.getElementById('pfh').value = bgh.replace('#', '');
-      document.getElementById('pfo').value = Math.round((parseFloat(c.style.opacity) || 1) * 100);
+    //   const bgh = toHex(c.style.backgroundColor || '#ffffff');
+    //   document.getElementById('pfh').value = bgh.replace('#', '');
+    //   document.getElementById('pfo').value = Math.round((parseFloat(c.style.opacity) || 1) * 100);
 
-      const sch = toHex(c.style.borderColor || '#cccccc');
-      document.getElementById('psh').value = sch.replace('#', '');
-      document.getElementById('psw').value = parseInt(c.style.borderWidth) || 0;
+    //   const sch = toHex(c.style.borderColor || '#cccccc');
+    //   document.getElementById('psh').value = sch.replace('#', '');
+    //   document.getElementById('psw').value = parseInt(c.style.borderWidth) || 0;
 
-      const def = REG[c.type];
-      const showT = def && def.txt;
-      document.getElementById('TYPO').style.display = showT ? 'block' : 'none';
-      if (showT) {
-        document.getElementById('pfont').value = c.style.fontFamily || 'Inter';
-        document.getElementById('pfs').value = parseInt(c.style.fontSize) || 14;
-        document.getElementById('pfw').value = c.style.fontWeight || '400';
-        const tch = toHex(c.style.color || '#333333');
-        document.getElementById('pth').value = tch.replace('#', '');
-        document.getElementById('pta').value = c.style.textAlign || 'left';
-        document.getElementById('pcon').value = c.props.content || '';
-        const pph = document.getElementById('pplaceholder'); if (pph) pph.value = c.props.placeholder || '';
-      }
+    //   const def = REG[c.type];
+    //   const showT = def && def.txt;
+    //   document.getElementById('TYPO').style.display = showT ? 'block' : 'none';
+    //   if (showT) {
+    //     document.getElementById('pfont').value = c.style.fontFamily || 'Inter';
+    //     document.getElementById('pfs').value = parseInt(c.style.fontSize) || 14;
+    //     document.getElementById('pfw').value = c.style.fontWeight || '400';
+    //     const tch = toHex(c.style.color || '#333333');
+    //     document.getElementById('pth').value = tch.replace('#', '');
+    //     document.getElementById('pta').value = c.style.textAlign || 'left';
+    //     document.getElementById('pcon').value = c.props.content || '';
+    //     const pph = document.getElementById('pplaceholder'); if (pph) pph.value = c.props.placeholder || '';
+    //   }
 
-      const showI = def && def.img;
-      document.getElementById('IMGSEC').style.display = showI ? 'block' : 'none';
-      if (showI) {
-        document.getElementById('piu').value = c.props.src && c.props.src.startsWith('data:') ? '(uploaded)' : (c.props.src || '');
-        document.getElementById('pif').value = c.props.fit || 'cover';
-        const pim = document.getElementById('pim');
-        if (pim) pim.value = c.props.position || 'center';
-        document.getElementById('imgFile').value = '';
-      }
+    //   const showI = def && def.img;
+    //   document.getElementById('IMGSEC').style.display = showI ? 'block' : 'none';
+    //   if (showI) {
+    //     document.getElementById('piu').value = c.props.src && c.props.src.startsWith('data:') ? '(uploaded)' : (c.props.src || '');
+    //     document.getElementById('pif').value = c.props.fit || 'cover';
+    //     const pim = document.getElementById('pim');
+    //     if (pim) pim.value = c.props.position || 'center';
+    //     document.getElementById('imgFile').value = '';
+    //   }
 
-      document.getElementById('prad').value = parseInt(c.style.borderRadius) || 0;
-      document.getElementById('pop').value = Math.round((parseFloat(c.style.opacity) || 1) * 100);
-      document.getElementById('psh2').value = c.style.boxShadow && c.style.boxShadow !== 'none' ? c.style.boxShadow : '';
+    //   document.getElementById('prad').value = parseInt(c.style.borderRadius) || 0;
+    //   document.getElementById('pop').value = Math.round((parseFloat(c.style.opacity) || 1) * 100);
+    //   document.getElementById('psh2').value = c.style.boxShadow && c.style.boxShadow !== 'none' ? c.style.boxShadow : '';
 
-      // ── update color swatches ──
-      const bgh2 = toHex(c.style.backgroundColor || '#ffffff');
-      const sch2 = toHex(c.style.borderColor || '#cccccc');
-      const sw_fill = document.getElementById('sw-fill');
-      const sw_stroke = document.getElementById('sw-stroke');
-      const sw_text = document.getElementById('sw-text');
-      if (sw_fill) sw_fill.style.background = bgh2;
-      if (sw_stroke) sw_stroke.style.background = sch2;
-      if (sw_text) sw_text.style.background = toHex(c.style.color || '#333333');
+    //   // ── update color swatches ──
+    //   const bgh2 = toHex(c.style.backgroundColor || '#ffffff');
+    //   const sch2 = toHex(c.style.borderColor || '#cccccc');
+    //   const sw_fill = document.getElementById('sw-fill');
+    //   const sw_stroke = document.getElementById('sw-stroke');
+    //   const sw_text = document.getElementById('sw-text');
+    //   if (sw_fill) sw_fill.style.background = bgh2;
+    //   if (sw_stroke) sw_stroke.style.background = sch2;
+    //   if (sw_text) sw_text.style.background = toHex(c.style.color || '#333333');
 
-      // ── fill spacing panel ──
-      fillSpacing(c);
-    }
+    //   // ── fill spacing panel ──
+    //   fillSpacing(c);
+    // }
 
     function ppSync(c) {
       if (G.selId === c.id) {
@@ -4141,65 +4230,65 @@
       });
     }
 
-    function renderLayers() {
-      const el = document.getElementById('LTREE'); let html = '';
-      G.frames.forEach(f => {
-        const rootComps = f.comps.filter(c => !c.parentId);
-        html += `<div class="lgrp">
-      <div class="lgrph" onclick="setActiveFrame('${f.id}')">
-        ${f.w <= 500 ? '📱' : '🖥'} ${f.name}<span class="cnt">(${f.comps.length})</span>
-        <span class="ldel" onclick="event.stopPropagation();deleteFrame('${f.id}')" title="Delete frame">✕</span>
-      </div>`;
-        if (!f.comps.length) { html += `<div class="lempty">Empty frame</div>`; }
-        else {
-          function renderCompTree(comps, parentId, depth) {
-            const items = comps.filter(c => (parentId ? c.parentId === parentId : !c.parentId));
-            items.forEach((c, idx) => {
-              const children = comps.filter(ch => ch.parentId === c.id);
-              const hasChildren = children.length > 0;
-              const isCollapsed = G.collapsed.has(c.id);
-              const layerIcon = c.type === 'circle' ? '◯'
-                : c.type === 'rectangle' ? '▭'
-                : (LICONS[c.type] || '◈');
+    // function renderLayers() {
+    //   const el = document.getElementById('LTREE'); let html = '';
+    //   G.frames.forEach(f => {
+    //     const rootComps = f.comps.filter(c => !c.parentId);
+    //     html += `<div class="lgrp">
+    //   <div class="lgrph" onclick="setActiveFrame('${f.id}')">
+    //     ${f.w <= 500 ? '📱' : '🖥'} ${f.name}<span class="cnt">(${f.comps.length})</span>
+    //     <span class="ldel" onclick="event.stopPropagation();deleteFrame('${f.id}')" title="Delete frame">✕</span>
+    //   </div>`;
+    //     if (!f.comps.length) { html += `<div class="lempty">Empty frame</div>`; }
+    //     else {
+    //       function renderCompTree(comps, parentId, depth) {
+    //         const items = comps.filter(c => (parentId ? c.parentId === parentId : !c.parentId));
+    //         items.forEach((c, idx) => {
+    //           const children = comps.filter(ch => ch.parentId === c.id);
+    //           const hasChildren = children.length > 0;
+    //           const isCollapsed = G.collapsed.has(c.id);
+    //           const layerIcon = c.type === 'circle' ? '◯'
+    //             : c.type === 'rectangle' ? '▭'
+    //             : (LICONS[c.type] || '◈');
 
-              // Build indent with tree lines
-              let indentHtml = '';
-              for (let d = 0; d < depth; d++) {
-                indentHtml += `<span class="li-line"></span>`;
-              }
+    //           // Build indent with tree lines
+    //           let indentHtml = '';
+    //           for (let d = 0; d < depth; d++) {
+    //             indentHtml += `<span class="li-line"></span>`;
+    //           }
 
-              // Toggle button for containers with children
-              const toggleHtml = hasChildren
-                ? `<span class="li-toggle" onclick="event.stopPropagation();toggleCollapse('${c.id}')">${isCollapsed ? '▶' : '▼'}</span>`
-                : `<span style="width:14px;flex-shrink:0;"></span>`;
+    //           // Toggle button for containers with children
+    //           const toggleHtml = hasChildren
+    //             ? `<span class="li-toggle" onclick="event.stopPropagation();toggleCollapse('${c.id}')">${isCollapsed ? '▶' : '▼'}</span>`
+    //             : `<span style="width:14px;flex-shrink:0;"></span>`;
 
-              html += `<div
-                class="li${G.selId === c.id ? ' on' : ''}${c.visible === false ? ' hid' : ''}"
-                data-cid="${c.id}"
-                data-parentid="${c.parentId || ''}"
-                draggable="true"
-                onclick="layerClick('${c.id}')"
-                ondragstart="layerDragStart(event,'${c.id}')"
-                ondragover="layerDragOver(event,'${c.id}')"
-                ondragleave="layerDragLeave(event)"
-                ondrop="layerDrop(event,'${c.id}')"
-                ondragend="layerDragEnd()"
-                style="padding-left:${8 + depth * 0}px">
-                <span class="li-indent" style="display:flex;align-items:center;">${indentHtml}</span>
-                ${toggleHtml}
-                <span class="li-ico" style="font-size:11px;flex-shrink:0;width:14px;text-align:center;">${layerIcon}</span>
-                <span class="li-nm" style="flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:11px;">${c.name}</span>
-                <span class="li-vis" style="opacity:0;font-size:10px;cursor:pointer;color:var(--t2);" onclick="event.stopPropagation();toggleVis('${c.id}')">${c.visible === false ? '🙈' : '👁'}</span>
-              </div>`;
-              if (hasChildren && !isCollapsed) renderCompTree(comps, c.id, depth + 1);
-            });
-          }
-          renderCompTree(f.comps, null, 0);
-        }
-        html += '</div>';
-      });
-      el.innerHTML = html;
-    }
+    //           html += `<div
+    //             class="li${G.selId === c.id ? ' on' : ''}${c.visible === false ? ' hid' : ''}"
+    //             data-cid="${c.id}"
+    //             data-parentid="${c.parentId || ''}"
+    //             draggable="true"
+    //             onclick="layerClick('${c.id}')"
+    //             ondragstart="layerDragStart(event,'${c.id}')"
+    //             ondragover="layerDragOver(event,'${c.id}')"
+    //             ondragleave="layerDragLeave(event)"
+    //             ondrop="layerDrop(event,'${c.id}')"
+    //             ondragend="layerDragEnd()"
+    //             style="padding-left:${8 + depth * 0}px">
+    //             <span class="li-indent" style="display:flex;align-items:center;">${indentHtml}</span>
+    //             ${toggleHtml}
+    //             <span class="li-ico" style="font-size:11px;flex-shrink:0;width:14px;text-align:center;">${layerIcon}</span>
+    //             <span class="li-nm" style="flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:11px;">${c.name}</span>
+    //             <span class="li-vis" style="opacity:0;font-size:10px;cursor:pointer;color:var(--t2);" onclick="event.stopPropagation();toggleVis('${c.id}')">${c.visible === false ? '🙈' : '👁'}</span>
+    //           </div>`;
+    //           if (hasChildren && !isCollapsed) renderCompTree(comps, c.id, depth + 1);
+    //         });
+    //       }
+    //       renderCompTree(f.comps, null, 0);
+    //     }
+    //     html += '</div>';
+    //   });
+    //   el.innerHTML = html;
+    // }
     function layerClick(id) { selComp(id); renderLayers(); }
     function toggleCollapse(id) {
       if (G.collapsed.has(id)) G.collapsed.delete(id);
@@ -4534,6 +4623,21 @@
       const t = document.getElementById('TST'); t.classList.add('show');
       setTimeout(() => t.classList.remove('show'), 2600);
     }
+    function applyNoFill() {
+      if (!G.selId) return;
+      const c = getComp(G.selId); if (!c) return;
+      c.style.backgroundColor = 'transparent';
+      c.style.opacity = '1';
+      const sw = document.getElementById('sw-fill'); if (sw) sw.style.background = 'transparent';
+      const pfh = document.getElementById('pfh'); if (pfh) pfh.value = '';
+      const pfo = document.getElementById('pfo'); if (pfo) pfo.value = '100';
+      const pop = document.getElementById('pop'); if (pop) pop.value = '100';
+      reRender(c);
+      pushH();
+      document.getElementById('CPOP').classList.remove('visible');
+      toast('No Fill applied');
+    }
+
     function toHex(c) {
       if (!c) return '#ffffff';
       if (c.startsWith('#')) { return c.length === 4 ? '#' + c[1] + c[1] + c[2] + c[2] + c[3] + c[3] : c.slice(0, 7); }
@@ -4974,8 +5078,11 @@
         ['TB','LP','RP'].forEach(function(id){ var el=document.getElementById(id); if(el) el.style.display='none'; });
       }
       if (msg.type === 'DESIGN_CMD') {
-        if (msg.cmd === 'undo') undo();
-        if (msg.cmd === 'redo' && G.histIdx < G.hist.length - 1) { G.histIdx++; restoreSnap(JSON.parse(G.hist[G.histIdx])); }
+        const cmd = (msg.cmd || '').toLowerCase();
+        if (cmd === 'undo') undo();
+        if (cmd === 'redo') {
+          if (G.histIdx < G.hist.length - 1) { G.histIdx++; restoreSnap(JSON.parse(G.hist[G.histIdx])); }
+        }
       }
       if (msg.type === 'DESIGN_REQUEST_SAVE') window.save();
 

@@ -80,7 +80,7 @@ public class PublicHolidayController {
                 publicHolidayRepository.findAll().stream()
                     .filter(h -> h.getHolidayDate().getYear() == y)
                     .sorted((a, b) -> a.getHolidayDate().compareTo(b.getHolidayDate()))
-                    .toList()
+                    .collect(java.util.stream.Collectors.toList())
             );
         }
 
