@@ -58,7 +58,9 @@ public class SecurityConfig {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowedOrigins(Arrays.asList(
                 "http://localhost:4200",
-                "http://localhost:8080"
+                "http://localhost:8080",
+                "https://asn.app-preview.xyz",
+                "https://api.app-preview.xyz"
         ));
         config.setAllowedMethods(Arrays.asList(
                 "GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"
