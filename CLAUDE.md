@@ -5145,3 +5145,74 @@ SELECT pay_period, status, COUNT(*) FROM salary_history GROUP BY pay_period, sta
 ## Stack
 Angular 21 + Spring Boot 2.7.18 + MySQL (asn_db)
 Deadline: May 18, 2026
+
+## 🚀 Production Server — Angular Deploy (IMPORTANT)
+
+### Server Info
+- URL: https://asn.app-preview.xyz
+- Tunnel: Cloudflare Tunnel → localhost:4200
+- Backend: Java Spring Boot → localhost:8080
+- OS: Ubuntu Linux
+
+### ⚠️ မသုံးရ vs သုံးရ
+| ❌ မသုံးရ | ✅ သုံးရ |
+|-----------|---------|
+| `ng serve` | `ng build` + `serve --single` |
+| `http-server --spa` | `serve --single` |
+
+---
+
+### Code ပြောင်းတိုင်း Deploy Flow
+
+```bash
+# Step 1 — Build
+cd ~/brycenhub/src/main/angular/frontend
+ng build --configuration production
+
+# Step 2 — Old process ရပ်
+pkill -f "ng serve"
+pkill -f "http-server"
+pkill -f "serve"
+sleep 2
+
+# Step 3 — SPA mode နဲ့ serve
+nohup serve ~/brycenhub/src/main/angular/frontend/dist/frontend/browser -p 4200 --single > ~/serve.log 2>&1 &
+
+# Step 4 — Check
+tail -5 ~/serve.log
+```
+
+---
+
+### စစ်ဆေးနည်း
+```bash
+# Running ဖြစ်နေလားစစ်
+ps aux | grep serve
+
+# Log ကြည့်
+tail -f ~/serve.log
+
+# Port စစ်
+sudo ss -tlnp | grep 4200
+```
+
+---
+
+### SPA Routing — /call route ပြဿနာ
+- Angular route တွေ (`/call`, `/design/:id` etc) server-side မသိ
+- `serve --single` flag သုံးမှ unknown path → `index.html` → Angular router handle လုပ်
+- `ng serve` မသုံးရ — dev only, production မဟုတ်
+
+---
+
+### Cloudflare Tunnel Config
+```yaml
+# ~/.cloudflared/config.yml
+tunnel: myapp
+ingress:
+  - hostname: asn.app-preview.xyz
+    service: http://localhost:4200
+  - hostname: api.app-preview.xyz
+    service: http://localhost:8080
+  - service: http_status:404
+```

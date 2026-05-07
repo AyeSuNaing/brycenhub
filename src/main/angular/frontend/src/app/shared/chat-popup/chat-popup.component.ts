@@ -8,6 +8,7 @@ import { ZegoService } from '../../services/zego.service';
 import { AuthService } from '../../services/auth.service';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
+import { CallNotificationService } from '../../services/call-notification.service';
 
 export interface ChatMember {
   id: number;
@@ -48,17 +49,21 @@ export class ChatPopupComponent implements OnInit, OnDestroy {
   newMessage = '';
   messages: ChatMessage[] = [];
 
+  get popupTitle(): string {
+    return this.isGroup ? (this.member.projectName || 'Group') : this.member.name;
+  }
+
   private currentUser: any = null;
   private roomID = '';
   private _pollTimer: any = null;
   private _lastMessageId = '';
 
-
   constructor(
     private zegoService: ZegoService,
     private authService: AuthService,
     private http: HttpClient,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private callNotifService: CallNotificationService,
   ) {}
 
   ngOnInit() {
@@ -164,7 +169,7 @@ export class ChatPopupComponent implements OnInit, OnDestroy {
     }
   }
 
-  // ✅ NEW TAB approach — black screen ပြဿနာ မရှိတော့ဘူး
+  // ✅ Send call invite to receiver BEFORE opening call tab
   startCall(mode: 'voice' | 'video') {
     const params = new URLSearchParams({
       roomId:   this.roomID,
@@ -175,6 +180,20 @@ export class ChatPopupComponent implements OnInit, OnDestroy {
       userId:   String(this.currentUser.id),
     });
 
+    // Send notification to receiver (direct call only)
+    if (!this.isGroup) {
+      this.callNotifService.sendCallInvite({
+        callerId:     Number(this.currentUser.id || this.currentUser.userId),
+        calleeId:     this.member.id,
+        roomId:       this.roomID,
+        mode:         mode,
+        callerName:   this.currentUser.name,
+        callerUserId: String(this.currentUser.id || this.currentUser.userId),
+        isGroup:      false,
+      });
+    }
+
+    // Open call tab
     window.open(`/call?${params.toString()}`, '_blank');
   }
 
@@ -224,44 +243,28 @@ export class ChatPopupComponent implements OnInit, OnDestroy {
     }).subscribe({
       next: (msgs) => {
         if (!msgs || msgs.length === 0) return;
-        const myId = this.currentUser?.id || this.currentUser?.userId;
-        const newMessages = msgs.map(m => ({
+        const lastId = String(msgs[msgs.length - 1].id);
+        if (lastId === this._lastMessageId) return;
+        this._lastMessageId = lastId;
+
+        this.messages = msgs.map(m => ({
           id: String(m.id),
           senderId: String(m.senderId),
           senderName: m.senderName || 'User',
           content: m.content,
           time: this.formatTime(m.createdAt),
-          isMine: Number(m.senderId) === Number(myId)
+          isMine: Number(m.senderId) === Number(this.currentUser.id || this.currentUser.userId)
         }));
-        // ✅ Message အသစ်တွေ ပေါင်းထည့် — existing IDs တွေ skip
-        const existingIds = new Set(this.messages.map(m => m.id));
-        const added = newMessages.filter(m => !existingIds.has(m.id));
-        if (added.length > 0) {
-          this.messages = [...this.messages, ...added];
-          this.cdr.detectChanges();
-          this.scrollToBottom();
-        }
+        this.cdr.detectChanges();
+        this.scrollToBottom();
       },
       error: () => {}
     });
   }
 
-  formatTime(isoString: string): string {
-    if (!isoString) return '';
-    try {
-      const d = new Date(isoString);
-      return d.toLocaleTimeString('en-US', {
-        hour: '2-digit', minute: '2-digit', hour12: false
-      });
-    } catch { return ''; }
+  formatTime(iso: string): string {
+    if (!iso) return '';
+    const d = new Date(iso);
+    return d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
   }
-
-  get popupTitle(): string {
-    return this.isGroup
-      ? (this.member.projectName || 'Group Chat')
-      : this.member.name;
-  }
-
-  // call မရှိတော့တာကြောင့် isInCall မလို — HTML compatibility အတွက်
-  get isInCall(): boolean { return false; }
 }

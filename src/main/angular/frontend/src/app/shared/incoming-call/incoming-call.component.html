@@ -1,0 +1,29 @@
+<div class="incoming-call-overlay" *ngIf="call">
+  <div class="incoming-call-card">
+
+    <!-- Pulse avatar -->
+    <div class="caller-avatar-wrap">
+      <div class="pulse-ring"></div>
+      <div class="caller-avatar">
+        {{ call.callerName.charAt(0).toUpperCase() }}
+      </div>
+    </div>
+
+    <!-- Info -->
+    <div class="caller-info">
+      <div class="call-label">
+        {{ call.mode === 'voice' ? '📞 Incoming Voice Call' : '📹 Incoming Video Call' }}
+      </div>
+      <div class="caller-name">{{ call.callerName }}</div>
+    </div>
+
+    <!-- Actions -->
+    <div class="call-actions">
+      <button class="btn-reject" (click)="reject()" title="Reject">✕</button>
+      <button class="btn-accept" (click)="accept()" title="Accept">
+        {{ call.mode === 'voice' ? '📞' : '📹' }}
+      </button>
+    </div>
+
+  </div>
+</div>
