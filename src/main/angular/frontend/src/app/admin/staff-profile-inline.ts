@@ -145,9 +145,9 @@ export class StaffProfileInline implements OnInit {
   }
 
   canViewCurrentWork(): boolean {
-    const staffRole = (this.staff?.roleName || this.staff?.role || '').toUpperCase();
-    return !['VICE_PRESIDENT', 'COUNTRY_DIRECTOR', 'BOSS', 'ADMIN'].includes(staffRole);
-  }
+  const loginRole = (this.auth.getUser()?.role || '').toUpperCase();
+  return !['ADMIN'].includes(loginRole);
+}
 
   canViewDangerZone(): boolean {
     return (this.auth.getUser()?.role || '') === 'ADMIN';
@@ -239,7 +239,7 @@ export class StaffProfileInline implements OnInit {
         next: d => {
           const list = d || [];
           this.salaryStructure = list.length > 0 ? {
-            currency: 'USD', baseSalary: list[0].baseSalary,
+            currency: list[0].currency || 'USD', baseSalary: list[0].baseSalary,
             otRatePerHour: list[0].otRatePerHour || 0,
             workingDaysPerMonth: list[0].workingDaysPerMonth || 26,
             effectiveDate: list[0].effectiveDate, note: list[0].note,

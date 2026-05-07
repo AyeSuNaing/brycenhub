@@ -36,16 +36,29 @@
           outline:none;transition:border-color 0.15s;box-sizing:border-box;"/>
     </div>
 
-    <!-- Department filter -->
-    <select [(ngModel)]="filterDept"
-      style="padding:8px 10px;border-radius:9px;font-size:11px;
-        border:1px solid var(--color-border);background:var(--input-bg);
-        color:var(--color-text);cursor:pointer;outline:none;">
-      <option value="">{{ lbl('All Departments') }}</option>
-      <option *ngFor="let d of departments" [value]="d.id">{{ d.name }}</option>
-    </select>
+    <!-- ══ BOSS: Branch filter (instead of Department) ══ -->
+    <ng-container *ngIf="isBoss">
+      <select [(ngModel)]="filterBranch"
+        style="padding:8px 10px;border-radius:9px;font-size:11px;
+          border:1px solid var(--color-border);background:var(--input-bg);
+          color:var(--color-text);cursor:pointer;outline:none;min-width:140px;">
+        <option value="">🌍 All Branches</option>
+        <option *ngFor="let b of availableBranches" [value]="b.id">{{ b.name }}</option>
+      </select>
+    </ng-container>
 
-    <!-- Role filter -->
+    <!-- ══ ADMIN/Others: Department filter ══ -->
+    <ng-container *ngIf="!isBoss">
+      <select [(ngModel)]="filterDept"
+        style="padding:8px 10px;border-radius:9px;font-size:11px;
+          border:1px solid var(--color-border);background:var(--input-bg);
+          color:var(--color-text);cursor:pointer;outline:none;">
+        <option value="">{{ lbl('All Departments') }}</option>
+        <option *ngFor="let d of departments" [value]="d.id">{{ d.name }}</option>
+      </select>
+    </ng-container>
+
+    <!-- Role filter (all roles) -->
     <select [(ngModel)]="filterRole"
       style="padding:8px 10px;border-radius:9px;font-size:11px;
         border:1px solid var(--color-border);background:var(--input-bg);
@@ -64,8 +77,8 @@
       <option value="inactive">{{ lbl('Inactive') }}</option>
     </select>
 
-    <!-- Add Staff -->
-    <button *ngIf="showAddBtn" class="btn-primary" (click)="addStaff.emit()"
+    <!-- Add Staff button (ADMIN only, not BOSS) -->
+    <button *ngIf="showAddBtn && !isBoss" class="btn-primary" (click)="addStaff.emit()"
       style="white-space:nowrap;padding:8px 16px;font-size:11px;">
       {{ lbl('Add Staff') }}
     </button>
@@ -81,7 +94,9 @@
           <tr>
             <th style="padding-left:16px;">{{ lbl('NAME') }}</th>
             <th>{{ lbl('ROLE') }}</th>
-            <th>{{ lbl('DEPARTMENT') }}</th>
+            <!-- BOSS: show Branch column instead of Department -->
+            <th *ngIf="isBoss">BRANCH</th>
+            <th *ngIf="!isBoss">{{ lbl('DEPARTMENT') }}</th>
             <th>{{ lbl('EMAIL') }}</th>
             <th>{{ lbl('PHONE') }}</th>
             <th>{{ lbl('Status') }}</th>
@@ -122,8 +137,14 @@
               </span>
             </td>
 
-            <!-- Department -->
-            <td style="font-size:11px;opacity:0.7;">{{ s.departmentName || '—' }}</td>
+            <!-- Branch (BOSS) or Department (others) -->
+            <td *ngIf="isBoss" style="font-size:11px;opacity:0.7;">
+              <span style="font-size:10px;padding:2px 7px;border-radius:10px;
+                background:rgba(99,102,241,0.1);color:#818cf8;">
+                {{ s.branchName || '—' }}
+              </span>
+            </td>
+            <td *ngIf="!isBoss" style="font-size:11px;opacity:0.7;">{{ s.departmentName || '—' }}</td>
 
             <!-- Email -->
             <td style="font-size:11px;opacity:0.7;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">

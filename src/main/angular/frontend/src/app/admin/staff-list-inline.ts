@@ -35,6 +35,26 @@ export class StaffListInline implements OnInit {
   filterDept   = '';
   filterRole   = '';
   filterStatus = '';
+  filterBranch = '';   // BOSS only — branch filter
+
+  // ── Role helpers ──
+  get userRole(): string {
+    return this.auth.getUser()?.role || '';
+  }
+  get isBoss(): boolean {
+    return this.userRole === 'BOSS';
+  }
+
+  // ── Unique branches from staffList (BOSS mode) ──
+  get availableBranches(): { id: number; name: string }[] {
+    const map = new Map<number, string>();
+    for (const s of this.staffList) {
+      if (s.branchId && s.branchName) map.set(s.branchId, s.branchName);
+    }
+    return Array.from(map.entries())
+      .map(([id, name]) => ({ id, name }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }
 
   constructor(
     private http: HttpClient,
@@ -53,37 +73,77 @@ export class StaffListInline implements OnInit {
     return getLabel(this.auth.getUser()?.preferredLanguage, key);
   }
 
+  // ── Load Staff: BOSS → all-staff, others → staff-list (my branch) ──
   loadStaff() {
     this.isLoading = true;
-    this.http.get<any[]>(`${BASE}/users/staff-list`, { headers: this.auth.getHeaders() })
+    const endpoint = this.isBoss
+      ? `${BASE}/users/all-staff`
+      : `${BASE}/users/staff-list`;
+
+    this.http.get<any[]>(endpoint, { headers: this.auth.getHeaders() })
       .subscribe({
-        next: list => { this.staffList = list; this.isLoading = false; this.cdr.detectChanges(); },
+        next: list => {
+          this.staffList = list || [];
+          this.isLoading = false;
+          this.cdr.detectChanges();
+        },
         error: () => { this.isLoading = false; }
       });
   }
 
+  // ── Load Departments: BOSS → no dept filter (branch filter instead), others → my-branch ──
   loadDepartments() {
+    if (this.isBoss) {
+      // BOSS uses branch filter instead — skip dept load
+      this.departments = [];
+      return;
+    }
     this.http.get<any[]>(`${BASE}/departments/my-branch`, { headers: this.auth.getHeaders() })
-      .subscribe({ next: list => { this.departments = list; this.cdr.detectChanges(); }, error: () => {} });
+      .subscribe({ next: list => { this.departments = list || []; this.cdr.detectChanges(); }, error: () => {} });
   }
 
   loadRoles() {
     this.http.get<any[]>(`${BASE}/user-roles`, { headers: this.auth.getHeaders() })
-      .subscribe({ next: list => { this.roles = list; this.cdr.detectChanges(); }, error: () => {} });
+      .subscribe({ next: list => { this.roles = list || []; this.cdr.detectChanges(); }, error: () => {} });
+  }
+
+  // ── Role sort order (VpDashboardController နဲ့ တူညီ) ──
+  private roleOrder(roleName: string): number {
+    switch ((roleName || '').toUpperCase()) {
+      case 'BOSS':             return 1;
+      case 'COUNTRY_DIRECTOR': return 2;
+      case 'VICE_PRESIDENT':   return 3;
+      case 'ADMIN':            return 4;
+      case 'PROJECT_MANAGER':  return 5;
+      case 'LEADER':           return 6;
+      case 'UI_UX':            return 7;
+      case 'DEVELOPER':        return 8;
+      case 'QA':               return 9;
+      default:                 return 99;
+    }
   }
 
   get filteredList(): any[] {
-    return this.staffList.filter(s => {
-      const matchSearch = !this.searchQuery ||
-        s.name?.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
-        s.email?.toLowerCase().includes(this.searchQuery.toLowerCase());
-      const matchDept   = !this.filterDept   || s.departmentId == this.filterDept;
-      const matchRole   = !this.filterRole   || s.roleId == this.filterRole;
-      const matchStatus = !this.filterStatus ||
-        (this.filterStatus === 'active'   &&  s.isActive) ||
-        (this.filterStatus === 'inactive' && !s.isActive);
-      return matchSearch && matchDept && matchRole && matchStatus;
-    });
+    return this.staffList
+      .filter(s => {
+        const matchSearch  = !this.searchQuery ||
+          s.name?.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
+          s.email?.toLowerCase().includes(this.searchQuery.toLowerCase());
+        const matchDept    = !this.filterDept   || s.departmentId == this.filterDept;
+        const matchRole    = !this.filterRole   || s.roleId == this.filterRole;
+        const matchStatus  = !this.filterStatus ||
+          (this.filterStatus === 'active'   &&  s.isActive) ||
+          (this.filterStatus === 'inactive' && !s.isActive);
+        const matchBranch  = !this.filterBranch || s.branchId == this.filterBranch;
+        return matchSearch && matchDept && matchRole && matchStatus && matchBranch;
+      })
+      .sort((a, b) => {
+        const ra = this.roleOrder(a.roleName);
+        const rb = this.roleOrder(b.roleName);
+        if (ra !== rb) return ra - rb;
+        // same role → name alphabetical
+        return (a.name || '').localeCompare(b.name || '');
+      });
   }
 
   getAvatarColor(name: string): string {

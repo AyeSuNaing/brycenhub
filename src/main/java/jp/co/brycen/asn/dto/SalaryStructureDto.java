@@ -67,6 +67,7 @@ public class SalaryStructureDto {
         private Long createdBy;
         private String createdByName;
         private LocalDateTime createdAt;
+        private String currency;
     }
 
     // ─────────────────────────────────────────────

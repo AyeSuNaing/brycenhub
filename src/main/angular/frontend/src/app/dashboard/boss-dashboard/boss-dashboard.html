@@ -188,7 +188,13 @@
       <app-announcement-inline    *ngIf="activeView==='announcements'"></app-announcement-inline>
       <app-branch-projects-inline *ngIf="activeView==='all-projects'" [hidePanel]="true" (back)="setView('dashboard')"></app-branch-projects-inline>
       <app-staff-list-inline      *ngIf="activeView==='members'" (viewProfile)="onViewProfile($event)" (addStaff)="setView('members')" (back)="setView('dashboard')"></app-staff-list-inline>
-      <app-staff-profile-inline   *ngIf="activeView==='member-profile'" [staffId]="$any(selectedStaffId)" (back)="setView('members')"></app-staff-profile-inline>
+      <app-staff-profile-inline 
+        *ngIf="activeView==='member-profile' && selectedStaffId"
+        [staffId]="selectedStaffId" 
+        (back)="setView('members')">
+      </app-staff-profile-inline>
+
+      <!-- <app-staff-profile-inline   *ngIf="activeView==='member-profile'" [staffId]="$any(selectedStaffId)" (back)="setView('members')"></app-staff-profile-inline> -->
       <app-holidays-inline        *ngIf="activeView==='holidays'"></app-holidays-inline>
       <app-tax-brackets-inline    *ngIf="activeView==='tax'"></app-tax-brackets-inline>
 

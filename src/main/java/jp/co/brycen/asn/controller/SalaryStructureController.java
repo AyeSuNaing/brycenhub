@@ -221,8 +221,9 @@ public class SalaryStructureController {
         }
 
         List<SalaryStructure> list = salaryRepo.findHistoryByUserId(userId);
-
-        Map<Long, String> nameCache = new HashMap<>();
+	     String currency = resolveCurrency(target.getBranchId());
+	     Map<Long, String> nameCache = new HashMap<>();
+	     
         List<SalaryStructureDto.HistoryItem> items = list.stream().map(s -> {
             SalaryStructureDto.HistoryItem it = new SalaryStructureDto.HistoryItem();
             it.setId(s.getId());
@@ -231,6 +232,7 @@ public class SalaryStructureController {
             it.setNote(s.getNote());
             it.setCreatedBy(s.getCreatedBy());
             it.setCreatedAt(s.getCreatedAt());
+            it.setCurrency(currency);
 
             if (s.getCreatedBy() != null) {
                 String cached = nameCache.get(s.getCreatedBy());

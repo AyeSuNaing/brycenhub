@@ -663,9 +663,10 @@ export class BossDashboard implements OnInit, OnDestroy {
     }
   }
 
-  onViewProfile(id: number) {
-    this.selectedStaffId = id;
+  onViewProfile(staff: any) {
+    this.selectedStaffId = staff?.id ?? staff;  // object or number နှစ်မျိုးလုံး handle
     this.setView('member-profile');
+    this.cdr.detectChanges();
   }
 
   signOut() {
