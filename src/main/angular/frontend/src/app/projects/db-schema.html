@@ -3,14 +3,14 @@
   <!-- TOPBAR -->
   <header class="erd-topbar">
     <div class="erd-top-left">
-      <div class="erd-logo-wrap"><span class="erd-logo-b">B</span></div>
+      <img class="logo-img" src="logo.jpg" alt="Brycen"/>
       <div>
         <div class="erd-logo-text">Brycen Hub</div>
         <div class="erd-logo-slogan">One Group. One Platform. Full Visibility.</div>
       </div>
     </div>
     <div class="erd-top-center">
-      <button class="erd-back-btn" (click)="goBack()">← Back to {{projectName}}</button>
+      <button class="erd-back-btn" (click)="goBack()">{{ lbl('kanbanBackTo') }}  {{projectName}}</button>
     </div>
     <div class="erd-top-right">
       <span>🗄️</span>

@@ -3,14 +3,14 @@
   <!-- TOPBAR -->
   <header class="swagger-topbar">
     <div class="swagger-top-left">
-      <div class="swagger-logo-wrap"><span class="swagger-logo-b">B</span></div>
+      <img class="logo-img" src="logo.jpg" alt="Brycen"/>
       <div>
         <div class="swagger-logo-text">Brycen Hub</div>
         <div class="swagger-logo-slogan">One Group. One Platform. Full Visibility.</div>
       </div>
     </div>
     <div class="swagger-top-center">
-      <button class="swagger-back-btn" (click)="goBack()">← Back to {{projectName}}</button>
+      <button class="swagger-back-btn" (click)="goBack()">{{ lbl('kanbanBackTo') }}  {{projectName}}</button>
     </div>
     <div class="swagger-top-right">
       <span>⚡</span>

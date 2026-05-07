@@ -8,6 +8,7 @@ import { HttpClient } from '@angular/common/http';
 import { AuthService } from '../services/auth.service';
 import { environment } from '../../environments/environment';
 import { NavigationStateService } from '../services/navigation-state.service';
+import { setupLabel, SetupI18nKey } from './i18n/setup.i18n';
 
 export interface DbTable {
   id: number;
@@ -75,6 +76,7 @@ export class DbSchemaComponent implements OnInit, AfterViewInit {
   tableNodes: TableNode[] = [];
   fkLines: FkLine[] = [];
 
+  currentLang: string = 'en';
   svgWidth  = 4000;
   svgHeight = 3000;
 
@@ -104,11 +106,16 @@ export class DbSchemaComponent implements OnInit, AfterViewInit {
   ngOnInit(): void {
     this.route.params.subscribe(params => {
       this.projectId = Number(params['projectId']);
+      this.currentLang = this.auth.getUser()?.preferredLanguage || 'en';
       this.loadProjectName();
       this.loadTables();
     });
   }
 
+  lbl(key: SetupI18nKey): string {
+    return setupLabel(this.currentLang, key);
+  }
+  
   ngAfterViewInit(): void {}
 
   private loadProjectName(): void {

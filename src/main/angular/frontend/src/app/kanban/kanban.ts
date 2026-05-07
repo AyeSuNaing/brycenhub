@@ -14,6 +14,8 @@ import { AuthService } from '../services/auth.service';
 import { environment } from '../../environments/environment';
 import { NavigationStateService } from '../services/navigation-state.service';
 
+// ── i18n ──
+import { setupLabel, SetupI18nKey } from '../projects/i18n/setup.i18n';
 
 const BASE = environment.apiBaseUrl;
 
@@ -77,7 +79,8 @@ export class Kanban implements OnInit {
   showLangMenu = false;
   currentLang = { code: 'en', display: 'EN', flag: '🇺🇸', name: 'English' };
 
-  columns = [
+  // ── columns — DB ကနေ load, default fallback ──
+  columns: { status: string; label: string; color: string; listId: string }[] = [
     { status: 'TODO',             label: 'Backlog',          color: '#6366f1', listId: 'col-0' },
     { status: 'IN_PROGRESS',      label: 'In Progress',      color: '#3b82f6', listId: 'col-1' },
     { status: 'IN_REVIEW',        label: 'In Review',        color: '#f59e0b', listId: 'col-2' },
@@ -89,7 +92,6 @@ export class Kanban implements OnInit {
     return this.columns.map(c => c.listId);
   }
 
-  // ✅ Column width — 5 ခုဆိုရင် full width equal divide, 5 ကျော်ရင် 260px + scroll
   get colWidth(): string {
     const n = this.columns.length;
     if (n <= 5) {
@@ -102,6 +104,7 @@ export class Kanban implements OnInit {
   get colMinWidth(): string {
     return this.columns.length <= 5 ? '160px' : '260px';
   }
+
   constructor(
     private http: HttpClient,
     private auth: AuthService,
@@ -131,6 +134,52 @@ export class Kanban implements OnInit {
     });
   }
 
+  // ── i18n helpers ──
+  lbl(key: SetupI18nKey): string {
+    return setupLabel(this.currentLang.code, key);
+  }
+
+  getColLabel(statusKey: string, fallbackName: string): string {
+    const map: Record<string, SetupI18nKey> = {
+      'TODO':             'colBacklog',
+      'IN_PROGRESS':      'colInProgress',
+      'IN_REVIEW':        'colInReview',
+      'PENDING_APPROVAL': 'colCustomerConfirm',
+      'DONE':             'colDone',
+    };
+    const key = map[statusKey];
+    return key ? this.lbl(key) : fallbackName;
+  }
+
+  // ── Load columns from DB ──
+  loadColumns() {
+    const h = { headers: this.auth.getHeaders() };
+    this.http.get<any[]>(`${BASE}/project-board-columns/by-project/${this.projectId}`, h).subscribe({
+      next: cols => {
+        if (cols && cols.length > 0) {
+          this.columns = cols.map((c, i) => ({
+            status: c.statusKey,
+            label:  this.getColLabel(c.statusKey, c.name),
+            color:  c.color || '#6366f1',
+            listId: `col-${i}`,
+          }));
+        }
+        // else — keep hardcoded defaults
+        this.cdr.detectChanges();
+      },
+      error: () => { /* keep hardcoded defaults */ }
+    });
+  }
+
+  // ── Refresh column labels when language changes ──
+  refreshColumnLabels() {
+    this.columns = this.columns.map((c, i) => ({
+      ...c,
+      label: this.getColLabel(c.status, c.label),
+      listId: `col-${i}`,
+    }));
+  }
+
   setLang(lang: any) {
     this.currentLang = lang;
     this.showLangMenu = false;
@@ -140,6 +189,10 @@ export class Kanban implements OnInit {
         if (user) { user.preferredLanguage = lang.code; localStorage.setItem('user', JSON.stringify(user)); }
       }
     });
+    // ── Refresh column labels for new lang ──
+    this.refreshColumnLabels();
+    this.cdr.detectChanges();
+
     if (lang.code === 'en') {
       this.tasks.forEach(t => { t.translatedTitle = ''; t.translatedDesc = ''; });
       this.cdr.detectChanges();
@@ -176,6 +229,8 @@ export class Kanban implements OnInit {
     this.http.get<any[]>(`${BASE}/sprints/by-project/${this.projectId}`, h).subscribe({
       next: s => { this.sprints = s; this.cdr.detectChanges(); }, error: () => {}
     });
+    // ── Load columns from DB ──
+    this.loadColumns();
   }
 
   async translateTasks(lang: string) {
@@ -197,7 +252,6 @@ export class Kanban implements OnInit {
     const task = event.item.data;
 
     if (event.previousContainer === event.container) {
-      // same column reorder
       moveItemInArray(
         this.getColumnTasksRef(targetStatus),
         event.previousIndex,
@@ -205,12 +259,8 @@ export class Kanban implements OnInit {
       );
       this.cdr.detectChanges();
     } else {
-      // cross-column move — status ပြောင်းပြီး UI refresh
       const prevStatus = task.status;
       task.status = targetStatus;
-
-      // transferArrayItem ကို မသုံးဘဲ status change ပဲ လုပ်
-      // getTasksByStatus() က computed ဖြစ်တာကြောင့် auto update ဖြစ်မယ်
       this.cdr.detectChanges();
 
       this.http.patch(
@@ -335,17 +385,12 @@ export class Kanban implements OnInit {
   getMemberInitial(userId: number): string { return this.getMemberName(userId)[0]?.toUpperCase() || '?'; }
   getMemberColor(userId: number): string { const c = ['#6366f1','#3b82f6','#22c55e','#f59e0b','#a855f7','#ec4899']; return c[userId % c.length]; }
 
-  // ═══════════════════════════════════════════════════
-  // Member display with role — for dropdown options
-  // "Phyo Naing Htun — Developer"
-  // ═══════════════════════════════════════════════════
   getMemberLabel(m: any): string {
     const name = m.userName || m.name || `User #${m.userId}`;
     const role = m.displayName || this.getRoleDisplayName(m.roleInProject) || '';
     return role ? `${name} — ${role}` : name;
   }
 
-  // Role code → display name
   getRoleDisplayName(role: string): string {
     if (!role) return '';
     const map: any = {
@@ -380,10 +425,9 @@ export class Kanban implements OnInit {
     const isPm = Number(this.project?.pmId) === Number(this.auth.getUser()?.userId);
     return projectOk || isPm;
   }
-  
+
   goBack(): void { history.back(); }
 
-  // ── TASK EDIT / DELETE ────────────────────────────
   openEditTask() {
     if (!this.selectedTask) return;
     this.taskEditForm = {
@@ -412,7 +456,6 @@ export class Kanban implements OnInit {
 
     this.http.put<any>(`${BASE}/tasks/${this.selectedTask.id}`, body, h).subscribe({
       next: updated => {
-        // Update local task
         const idx = this.tasks.findIndex(t => t.id === this.selectedTask.id);
         if (idx >= 0) {
           this.tasks[idx] = { ...this.tasks[idx], ...updated };
@@ -434,12 +477,10 @@ export class Kanban implements OnInit {
   deleteTask() {
     if (!this.selectedTask) return;
     const h = { headers: this.auth.getHeaders() };
-    // Soft delete — status = CANCELLED (ပြန်ရနိုင်)
     this.http.patch(`${BASE}/tasks/${this.selectedTask.id}/status`,
       { status: 'CANCELLED' }, h
     ).subscribe({
       next: () => {
-        // local array ကနေ ဖျက် (CANCELLED tasks ကို board မှာ မပြ)
         this.tasks = this.tasks.filter(t => t.id !== this.selectedTask.id);
         this.showDeleteConfirm = false;
         this.showPanel = false;

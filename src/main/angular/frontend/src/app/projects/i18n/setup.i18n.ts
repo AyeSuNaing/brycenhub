@@ -66,7 +66,12 @@ export type SetupI18nKey =
   // ── Project Inline — Right Sidebar ──
   | 'myTasksTitle' | 'noTasksAssigned'
   | 'groupChat' | 'teamMembersSidebar'
-  | 'onlineStatus' | 'offlineStatus';
+  | 'onlineStatus' | 'offlineStatus'
+  // ── Board Columns ──
+  | 'colBacklog' | 'colInProgress' | 'colInReview'
+  | 'colCustomerConfirm' | 'colDone'
+  // ── Kanban UI ──
+  | 'kanbanBackTo' | 'kanbanNewTask';
 
 export type SetupI18nLang = 'en' | 'my' | 'ja' | 'vi' | 'ko' | 'km';
 
@@ -238,6 +243,13 @@ export const SETUP_I18N: Record<SetupI18nLang, Record<SetupI18nKey, string>> = {
     teamMembersSidebar: 'Team Members',
     onlineStatus: 'Online',
     offlineStatus: 'Offline',
+    colBacklog: 'Backlog',
+    colInProgress: 'In Progress',
+    colInReview: 'In Review',
+    colCustomerConfirm: 'Customer Confirm',
+    colDone: 'Done',
+    kanbanBackTo: '← Back to',
+    kanbanNewTask: '+ New Task',
   },
 
   // ═══════════════════════════════════════════════════════════════
@@ -406,6 +418,13 @@ export const SETUP_I18N: Record<SetupI18nLang, Record<SetupI18nKey, string>> = {
     teamMembersSidebar: 'အဖွဲ့သားများ',
     onlineStatus: 'အွန်လိုင်း',
     offlineStatus: 'အော့ဖ်လိုင်း',
+    colBacklog: 'Backlog',
+    colInProgress: 'လုပ်ဆောင်နေ',
+    colInReview: 'စစ်ဆေးနေ',
+    colCustomerConfirm: 'ဖောက်သည်အတည်ပြု',
+    colDone: 'ပြီးပြီ',
+    kanbanBackTo: '← သို့',
+    kanbanNewTask: '+ တာဝန်အသစ်',
   },
 
   // ═══════════════════════════════════════════════════════════════
@@ -574,6 +593,13 @@ export const SETUP_I18N: Record<SetupI18nLang, Record<SetupI18nKey, string>> = {
     teamMembersSidebar: 'チームメンバー',
     onlineStatus: 'オンライン',
     offlineStatus: 'オフライン',
+    colBacklog: 'バックログ',
+    colInProgress: '進行中',
+    colInReview: 'レビュー中',
+    colCustomerConfirm: '顧客確認',
+    colDone: '完了',
+    kanbanBackTo: '← 戻る:',
+    kanbanNewTask: '＋ 新しいタスク',
   },
 
   // ═══════════════════════════════════════════════════════════════
@@ -742,6 +768,13 @@ export const SETUP_I18N: Record<SetupI18nLang, Record<SetupI18nKey, string>> = {
     teamMembersSidebar: 'សមាជិកក្រុម',
     onlineStatus: 'អនឡាញ',
     offlineStatus: 'គ្មានអ៊ីនធឺណិត',
+    colBacklog: 'Backlog',
+    colInProgress: 'កំពុងធ្វើ',
+    colInReview: 'កំពុងពិនិត្យ',
+    colCustomerConfirm: 'អតិថិជនបញ្ជាក់',
+    colDone: 'រួចរាល់',
+    kanbanBackTo: '← ត្រឡប់ទៅ',
+    kanbanNewTask: '+ កិច្ចការថ្មី',
   },
 
   // ═══════════════════════════════════════════════════════════════
@@ -910,6 +943,13 @@ export const SETUP_I18N: Record<SetupI18nLang, Record<SetupI18nKey, string>> = {
     teamMembersSidebar: 'Thành viên nhóm',
     onlineStatus: 'Trực tuyến',
     offlineStatus: 'Ngoại tuyến',
+    colBacklog: 'Backlog',
+    colInProgress: 'Đang làm',
+    colInReview: 'Đang xem xét',
+    colCustomerConfirm: 'Khách hàng xác nhận',
+    colDone: 'Hoàn thành',
+    kanbanBackTo: '← Quay lại',
+    kanbanNewTask: '+ Tác vụ mới',
   },
 
   // ═══════════════════════════════════════════════════════════════
@@ -1078,6 +1118,13 @@ export const SETUP_I18N: Record<SetupI18nLang, Record<SetupI18nKey, string>> = {
     teamMembersSidebar: '팀 멤버',
     onlineStatus: '온라인',
     offlineStatus: '오프라인',
+    colBacklog: '백로그',
+    colInProgress: '진행 중',
+    colInReview: '검토 중',
+    colCustomerConfirm: '고객 확인',
+    colDone: '완료',
+    kanbanBackTo: '← 돌아가기:',
+    kanbanNewTask: '+ 새 작업',
   },
 };
 

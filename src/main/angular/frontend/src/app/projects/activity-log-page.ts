@@ -8,6 +8,7 @@ import { catchError } from 'rxjs/operators';
 import { AuthService } from '../services/auth.service';
 import { environment } from '../../environments/environment';
 import { NavigationStateService } from '../services/navigation-state.service';
+import { setupLabel, SetupI18nKey } from './i18n/setup.i18n';
 
 const BASE = environment.apiBaseUrl;
 
@@ -26,7 +27,7 @@ export class ActivityLogPageComponent implements OnInit {
   tasks: any[] = [];
   activities: any[] = [];
   filteredActivities: any[] = [];
-
+  currentLang: string = 'en';
   isLoading = true;
   isDark = true;
 
@@ -66,13 +67,16 @@ export class ActivityLogPageComponent implements OnInit {
     // Detect theme from body class (set by parent/login) — don't force
     this.isDark = document.body.classList.contains('dark') ||
                   localStorage.getItem('brycen-theme') !== 'light';
-
+    this.currentLang = this.auth.getUser()?.preferredLanguage || 'en';
     this.route.params.subscribe(p => {
       this.projectId = +(p['projectId'] || p['id']);
       if (this.projectId) this.loadAll();
     });
   }
 
+  lbl(key: SetupI18nKey): string {
+    return setupLabel(this.currentLang, key);
+  }
   toggleTheme() {
     this.isDark = !this.isDark;
     document.body.classList.toggle('dark', this.isDark);

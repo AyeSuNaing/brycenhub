@@ -5,6 +5,7 @@ import { HttpClient } from '@angular/common/http';
 import { AuthService } from '../services/auth.service';
 import { environment } from '../../environments/environment';
 import { NavigationStateService } from '../services/navigation-state.service';
+import { setupLabel, SetupI18nKey } from './i18n/setup.i18n';
 
 interface ApiEndpoint {
   id: number;
@@ -38,6 +39,7 @@ export class ApiDocsComponent implements OnInit {
   selectedFrame = 'all';
   searchTerm = '';
 
+  currentLang: string = 'en';
   constructor(
     private route: ActivatedRoute,
     private router: Router,
@@ -49,10 +51,15 @@ export class ApiDocsComponent implements OnInit {
   ngOnInit(): void {
     this.route.params.subscribe(params => {
       this.projectId = Number(params['projectId']);
+      this.currentLang = this.auth.getUser()?.preferredLanguage || 'en';
       this.loadProjectName();
       this.loadEndpoints();
     });
   }
+
+    lbl(key: SetupI18nKey): string {
+      return setupLabel(this.currentLang, key);
+    }
 
   private loadProjectName(): void {
     this.http.get<any>(

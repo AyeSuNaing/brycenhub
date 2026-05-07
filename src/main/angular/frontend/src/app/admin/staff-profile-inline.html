@@ -16,7 +16,7 @@
           border:none;color:inherit;padding:0;"
         onmouseenter="this.style.opacity='1'"
         onmouseleave="this.style.opacity='0.45'">
-        {{ lbl('Back to Staff List') }}
+        {{ backLabel || lbl('Back to Staff List') }}
       </button>
       <span style="opacity:0.15;">|</span>
       <div style="font-size:15px;font-weight:700;">{{ lbl('Staff Profile') }}</div>

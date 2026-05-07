@@ -23,6 +23,7 @@ export class StaffProfileInline implements OnInit {
   @Input()  staffId!: number;
   @Output() back = new EventEmitter<void>();
   @Output() edit = new EventEmitter<any>();
+  @Input()  backLabel: string = '';
 
   staff:    any   = null;
   profile:  any   = null;

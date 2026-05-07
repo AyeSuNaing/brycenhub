@@ -94,29 +94,29 @@
           </div>
           <div class="profile-name">{{ currentUser?.name }}</div>
           <div class="role-badge">{{ currentUser?.role }}</div>
-          <div class="member-badge">⭐ Brycen Member</div>
+          <div class="member-badge">⭐ {{ branchName || 'Brycen Member' }}</div>
         </div>
 
         <div style="height:6px"></div>
 
         <div class="sidebar-nav-wrap">
           <!-- Dashboard -->
-          <div class="sidebar-item" [class.active]="activeView==='dashboard'" (click)="setView('dashboard')">
+          <div class="sidebar-item" [class.active]="activeView==='dashboard'" (click)="closeProject();setView('dashboard')">
             <span class="nav-icon">📊</span>
             <span>{{ lbl('Dashboard') }}</span>
           </div>
           <!-- Announcements -->
-          <div class="sidebar-item" [class.active]="activeView==='announce'" (click)="setView('announce')">
+          <div class="sidebar-item" [class.active]="activeView==='announce'" (click)="closeProject();setView('announce')">
             <span class="nav-icon">📢</span>
             <span>{{ lbl('Announcements') }}</span>
           </div>
           <!-- Leave Request -->
-          <div class="sidebar-item" [class.active]="activeView==='leave'" (click)="setView('leave')">
+          <div class="sidebar-item" [class.active]="activeView==='leave'" (click)="closeProject();setView('leave')">
             <span class="nav-icon">🏖</span>
             <span>{{ lbl('Leave Request') }}</span>
           </div>
           <!-- OT Request -->
-          <div class="sidebar-item" [class.active]="activeView==='ot'" (click)="setView('ot')">
+          <div class="sidebar-item" [class.active]="activeView==='ot'" (click)="closeProject();setView('ot')">
             <span class="nav-icon">⏰</span>
             <span>{{ lbl('OT Request') }}</span>
           </div>
@@ -168,19 +168,19 @@
       <div class="sidebar-bottom">
         <div class="settings-wrap">
           <div *ngIf="settingsOpen" class="settings-submenu">
-            <div class="sub-item" style="cursor:pointer;" (click)="openMyProfile()">
+            <div class="sub-item" style="cursor:pointer;" (click)="closeProject();openMyProfile()">
               <span>👤</span><span>{{ lbl('Profile') }}</span>
             </div>
             <div class="sub-item" style="cursor:pointer;"
-              (click)="setView('change-password');settingsOpen=false">
+              (click)="closeProject();setView('change-password');settingsOpen=false">
               <span>🔒</span><span>{{ lbl('Change Password') }}</span>
             </div>
             <div class="sub-item" style="cursor:pointer;"
-              (click)="setView('holidays');settingsOpen=false">
+              (click)="closeProject();setView('holidays');settingsOpen=false">
               <span>🗓️</span><span>{{ lbl('Public Holidays') }}</span>
             </div>
             <div class="sub-item" style="cursor:pointer;"
-              (click)="setView('tax');settingsOpen=false">
+              (click)="closeProject();setView('tax');settingsOpen=false">
               <span>🌏</span><span>{{ lbl('Tax Brackets') }}</span>
             </div>
             <div class="sub-item signout-item" (click)="signOut()">
@@ -237,11 +237,14 @@
     </app-member-attendance-inline>
 
     <!-- My Profile -->
+
     <app-staff-profile-inline *ngIf="activeView==='my-profile' && selectedStaffId > 0"
       [staffId]="selectedStaffId"
+      [backLabel]="lbl('Back')"
       (back)="setView('dashboard')">
     </app-staff-profile-inline>
 
+    
     <!-- Public Holidays -->
     <app-holidays-inline *ngIf="activeView==='holidays'"
       (back)="setView('dashboard')">

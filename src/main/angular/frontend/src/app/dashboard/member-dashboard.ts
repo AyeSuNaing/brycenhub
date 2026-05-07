@@ -96,6 +96,7 @@ export class MemberDashboard implements OnInit, AfterViewInit, OnDestroy {
   private _unreadPollTimer: any = null;
 
   selectedStaffId = 0; // ✅ NEW — for own profile view
+  branchName = '';
 
   // ✅ i18n
   lbl(key: AppLabelKey): string {
@@ -193,6 +194,7 @@ export class MemberDashboard implements OnInit, AfterViewInit, OnDestroy {
       localStorage.removeItem('brycen-active-view');
     }
 
+    this.loadBranchName();
     this.loadAll();
     this.startUnreadPolling();
   }
@@ -211,6 +213,17 @@ export class MemberDashboard implements OnInit, AfterViewInit, OnDestroy {
   ngOnDestroy() {
     this.stopUnreadPolling();
   }
+
+  loadBranchName() {
+  const branchId = this.currentUser?.branchId;
+  if (!branchId) return;
+  const h = { headers: this.authService.getHeaders() };
+  this.http.get<any>(`${BASE}/branches/${branchId}`, h).subscribe({
+    next: b => { this.branchName = b?.name || 'Brycen Member'; this.cdr.detectChanges(); },
+    error: () => {}
+  });
+}
+
 
   loadAll() {
     this.dataService.getStats().subscribe({
@@ -356,6 +369,7 @@ export class MemberDashboard implements OnInit, AfterViewInit, OnDestroy {
   getBarMaxVal(): number { return Math.max(...this.chartData.map(d => d.done + d.inProgress + d.todo)); }
 
   openProject(id: number) {
+    this.activeView = 'dashboard';
     this.router.navigate(['/dashboard/member'], { queryParams: { projectId: id } });
   }
   closeProject() {

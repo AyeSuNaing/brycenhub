@@ -43,7 +43,7 @@ const MAX_FIX_ATTEMPTS = 5;
 export class ProjectInlineComponent implements OnInit, OnChanges {
 
   @Input() projectId!: number;
-  @Input() hidePanel = false;   // ✅ VP/CD/BOSS → true, Member → false
+  @Input() hidePanel = false;
   @Output() close = new EventEmitter<void>();
 
   project: any = null;
@@ -153,7 +153,6 @@ export class ProjectInlineComponent implements OnInit, OnChanges {
   gitCommitsErrorCode = '';
   gitRepoInfo: { owner?: string; repo?: string; repoUrl?: string; count?: number } = {};
 
-  // Repo edit form
   showRepoEdit = false;
   repoForm = {
     repoUrl: '',
@@ -170,12 +169,12 @@ export class ProjectInlineComponent implements OnInit, OnChanges {
   designFramesLoading = false;
   designVersion: number | null = null;
 
-  boardColumns = [
-    { label: 'Backlog', status: 'TODO', color: '#6366f1' },
-    { label: 'In Progress', status: 'IN_PROGRESS', color: '#3b82f6' },
-    { label: 'In Review', status: 'IN_REVIEW', color: '#f59e0b' },
+  boardColumns: { label: string; status: string; color: string }[] = [
+    { label: 'Backlog',          status: 'TODO',             color: '#6366f1' },
+    { label: 'In Progress',      status: 'IN_PROGRESS',      color: '#3b82f6' },
+    { label: 'In Review',        status: 'IN_REVIEW',        color: '#f59e0b' },
     { label: 'Customer Confirm', status: 'PENDING_APPROVAL', color: '#a855f7' },
-    { label: 'Done', status: 'DONE', color: '#22c55e' },
+    { label: 'Done',             status: 'DONE',             color: '#22c55e' },
   ];
 
   currentLang: string = 'en';
@@ -197,17 +196,15 @@ export class ProjectInlineComponent implements OnInit, OnChanges {
   ) { }
 
   ngOnInit() {
-    // Theme detection — body class first, then localStorage, default dark
     if (document.body.classList.contains('light')) {
       this.isDark = false;
     } else if (document.body.classList.contains('dark')) {
       this.isDark = true;
     } else {
       const saved = localStorage.getItem('brycen-theme');
-      this.isDark = saved !== 'light';  // default to dark
+      this.isDark = saved !== 'light';
     }
 
-    // Watch for theme changes from parent dashboard
     this.themeObserver = new MutationObserver(() => {
       const nowDark = document.body.classList.contains('dark') ||
                      !document.body.classList.contains('light');
@@ -249,6 +246,13 @@ export class ProjectInlineComponent implements OnInit, OnChanges {
     this.designFrames = [];
     this.designFramesCount = 0;
     this.designVersion = null;
+    this.boardColumns = [
+      { label: 'Backlog',          status: 'TODO',             color: '#6366f1' },
+      { label: 'In Progress',      status: 'IN_PROGRESS',      color: '#3b82f6' },
+      { label: 'In Review',        status: 'IN_REVIEW',        color: '#f59e0b' },
+      { label: 'Customer Confirm', status: 'PENDING_APPROVAL', color: '#a855f7' },
+      { label: 'Done',             status: 'DONE',             color: '#22c55e' },
+    ];
     this.isLoading = true;
     this.showEdit = false; this.showDangerZone = false;
     this.activeTab = 'overview';
@@ -259,6 +263,37 @@ export class ProjectInlineComponent implements OnInit, OnChanges {
   // ── i18n helpers ──
   lbl(key: SetupI18nKey): string {
     return setupLabel(this.currentLang, key);
+  }
+
+  // ── Board column label — DB name fallback for custom columns ──
+  getColLabel(statusKey: string, fallbackName: string): string {
+    const map: Record<string, SetupI18nKey> = {
+      'TODO':             'colBacklog',
+      'IN_PROGRESS':      'colInProgress',
+      'IN_REVIEW':        'colInReview',
+      'PENDING_APPROVAL': 'colCustomerConfirm',
+      'DONE':             'colDone',
+    };
+    const key = map[statusKey];
+    return key ? this.lbl(key) : fallbackName;
+  }
+
+  loadBoardColumns(projectId: number) {
+    const h = { headers: this.auth.getHeaders() };
+    this.http.get<any[]>(`${BASE}/project-board-columns/by-project/${projectId}`, h).subscribe({
+      next: cols => {
+        if (cols && cols.length > 0) {
+          this.boardColumns = cols.map(c => ({
+            label:  this.getColLabel(c.statusKey, c.name),
+            status: c.statusKey,
+            color:  c.color || '#6366f1',
+          }));
+        }
+        // else — keep hardcoded defaults
+        this.cdr.detectChanges();
+      },
+      error: () => { /* keep hardcoded defaults */ }
+    });
   }
 
   // ── Typed tabs — avoids 'string not assignable to SetupI18nKey' in template ──
@@ -305,7 +340,7 @@ export class ProjectInlineComponent implements OnInit, OnChanges {
 
   async switchLang(lang: string): Promise<void> {
     this.currentLang = lang;
- 
+
     if (lang === 'en' || !this.project) {
       this.translatedTitle = '';
       this.translatedDesc  = '';
@@ -314,15 +349,12 @@ export class ProjectInlineComponent implements OnInit, OnChanges {
       this.cdr.detectChanges();
       return;
     }
- 
-    // Loading START — isLoading ကို parent (loadAll) က ကိုင်ထားတယ်
-    // switchLang ကို manual ခေါ်ရင်တော့ isTranslating သုံး
+
     this.isTranslating = true;
     this.cdr.detectChanges();
- 
+
     const h = { headers: this.auth.getHeaders() };
- 
-    // Project + Tasks တပြိုင်နက် ဆင်း
+
     const projectT$ = this.http
       .get<any>(`${BASE}/translations/project/${this.project.id}?lang=${lang}`, h)
       .toPromise()
@@ -334,12 +366,11 @@ export class ProjectInlineComponent implements OnInit, OnChanges {
         this.translatedTitle = '';
         this.translatedDesc  = '';
       });
- 
+
     const tasksT$ = this.translateTasks(lang);
- 
-    // ✅ ၂ ခုလုံး ပြီးမှ loading ဖြုတ်
+
     await Promise.all([projectT$, tasksT$]);
- 
+
     this.isTranslating = false;
     this.cdr.detectChanges();
   }
@@ -364,45 +395,41 @@ export class ProjectInlineComponent implements OnInit, OnChanges {
         this.apiEndpoints = res.apis     || [];
         this.dbTables     = res.dbTables || [];
         this.activities   = this.enrichActivities(res.activities || [], this.members);
- 
+
         const userLang = this.auth.getUser()?.preferredLanguage || 'en';
- 
+
         if (this.pendingLang) {
-          // pendingLang ရှိရင် — translate အကုန်ပြီးမှ isLoading=false
           await this.switchLang(this.pendingLang);
           this.pendingLang = '';
           this.isLoading = false;
           this.cdr.detectChanges();
- 
+
         } else if (userLang !== 'en') {
-          // ✅ KEY FIX: user language != en ဆိုရင်
-          // translate အကုန်ပြီးမှ isLoading=false ချ → English flash မဖြစ်
           this.currentLang = userLang;
           await this.switchLang(userLang);
           this.isLoading = false;
           this.cdr.detectChanges();
- 
+
         } else {
-          // English — ချက်ချင်း ပြ
           this.isLoading = false;
           this.cdr.detectChanges();
         }
       },
       error: () => { this.isLoading = false; this.cdr.detectChanges(); }
     });
- 
+
     this.loadTechStackAndRules(id);
     this.loadRemovedMembers(id);
     this.loadSetupGuide(id);
     this.loadGitCommits(id);
     this.loadDesignPreview(id);
+    this.loadBoardColumns(id);
   }
 
   async translateTasks(lang: string): Promise<void> {
     if (!this.tasks.length) return;
     const h = { headers: this.auth.getHeaders() };
- 
-    // Parallel — sequential loop မဟုတ်ဘူး (fast)
+
     await Promise.all(
       this.tasks.map(async t => {
         try {
@@ -417,10 +444,9 @@ export class ProjectInlineComponent implements OnInit, OnChanges {
         }
       })
     );
- 
+
     this.cdr.detectChanges();
   }
- 
 
   loadTechStackAndRules(id: number) {
     const h = { headers: this.auth.getHeaders() };
@@ -696,7 +722,7 @@ export class ProjectInlineComponent implements OnInit, OnChanges {
   }
 
   // ══════════════════════════════════════════════════════════════════
-  // ERROR FIX — Iterative
+  // ERROR FIX
   // ══════════════════════════════════════════════════════════════════
 
   getErrorFix(stepIndex: number) {
@@ -925,23 +951,17 @@ export class ProjectInlineComponent implements OnInit, OnChanges {
   }
 
   canAccessSetup(): boolean {
-    // const r = this.getRole();
-    // return ['BOSS', 'VICE_PRESIDENT', 'COUNTRY_DIRECTOR', 'PROJECT_MANAGER'].includes(r);
     return true;
   }
 
-  // ─── Scope lock: Information + Tech Stack edit ───
-  // Tasks ရှိပြီးရင် project scope/tech stack ပြင်လို့ မရတော့ (business rule)
-  // Members, Rules, Setup, Git တို့တော့ ဆက်ပြင်လို့ရ
   canEditScope(): boolean {
     if (!this.canEdit()) return false;
-    // Exclude CANCELLED tasks — those don't count as "active work"
     const activeTasks = (this.tasks || []).filter(t => t.status !== 'CANCELLED');
     return activeTasks.length === 0;
   }
 
   isScopeLocked(): boolean {
-    if (!this.canEdit()) return false;  // not shown for non-editors
+    if (!this.canEdit()) return false;
     const activeTasks = (this.tasks || []).filter(t => t.status !== 'CANCELLED');
     return activeTasks.length > 0;
   }
@@ -956,13 +976,12 @@ export class ProjectInlineComponent implements OnInit, OnChanges {
   // ══════════════════════════════════════════════════════════════════
 
   get statsCards() {
-    // Compute live from local tasks (exclude CANCELLED from total)
     const activeTasks = this.tasks.filter(t => t.status !== 'CANCELLED');
-    const total = activeTasks.length;
-    const completed = activeTasks.filter(t => t.status === 'DONE').length;
+    const total      = activeTasks.length;
+    const completed  = activeTasks.filter(t => t.status === 'DONE').length;
     const inProgress = activeTasks.filter(t => t.status === 'IN_PROGRESS').length;
-    const now = new Date();
-    const overdue = activeTasks.filter(t =>
+    const now        = new Date();
+    const overdue    = activeTasks.filter(t =>
       t.dueDate && t.status !== 'DONE' && new Date(t.dueDate) < now
     ).length;
 
@@ -990,9 +1009,6 @@ export class ProjectInlineComponent implements OnInit, OnChanges {
   get inProgressCount(): number { return this.tasks.filter(t => t.status === 'IN_PROGRESS').length; }
   getTasksByStatus(status: string): any[] { return this.tasks.filter(t => t.status === status); }
 
-  // ═══════════════════════════════════════════════════
-  // Board Preview — mini task cards helpers
-  // ═══════════════════════════════════════════════════
   getTopTasksByStatus(status: string, limit: number = 2): any[] {
     const priorityOrder: any = { CRITICAL: 0, HIGH: 1, MEDIUM: 2, LOW: 3 };
     return this.tasks
@@ -1001,7 +1017,6 @@ export class ProjectInlineComponent implements OnInit, OnChanges {
         const pa = priorityOrder[a.priority] ?? 99;
         const pb = priorityOrder[b.priority] ?? 99;
         if (pa !== pb) return pa - pb;
-        // Same priority — sort by due date (soonest first)
         if (a.dueDate && b.dueDate) return a.dueDate.localeCompare(b.dueDate);
         if (a.dueDate) return -1;
         if (b.dueDate) return 1;
@@ -1027,7 +1042,6 @@ export class ProjectInlineComponent implements OnInit, OnChanges {
     return colors[Number(userId) % colors.length];
   }
 
-  // ⭐ NEW: Get full member name for tooltip (userId → name)
   getMemberName(userId: number): string {
     if (!userId) return 'Unassigned';
     const m = this.members.find(mem => Number(mem.userId) === Number(userId));
@@ -1042,12 +1056,7 @@ export class ProjectInlineComponent implements OnInit, OnChanges {
   }
 
   getTaskPriorityColor(priority: string): string {
-    const map: any = {
-      CRITICAL: '#dc2626',
-      HIGH: '#ef4444',
-      MEDIUM: '#f59e0b',
-      LOW: '#64748b',
-    };
+    const map: any = { CRITICAL: '#dc2626', HIGH: '#ef4444', MEDIUM: '#f59e0b', LOW: '#64748b' };
     return map[priority] || '#64748b';
   }
 
@@ -1139,44 +1148,28 @@ export class ProjectInlineComponent implements OnInit, OnChanges {
 
   getActionText(action: string): string {
     const m: any = {
-      TASK_CREATED: 'created a task',
-      TASK_MOVED: 'moved a task',
-      TASK_ASSIGNED: 'assigned a task',
-      TASK_UPDATED: 'updated a task',
-      TASK_DELETED: 'deleted a task',
-      COMMENT_ADDED: 'added a comment',
-      COMMENTED: 'commented on a task',
-      FILE_UPLOADED: 'uploaded a file',
-      MEMBER_ADDED: 'added a member',
-      MEMBER_REMOVED: 'removed a member',
-      PROJECT_CREATED: 'created the project',
-      PROJECT_UPDATED: 'updated the project',
+      TASK_CREATED: 'created a task', TASK_MOVED: 'moved a task',
+      TASK_ASSIGNED: 'assigned a task', TASK_UPDATED: 'updated a task',
+      TASK_DELETED: 'deleted a task', COMMENT_ADDED: 'added a comment',
+      COMMENTED: 'commented on a task', FILE_UPLOADED: 'uploaded a file',
+      MEMBER_ADDED: 'added a member', MEMBER_REMOVED: 'removed a member',
+      PROJECT_CREATED: 'created the project', PROJECT_UPDATED: 'updated the project',
       STATUS_CHANGED: 'changed status',
     };
     return m[action] || action.replace(/_/g, ' ').toLowerCase();
   }
 
-  // Enrich activities with userName / initial / task title
   private enrichActivities(acts: any[], members: any[]): any[] {
     if (!acts || !acts.length) return [];
     return acts.map(a => {
-      // find member by userId
       const m = members.find(x => (x.userId || x.id) === a.userId);
       const userName = m?.userName || m?.name || 'User';
-
-      // find task title by target_id (if target_type === 'TASK')
       let targetName = '';
       if (a.targetType === 'TASK' && a.targetId) {
         const task = this.tasks.find(t => t.id === a.targetId);
         targetName = task?.title || `Task #${a.targetId}`;
       }
-
-      return {
-        ...a,
-        userName: userName,
-        userInitial: (userName || 'U')[0].toUpperCase(),
-        targetName: targetName,
-      };
+      return { ...a, userName, userInitial: (userName || 'U')[0].toUpperCase(), targetName };
     });
   }
 
@@ -1194,17 +1187,17 @@ export class ProjectInlineComponent implements OnInit, OnChanges {
     } catch { }
     return columnsStr.split(',').slice(0, 4).map(part => {
       const trimmed = part.trim();
-      const tokens = trimmed.split(/\s+/);
-      const name = tokens[0] || '';
-      const isPk = name === 'id' || trimmed.toUpperCase().includes('PK');
+      const tokens  = trimmed.split(/\s+/);
+      const name    = tokens[0] || '';
+      const isPk    = name === 'id' || trimmed.toUpperCase().includes('PK');
       return isPk ? `🔑 ${name}` : name;
     });
   }
 
   // ══════════════════════════════════════════════════════════════════
-  // CHAT
+  // NAVIGATION
   // ══════════════════════════════════════════════════════════════════
-  // ✅ Save project state then navigate — back button restores project inline
+
   private saveAndNavigate(route: any[]): void {
     const role = this.auth.getUser()?.role || '';
     let dashboard: string;
@@ -1219,11 +1212,12 @@ export class ProjectInlineComponent implements OnInit, OnChanges {
     this.router.navigate(route);
   }
 
-  openBoard(): void     { this.saveAndNavigate(['/kanban',   this.projectId]); }
-  openDesign(): void    { this.saveAndNavigate(['/design',   this.projectId]); }
-  openApiDocs(): void   { this.saveAndNavigate(['/projects', this.projectId, 'api-docs']); }
-  openDbSchema(): void  { this.saveAndNavigate(['/projects', this.projectId, 'db-schema']); }
-  openActivity(): void  { this.saveAndNavigate(['/projects', this.projectId, 'activity']); }
+  openBoard(): void    { this.saveAndNavigate(['/kanban',   this.projectId]); }
+  openDesign(): void   { this.saveAndNavigate(['/design',   this.projectId]); }
+  openApiDocs(): void  { this.saveAndNavigate(['/projects', this.projectId, 'api-docs']); }
+  openDbSchema(): void { this.saveAndNavigate(['/projects', this.projectId, 'db-schema']); }
+  openActivity(): void { this.saveAndNavigate(['/projects', this.projectId, 'activity']); }
+
   openMemberChat(m: any) {
     this.selectedChatMember = {
       id: m.userId || m.id,
@@ -1265,7 +1259,6 @@ export class ProjectInlineComponent implements OnInit, OnChanges {
     });
   }
 
-
   deleteTechStack(id: number) {
     if (!id) return;
     const h = { headers: this.auth.getHeaders() };
@@ -1283,10 +1276,8 @@ export class ProjectInlineComponent implements OnInit, OnChanges {
     if (this.staffList.length > 0) { this.filterStaff(); return; }
     this.staffListLoading = true;
     const h = { headers: this.auth.getHeaders() };
-    // Use /all-staff for company-wide list (cross-branch)
     this.http.get<any[]>(`${BASE}/users/all-staff`, h).subscribe({
       next: users => {
-        // Only exclude CUSTOMER — allow all other roles (BOSS, DIRECTOR, ADMIN can be project members too)
         const exclude = ['CUSTOMER'];
         const myId = this.auth.getUser()?.id || this.auth.getUser()?.userId;
         this.staffList = (users || []).filter(u => {
@@ -1311,42 +1302,29 @@ export class ProjectInlineComponent implements OnInit, OnChanges {
       this.cdr.detectChanges();
       return;
     }
-
-    // Build multiple searchable role variants for each staff
     this.filteredStaff = this.staffList.filter(s => {
-      const rawRole = s.roleDto?.name || s.roleName || s.role || '';
+      const rawRole     = s.roleDto?.name || s.roleName || s.role || '';
       const displayRole = this.getRoleDisplayName(rawRole);
-
-      // Normalize: "UI_UX" → ["ui_ux", "ui/ux", "ui ux", "uiux", "ui/ux designer"]
-      const variants = [
-        rawRole.toLowerCase(),                    // "ui_ux"
-        rawRole.toLowerCase().replace(/_/g, '/'), // "ui/ux"
-        rawRole.toLowerCase().replace(/_/g, ' '), // "ui ux"
-        rawRole.toLowerCase().replace(/_/g, ''),  // "uiux"
-        displayRole.toLowerCase(),                // "ui/ux designer"
+      const variants    = [
+        rawRole.toLowerCase(),
+        rawRole.toLowerCase().replace(/_/g, '/'),
+        rawRole.toLowerCase().replace(/_/g, ' '),
+        rawRole.toLowerCase().replace(/_/g, ''),
+        displayRole.toLowerCase(),
       ];
-
       const name  = (s.name  || '').toLowerCase();
-      const email = (s.email || '').toLowerCase(); // ✅ email ထည့်
-
+      const email = (s.email || '').toLowerCase();
       return name.includes(q) || email.includes(q) || variants.some(v => v.includes(q));
     });
     this.cdr.detectChanges();
   }
 
-  // Helper — role code ကို display name ပြောင်းပေးတဲ့ method
   getRoleDisplayName(role: string): string {
     const map: any = {
-      PROJECT_MANAGER: 'Project Manager',
-      LEADER: 'Leader',
-      UI_UX: 'UI/UX Designer',
-      DEVELOPER: 'Developer',
-      QA: 'QA Engineer',
-      VICE_PRESIDENT: 'Vice President',
-      COUNTRY_DIRECTOR: 'Country Director',
-      ADMIN: 'Admin',
-      BOSS: 'CEO',
-      CUSTOMER: 'Customer',
+      PROJECT_MANAGER: 'Project Manager', LEADER: 'Leader',
+      UI_UX: 'UI/UX Designer', DEVELOPER: 'Developer', QA: 'QA Engineer',
+      VICE_PRESIDENT: 'Vice President', COUNTRY_DIRECTOR: 'Country Director',
+      ADMIN: 'Admin', BOSS: 'CEO', CUSTOMER: 'Customer',
     };
     return map[role] || role || '';
   }
@@ -1511,8 +1489,6 @@ export class ProjectInlineComponent implements OnInit, OnChanges {
     return this.members.filter(m => m.roleInProject !== 'ADMIN').length;
   }
 
-  // ─── Split into Management (VP + Director) vs Team Members ───
-  // Admin is excluded from both — HR role, not project-related
   hasManagementMembers(): boolean {
     return this.members.some(m =>
       m.roleInProject === 'COUNTRY_DIRECTOR' ||
@@ -1538,5 +1514,4 @@ export class ProjectInlineComponent implements OnInit, OnChanges {
   ngOnDestroy() {
     this.themeObserver?.disconnect();
   }
-
 }
