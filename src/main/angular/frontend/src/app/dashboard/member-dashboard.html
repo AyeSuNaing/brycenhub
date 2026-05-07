@@ -124,7 +124,7 @@
           <div class="sidebar-item" [class.active]="activeView==='attendance'"
             (click)="closeProject(); setView('attendance')">
             <span class="nav-icon">📋</span>
-            <span>Attendance Log</span>
+            <span>{{ lbl('Attendance Log') }} </span>
           </div>
           <!-- New Project -->
           <div *ngIf="canCreateProject()" (click)="openNewProject()"

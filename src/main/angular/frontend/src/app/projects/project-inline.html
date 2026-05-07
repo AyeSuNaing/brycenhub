@@ -32,7 +32,7 @@
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px;">
       <button (click)="close.emit()" style="display:flex;align-items:center;gap:5px;font-size:11px;opacity:0.5;cursor:pointer;background:none;border:none;color:inherit;transition:opacity 0.15s;padding:0;"
         onmouseenter="this.style.opacity='1'" onmouseleave="this.style.opacity='0.5'">
-        ← Back to Dashboard
+        {{ lbl('backToDashboard') }}
       </button>
       <span style="opacity:0.2;">|</span>
       <span style="font-size:13px;font-weight:700;">{{ project.title }}</span>
@@ -50,23 +50,15 @@
       </div>
     </div>
 
-    <!-- ══ TABS (7 tabs: Overview, Info, Tech Stack, Members, Rules, Setup, Git) ══ -->
+    <!-- ══ TABS ══ -->
     <div style="display:flex;gap:0;border-bottom:1px solid var(--color-border,#1e2d4a);flex-shrink:0;margin-bottom:14px;overflow-x:auto;">
-      <ng-container *ngFor="let tab of [
-            {id:'overview',    label:'📊 Overview',    show: canAccessSetup()},
-            {id:'information', label:'📋 Information', show: canAccessSetup()},
-            {id:'techstack',   label:'🛠 Tech Stack',   show: canAccessSetup()},
-            {id:'members',     label:'👥 Members',     show: canAccessSetup()},
-            {id:'rules',       label:'📐 Rules',       show: canAccessSetup()},
-            {id:'setup',       label:'🚀 Setup',       show: canAccessSetup()},
-            {id:'git',         label:'🌿 Git',         show: canAccessSetup()}
-          ]">
+      <ng-container *ngFor="let tab of tabs">
         <div *ngIf="tab.show"
           (click)="activeTab = tab.id"
           style="padding:8px 18px;font-size:11px;font-weight:600;border-bottom:2px solid transparent;margin-bottom:-1px;cursor:pointer;transition:all 0.15s;white-space:nowrap;flex-shrink:0;"
           [style.borderBottomColor]="activeTab === tab.id ? (tab.id === 'git' ? '#818cf8' : '#22c55e') : 'transparent'"
           [style.color]="activeTab === tab.id ? (tab.id === 'git' ? '#818cf8' : '#22c55e') : '#64748b'">
-          {{ tab.label }}
+          {{ lbl(tab.labelKey) }}
         </div>
       </ng-container>
     </div>
@@ -75,19 +67,17 @@
     <ng-container *ngIf="activeTab === 'overview'">
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
 
-        <!-- ═══ BOARD PREVIEW — Kanban style (header on top, 140px body, auto-fill title) ═══ -->
+        <!-- ═══ BOARD PREVIEW ═══ -->
         <div class="card">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
-            <div class="card-title" style="margin-bottom:0;">⊞ Board Preview</div>
+            <div class="card-title" style="margin-bottom:0;">{{ lbl('boardPreview') }}</div>
             <div style="display:flex;align-items:center;gap:6px;">
-             
-              <a (click)="openBoard()"  style="font-size:10px;border:1px solid #22c55e55;color:#22c55e;padding:3px 10px;border-radius:20px;font-weight:600;text-decoration:none;cursor:pointer;">
-                Open Board →
+              <a (click)="openBoard()" style="font-size:10px;border:1px solid #22c55e55;color:#22c55e;padding:3px 10px;border-radius:20px;font-weight:600;text-decoration:none;cursor:pointer;">
+                {{ lbl('openBoard') }}
               </a>
             </div>
           </div>
 
-          
           <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;">
             <div *ngFor="let col of boardColumns"
               style="border-radius:8px;border:1px solid;overflow:hidden;cursor:pointer;transition:border-color 0.15s;display:flex;flex-direction:column;"
@@ -98,7 +88,6 @@
               onmouseleave="this.style.borderColor=this.getAttribute('data-default-border')"
               [routerLink]="['/kanban', project.id]">
 
-              <!-- HEADER -->
               <div style="height:45px;padding:4px 5px;border-bottom:1px solid;display:flex;align-items:center;justify-content:space-between;gap:4px;flex-shrink:0;box-sizing:border-box;"
                 [style.borderBottomColor]="isDark ? 'rgba(30,45,74,0.3)' : '#e2e8f0'">
                 <div style="display:flex;align-items:center;gap:5px;min-width:0;flex:1;">
@@ -111,7 +100,6 @@
                 </span>
               </div>
 
-              <!-- BODY: task card -->
               <ng-container *ngIf="getTopTasksByStatus(col.status, 1)[0] as t">
                 <div style="height:100px;padding:5px;display:flex;flex-direction:column;border-left:2px solid;box-sizing:border-box;gap:6px;"
                   [style.borderLeftColor]="getTaskPriorityColor(t.priority)">
@@ -131,47 +119,43 @@
                 </div>
               </ng-container>
 
-              <!-- Empty state -->
               <div *ngIf="getTopTasksByStatus(col.status, 1).length === 0"
                 style="height:140px;display:flex;align-items:center;justify-content:center;border-left:2px solid rgba(100,116,139,0.2);">
-                <span style="font-size:10px;opacity:0.25;">No tasks</span>
+                <span style="font-size:10px;opacity:0.25;">{{ lbl('noTasksBoard') }}</span>
               </div>
             </div>
           </div>
-
-
-
         </div>
         <!-- ═══ END BOARD PREVIEW ═══ -->
 
         <!-- UI/UX Design Preview -->
         <div class="card">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
-            <div class="card-title" style="margin-bottom:0;">🎨 UI/UX Design Preview</div>
+            <div class="card-title" style="margin-bottom:0;">{{ lbl('designPreview') }}</div>
             <div style="display:flex;gap:6px;align-items:center;">
               <span *ngIf="designFramesCount > 0" style="font-size:12px;padding:3px 10px;border-radius:6px;background:rgba(236,72,153,0.12);color:#f472b6;font-weight:700;border:1px solid rgba(244,114,182,0.3);">
-                {{ designFramesCount }} frame{{ designFramesCount === 1 ? '' : 's' }}
+                {{ designFramesCount }} {{ lbl('framesUnit') }}
               </span>
               <span *ngIf="designVersion" style="font-size:9px;padding:2px 7px;border-radius:5px;background:#1e78c822;color:#60a5fa;font-weight:700;border:1px solid #3b82f633;">
                 v{{ designVersion }}
               </span>
               <button (click)="openDesign()" style="font-size:10px;cursor:pointer;background:#3b82f622;border:none;color:#60a5fa;padding:4px 10px;border-radius:7px;font-weight:600;">
-                Open Design →
+                {{ lbl('openDesign') }}
               </button>
             </div>
           </div>
 
           <div *ngIf="designFramesLoading" style="height:140px;display:flex;align-items:center;justify-content:center;gap:8px;opacity:0.5;">
             <div style="width:12px;height:12px;border:2px solid #60a5fa;border-top-color:transparent;border-radius:50%;animation:spin 0.8s linear infinite;"></div>
-            <span style="font-size:10px;color:#60a5fa;font-weight:600;">Loading frames...</span>
+            <span style="font-size:10px;color:#60a5fa;font-weight:600;">{{ lbl('loadingFrames') }}</span>
           </div>
 
           <div *ngIf="!designFramesLoading && designFrames.length === 0"
             style="height:140px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;border-radius:8px;border:1px dashed rgba(30,45,74,0.5);background:rgba(15,22,40,0.5);">
             <div style="font-size:28px;opacity:0.3;">🎨</div>
-            <div style="font-size:10px;opacity:0.4;">No design frames yet</div>
+            <div style="font-size:10px;opacity:0.4;">{{ lbl('noDesignFrames') }}</div>
             <button (click)="openDesign()" style="font-size:9px;padding:4px 10px;border-radius:6px;border:1px solid #3b82f644;background:#3b82f615;color:#60a5fa;font-weight:600;cursor:pointer;">
-              Create design →
+              {{ lbl('createDesign') }}
             </button>
           </div>
 
@@ -188,7 +172,7 @@
           </div>
 
           <div *ngIf="!designFramesLoading && designFramesCount > 3" style="text-align:center;padding:8px 0 0;font-size:10px;opacity:0.5;">
-            <span style="color:#60a5fa;font-weight:700;">+{{ designFramesCount - 3 }}</span> more frame{{ designFramesCount - 3 === 1 ? '' : 's' }} · <span style="opacity:0.7;cursor:pointer;text-decoration:underline;" (click)="openDesign()">View all</span>
+            <span style="color:#60a5fa;font-weight:700;">+{{ designFramesCount - 3 }}</span> {{ lbl('moreFrames') }} · <span style="opacity:0.7;cursor:pointer;text-decoration:underline;" (click)="openDesign()">{{ lbl('viewAll') }}</span>
           </div>
         </div>
       </div>
@@ -196,15 +180,14 @@
       <!-- ⚡ API Documentation -->
       <div class="card">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
-          <div class="card-title" style="margin-bottom:0;">⚡ API Documentation</div>
+          <div class="card-title" style="margin-bottom:0;">{{ lbl('apiDocumentation') }}</div>
           <div style="display:flex;gap:6px;">
             <span style="font-size:9px;padding:2px 7px;border-radius:5px;background:#22c55e22;color:#22c55e;font-weight:700;border:1px solid #22c55e33;">REST v1</span>
-            <a (click)="openApiDocs()" style="font-size:10px;cursor:pointer;background:#6366f122;color:#818cf8;padding:4px 10px;border-radius:7px;font-weight:600;text-decoration:none;display:inline-block;">Open API →</a>
+            <a (click)="openApiDocs()" style="font-size:10px;cursor:pointer;background:#6366f122;color:#818cf8;padding:4px 10px;border-radius:7px;font-weight:600;text-decoration:none;display:inline-block;">{{ lbl('openApi') }}</a>
           </div>
         </div>
         <div *ngIf="!apiEndpoints.length" style="text-align:center;padding:30px 20px;font-size:11px;opacity:0.35;">
-          No API endpoints yet.<br>
-          <span style="font-size:9px;opacity:0.6;">Generate code from Design Tool to auto-extract APIs.</span>
+          {{ lbl('noApiEndpoints') }}
         </div>
         <div *ngIf="apiEndpoints.length" style="display:flex;flex-direction:column;gap:3px;">
           <div *ngFor="let ep of apiEndpoints"
@@ -219,12 +202,11 @@
       <!-- 🗄️ Database Design -->
       <div class="card">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
-          <div class="card-title" style="margin-bottom:0;">🗄️ Database Design</div>
-          <a (click)="openDbSchema()" style="font-size:10px;cursor:pointer;background:#1e3a5f22;color:#60a5fa;padding:4px 10px;border-radius:7px;font-weight:600;text-decoration:none;display:inline-block;">Open Schema →</a>
+          <div class="card-title" style="margin-bottom:0;">{{ lbl('databaseDesign') }}</div>
+          <a (click)="openDbSchema()" style="font-size:10px;cursor:pointer;background:#1e3a5f22;color:#60a5fa;padding:4px 10px;border-radius:7px;font-weight:600;text-decoration:none;display:inline-block;">{{ lbl('openSchema') }}</a>
         </div>
         <div *ngIf="!dbTables.length" style="text-align:center;padding:30px 20px;font-size:11px;opacity:0.35;">
-          No database tables yet.<br>
-          <span style="font-size:9px;opacity:0.6;">Generate code from Design Tool to auto-extract DB schema.</span>
+          {{ lbl('noDbTables') }}
         </div>
         <div *ngIf="dbTables.length" style="display:flex;gap:10px;overflow-x:auto;padding-bottom:6px;">
           <div *ngFor="let tbl of dbTables"
@@ -241,7 +223,7 @@
       <!-- Activity Log -->
       <div class="card">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
-          <div class="card-title" style="margin-bottom:0;">🕐 Activity Log</div>
+          <div class="card-title" style="margin-bottom:0;">{{ lbl('activityLog') }}</div>
           <div style="display:flex;align-items:center;gap:8px;">
             <span style="font-size:9px;padding:2px 8px;border-radius:20px;background:rgba(148,163,184,0.12);color:#94a3b8;font-weight:600;border:1px solid rgba(148,163,184,0.2);">
               {{ activities.length }} total
@@ -251,14 +233,13 @@
               style="font-size:10px;padding:4px 12px;border-radius:8px;border:1px solid #22c55e44;background:rgba(34,197,94,0.08);color:#22c55e;font-weight:700;cursor:pointer;transition:all 0.15s;text-decoration:none;display:inline-block;"
               onmouseenter="this.style.background='rgba(34,197,94,0.15)'"
               onmouseleave="this.style.background='rgba(34,197,94,0.08)'">
-              View All →
+              {{ lbl('viewAllActivity') }}
             </a>
           </div>
         </div>
 
-        <div *ngIf="!activities.length" style="text-align:center;padding:20px;font-size:11px;opacity:0.35;">No activity yet</div>
+        <div *ngIf="!activities.length" style="text-align:center;padding:20px;font-size:11px;opacity:0.35;">{{ lbl('noActivity') }}</div>
 
-        <!-- Activity list — scrollable when expanded -->
         <div style="display:flex;flex-direction:column;gap:8px;">
           <div *ngFor="let act of activities.slice(0, 3)"
             style="display:flex;align-items:flex-start;gap:8px;">
@@ -269,13 +250,13 @@
                 {{ getActionText(act.action) }}
                 <span *ngIf="act.targetName" style="color:#22c55e;font-weight:600;"> "{{ act.targetName }}"</span>
                 <span *ngIf="act.newValue && act.action !== 'COMMENTED'" style="opacity:0.5;"> → {{ act.newValue }}</span>
-                <span *ngIf="act.action === 'COMMENTED' && act.newValue" style="opacity:0.5;font-style:italic;"> — "{{ (act.newValue | slice:0:40) + (act.newValue.length > 40 ? '…' : '') }}"</span>              </div>
+                <span *ngIf="act.action === 'COMMENTED' && act.newValue" style="opacity:0.5;font-style:italic;"> — "{{ (act.newValue | slice:0:40) + (act.newValue.length > 40 ? '…' : '') }}"</span>
+              </div>
               <div class="act-time">{{ act.createdAt | date:'MMM d, h:mm a' }}</div>
             </div>
             <span style="font-size:13px;">{{ getActionIcon(act.action) }}</span>
           </div>
         </div>
-
       </div>
     </ng-container>
 
@@ -283,7 +264,7 @@
     <ng-container *ngIf="activeTab === 'information'">
       <div class="card" style="animation:fadeIn 0.3s ease;">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
-          <div class="card-title" style="margin-bottom:0;">📋 Project Information</div>
+          <div class="card-title" style="margin-bottom:0;">{{ lbl('projectInformation') }}</div>
           <div style="display:flex;align-items:center;gap:8px;">
             <span style="font-size:10px;padding:3px 10px;border-radius:20px;font-weight:700;"
               [style.background]="getStatusBg(project.status)"
@@ -291,50 +272,48 @@
               [style.border]="'1px solid ' + getStatusColor2(project.status) + '44'">
               ● {{ project.status }}
             </span>
-            <!-- Edit button — disabled if tasks exist (scope lock) -->
             <button *ngIf="canEditScope()"
               (click)="showEdit = !showEdit; showEdit && initEditForm()"
               style="display:flex;align-items:center;gap:5px;padding:5px 14px;border-radius:8px;border:1px solid;font-size:11px;font-weight:600;cursor:pointer;transition:all 0.15s;"
               [style.borderColor]="showEdit ? '#22c55e' : 'var(--color-border,#1e2d4a)'"
               [style.background]="showEdit ? '#22c55e22' : 'transparent'"
               [style.color]="showEdit ? '#22c55e' : '#64748b'">
-              ✏️ {{ showEdit ? 'Cancel' : 'Edit' }}
+              {{ showEdit ? lbl('editCancel') : lbl('editProject') }}
             </button>
-            <!-- Locked state — tasks already exist -->
             <span *ngIf="isScopeLocked()"
               [title]="getLockedReason()"
               style="display:flex;align-items:center;gap:5px;padding:5px 14px;border-radius:8px;border:1px solid rgba(100,116,139,0.3);font-size:11px;font-weight:600;background:rgba(100,116,139,0.08);color:#64748b;cursor:not-allowed;">
-              🔒 Locked
+              {{ lbl('lockedScope') }}
             </span>
           </div>
         </div>
 
         <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:14px;">
           <div>
-            <div style="font-size:9px;opacity:0.4;margin-bottom:4px;letter-spacing:0.5px;font-weight:600;">PROJECT</div>
+            <div style="font-size:9px;opacity:0.4;margin-bottom:4px;letter-spacing:0.5px;font-weight:600;">{{ lbl('labelProject') }}</div>
             <div style="font-size:14px;font-weight:700;">{{ translatedTitle || project.title }}</div>
           </div>
           <div>
-            <div style="font-size:9px;opacity:0.4;margin-bottom:4px;letter-spacing:0.5px;font-weight:600;">PM</div>
+            <div style="font-size:9px;opacity:0.4;margin-bottom:4px;letter-spacing:0.5px;font-weight:600;">{{ lbl('labelPm') }}</div>
             <div style="font-size:12px;font-weight:700;color:#22c55e;display:flex;align-items:center;gap:5px;">
               <span style="width:20px;height:20px;border-radius:50%;background:linear-gradient(135deg,#14532d,#16a34a);display:inline-flex;align-items:center;justify-content:center;font-size:9px;color:white;font-weight:700;">{{ getPmInitial() }}</span>
               {{ getPmName() }}
             </div>
           </div>
           <div>
-            <div style="font-size:9px;opacity:0.4;margin-bottom:4px;letter-spacing:0.5px;font-weight:600;">START DATE</div>
+            <div style="font-size:9px;opacity:0.4;margin-bottom:4px;letter-spacing:0.5px;font-weight:600;">{{ lbl('labelStartDate') }}</div>
             <div style="font-size:12px;font-weight:600;">{{ project.startDate | date:'yyyy-MM-dd' }}</div>
           </div>
           <div>
-            <div style="font-size:9px;opacity:0.4;margin-bottom:4px;letter-spacing:0.5px;font-weight:600;">DEADLINE</div>
+            <div style="font-size:9px;opacity:0.4;margin-bottom:4px;letter-spacing:0.5px;font-weight:600;">{{ lbl('labelDeadline') }}</div>
             <div style="font-size:12px;font-weight:600;" [style.color]="isOverdue() ? '#ef4444' : ''">{{ project.endDate | date:'yyyy-MM-dd' }}</div>
           </div>
           <div>
-            <div style="font-size:9px;opacity:0.4;margin-bottom:4px;letter-spacing:0.5px;font-weight:600;">BUDGET</div>
+            <div style="font-size:9px;opacity:0.4;margin-bottom:4px;letter-spacing:0.5px;font-weight:600;">{{ lbl('labelBudget') }}</div>
             <div style="font-size:12px;font-weight:700;color:#22c55e;">{{ getBudget() }}</div>
           </div>
           <div>
-            <div style="font-size:9px;opacity:0.4;margin-bottom:4px;letter-spacing:0.5px;font-weight:600;">PRIORITY</div>
+            <div style="font-size:9px;opacity:0.4;margin-bottom:4px;letter-spacing:0.5px;font-weight:600;">{{ lbl('labelPriority') }}</div>
             <span style="font-size:9px;padding:3px 10px;border-radius:20px;font-weight:700;border:1px solid;"
               [style.color]="getPriorityColor2(project.priority || 'MEDIUM')"
               [style.background]="getPriorityColor2(project.priority || 'MEDIUM') + '18'"
@@ -343,11 +322,11 @@
             </span>
           </div>
           <div *ngIf="project.clientId">
-            <div style="font-size:9px;opacity:0.4;margin-bottom:4px;letter-spacing:0.5px;font-weight:600;">CLIENT</div>
+            <div style="font-size:9px;opacity:0.4;margin-bottom:4px;letter-spacing:0.5px;font-weight:600;">{{ lbl('labelClient') }}</div>
             <div style="font-size:12px;font-weight:600;color:#60a5fa;">🏢 {{ getClientName() }}</div>
           </div>
           <div>
-            <div style="font-size:9px;opacity:0.4;margin-bottom:4px;letter-spacing:0.5px;font-weight:600;">PROGRESS</div>
+            <div style="font-size:9px;opacity:0.4;margin-bottom:4px;letter-spacing:0.5px;font-weight:600;">{{ lbl('labelProgress') }}</div>
             <div style="display:flex;align-items:center;gap:8px;">
               <div style="flex:1;height:6px;background:#1e2d4a;border-radius:3px;overflow:hidden;">
                 <div [style.width]="(project.progress || 0) + '%'" style="height:100%;background:linear-gradient(90deg,#14532d,#22c55e);border-radius:3px;"></div>
@@ -356,44 +335,44 @@
             </div>
           </div>
           <div *ngIf="project.originalLanguage">
-            <div style="font-size:9px;opacity:0.4;margin-bottom:4px;letter-spacing:0.5px;font-weight:600;">LANGUAGE</div>
+            <div style="font-size:9px;opacity:0.4;margin-bottom:4px;letter-spacing:0.5px;font-weight:600;">{{ lbl('labelLanguage') }}</div>
             <div style="font-size:12px;font-weight:600;">{{ project.originalLanguage | uppercase }}</div>
           </div>
         </div>
 
         <div *ngIf="project.description" style="margin-top:4px;border-top:1px solid rgba(255,255,255,0.05);padding-top:14px;">
-          <div style="font-size:9px;opacity:0.4;margin-bottom:8px;letter-spacing:0.5px;font-weight:600;">📝 DESCRIPTION</div>
+          <div style="font-size:9px;opacity:0.4;margin-bottom:8px;letter-spacing:0.5px;font-weight:600;">{{ lbl('labelDescription') }}</div>
           <div style="font-size:12px;line-height:1.8;opacity:0.75;white-space:pre-wrap;">{{ translatedDesc || project.description }}</div>
         </div>
       </div>
 
-      <!-- EDIT SECTION — canEdit() already filters; no tasks restriction -->
+      <!-- EDIT SECTION -->
       <div *ngIf="showEdit" style="border-radius:12px;border:1px solid #22c55e44;background:linear-gradient(135deg,#14532d08,#0d1424);padding:16px;animation:fadeIn 0.2s ease;">
-        <div style="font-size:11px;font-weight:700;color:#22c55e;letter-spacing:0.5px;margin-bottom:14px;">✏️ EDIT PROJECT</div>
+        <div style="font-size:11px;font-weight:700;color:#22c55e;letter-spacing:0.5px;margin-bottom:14px;">{{ lbl('editProject') }}</div>
         <div style="display:flex;flex-direction:column;gap:12px;">
           <div>
-            <label style="font-size:9px;font-weight:700;text-transform:uppercase;color:#64748b;display:block;margin-bottom:4px;">PROJECT TITLE *</label>
+            <label style="font-size:9px;font-weight:700;text-transform:uppercase;color:#64748b;display:block;margin-bottom:4px;">{{ lbl('editFieldTitle') }}</label>
             <input [(ngModel)]="editForm.title" placeholder="Project title"
               style="width:100%;border-radius:9px;border:1px solid var(--color-border,#1e2d4a);padding:9px 12px;font-size:12px;outline:none;background:var(--input-bg,#0d1424);color:var(--input-text,#e2e8f0);box-sizing:border-box;">
           </div>
           <div>
-            <label style="font-size:9px;font-weight:700;text-transform:uppercase;color:#64748b;display:block;margin-bottom:4px;">DESCRIPTION</label>
+            <label style="font-size:9px;font-weight:700;text-transform:uppercase;color:#64748b;display:block;margin-bottom:4px;">{{ lbl('editFieldDesc') }}</label>
             <textarea [(ngModel)]="editForm.description" rows="4"
               style="width:100%;border-radius:9px;border:1px solid var(--color-border,#1e2d4a);padding:9px 12px;font-size:12px;outline:none;background:var(--input-bg,#0d1424);color:var(--input-text,#e2e8f0);box-sizing:border-box;resize:vertical;"></textarea>
           </div>
           <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;">
             <div>
-              <label style="font-size:9px;font-weight:700;text-transform:uppercase;color:#64748b;display:block;margin-bottom:4px;">START DATE</label>
+              <label style="font-size:9px;font-weight:700;text-transform:uppercase;color:#64748b;display:block;margin-bottom:4px;">{{ lbl('editFieldStartDate') }}</label>
               <input type="date" [(ngModel)]="editForm.startDate"
                 style="width:100%;border-radius:9px;border:1px solid var(--color-border,#1e2d4a);padding:9px 12px;font-size:12px;outline:none;background:var(--input-bg,#0d1424);color:var(--input-text,#e2e8f0);box-sizing:border-box;color-scheme:dark;">
             </div>
             <div>
-              <label style="font-size:9px;font-weight:700;text-transform:uppercase;color:#64748b;display:block;margin-bottom:4px;">END DATE</label>
+              <label style="font-size:9px;font-weight:700;text-transform:uppercase;color:#64748b;display:block;margin-bottom:4px;">{{ lbl('editFieldEndDate') }}</label>
               <input type="date" [(ngModel)]="editForm.endDate"
                 style="width:100%;border-radius:9px;border:1px solid var(--color-border,#1e2d4a);padding:9px 12px;font-size:12px;outline:none;background:var(--input-bg,#0d1424);color:var(--input-text,#e2e8f0);box-sizing:border-box;color-scheme:dark;">
             </div>
             <div>
-              <label style="font-size:9px;font-weight:700;text-transform:uppercase;color:#64748b;display:block;margin-bottom:4px;">BUDGET (USD)</label>
+              <label style="font-size:9px;font-weight:700;text-transform:uppercase;color:#64748b;display:block;margin-bottom:4px;">{{ lbl('editFieldBudget') }}</label>
               <input type="number" [(ngModel)]="editForm.budget" placeholder="0"
                 style="width:100%;border-radius:9px;border:1px solid var(--color-border,#1e2d4a);padding:9px 12px;font-size:12px;outline:none;background:var(--input-bg,#0d1424);color:var(--input-text,#e2e8f0);box-sizing:border-box;">
             </div>
@@ -401,24 +380,24 @@
           <div *ngIf="editError" style="font-size:11px;color:#ef4444;padding:8px 12px;border-radius:8px;background:#ef444411;">{{ editError }}</div>
           <div style="display:flex;justify-content:flex-end;gap:8px;">
             <button (click)="showEdit=false;editError=''"
-              style="padding:8px 18px;border-radius:8px;border:1px solid var(--color-border,#1e2d4a);font-size:11px;font-weight:600;cursor:pointer;background:transparent;color:#64748b;">Cancel</button>
+              style="padding:8px 18px;border-radius:8px;border:1px solid var(--color-border,#1e2d4a);font-size:11px;font-weight:600;cursor:pointer;background:transparent;color:#64748b;">{{ lbl('editCancel') }}</button>
             <button (click)="saveEdit()" [disabled]="isSaving"
               style="padding:8px 22px;border-radius:8px;border:none;background:linear-gradient(135deg,#14532d,#16a34a);color:white;font-size:11px;font-weight:700;cursor:pointer;">
-              {{ isSaving ? 'Saving...' : '💾 Save Changes' }}
+              {{ isSaving ? lbl('saving') : lbl('saveChanges') }}
             </button>
           </div>
 
           <!-- DANGER ZONE -->
           <div *ngIf="canDelete()" style="margin-top:4px;border-top:1px solid var(--color-border,#1e2d4a);padding-top:14px;">
             <div (click)="showDangerZone = !showDangerZone" style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;">
-              <span style="font-size:11px;font-weight:700;color:#ef4444;letter-spacing:0.5px;">⚠️ DANGER ZONE</span>
+              <span style="font-size:11px;font-weight:700;color:#ef4444;letter-spacing:0.5px;">{{ lbl('dangerZone') }}</span>
               <span style="font-size:10px;color:#ef4444;opacity:0.6;">{{ showDangerZone ? '▲' : '▼' }}</span>
             </div>
             <div *ngIf="showDangerZone" style="margin-top:12px;padding:14px;border-radius:10px;border:1px solid #ef444433;background:#ef444408;animation:fadeIn 0.2s ease;">
-              <div style="font-size:11px;color:#ef4444;font-weight:600;margin-bottom:4px;">🚫 Cancel this project</div>
+              <div style="font-size:11px;color:#ef4444;font-weight:600;margin-bottom:4px;">{{ lbl('cancelProject') }}</div>
               <div style="font-size:10px;opacity:0.6;margin-bottom:12px;line-height:1.5;">Project status ကို <strong style="color:#ef4444;">CANCELLED</strong> ပြောင်းမည်။ Tasks နဲ့ members ဒေတာများ ဆက်ရှိနေမည်။</div>
               <label style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#ef4444;opacity:0.7;display:block;margin-bottom:6px;">
-                Type <strong style="font-family:monospace;background:#ef444422;padding:1px 6px;border-radius:4px;">{{ project.title }}</strong> to confirm
+                {{ lbl('editConfirmType') }} <strong style="font-family:monospace;background:#ef444422;padding:1px 6px;border-radius:4px;">{{ project.title }}</strong>
               </label>
               <input [(ngModel)]="deleteConfirmName" [placeholder]="project.title"
                 style="width:100%;border-radius:9px;border:1px solid #ef444433;padding:8px 12px;font-size:12px;outline:none;background:var(--input-bg,#0d1424);color:var(--input-text,#e2e8f0);box-sizing:border-box;font-family:inherit;margin-bottom:10px;">
@@ -428,7 +407,7 @@
                 [style.color]="deleteConfirmMatches ? 'white' : '#ef444488'"
                 [style.cursor]="deleteConfirmMatches && !isDeleting ? 'pointer' : 'not-allowed'">
                 <div *ngIf="isDeleting" style="width:11px;height:11px;border:2px solid white;border-top-color:transparent;border-radius:50%;animation:spin 0.8s linear infinite;"></div>
-                {{ isDeleting ? 'Cancelling...' : '🚫 Cancel Project' }}
+                {{ isDeleting ? lbl('cancelling') : lbl('cancelProject') }}
               </button>
             </div>
           </div>
@@ -440,22 +419,20 @@
     <ng-container *ngIf="activeTab === 'techstack'">
       <div class="card">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
-          <div class="card-title" style="margin-bottom:0;">🛠 Tech Stack</div>
+          <div class="card-title" style="margin-bottom:0;">{{ lbl('techStackTitle') }}</div>
           <div style="display:flex;align-items:center;gap:8px;">
-            <span style="font-size:9px;padding:2px 8px;border-radius:20px;background:#3b82f622;color:#60a5fa;font-weight:700;border:1px solid #3b82f633;">{{ techStacks.length }} techs</span>
-            <!-- Edit button — disabled if tasks exist (scope lock) -->
+            <span style="font-size:9px;padding:2px 8px;border-radius:20px;background:#3b82f622;color:#60a5fa;font-weight:700;border:1px solid #3b82f633;">{{ techStacks.length }} {{ lbl('techs') }}</span>
             <button *ngIf="canEditScope()" (click)="showTechEdit = !showTechEdit"
               style="display:flex;align-items:center;gap:5px;padding:4px 12px;border-radius:8px;border:1px solid;font-size:11px;font-weight:600;cursor:pointer;transition:all 0.15s;"
               [style.borderColor]="showTechEdit ? '#22c55e' : 'var(--color-border,#1e2d4a)'"
               [style.background]="showTechEdit ? '#22c55e22' : 'transparent'"
               [style.color]="showTechEdit ? '#22c55e' : '#64748b'">
-              ✏️ {{ showTechEdit ? 'Done' : 'Edit' }}
+              {{ showTechEdit ? lbl('editCancel') : lbl('editProject') }}
             </button>
-            <!-- Locked state — tasks already exist -->
             <span *ngIf="isScopeLocked()"
               [title]="getLockedReason()"
               style="display:flex;align-items:center;gap:5px;padding:4px 12px;border-radius:8px;border:1px solid rgba(100,116,139,0.3);font-size:11px;font-weight:600;background:rgba(100,116,139,0.08);color:#64748b;cursor:not-allowed;">
-              🔒 Locked
+              {{ lbl('lockedScope') }}
             </span>
           </div>
         </div>
@@ -465,7 +442,6 @@
           <span style="font-size:11px;">Loading...</span>
         </div>
 
-        <!-- VIEW MODE -->
         <div *ngIf="!techStackLoading && !showTechEdit">
           <div *ngFor="let group of groupedTechStacks" style="margin-bottom:14px;">
             <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;">
@@ -483,10 +459,9 @@
               </span>
             </div>
           </div>
-          <div *ngIf="techStacks.length === 0" style="text-align:center;padding:24px;font-size:11px;opacity:0.35;">No tech stack defined yet</div>
+          <div *ngIf="techStacks.length === 0" style="text-align:center;padding:24px;font-size:11px;opacity:0.35;">{{ lbl('noTechStack') }}</div>
         </div>
 
-        <!-- EDIT MODE -->
         <div *ngIf="!techStackLoading && showTechEdit" style="display:flex;flex-direction:column;gap:10px;">
           <div *ngFor="let group of groupedTechStacks" style="margin-bottom:8px;">
             <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;">
@@ -507,9 +482,9 @@
             </div>
           </div>
           <div style="border-top:1px solid var(--color-border,#1e2d4a);padding-top:12px;">
-            <div style="font-size:10px;font-weight:600;opacity:0.5;margin-bottom:8px;">+ ADD NEW TECH</div>
+            <div style="font-size:10px;font-weight:600;opacity:0.5;margin-bottom:8px;">{{ lbl('addNewTech') }}</div>
             <div style="display:flex;gap:6px;align-items:center;">
-              <input [(ngModel)]="newTechName" placeholder="e.g. Angular, Flutter..." (keyup.enter)="addTechStack()"
+              <input [(ngModel)]="newTechName" [placeholder]="lbl('addTechPlaceholder')" (keyup.enter)="addTechStack()"
                 style="flex:1;border-radius:8px;border:1px solid var(--color-border,#1e2d4a);padding:7px 10px;font-size:11px;outline:none;background:var(--input-bg,#0d1424);color:var(--input-text,#e2e8f0);">
               <select [(ngModel)]="newTechCategory"
                 style="border-radius:8px;border:1px solid var(--color-border,#1e2d4a);padding:7px 8px;font-size:10px;outline:none;background:var(--input-bg,#0d1424);color:#94a3b8;">
@@ -524,261 +499,191 @@
               </select>
               <button (click)="addTechStack()" [disabled]="!newTechName.trim()"
                 style="padding:7px 14px;border-radius:8px;border:none;background:#22c55e;color:white;font-size:11px;font-weight:700;cursor:pointer;"
-                [style.opacity]="newTechName.trim() ? '1' : '0.4'">+ Add</button>
+                [style.opacity]="newTechName.trim() ? '1' : '0.4'">{{ lbl('addMemberBtn') }}</button>
             </div>
           </div>
         </div>
       </div>
     </ng-container>
 
-    <!-- ══════ TAB: MEMBERS (SPLIT INTO 2 SECTIONS) ══════ -->
+    <!-- ══════ TAB: MEMBERS ══════ -->
     <ng-container *ngIf="activeTab === 'members'">
       <div class="card">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
-          <div class="card-title" style="margin-bottom:0;">👥 Team Members</div>
+          <div class="card-title" style="margin-bottom:0;">{{ lbl('teamMembersTitle') }}</div>
           <div style="display:flex;align-items:center;gap:8px;">
-            <span style="font-size:9px;padding:2px 8px;border-radius:20px;background:#22c55e22;color:#22c55e;font-weight:700;">{{ getVisibleMemberCount() }} members</span>
+            <span style="font-size:9px;padding:2px 8px;border-radius:20px;background:#22c55e22;color:#22c55e;font-weight:700;">{{ getVisibleMemberCount() }} {{ lbl('rules') }}</span>
             <button *ngIf="canEdit()" (click)="showMemberEdit = !showMemberEdit; showMemberEdit && loadStaffList()"
               style="display:flex;align-items:center;gap:5px;padding:4px 12px;border-radius:8px;border:1px solid;font-size:11px;font-weight:600;cursor:pointer;transition:all 0.15s;"
               [style.borderColor]="showMemberEdit ? '#22c55e' : 'var(--color-border,#1e2d4a)'"
               [style.background]="showMemberEdit ? '#22c55e22' : 'transparent'"
               [style.color]="showMemberEdit ? '#22c55e' : '#64748b'">
-              ✏️ {{ showMemberEdit ? 'Done' : 'Edit' }}
+              {{ showMemberEdit ? lbl('editCancel') : lbl('editProject') }}
             </button>
           </div>
         </div>
 
-        <!-- ════ SECTION 1: MANAGEMENT (Director / VP only — Admin excluded) ════ -->
+        <!-- MANAGEMENT -->
         <div *ngIf="hasManagementMembers()" style="margin-bottom:16px;">
           <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;padding:0 2px;">
-            <span style="font-size:11px;font-weight:700;color:#94a3b8;letter-spacing:0.5px;">MANAGEMENT</span>
+            <span style="font-size:11px;font-weight:700;color:#94a3b8;letter-spacing:0.5px;">{{ lbl('managementSection') }}</span>
             <span style="font-size:9px;opacity:0.5;">({{ getManagementCount() }})</span>
             <div style="flex:1;height:1px;background:var(--color-border,#1e2d4a);opacity:0.4;"></div>
           </div>
-
           <div style="display:flex;flex-direction:column;gap:8px;">
             <ng-container *ngFor="let m of sortMembers(members); let i=index">
               <div *ngIf="m.roleInProject === 'COUNTRY_DIRECTOR' || m.roleInProject === 'VICE_PRESIDENT'"
                 style="display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:10px;border:1px solid var(--color-border,#1e2d4a);transition:all 0.15s;"
                 onmouseenter="this.style.borderColor='#a855f733'"
                 onmouseleave="this.style.borderColor='var(--color-border,#1e2d4a)'">
-
-                <!-- Avatar -->
                 <div style="width:36px;height:36px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:white;"
                   [style.background]="m.color || getMemberColor(i)">
                   {{ m.initial || getMemberInitial(m) }}
                 </div>
-
-                <!-- Name + Role -->
                 <div style="flex:1;min-width:0;">
-                  <div style="font-size:12px;font-weight:700;color:var(--input-text,#e2e8f0);">
-                    {{ m.userName || m.name }}
-                  </div>
+                  <div style="font-size:12px;font-weight:700;color:var(--input-text,#e2e8f0);">{{ m.userName || m.name }}</div>
                   <div style="margin-top:3px;">
                     <span style="font-size:10px;font-weight:700;"
-                      [style.color]="m.roleInProject==='COUNTRY_DIRECTOR' ? '#a855f7'
-                                   : m.roleInProject==='VICE_PRESIDENT'   ? '#ef4444'
-                                   : '#ec4899'">
+                      [style.color]="m.roleInProject==='COUNTRY_DIRECTOR' ? '#a855f7' : m.roleInProject==='VICE_PRESIDENT' ? '#ef4444' : '#ec4899'">
                       {{ m.displayName || m.roleInProject }}
                     </span>
                   </div>
                 </div>
-
-                <!-- Online status + Locked badge -->
                 <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
                   <div style="display:flex;align-items:center;gap:4px;">
                     <div style="width:6px;height:6px;border-radius:50%;" [style.background]="m.online ? '#22c55e' : '#475569'"></div>
-                    <span style="font-size:9px;opacity:0.4;">{{ m.online ? 'Online' : 'Offline' }}</span>
+                    <span style="font-size:9px;opacity:0.4;">{{ m.online ? lbl('onlineStatus') : lbl('offlineStatus') }}</span>
                   </div>
-                  <span *ngIf="showMemberEdit"
-                    style="font-size:9px;opacity:0.3;padding:3px 8px;font-weight:700;"
-                    [style.color]="m.roleInProject==='COUNTRY_DIRECTOR' ? '#a855f7'
-                                 : m.roleInProject==='VICE_PRESIDENT'   ? '#ef4444'
-                                 : '#ec4899'">
-                    🔒 {{ m.roleInProject === 'VICE_PRESIDENT'   ? 'VP'
-                        : m.roleInProject === 'COUNTRY_DIRECTOR' ? 'DIR'
-                        : 'HR' }}
-                  </span>
                 </div>
               </div>
             </ng-container>
           </div>
         </div>
 
-        <!-- ════ SECTION 2: TEAM MEMBERS (PM / Leader / UI_UX / Dev / QA / Customer) ════ -->
+        <!-- TEAM MEMBERS -->
         <div>
           <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;padding:0 2px;">
-            <span style="font-size:11px;font-weight:700;color:#22c55e;letter-spacing:0.5px;">TEAM MEMBERS</span>
+            <span style="font-size:11px;font-weight:700;color:#22c55e;letter-spacing:0.5px;">{{ lbl('teamSection') }}</span>
             <span style="font-size:9px;opacity:0.5;">({{ getTeamMemberCount() }})</span>
             <div style="flex:1;height:1px;background:var(--color-border,#1e2d4a);opacity:0.4;"></div>
           </div>
-
-          <div *ngIf="getTeamMemberCount() === 0" style="text-align:center;padding:20px;font-size:11px;opacity:0.4;">
-            No team members yet
-          </div>
-
+          <div *ngIf="getTeamMemberCount() === 0" style="text-align:center;padding:20px;font-size:11px;opacity:0.4;">{{ lbl('noTeamMembers') }}</div>
           <div style="display:flex;flex-direction:column;gap:8px;">
             <ng-container *ngFor="let m of sortMembers(members); let i=index">
               <div *ngIf="m.roleInProject !== 'COUNTRY_DIRECTOR' && m.roleInProject !== 'VICE_PRESIDENT' && m.roleInProject !== 'ADMIN'"
                 style="display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:10px;border:1px solid var(--color-border,#1e2d4a);transition:all 0.15s;"
                 onmouseenter="this.style.borderColor='#22c55e33'"
                 onmouseleave="this.style.borderColor='var(--color-border,#1e2d4a)'">
-
-                <!-- Avatar -->
                 <div style="width:36px;height:36px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:white;"
                   [style.background]="m.color || getMemberColor(i)">
                   {{ m.initial || getMemberInitial(m) }}
                 </div>
-
-                <!-- Name + Role -->
                 <div style="flex:1;min-width:0;">
-                  <div style="font-size:12px;font-weight:700;color:var(--input-text,#e2e8f0);">
-                    {{ m.userName || m.name }}
-                  </div>
+                  <div style="font-size:12px;font-weight:700;color:var(--input-text,#e2e8f0);">{{ m.userName || m.name }}</div>
                   <div style="display:flex;align-items:center;gap:4px;margin-top:3px;flex-wrap:wrap;">
                     <span style="font-size:10px;"
-                      [style.color]="m.roleInProject==='PROJECT_MANAGER'  ? '#22c55e'
-                                   : m.roleInProject==='LEADER'           ? '#0891b2'
-                                   : m.roleInProject==='UI_UX'            ? '#7c3aed'
-                                   : m.roleInProject==='DEVELOPER'        ? '#4f46e5'
-                                   : m.roleInProject==='QA'               ? '#ea580c'
-                                   : m.roleInProject==='CUSTOMER'         ? '#64748b'
-                                   : '#94a3b8'"
+                      [style.color]="m.roleInProject==='PROJECT_MANAGER' ? '#22c55e' : m.roleInProject==='LEADER' ? '#0891b2' : m.roleInProject==='UI_UX' ? '#7c3aed' : m.roleInProject==='DEVELOPER' ? '#4f46e5' : m.roleInProject==='QA' ? '#ea580c' : m.roleInProject==='CUSTOMER' ? '#64748b' : '#94a3b8'"
                       [style.fontWeight]="m.roleInProject==='PROJECT_MANAGER' ? '700' : '500'">
                       {{ m.displayName || m.roleInProject || m.role }}
                     </span>
-                    <span *ngIf="m.tasks && m.tasks > 0" style="font-size:9px;color:#22c55e;font-weight:600;">
-                      · {{ m.tasks }} tasks
-                    </span>
                   </div>
                 </div>
-
-                <!-- Online + Remove -->
                 <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
                   <div style="display:flex;align-items:center;gap:4px;">
                     <div style="width:6px;height:6px;border-radius:50%;" [style.background]="m.online ? '#22c55e' : '#475569'"></div>
-                    <span style="font-size:9px;opacity:0.4;">{{ m.online ? 'Online' : 'Offline' }}</span>
+                    <span style="font-size:9px;opacity:0.4;">{{ m.online ? lbl('onlineStatus') : lbl('offlineStatus') }}</span>
                   </div>
-                  <button *ngIf="showMemberEdit
-                              && m.roleInProject !== 'PROJECT_MANAGER'
-                              && !m.isDefault"
+                  <button *ngIf="showMemberEdit && m.roleInProject !== 'PROJECT_MANAGER' && !m.isDefault"
                     (click)="removeMember(m.userId)"
-                    style="padding:3px 10px;border-radius:6px;border:1px solid #ef444444;background:transparent;color:#ef4444;font-size:10px;font-weight:600;cursor:pointer;transition:all 0.15s;"
-                    onmouseenter="this.style.background='#ef444411'"
-                    onmouseleave="this.style.background='transparent'">
-                    Remove
+                    style="padding:3px 10px;border-radius:6px;border:1px solid #ef444444;background:transparent;color:#ef4444;font-size:10px;font-weight:600;cursor:pointer;"
+                    onmouseenter="this.style.background='#ef444411'" onmouseleave="this.style.background='transparent'">
+                    {{ lbl('removeMemberBtn') }}
                   </button>
-                  <span *ngIf="showMemberEdit && (m.roleInProject === 'PROJECT_MANAGER' || m.isDefault)"
-                    style="font-size:9px;opacity:0.3;padding:3px 8px;font-weight:700;color:#22c55e;">
-                    🔒 PM
-                  </span>
                 </div>
               </div>
             </ng-container>
           </div>
         </div>
 
-        <!-- ════ REMOVED MEMBERS SECTION ════ -->
+        <!-- REMOVED MEMBERS -->
         <div *ngIf="removedMembers.length > 0" style="margin-top:12px;">
           <div (click)="showRemovedMembers = !showRemovedMembers"
             style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;border-radius:8px;border:1px solid #ef444433;background:#ef444408;cursor:pointer;">
-            <span style="font-size:11px;font-weight:600;color:#ef4444;">
-              ⛔ Removed Members ({{ removedMembers.length }})
-            </span>
+            <span style="font-size:11px;font-weight:600;color:#ef4444;">{{ lbl('removedMembers') }} ({{ removedMembers.length }})</span>
             <span style="font-size:10px;color:#ef4444;opacity:0.6;">{{ showRemovedMembers ? '▲' : '▼' }}</span>
           </div>
-
           <div *ngIf="showRemovedMembers" style="display:flex;flex-direction:column;gap:6px;margin-top:8px;">
             <div *ngFor="let m of removedMembers; let i=index"
-              style="display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:10px;border:1px solid #ef444422;background:#ef44440a;opacity:0.75;transition:all 0.15s;">
-              <div style="width:36px;height:36px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:white;filter:grayscale(0.5);"
+              style="display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:10px;border:1px solid #ef444422;background:#ef44440a;opacity:0.75;">
+              <div style="width:36px;height:36px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:white;"
                 [style.background]="m.color || getMemberColor(i)">{{ m.initial || getMemberInitial(m) }}</div>
               <div style="flex:1;">
-                <div style="font-size:12px;font-weight:600;color:var(--input-text,#e2e8f0);">{{ m.userName || m.name }}</div>
-                <div style="display:flex;align-items:center;gap:4px;margin-top:3px;flex-wrap:wrap;">
-                  <span style="font-size:10px;opacity:0.5;"
-                    [style.color]="m.roleInProject==='COUNTRY_DIRECTOR'?'#a855f7':m.roleInProject==='VICE_PRESIDENT'?'#ef4444':m.roleInProject==='ADMIN'?'#ec4899':''">
-                    {{ m.displayName || m.roleInProject || m.role }}
-                  </span>
+                <div style="font-size:12px;font-weight:600;">{{ m.userName || m.name }}</div>
+                <div style="display:flex;align-items:center;gap:4px;margin-top:3px;">
+                  <span style="font-size:10px;opacity:0.5;">{{ m.displayName || m.roleInProject || m.role }}</span>
                   <span style="color:#ef4444;font-size:9px;">· Removed</span>
                 </div>
               </div>
               <button *ngIf="canEdit()" (click)="restoreMember(m.userId, m.roleInProject)"
-                style="padding:3px 10px;border-radius:6px;border:1px solid #22c55e44;background:transparent;color:#22c55e;font-size:10px;font-weight:600;cursor:pointer;transition:all 0.15s;"
-                onmouseenter="this.style.background='#22c55e11'"
-                onmouseleave="this.style.background='transparent'">
-                Re-add
+                style="padding:3px 10px;border-radius:6px;border:1px solid #22c55e44;background:transparent;color:#22c55e;font-size:10px;font-weight:600;cursor:pointer;"
+                onmouseenter="this.style.background='#22c55e11'" onmouseleave="this.style.background='transparent'">
+                {{ lbl('reAddMemberBtn') }}
               </button>
             </div>
           </div>
         </div>
 
-        <!-- ════ ADD MEMBER SECTION ════ -->
+        <!-- ADD MEMBER -->
         <div *ngIf="showMemberEdit" style="margin-top:14px;border-top:1px solid var(--color-border,#1e2d4a);padding-top:14px;">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
-            <div style="font-size:12px;font-weight:700;color:#22c55e;">➕ Add New Member</div>
+            <div style="font-size:12px;font-weight:700;color:#22c55e;">{{ lbl('addNewMember') }}</div>
             <span style="font-size:10px;opacity:0.5;">{{ filteredStaff.length }} available</span>
           </div>
-
           <div style="position:relative;margin-bottom:10px;">
             <span style="position:absolute;left:11px;top:50%;transform:translateY(-50%);font-size:12px;opacity:0.4;pointer-events:none;">🔍</span>
             <input [(ngModel)]="memberSearchQuery" (ngModelChange)="filterStaff()"
-              placeholder="Search by name, email or role..."
+              [placeholder]="lbl('searchMemberPlaceholder')"
               style="width:100%;padding:8px 12px 8px 32px;border-radius:9px;font-size:11px;border:1px solid var(--color-border,#1e2d4a);background:var(--input-bg,#0d1424);color:var(--input-text,#e2e8f0);outline:none;box-sizing:border-box;">
           </div>
-
-          <div *ngIf="staffListLoading" style="padding:20px;text-align:center;font-size:11px;opacity:0.5;">
-            Loading staff...
-          </div>
-
+          <div *ngIf="staffListLoading" style="padding:20px;text-align:center;font-size:11px;opacity:0.5;">{{ lbl('loadingStaff') }}</div>
           <div *ngIf="!staffListLoading" style="max-height:280px;overflow-y:auto;display:flex;flex-direction:column;gap:6px;">
             <div *ngFor="let s of filteredStaff"
-              style="display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:9px;border:1px solid var(--color-border,#1e2d4a);transition:all 0.15s;"
-              [style.opacity]="isAlreadyMember(s.id) ? '0.4' : '1'"
-              [style.background]="isAlreadyMember(s.id) ? 'rgba(34,197,94,0.05)' : 'transparent'">
+              style="display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:9px;border:1px solid var(--color-border,#1e2d4a);"
+              [style.opacity]="isAlreadyMember(s.id) ? '0.4' : '1'">
               <div style="width:30px;height:30px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:white;"
                 [style.background]="getRoleColor(s.roleDto?.name || s.roleName || s.role)">
                 {{ (s.name || '?')[0]?.toUpperCase() }}
               </div>
               <div style="flex:1;min-width:0;">
                 <div style="font-size:11px;font-weight:600;">{{ s.name }}</div>
-                <div style="font-size:9px;opacity:0.55;margin-top:1px;">{{ getRoleDisplayName(s.roleDto?.name || s.roleName || s.role) || 'Staff' }}</div>
-                <div *ngIf="s.email"
-                  style="font-size:9px;opacity:0.35;margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
-                  {{ s.email }}
-                </div>
+                <div style="font-size:9px;opacity:0.55;margin-top:1px;">{{ getRoleDisplayName(s.roleDto?.name || s.roleName || s.role) }}</div>
+                <div *ngIf="s.email" style="font-size:9px;opacity:0.35;margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ s.email }}</div>
               </div>
               <button *ngIf="!isAlreadyMember(s.id)" (click)="addMember(s)"
-                style="padding:4px 12px;border-radius:7px;border:1px solid #22c55e;background:transparent;color:#22c55e;font-size:10px;font-weight:700;cursor:pointer;transition:all 0.15s;"
+                style="padding:4px 12px;border-radius:7px;border:1px solid #22c55e;background:transparent;color:#22c55e;font-size:10px;font-weight:700;cursor:pointer;"
                 onmouseenter="this.style.background='#22c55e22'" onmouseleave="this.style.background='transparent'">
-                + Add
+                {{ lbl('addMemberBtn') }}
               </button>
-              <span *ngIf="isAlreadyMember(s.id)" style="font-size:10px;color:#22c55e;font-weight:600;padding:4px 10px;">
-                ✓ Added
-              </span>
-            </div>
-
-            <div *ngIf="filteredStaff.length === 0" style="padding:20px;text-align:center;font-size:11px;opacity:0.4;font-style:italic;">
-              No staff found matching "{{ memberSearchQuery }}"
+              <span *ngIf="isAlreadyMember(s.id)" style="font-size:10px;color:#22c55e;font-weight:600;padding:4px 10px;">{{ lbl('alreadyAdded') }}</span>
             </div>
           </div>
         </div>
       </div>
     </ng-container>
 
-    <!-- ══════ TAB: RULES (with Edit/Add/Delete) ══════ -->
+    <!-- ══════ TAB: RULES ══════ -->
     <ng-container *ngIf="activeTab === 'rules'">
       <div class="card">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
-          <div class="card-title" style="margin-bottom:0;">📐 Project Rules</div>
+          <div class="card-title" style="margin-bottom:0;">{{ lbl('rulesTitle') }}</div>
           <div style="display:flex;align-items:center;gap:8px;">
-            <span style="font-size:9px;padding:2px 8px;border-radius:20px;background:#6366f122;color:#818cf8;font-weight:700;border:1px solid #6366f133;">{{ projectRules.length }} rules</span>
+            <span style="font-size:9px;padding:2px 8px;border-radius:20px;background:#6366f122;color:#818cf8;font-weight:700;border:1px solid #6366f133;">{{ projectRules.length }} {{ lbl('rules') }}</span>
             <button *ngIf="canEdit()" (click)="showRuleEdit = !showRuleEdit"
-              style="display:flex;align-items:center;gap:5px;padding:4px 12px;border-radius:8px;border:1px solid;font-size:11px;font-weight:600;cursor:pointer;transition:all 0.15s;"
+              style="display:flex;align-items:center;gap:5px;padding:4px 12px;border-radius:8px;border:1px solid;font-size:11px;font-weight:600;cursor:pointer;"
               [style.borderColor]="showRuleEdit ? '#22c55e' : 'var(--color-border,#1e2d4a)'"
               [style.background]="showRuleEdit ? '#22c55e22' : 'transparent'"
               [style.color]="showRuleEdit ? '#22c55e' : '#64748b'">
-              ✏️ {{ showRuleEdit ? 'Done' : 'Edit' }}
+              {{ showRuleEdit ? lbl('editCancel') : lbl('editProject') }}
             </button>
           </div>
         </div>
@@ -788,12 +693,10 @@
           <span style="font-size:11px;">Loading...</span>
         </div>
 
-        <!-- Rules list with inline edit -->
         <div *ngIf="!rulesLoading" style="display:flex;flex-direction:column;gap:8px;">
-          <div *ngFor="let rule of projectRules; let i=index"
-            style="padding:12px 14px;border-radius:10px;border:1px solid var(--color-border,#1e2d4a);border-left:3px solid;background:rgba(255,255,255,0.02);"
+          <div *ngFor="let rule of projectRules"
+            style="padding:12px 14px;border-radius:10px;border:1px solid var(--color-border,#1e2d4a);border-left:3px solid;"
             [style.borderLeftColor]="getRuleCategoryColor(rule.category)">
-
             <ng-container *ngIf="editingRuleId !== rule.id">
               <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;">
                 <div style="flex:1;">
@@ -804,66 +707,46 @@
                       {{ getRuleCategoryIcon(rule.category) }} {{ rule.category }}
                     </span>
                   </div>
-                  <div style="font-size:12px;font-weight:700;color:var(--input-text,#e2e8f0);margin-bottom:4px;">{{ rule.title }}</div>
+                  <div style="font-size:12px;font-weight:700;margin-bottom:4px;">{{ rule.title }}</div>
                   <div style="font-size:11px;opacity:0.55;line-height:1.6;">{{ rule.content }}</div>
                 </div>
-                <div *ngIf="showRuleEdit" style="display:flex;gap:5px;flex-shrink:0;">
-                  <button (click)="startEditRule(rule)"
-                    style="padding:3px 8px;border-radius:6px;border:1px solid var(--color-border,#1e2d4a);background:transparent;color:#64748b;font-size:10px;cursor:pointer;transition:all 0.15s;"
-                    onmouseenter="this.style.borderColor='#22c55e';this.style.color='#22c55e'"
-                    onmouseleave="this.style.borderColor='var(--color-border,#1e2d4a)';this.style.color='#64748b'">
-                    ✏️
-                  </button>
-                  <button (click)="deleteRule(rule.id)"
-                    style="padding:3px 8px;border-radius:6px;border:1px solid #ef444433;background:transparent;color:#ef4444;font-size:10px;cursor:pointer;transition:all 0.15s;"
-                    onmouseenter="this.style.background='#ef444411'" onmouseleave="this.style.background='transparent'">
-                    🗑
-                  </button>
+                <div *ngIf="showRuleEdit" style="display:flex;gap:5px;">
+                  <button (click)="startEditRule(rule)" style="padding:3px 8px;border-radius:6px;border:1px solid var(--color-border,#1e2d4a);background:transparent;color:#64748b;font-size:10px;cursor:pointer;">✏️</button>
+                  <button (click)="deleteRule(rule.id)" style="padding:3px 8px;border-radius:6px;border:1px solid #ef444433;background:transparent;color:#ef4444;font-size:10px;cursor:pointer;">🗑</button>
                 </div>
               </div>
             </ng-container>
-
             <ng-container *ngIf="editingRuleId === rule.id">
               <div style="display:flex;flex-direction:column;gap:8px;">
                 <input [(ngModel)]="ruleEditForm.title" placeholder="Rule title *"
-                  style="width:100%;border-radius:8px;border:1px solid #22c55e66;padding:7px 10px;font-size:12px;outline:none;background:var(--input-bg,#0d1424);color:var(--input-text,#e2e8f0);box-sizing:border-box;font-family:inherit;font-weight:600;">
-                <textarea [(ngModel)]="ruleEditForm.content" rows="3" placeholder="Rule description..."
-                  style="width:100%;border-radius:8px;border:1px solid var(--color-border,#1e2d4a);padding:7px 10px;font-size:11px;outline:none;background:var(--input-bg,#0d1424);color:var(--input-text,#e2e8f0);box-sizing:border-box;font-family:inherit;resize:none;line-height:1.6;"></textarea>
-                <div style="display:flex;align-items:center;gap:8px;">
-                  <select [(ngModel)]="ruleEditForm.category"
-                    style="border-radius:7px;border:1px solid var(--color-border,#1e2d4a);padding:5px 8px;font-size:10px;outline:none;cursor:pointer;background:var(--input-bg,#0d1424);color:#94a3b8;">
+                  style="width:100%;border-radius:8px;border:1px solid #22c55e66;padding:7px 10px;font-size:12px;outline:none;background:var(--input-bg,#0d1424);color:var(--input-text,#e2e8f0);box-sizing:border-box;">
+                <textarea [(ngModel)]="ruleEditForm.content" rows="3"
+                  style="width:100%;border-radius:8px;border:1px solid var(--color-border,#1e2d4a);padding:7px 10px;font-size:11px;outline:none;background:var(--input-bg,#0d1424);color:var(--input-text,#e2e8f0);box-sizing:border-box;resize:none;"></textarea>
+                <div style="display:flex;gap:8px;">
+                  <select [(ngModel)]="ruleEditForm.category" style="border-radius:7px;border:1px solid var(--color-border,#1e2d4a);padding:5px 8px;font-size:10px;outline:none;background:var(--input-bg,#0d1424);color:#94a3b8;">
                     <option value="CODING_STANDARDS">📦 CODING_STANDARDS</option>
                     <option value="PROCESS_RULES">⚙️ PROCESS_RULES</option>
                     <option value="GENERAL">📌 GENERAL</option>
                   </select>
                   <div style="flex:1;"></div>
-                  <button (click)="cancelEditRule()"
-                    style="padding:5px 12px;border-radius:7px;border:1px solid var(--color-border,#1e2d4a);background:transparent;color:#64748b;font-size:10px;font-weight:600;cursor:pointer;">
-                    Cancel
-                  </button>
-                  <button (click)="saveRule(rule.id)"
-                    style="padding:5px 12px;border-radius:7px;border:none;background:linear-gradient(135deg,#14532d,#16a34a);color:white;font-size:10px;font-weight:700;cursor:pointer;">
-                    💾 Save
-                  </button>
+                  <button (click)="cancelEditRule()" style="padding:5px 12px;border-radius:7px;border:1px solid var(--color-border,#1e2d4a);background:transparent;color:#64748b;font-size:10px;font-weight:600;cursor:pointer;">{{ lbl('editCancel') }}</button>
+                  <button (click)="saveRule(rule.id)" style="padding:5px 12px;border-radius:7px;border:none;background:linear-gradient(135deg,#14532d,#16a34a);color:white;font-size:10px;font-weight:700;cursor:pointer;">💾 {{ lbl('saveChanges') }}</button>
                 </div>
               </div>
             </ng-container>
           </div>
-
-          <div *ngIf="projectRules.length === 0" style="text-align:center;padding:24px;font-size:11px;opacity:0.35;">No rules defined yet</div>
+          <div *ngIf="projectRules.length === 0" style="text-align:center;padding:24px;font-size:11px;opacity:0.35;">{{ lbl('noRules') }}</div>
         </div>
 
-        <!-- Add New Rule -->
         <div *ngIf="showRuleEdit" style="margin-top:14px;border-top:1px solid var(--color-border,#1e2d4a);padding-top:14px;">
-          <div style="font-size:10px;font-weight:600;opacity:0.5;margin-bottom:10px;letter-spacing:0.5px;">+ ADD NEW RULE</div>
+          <div style="font-size:10px;font-weight:600;opacity:0.5;margin-bottom:10px;">{{ lbl('addNewRule') }}</div>
           <div style="display:flex;flex-direction:column;gap:8px;">
             <input [(ngModel)]="newRuleTitle" placeholder="Rule title *"
-              style="width:100%;border-radius:8px;border:1px solid var(--color-border,#1e2d4a);padding:8px 12px;font-size:12px;outline:none;background:var(--input-bg,#0d1424);color:var(--input-text,#e2e8f0);box-sizing:border-box;font-family:inherit;">
-            <textarea [(ngModel)]="newRuleContent" rows="3" placeholder="Rule description..."
-              style="width:100%;border-radius:8px;border:1px solid var(--color-border,#1e2d4a);padding:8px 12px;font-size:11px;outline:none;background:var(--input-bg,#0d1424);color:var(--input-text,#e2e8f0);box-sizing:border-box;font-family:inherit;resize:none;line-height:1.6;"></textarea>
-            <div style="display:flex;align-items:center;gap:8px;">
-              <select [(ngModel)]="newRuleCategory"
-                style="border-radius:7px;border:1px solid var(--color-border,#1e2d4a);padding:6px 8px;font-size:10px;outline:none;cursor:pointer;background:var(--input-bg,#0d1424);color:#94a3b8;">
+              style="width:100%;border-radius:8px;border:1px solid var(--color-border,#1e2d4a);padding:8px 12px;font-size:12px;outline:none;background:var(--input-bg,#0d1424);color:var(--input-text,#e2e8f0);box-sizing:border-box;">
+            <textarea [(ngModel)]="newRuleContent" rows="3"
+              style="width:100%;border-radius:8px;border:1px solid var(--color-border,#1e2d4a);padding:8px 12px;font-size:11px;outline:none;background:var(--input-bg,#0d1424);color:var(--input-text,#e2e8f0);box-sizing:border-box;resize:none;"></textarea>
+            <div style="display:flex;gap:8px;">
+              <select [(ngModel)]="newRuleCategory" style="border-radius:7px;border:1px solid var(--color-border,#1e2d4a);padding:6px 8px;font-size:10px;outline:none;background:var(--input-bg,#0d1424);color:#94a3b8;">
                 <option value="CODING_STANDARDS">📦 CODING_STANDARDS</option>
                 <option value="PROCESS_RULES">⚙️ PROCESS_RULES</option>
                 <option value="GENERAL">📌 GENERAL</option>
@@ -872,7 +755,7 @@
               <button (click)="addRule()" [disabled]="!newRuleTitle.trim() || !newRuleContent.trim()"
                 style="padding:7px 18px;border-radius:8px;border:none;background:linear-gradient(135deg,#14532d,#16a34a);color:white;font-size:11px;font-weight:700;cursor:pointer;"
                 [style.opacity]="newRuleTitle.trim() && newRuleContent.trim() ? '1' : '0.4'">
-                + Add Rule
+                {{ lbl('addNewRule') }}
               </button>
             </div>
           </div>
@@ -880,46 +763,46 @@
       </div>
     </ng-container>
 
-    <!-- ══════ TAB: PROJECT SETUP ══════ -->
+    <!-- ══════ TAB: SETUP ══════ -->
     <ng-container *ngIf="activeTab === 'setup'">
       <div class="card" style="animation:fadeIn 0.3s ease;">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
           <div style="display:flex;flex-direction:column;gap:4px;">
-            <div class="card-title" style="margin-bottom:0;">{{ setupLabel('cardTitle') }}</div>
-            <div style="font-size:10px;opacity:0.5;font-weight:500;">{{ setupLabel('cardSubtitle') }}</div>
+            <div class="card-title" style="margin-bottom:0;">{{ lbl('cardTitle') }}</div>
+            <div style="font-size:10px;opacity:0.5;font-weight:500;">{{ lbl('cardSubtitle') }}</div>
           </div>
           <div style="display:flex;align-items:center;gap:8px;">
             <span *ngIf="setupGuide?.parsed?.summary"
               style="font-size:9px;padding:2px 8px;border-radius:20px;background:#22c55e22;color:#22c55e;font-weight:700;border:1px solid #22c55e33;">
-              {{ setupLabel('badgeGenerated') }}
+              {{ lbl('badgeGenerated') }}
               <span *ngIf="getGuideOS()" style="opacity:0.75;"> · {{ osDisplayLabel(getGuideOS()!) }}</span>
             </span>
             <button *ngIf="canEdit()" (click)="generateSetupGuide()" [disabled]="setupGenerating"
               style="display:flex;align-items:center;gap:6px;padding:6px 14px;border-radius:8px;border:1px solid #22c55e44;font-size:11px;font-weight:700;cursor:pointer;background:linear-gradient(135deg,#14532d22,#16a34a22);color:#22c55e;"
               [style.opacity]="setupGenerating ? '0.6' : '1'">
               <div *ngIf="setupGenerating" style="width:11px;height:11px;border:2px solid #22c55e;border-top-color:transparent;border-radius:50%;animation:spin 0.8s linear infinite;"></div>
-              {{ setupGenerating ? setupLabel('btnGenerating') : (setupGuide ? setupLabel('btnRegenerate') : setupLabel('btnGenerate')) }}
+              {{ setupGenerating ? lbl('btnGenerating') : (setupGuide ? lbl('btnRegenerate') : lbl('btnGenerate')) }}
             </button>
           </div>
         </div>
 
         <div style="padding:10px 14px;border-radius:10px;background:rgba(59,130,246,0.06);border:1px solid rgba(59,130,246,0.2);margin-bottom:14px;">
-          <div style="font-size:10px;color:#60a5fa;font-weight:700;letter-spacing:0.5px;margin-bottom:4px;">{{ setupLabel('prereqTitle') }}</div>
+          <div style="font-size:10px;color:#60a5fa;font-weight:700;letter-spacing:0.5px;margin-bottom:4px;">{{ lbl('prereqTitle') }}</div>
           <div style="font-size:11px;opacity:0.75;line-height:1.7;">
-            {{ setupLabel('prereqLine1') }} <strong>{{ setupLabel('prereqLine1Bold') }}</strong>.<br>
-            {{ setupLabel('prereqLine2') }}
+            {{ lbl('prereqLine1') }} <strong>{{ lbl('prereqLine1Bold') }}</strong>.<br>
+            {{ lbl('prereqLine2') }}
           </div>
         </div>
 
         <div *ngIf="canEdit() && !setupLoading" style="padding:12px 14px;border-radius:10px;background:rgba(99,102,241,0.05);border:1px solid rgba(99,102,241,0.2);margin-bottom:14px;">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;flex-wrap:wrap;gap:6px;">
             <div>
-              <div style="font-size:10px;color:#818cf8;font-weight:700;letter-spacing:0.5px;">{{ setupLabel('osPickerTitle') }}</div>
-              <div style="font-size:9px;opacity:0.5;margin-top:2px;">{{ setupLabel('osPickerHint') }}</div>
+              <div style="font-size:10px;color:#818cf8;font-weight:700;letter-spacing:0.5px;">{{ lbl('osPickerTitle') }}</div>
+              <div style="font-size:9px;opacity:0.5;margin-top:2px;">{{ lbl('osPickerHint') }}</div>
             </div>
             <span *ngIf="detectedOS === selectedOS"
               style="font-size:9px;padding:2px 8px;border-radius:20px;background:rgba(99,102,241,0.15);color:#818cf8;font-weight:600;border:1px solid rgba(99,102,241,0.3);">
-              ✨ {{ setupLabel('osAutoDetected') }}
+              ✨ {{ lbl('osAutoDetected') }}
             </span>
           </div>
           <div style="display:flex;gap:6px;flex-wrap:wrap;">
@@ -928,249 +811,205 @@
               [style.borderColor]="selectedOS === opt.value ? '#818cf8' : 'var(--color-border,#1e2d4a)'"
               [style.background]="selectedOS === opt.value ? 'rgba(129,140,248,0.15)' : 'transparent'"
               [style.color]="selectedOS === opt.value ? '#818cf8' : '#94a3b8'">
-              {{ setupLabel(opt.labelKey) }}
-              <span *ngIf="selectedOS === opt.value" style="font-size:11px;">✓</span>
+              {{ lbl(opt.labelKey) }}
+              <span *ngIf="selectedOS === opt.value">✓</span>
             </button>
           </div>
         </div>
 
         <div *ngIf="setupLoading" style="display:flex;align-items:center;gap:8px;padding:20px 0;opacity:0.5;justify-content:center;">
           <div style="width:12px;height:12px;border:2px solid #22c55e;border-top-color:transparent;border-radius:50%;animation:spin 0.8s linear infinite;"></div>
-          <span style="font-size:11px;">{{ setupLabel('loadingGuide') }}</span>
+          <span style="font-size:11px;">{{ lbl('loadingGuide') }}</span>
         </div>
 
-        <div *ngIf="setupError" style="padding:12px;border-radius:8px;background:#ef444411;border:1px solid #ef444433;font-size:11px;color:#ef4444;margin-bottom:12px;">
-          ⚠️ {{ setupError }}
-        </div>
+        <div *ngIf="setupError" style="padding:12px;border-radius:8px;background:#ef444411;border:1px solid #ef444433;font-size:11px;color:#ef4444;margin-bottom:12px;">⚠️ {{ setupError }}</div>
 
         <div *ngIf="!setupLoading && !setupGuide && !setupGenerating" style="text-align:center;padding:40px 20px;">
           <div style="font-size:42px;opacity:0.3;margin-bottom:12px;">🚀</div>
-          <div style="font-size:13px;font-weight:700;color:#64748b;margin-bottom:6px;">{{ setupLabel('emptyTitle') }}</div>
+          <div style="font-size:13px;font-weight:700;color:#64748b;margin-bottom:6px;">{{ lbl('emptyTitle') }}</div>
           <div style="font-size:11px;opacity:0.5;line-height:1.7;max-width:400px;margin:0 auto 16px;">
-            {{ setupLabel('emptyDescBefore') }}
-            <strong style="color:#22c55e;">{{ setupLabel('emptyDescAction') }}</strong>
-            {{ setupLabel('emptyDescAfter') }}
+            {{ lbl('emptyDescBefore') }} <strong style="color:#22c55e;">{{ lbl('emptyDescAction') }}</strong> {{ lbl('emptyDescAfter') }}
           </div>
-          <div *ngIf="!techStacks.length" style="font-size:10px;color:#f59e0b;margin-top:12px;">
-            {{ setupLabel('emptyNoTech') }}
-          </div>
+          <div *ngIf="!techStacks.length" style="font-size:10px;color:#f59e0b;margin-top:12px;">{{ lbl('emptyNoTech') }}</div>
         </div>
 
         <div *ngIf="setupGenerating && !setupGuide" style="text-align:center;padding:40px 20px;">
           <div style="font-size:42px;opacity:0.5;margin-bottom:12px;animation:pulse 1.5s ease-in-out infinite;">🤖</div>
-          <div style="font-size:13px;font-weight:700;color:#22c55e;margin-bottom:6px;">{{ setupLabel('generatingTitle') }}</div>
-          <div style="font-size:11px;opacity:0.5;">
-            {{ setupLabel('generatingDesc') }}
-            <span style="color:#818cf8;font-weight:600;"> · {{ osDisplayLabel(selectedOS) }}</span>
-          </div>
+          <div style="font-size:13px;font-weight:700;color:#22c55e;margin-bottom:6px;">{{ lbl('generatingTitle') }}</div>
+          <div style="font-size:11px;opacity:0.5;">{{ lbl('generatingDesc') }} <span style="color:#818cf8;font-weight:600;"> · {{ osDisplayLabel(selectedOS) }}</span></div>
         </div>
 
         <div *ngIf="setupGuide && setupGuide.parsed" style="display:flex;flex-direction:column;gap:12px;">
           <div *ngIf="setupGuide.parsed.summary"
             style="padding:10px 14px;border-radius:10px;background:rgba(34,197,94,0.06);border-left:3px solid #22c55e;">
-            <div style="font-size:9px;color:#22c55e;font-weight:700;letter-spacing:0.5px;">{{ setupLabel('stackDetected') }}</div>
+            <div style="font-size:9px;color:#22c55e;font-weight:700;letter-spacing:0.5px;">{{ lbl('stackDetected') }}</div>
             <div style="font-size:12px;opacity:0.9;line-height:1.5;margin-top:4px;">{{ setupGuide.parsed.summary }}</div>
           </div>
 
           <div *ngFor="let step of setupGuide.parsed.steps; let i = index"
             style="border-radius:12px;border:1px solid var(--color-border,#1e2d4a);overflow:hidden;background:#0a101e;">
-
             <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:linear-gradient(135deg,#14532d15,#0a101e);border-bottom:1px solid var(--color-border,#1e2d4a);">
               <div style="display:flex;align-items:center;gap:10px;flex:1;">
                 <span style="width:22px;height:22px;border-radius:50%;background:linear-gradient(135deg,#14532d,#16a34a);display:flex;align-items:center;justify-content:center;color:white;font-size:11px;font-weight:800;flex-shrink:0;">{{ i + 1 }}</span>
-                <div style="flex:1;min-width:0;">
+                <div style="flex:1;">
                   <div style="font-size:12px;font-weight:700;color:#e2e8f0;">{{ step.title }}</div>
                   <div *ngIf="step.description" style="font-size:10px;opacity:0.55;margin-top:2px;">{{ step.description }}</div>
                 </div>
               </div>
               <button (click)="copyStepCommands(step, i)"
-                style="display:flex;align-items:center;gap:5px;padding:5px 10px;border-radius:7px;border:1px solid;font-size:10px;font-weight:600;cursor:pointer;flex-shrink:0;"
+                style="display:flex;align-items:center;gap:5px;padding:5px 10px;border-radius:7px;border:1px solid;font-size:10px;font-weight:600;cursor:pointer;"
                 [style.borderColor]="copiedStepIndex === i ? '#22c55e' : 'rgba(255,255,255,0.1)'"
                 [style.background]="copiedStepIndex === i ? '#22c55e22' : 'transparent'"
                 [style.color]="copiedStepIndex === i ? '#22c55e' : '#64748b'">
-                {{ copiedStepIndex === i ? setupLabel('copiedBtn') : setupLabel('copyBtn') }}
+                {{ copiedStepIndex === i ? lbl('copiedBtn') : lbl('copyBtn') }}
               </button>
             </div>
-
             <div style="padding:12px 14px;font-family:'DM Mono',monospace;font-size:11px;line-height:1.8;background:#0a0f1e;">
-              <div *ngFor="let cmd of step.commands"
-                style="white-space:pre-wrap;word-break:break-all;"
+              <div *ngFor="let cmd of step.commands" style="white-space:pre-wrap;word-break:break-all;"
                 [style.color]="isComment(cmd) ? '#64748b' : '#86efac'"
                 [style.opacity]="isComment(cmd) ? '0.65' : '1'">{{ cmd }}</div>
             </div>
 
+            <!-- Error Fix -->
             <div style="border-top:1px solid rgba(239,68,68,0.15);background:rgba(239,68,68,0.03);">
               <div (click)="toggleErrorFix(i)"
                 style="padding:8px 14px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;"
                 [style.background]="getErrorFix(i).expanded ? 'rgba(239,68,68,0.08)' : 'transparent'">
                 <span style="font-size:10px;color:#ef4444;font-weight:600;display:flex;align-items:center;gap:6px;">
-                  {{ setupLabel('fixErrorToggle') }}
+                  {{ lbl('fixErrorToggle') }}
                   <span *ngIf="getErrorFix(i).attempts.length > 0"
                     style="font-size:9px;padding:1px 6px;border-radius:20px;background:rgba(239,68,68,0.15);color:#f87171;font-weight:700;">
-                    {{ setupLabel('fixAttemptLabel') }} {{ getErrorFix(i).attempts.length + (getErrorFix(i).result ? 1 : 0) }}/5
+                    {{ lbl('fixAttemptLabel') }} {{ getErrorFix(i).attempts.length + (getErrorFix(i).result ? 1 : 0) }}/5
                   </span>
                 </span>
                 <span style="font-size:9px;color:#ef4444;opacity:0.6;">{{ getErrorFix(i).expanded ? '▲' : '▼' }}</span>
               </div>
 
               <div *ngIf="getErrorFix(i).expanded" style="padding:12px 14px;border-top:1px solid rgba(239,68,68,0.1);animation:fadeIn 0.2s ease;">
-
                 <div *ngIf="getErrorFix(i).attempts.length > 0" style="margin-bottom:12px;">
-                  <div style="font-size:9px;color:#64748b;font-weight:700;letter-spacing:0.5px;margin-bottom:6px;">{{ setupLabel('fixPreviousAttempts') }}</div>
-                  <div style="display:flex;flex-direction:column;gap:4px;">
-                    <div *ngFor="let attempt of getErrorFix(i).attempts; let j = index"
-                      style="padding:8px 10px;border-radius:6px;background:rgba(100,116,139,0.08);opacity:0.65;font-size:10px;">
-                      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:3px;">
-                        <span style="color:#64748b;font-weight:600;">{{ setupLabel('fixAttemptLabel') }} {{ j + 1 }}</span>
-                        <span style="color:#ef4444;font-size:9px;">❌ {{ setupLabel('fixAttemptDidNotWork') }}</span>
-                      </div>
-                      <div style="color:#94a3b8;font-family:'DM Mono',monospace;font-size:9px;opacity:0.7;">
-                        {{ setupLabel('fixAttemptTriedLabel') }}: {{ attempt.suggestedSolution }}
-                      </div>
+                  <div style="font-size:9px;color:#64748b;font-weight:700;letter-spacing:0.5px;margin-bottom:6px;">{{ lbl('fixPreviousAttempts') }}</div>
+                  <div *ngFor="let attempt of getErrorFix(i).attempts; let j = index"
+                    style="padding:8px 10px;border-radius:6px;background:rgba(100,116,139,0.08);opacity:0.65;font-size:10px;margin-bottom:4px;">
+                    <div style="display:flex;justify-content:space-between;margin-bottom:3px;">
+                      <span style="color:#64748b;font-weight:600;">{{ lbl('fixAttemptLabel') }} {{ j + 1 }}</span>
+                      <span style="color:#ef4444;font-size:9px;">❌ {{ lbl('fixAttemptDidNotWork') }}</span>
                     </div>
+                    <div style="color:#94a3b8;font-family:'DM Mono',monospace;font-size:9px;opacity:0.7;">{{ lbl('fixAttemptTriedLabel') }}: {{ attempt.suggestedSolution }}</div>
                   </div>
                 </div>
 
                 <div *ngIf="getErrorFix(i).attempts.length === 0 && !getErrorFix(i).loading && !getErrorFix(i).result">
-                  <div style="font-size:10px;color:#f87171;font-weight:700;letter-spacing:0.5px;margin-bottom:6px;">🐛 {{ setupLabel('fixErrorTitle') }}</div>
-                  <textarea [(ngModel)]="getErrorFix(i).errorInput" [placeholder]="setupLabel('fixErrorPlaceholder')" rows="5"
-                    style="width:100%;border-radius:8px;border:1px solid rgba(239,68,68,0.25);padding:8px 12px;font-size:11px;outline:none;background:rgba(0,0,0,0.3);color:#e2e8f0;box-sizing:border-box;resize:vertical;font-family:'DM Mono',monospace;line-height:1.5;"></textarea>
-                  <div *ngIf="getErrorFix(i).error" style="margin-top:6px;font-size:10px;color:#ef4444;padding:6px 10px;border-radius:6px;background:rgba(239,68,68,0.1);">
-                    ⚠️ {{ getErrorFix(i).error }}
-                  </div>
+                  <div style="font-size:10px;color:#f87171;font-weight:700;margin-bottom:6px;">🐛 {{ lbl('fixErrorTitle') }}</div>
+                  <textarea [(ngModel)]="getErrorFix(i).errorInput" [placeholder]="lbl('fixErrorPlaceholder')" rows="5"
+                    style="width:100%;border-radius:8px;border:1px solid rgba(239,68,68,0.25);padding:8px 12px;font-size:11px;outline:none;background:rgba(0,0,0,0.3);color:#e2e8f0;box-sizing:border-box;resize:vertical;font-family:'DM Mono',monospace;"></textarea>
+                  <div *ngIf="getErrorFix(i).error" style="margin-top:6px;font-size:10px;color:#ef4444;padding:6px 10px;border-radius:6px;background:rgba(239,68,68,0.1);">⚠️ {{ getErrorFix(i).error }}</div>
                   <div style="display:flex;justify-content:flex-end;gap:6px;margin-top:8px;">
-                    <button (click)="dismissErrorFix(i)"
-                      style="padding:6px 12px;border-radius:7px;border:1px solid rgba(255,255,255,0.1);background:transparent;color:#64748b;font-size:10px;font-weight:600;cursor:pointer;">
-                      {{ setupLabel('fixErrorClose') }}
-                    </button>
+                    <button (click)="dismissErrorFix(i)" style="padding:6px 12px;border-radius:7px;border:1px solid rgba(255,255,255,0.1);background:transparent;color:#64748b;font-size:10px;font-weight:600;cursor:pointer;">{{ lbl('fixErrorClose') }}</button>
                     <button (click)="fixErrorWithAI(step, i)" [disabled]="!getErrorFix(i).errorInput.trim()"
                       style="padding:6px 14px;border-radius:7px;border:none;background:linear-gradient(135deg,#dc2626,#ef4444);color:white;font-size:10px;font-weight:700;cursor:pointer;"
                       [style.opacity]="getErrorFix(i).errorInput.trim() ? '1' : '0.4'">
-                      {{ setupLabel('fixErrorButton') }}
+                      {{ lbl('fixErrorButton') }}
                     </button>
                   </div>
                 </div>
 
                 <div *ngIf="getErrorFix(i).loading" style="display:flex;align-items:center;justify-content:center;gap:8px;padding:20px;">
                   <div style="width:14px;height:14px;border:2px solid #ef4444;border-top-color:transparent;border-radius:50%;animation:spin 0.8s linear infinite;"></div>
-                  <span style="font-size:11px;color:#f87171;font-weight:600;">{{ setupLabel('fixErrorAnalyzing') }}</span>
+                  <span style="font-size:11px;color:#f87171;font-weight:600;">{{ lbl('fixErrorAnalyzing') }}</span>
                 </div>
 
-                <div *ngIf="getErrorFix(i).result && !getErrorFix(i).loading && !getErrorFix(i).showNewErrorInput"
-                  style="display:flex;flex-direction:column;gap:10px;">
+                <div *ngIf="getErrorFix(i).result && !getErrorFix(i).loading && !getErrorFix(i).showNewErrorInput" style="display:flex;flex-direction:column;gap:10px;">
                   <div style="padding:8px 12px;border-radius:8px;background:rgba(239,68,68,0.08);border-left:3px solid #ef4444;">
-                    <div style="font-size:9px;color:#ef4444;font-weight:700;letter-spacing:0.5px;margin-bottom:4px;">❌ {{ setupLabel('fixErrorProblem') }}</div>
+                    <div style="font-size:9px;color:#ef4444;font-weight:700;margin-bottom:4px;">❌ {{ lbl('fixErrorProblem') }}</div>
                     <div style="font-size:11px;opacity:0.85;line-height:1.5;">{{ getErrorFix(i).result!.problem }}</div>
                   </div>
-
                   <div style="padding:8px 12px;border-radius:8px;background:rgba(34,197,94,0.08);border-left:3px solid #22c55e;">
-                    <div style="font-size:9px;color:#22c55e;font-weight:700;letter-spacing:0.5px;margin-bottom:4px;">✓ {{ setupLabel('fixErrorSolution') }}</div>
+                    <div style="font-size:9px;color:#22c55e;font-weight:700;margin-bottom:4px;">✓ {{ lbl('fixErrorSolution') }}</div>
                     <div style="font-size:11px;opacity:0.85;line-height:1.5;">{{ getErrorFix(i).result!.solution }}</div>
                   </div>
-
-                  <div *ngIf="getErrorFix(i).result!.commands.length"
-                    style="border-radius:8px;border:1px solid rgba(34,197,94,0.25);overflow:hidden;background:#0a0f1e;">
+                  <div *ngIf="getErrorFix(i).result!.commands.length" style="border-radius:8px;border:1px solid rgba(34,197,94,0.25);overflow:hidden;background:#0a0f1e;">
                     <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 10px;background:rgba(34,197,94,0.08);border-bottom:1px solid rgba(34,197,94,0.15);">
-                      <span style="font-size:9px;color:#22c55e;font-weight:700;letter-spacing:0.5px;">🤖 {{ setupLabel('fixErrorCommandsLabel') }}</span>
+                      <span style="font-size:9px;color:#22c55e;font-weight:700;">🤖 {{ lbl('fixErrorCommandsLabel') }}</span>
                       <button (click)="copyFixCommands(i)"
                         style="padding:3px 8px;border-radius:5px;border:1px solid;font-size:9px;font-weight:600;cursor:pointer;"
                         [style.borderColor]="getErrorFix(i).copiedCommand ? '#22c55e' : 'rgba(255,255,255,0.12)'"
                         [style.background]="getErrorFix(i).copiedCommand ? 'rgba(34,197,94,0.15)' : 'transparent'"
                         [style.color]="getErrorFix(i).copiedCommand ? '#22c55e' : '#94a3b8'">
-                        {{ getErrorFix(i).copiedCommand ? setupLabel('copiedBtn') : setupLabel('copyBtn') }}
+                        {{ getErrorFix(i).copiedCommand ? lbl('copiedBtn') : lbl('copyBtn') }}
                       </button>
                     </div>
                     <div style="padding:10px 12px;font-family:'DM Mono',monospace;font-size:10px;line-height:1.7;">
-                      <div *ngFor="let cmd of getErrorFix(i).result!.commands"
-                        style="white-space:pre-wrap;word-break:break-all;"
+                      <div *ngFor="let cmd of getErrorFix(i).result!.commands" style="white-space:pre-wrap;word-break:break-all;"
                         [style.color]="isComment(cmd) ? '#64748b' : '#86efac'"
                         [style.opacity]="isComment(cmd) ? '0.65' : '1'">{{ cmd }}</div>
                     </div>
                   </div>
-
-                  <div *ngIf="getErrorFix(i).result!.explanation"
-                    style="padding:8px 12px;border-radius:8px;background:rgba(129,140,248,0.06);border-left:3px solid #818cf8;">
-                    <div style="font-size:9px;color:#818cf8;font-weight:700;letter-spacing:0.5px;margin-bottom:4px;">💡 {{ setupLabel('fixErrorExplanation') }}</div>
+                  <div *ngIf="getErrorFix(i).result!.explanation" style="padding:8px 12px;border-radius:8px;background:rgba(129,140,248,0.06);border-left:3px solid #818cf8;">
+                    <div style="font-size:9px;color:#818cf8;font-weight:700;margin-bottom:4px;">💡 {{ lbl('fixErrorExplanation') }}</div>
                     <div style="font-size:10px;opacity:0.75;line-height:1.6;">{{ getErrorFix(i).result!.explanation }}</div>
                   </div>
-
-                  <div style="display:flex;justify-content:flex-end;gap:6px;margin-top:2px;flex-wrap:wrap;">
+                  <div style="display:flex;justify-content:flex-end;gap:6px;flex-wrap:wrap;">
                     <button *ngIf="!hasReachedMaxAttempts(i)" (click)="markAsDidNotWork(i)"
                       style="padding:6px 12px;border-radius:7px;border:1px solid rgba(239,68,68,0.3);background:rgba(239,68,68,0.08);color:#ef4444;font-size:10px;font-weight:700;cursor:pointer;">
-                      {{ setupLabel('fixBtnDidNotWork') }}
+                      {{ lbl('fixBtnDidNotWork') }}
                     </button>
                     <button (click)="dismissErrorFix(i)"
                       style="padding:6px 12px;border-radius:7px;border:1px solid rgba(34,197,94,0.3);background:rgba(34,197,94,0.08);color:#22c55e;font-size:10px;font-weight:700;cursor:pointer;">
-                      {{ setupLabel('fixBtnWorked') }}
+                      {{ lbl('fixBtnWorked') }}
                     </button>
                   </div>
-
                   <div *ngIf="hasReachedMaxAttempts(i)"
                     style="padding:8px 12px;border-radius:8px;background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);font-size:10px;color:#fbbf24;">
-                    {{ setupLabel('fixMaxAttemptsReached') }}
+                    {{ lbl('fixMaxAttemptsReached') }}
                   </div>
                 </div>
 
                 <div *ngIf="getErrorFix(i).showNewErrorInput && !getErrorFix(i).loading">
-                  <div style="font-size:10px;color:#f87171;font-weight:700;letter-spacing:0.5px;margin-bottom:6px;">
-                    🔄 {{ setupLabel('fixErrorTitle') }} · {{ setupLabel('fixAttemptLabel') }} {{ getErrorFix(i).attempts.length + 2 }}
+                  <div style="font-size:10px;color:#f87171;font-weight:700;margin-bottom:6px;">
+                    🔄 {{ lbl('fixErrorTitle') }} · {{ lbl('fixAttemptLabel') }} {{ getErrorFix(i).attempts.length + 2 }}
                   </div>
-                  <textarea [(ngModel)]="getErrorFix(i).newErrorInput" [placeholder]="setupLabel('fixNewErrorPlaceholder')" rows="5"
-                    style="width:100%;border-radius:8px;border:1px solid rgba(239,68,68,0.25);padding:8px 12px;font-size:11px;outline:none;background:rgba(0,0,0,0.3);color:#e2e8f0;box-sizing:border-box;resize:vertical;font-family:'DM Mono',monospace;line-height:1.5;"></textarea>
-                  <div *ngIf="getErrorFix(i).error" style="margin-top:6px;font-size:10px;color:#ef4444;padding:6px 10px;border-radius:6px;background:rgba(239,68,68,0.1);">
-                    ⚠️ {{ getErrorFix(i).error }}
-                  </div>
+                  <textarea [(ngModel)]="getErrorFix(i).newErrorInput" [placeholder]="lbl('fixNewErrorPlaceholder')" rows="5"
+                    style="width:100%;border-radius:8px;border:1px solid rgba(239,68,68,0.25);padding:8px 12px;font-size:11px;outline:none;background:rgba(0,0,0,0.3);color:#e2e8f0;box-sizing:border-box;resize:vertical;font-family:'DM Mono',monospace;"></textarea>
                   <div style="display:flex;justify-content:flex-end;gap:6px;margin-top:8px;">
-                    <button (click)="cancelRetry(i)"
-                      style="padding:6px 12px;border-radius:7px;border:1px solid rgba(255,255,255,0.1);background:transparent;color:#64748b;font-size:10px;font-weight:600;cursor:pointer;">
-                      {{ setupLabel('fixErrorClose') }}
-                    </button>
+                    <button (click)="cancelRetry(i)" style="padding:6px 12px;border-radius:7px;border:1px solid rgba(255,255,255,0.1);background:transparent;color:#64748b;font-size:10px;font-weight:600;cursor:pointer;">{{ lbl('fixErrorClose') }}</button>
                     <button (click)="retryWithNewError(step, i)" [disabled]="!getErrorFix(i).newErrorInput.trim()"
                       style="padding:6px 14px;border-radius:7px;border:none;background:linear-gradient(135deg,#dc2626,#ef4444);color:white;font-size:10px;font-weight:700;cursor:pointer;"
                       [style.opacity]="getErrorFix(i).newErrorInput.trim() ? '1' : '0.4'">
-                      {{ setupLabel('fixErrorButton') }}
+                      {{ lbl('fixErrorButton') }}
                     </button>
                   </div>
                 </div>
-
               </div>
             </div>
           </div>
 
           <div style="text-align:center;padding:10px;font-size:10px;opacity:0.4;">
-            {{ setupLabel('footerNote') }}
-            <br>
-            <span style="font-size:9px;">
-              {{ setupLabel('footerHintBefore') }}
-              <code style="background:#1e2d4a;padding:1px 5px;border-radius:3px;font-family:monospace;">&lt;REPO_URL&gt;</code>
-              {{ setupLabel('footerHintAfter') }}
-            </span>
+            {{ lbl('footerNote') }}<br>
+            <span style="font-size:9px;">{{ lbl('footerHintBefore') }} <code style="background:#1e2d4a;padding:1px 5px;border-radius:3px;font-family:monospace;">&lt;REPO_URL&gt;</code> {{ lbl('footerHintAfter') }}</span>
           </div>
         </div>
       </div>
     </ng-container>
 
-    <!-- ══════ TAB: GIT ACTIVITY ══════ -->
+    <!-- ══════ TAB: GIT ══════ -->
     <ng-container *ngIf="activeTab === 'git'">
       <div class="card" style="animation:fadeIn 0.3s ease;">
-
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px;">
           <div style="display:flex;flex-direction:column;gap:4px;">
-            <div class="card-title" style="margin-bottom:0;">{{ setupLabel('gitActivityTitle') }}</div>
-            <div style="font-size:10px;opacity:0.5;font-weight:500;">{{ setupLabel('gitActivitySubtitle') }}</div>
+            <div class="card-title" style="margin-bottom:0;">{{ lbl('gitActivityTitle') }}</div>
+            <div style="font-size:10px;opacity:0.5;">{{ lbl('gitActivitySubtitle') }}</div>
           </div>
           <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
             <span *ngIf="gitRepoInfo.count && gitRepoInfo.count > 0"
               style="font-size:9px;padding:2px 8px;border-radius:20px;background:#6366f122;color:#818cf8;font-weight:700;border:1px solid #6366f133;">
-              {{ gitRepoInfo.count }} {{ setupLabel('gitCommitCount') }}
+              {{ gitRepoInfo.count }} {{ lbl('gitCommitCount') }}
             </span>
-            <span *ngIf="gitRepoInfo.owner && gitRepoInfo.repo"
-              style="font-size:10px;font-family:'DM Mono',monospace;color:#64748b;">
+            <span *ngIf="gitRepoInfo.owner && gitRepoInfo.repo" style="font-size:10px;font-family:'DM Mono',monospace;color:#64748b;">
               {{ gitRepoInfo.owner }}/{{ gitRepoInfo.repo }}
             </span>
             <button *ngIf="hasRepoConfigured() && !gitCommitsLoading" (click)="refreshGitCommits()"
               style="padding:5px 12px;border-radius:8px;border:1px solid rgba(255,255,255,0.1);font-size:10px;font-weight:600;cursor:pointer;background:transparent;color:#64748b;">
-              {{ setupLabel('gitRefreshBtn') }}
+              {{ lbl('gitRefreshBtn') }}
             </button>
             <button *ngIf="canEdit() && hasRepoConfigured()" (click)="openRepoEditor()"
               style="padding:5px 12px;border-radius:8px;border:1px solid rgba(255,255,255,0.1);font-size:10px;font-weight:600;cursor:pointer;background:transparent;color:#64748b;">
@@ -1181,17 +1020,17 @@
 
         <div *ngIf="gitCommitsLoading" style="display:flex;align-items:center;justify-content:center;gap:8px;padding:40px 0;opacity:0.5;">
           <div style="width:14px;height:14px;border:2px solid #818cf8;border-top-color:transparent;border-radius:50%;animation:spin 0.8s linear infinite;"></div>
-          <span style="font-size:11px;color:#818cf8;font-weight:600;">{{ setupLabel('gitLoadingCommits') }}</span>
+          <span style="font-size:11px;color:#818cf8;font-weight:600;">{{ lbl('gitLoadingCommits') }}</span>
         </div>
 
         <div *ngIf="!gitCommitsLoading && !hasRepoConfigured() && !showRepoEdit"
           style="text-align:center;padding:48px 20px;border-radius:10px;background:rgba(99,102,241,0.04);border:1px dashed rgba(99,102,241,0.3);">
           <div style="font-size:48px;opacity:0.4;margin-bottom:14px;">🔗</div>
-          <div style="font-size:14px;font-weight:700;color:#94a3b8;margin-bottom:6px;">{{ setupLabel('gitEmptyNoRepo') }}</div>
-          <div style="font-size:11px;opacity:0.55;line-height:1.6;max-width:400px;margin:0 auto 18px;">{{ setupLabel('gitEmptyNoRepoHint') }}</div>
+          <div style="font-size:14px;font-weight:700;color:#94a3b8;margin-bottom:6px;">{{ lbl('gitEmptyNoRepo') }}</div>
+          <div style="font-size:11px;opacity:0.55;line-height:1.6;max-width:400px;margin:0 auto 18px;">{{ lbl('gitEmptyNoRepoHint') }}</div>
           <button *ngIf="canEdit()" (click)="openRepoEditor()"
             style="padding:10px 22px;border-radius:9px;border:none;background:linear-gradient(135deg,#4f46e5,#6366f1);color:white;font-size:12px;font-weight:700;cursor:pointer;">
-            {{ setupLabel('gitSetRepoBtn') }}
+            {{ lbl('gitSetRepoBtn') }}
           </button>
         </div>
 
@@ -1199,24 +1038,19 @@
           style="padding:14px 16px;border-radius:10px;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.25);margin-bottom:8px;">
           <div style="display:flex;align-items:flex-start;gap:10px;">
             <span style="font-size:16px;">⚠️</span>
-            <div style="flex:1;">
-              <div style="font-size:11px;color:#ef4444;font-weight:700;margin-bottom:4px;">{{ gitCommitsError }}</div>
-            </div>
+            <div style="flex:1;font-size:11px;color:#ef4444;font-weight:700;">{{ gitCommitsError }}</div>
             <button *ngIf="canEdit()" (click)="openRepoEditor()"
-              style="padding:4px 10px;border-radius:6px;border:1px solid rgba(239,68,68,0.3);background:transparent;color:#ef4444;font-size:10px;font-weight:600;cursor:pointer;">
-              ⚙️ Fix
-            </button>
+              style="padding:4px 10px;border-radius:6px;border:1px solid rgba(239,68,68,0.3);background:transparent;color:#ef4444;font-size:10px;font-weight:600;cursor:pointer;">⚙️ Fix</button>
           </div>
         </div>
 
         <div *ngIf="!gitCommitsLoading && gitCommits.length > 0" style="display:flex;flex-direction:column;gap:8px;">
-          <div *ngFor="let commit of gitCommits; let i=index" (click)="openCommitInNewTab(commit)"
-            style="display:flex;gap:12px;padding:12px 14px;border-radius:10px;border:1px solid var(--color-border,#1e2d4a);background:rgba(255,255,255,0.02);cursor:pointer;transition:all 0.15s;"
+          <div *ngFor="let commit of gitCommits" (click)="openCommitInNewTab(commit)"
+            style="display:flex;gap:12px;padding:12px 14px;border-radius:10px;border:1px solid var(--color-border,#1e2d4a);cursor:pointer;transition:all 0.15s;"
             onmouseenter="this.style.borderColor='#6366f144';this.style.background='rgba(99,102,241,0.04)'"
-            onmouseleave="this.style.borderColor='var(--color-border,#1e2d4a)';this.style.background='rgba(255,255,255,0.02)'">
+            onmouseleave="this.style.borderColor='var(--color-border,#1e2d4a)';this.style.background='transparent'">
             <img *ngIf="commit.avatarUrl" [src]="commit.avatarUrl" [alt]="commit.authorName || 'Author'"
-              style="width:36px;height:36px;border-radius:50%;flex-shrink:0;border:1px solid rgba(255,255,255,0.08);"
-              onerror="this.style.display='none'">
+              style="width:36px;height:36px;border-radius:50%;flex-shrink:0;" onerror="this.style.display='none'">
             <div *ngIf="!commit.avatarUrl"
               style="width:36px;height:36px;border-radius:50%;flex-shrink:0;background:linear-gradient(135deg,#4f46e5,#6366f1);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:white;">
               {{ (commit.authorName || 'U')[0].toUpperCase() }}
@@ -1233,53 +1067,45 @@
             </div>
             <span style="font-size:12px;opacity:0.35;align-self:center;">↗</span>
           </div>
-
           <div style="text-align:center;padding:14px 0 4px;">
             <button (click)="openRepoInNewTab()"
               style="padding:9px 20px;border-radius:9px;border:1px solid rgba(129,140,248,0.3);background:rgba(129,140,248,0.08);color:#818cf8;font-size:12px;font-weight:700;cursor:pointer;">
-              {{ setupLabel('gitViewOnGithub') }}
+              {{ lbl('gitViewOnGithub') }}
             </button>
           </div>
         </div>
 
         <div *ngIf="!gitCommitsLoading && hasRepoConfigured() && gitCommits.length === 0 && !gitCommitsError && !showRepoEdit"
           style="text-align:center;padding:40px;font-size:12px;opacity:0.4;">
-          No commits yet in this repository.
+          {{ lbl('noActivity') }}
         </div>
 
         <div *ngIf="showRepoEdit"
           style="padding:18px;border-radius:12px;border:1px solid #6366f144;background:linear-gradient(135deg,#4f46e508,#6366f108);animation:fadeIn 0.2s ease;">
-          <div style="font-size:12px;font-weight:700;color:#818cf8;letter-spacing:0.5px;margin-bottom:16px;">🔗 LINK GITHUB REPOSITORY</div>
+          <div style="font-size:12px;font-weight:700;color:#818cf8;letter-spacing:0.5px;margin-bottom:16px;">{{ lbl('gitSetRepoBtn') }}</div>
           <div style="display:flex;flex-direction:column;gap:14px;">
             <div>
-              <label style="font-size:9px;font-weight:700;text-transform:uppercase;color:#64748b;display:block;margin-bottom:5px;">{{ setupLabel('gitRepoUrlLabel') }} *</label>
-              <input [(ngModel)]="repoForm.repoUrl" [placeholder]="setupLabel('gitRepoUrlPlaceholder')"
+              <label style="font-size:9px;font-weight:700;text-transform:uppercase;color:#64748b;display:block;margin-bottom:5px;">{{ lbl('gitRepoUrlLabel') }} *</label>
+              <input [(ngModel)]="repoForm.repoUrl" [placeholder]="lbl('gitRepoUrlPlaceholder')"
                 style="width:100%;border-radius:9px;border:1px solid var(--color-border,#1e2d4a);padding:10px 12px;font-size:12px;outline:none;background:var(--input-bg,#0d1424);color:var(--input-text,#e2e8f0);box-sizing:border-box;font-family:'DM Mono',monospace;">
             </div>
             <div>
-              <label style="font-size:9px;font-weight:700;text-transform:uppercase;color:#64748b;display:block;margin-bottom:5px;">{{ setupLabel('gitTokenLabel') }}</label>
-              <input [(ngModel)]="repoForm.githubToken" type="password" [placeholder]="setupLabel('gitTokenPlaceholder')"
+              <label style="font-size:9px;font-weight:700;text-transform:uppercase;color:#64748b;display:block;margin-bottom:5px;">{{ lbl('gitTokenLabel') }}</label>
+              <input [(ngModel)]="repoForm.githubToken" type="password" [placeholder]="lbl('gitTokenPlaceholder')"
                 style="width:100%;border-radius:9px;border:1px solid var(--color-border,#1e2d4a);padding:10px 12px;font-size:12px;outline:none;background:var(--input-bg,#0d1424);color:var(--input-text,#e2e8f0);box-sizing:border-box;font-family:'DM Mono',monospace;">
-              <div style="font-size:9px;opacity:0.5;margin-top:5px;line-height:1.5;">{{ setupLabel('gitTokenHint') }}</div>
+              <div style="font-size:9px;opacity:0.5;margin-top:5px;line-height:1.5;">{{ lbl('gitTokenHint') }}</div>
             </div>
-            <div *ngIf="repoSaveError"
-              style="font-size:11px;color:#ef4444;padding:8px 12px;border-radius:8px;background:#ef444411;border:1px solid #ef444433;">
-              ⚠️ {{ repoSaveError }}
-            </div>
+            <div *ngIf="repoSaveError" style="font-size:11px;color:#ef4444;padding:8px 12px;border-radius:8px;background:#ef444411;">⚠️ {{ repoSaveError }}</div>
             <div style="display:flex;justify-content:flex-end;gap:8px;">
-              <button (click)="cancelRepoEdit()"
-                style="padding:9px 20px;border-radius:9px;border:1px solid var(--color-border,#1e2d4a);font-size:12px;font-weight:600;cursor:pointer;background:transparent;color:#64748b;">
-                {{ setupLabel('gitCancelRepo') }}
-              </button>
+              <button (click)="cancelRepoEdit()" style="padding:9px 20px;border-radius:9px;border:1px solid var(--color-border,#1e2d4a);font-size:12px;font-weight:600;cursor:pointer;background:transparent;color:#64748b;">{{ lbl('gitCancelRepo') }}</button>
               <button (click)="saveRepoSettings()" [disabled]="isSavingRepo"
                 style="padding:9px 24px;border-radius:9px;border:none;background:linear-gradient(135deg,#4f46e5,#6366f1);color:white;font-size:12px;font-weight:700;cursor:pointer;"
                 [style.opacity]="isSavingRepo ? '0.6' : '1'">
-                {{ isSavingRepo ? 'Saving...' : setupLabel('gitSaveRepo') }}
+                {{ isSavingRepo ? lbl('saving') : lbl('gitSaveRepo') }}
               </button>
             </div>
           </div>
         </div>
-
       </div>
     </ng-container>
 
@@ -1287,16 +1113,15 @@
 </main>
 
 <!-- ════════ RIGHT SIDEBAR ════════ -->
-
 <aside *ngIf="!hidePanel" class="right-sidebar" style="width:260px;min-width:260px;max-width:260px;flex-shrink:0;">
 
   <div class="my-tasks-section">
     <div class="rs-section-header">
-      <span>My Tasks</span>
+      <span>{{ lbl('myTasksTitle') }}</span>
       <span class="rs-badge-red">{{ myTasks.length }}</span>
     </div>
     <div class="tasks-list" style="max-height:300px;">
-      <div *ngIf="!myTasks.length" style="text-align:center;padding:14px 0;font-size:10px;opacity:0.35;">No tasks assigned</div>
+      <div *ngIf="!myTasks.length" style="text-align:center;padding:14px 0;font-size:10px;opacity:0.35;">{{ lbl('noTasksAssigned') }}</div>
       <div *ngFor="let t of myTasks" class="task-card" [ngClass]="getPriorityTcClass(t.priority)">
         <div class="tc-top">
           <span class="tc-title">{{ t.translatedTitle || t.title }}</span>
@@ -1312,9 +1137,8 @@
 
   <div class="members-section">
     <div class="members-list">
-      <!-- GROUP CHAT + MGMT DM -->
       <div class="rs-section-header" style="margin-bottom:4px;">
-        <span style="font-size:11px;font-weight:700;">👥 Group Chat</span>
+        <span style="font-size:11px;font-weight:700;">{{ lbl('groupChat') }}</span>
       </div>
 
       <div class="member-card" (click)="openGroupChat()"
@@ -1329,12 +1153,10 @@
         <span style="font-size:12px;opacity:0.7;">💬</span>
       </div>
 
-      <!-- DIR / VP — DM only -->
       <ng-container *ngFor="let m of sortMembers(members); let i=index">
         <div *ngIf="m.userId !== (auth.getUser()?.id || auth.getUser()?.userId)
                  && (m.roleInProject === 'COUNTRY_DIRECTOR' || m.roleInProject === 'VICE_PRESIDENT')"
-          class="member-card" (click)="openMemberChat(m)"
-          style="cursor:pointer;margin-bottom:2px;">
+          class="member-card" (click)="openMemberChat(m)" style="cursor:pointer;margin-bottom:2px;">
           <div class="member-avatar" [style.background]="m.color || getMemberColor(i)">
             {{ m.initial || getMemberInitial(m) }}
             <div class="member-online" *ngIf="m.online"></div>
@@ -1343,9 +1165,7 @@
             <div class="member-name">{{ m.userName || m.name }}</div>
             <div class="member-info">
               <span style="font-size:9px;font-weight:700;"
-                [style.color]="m.roleInProject==='COUNTRY_DIRECTOR' ? '#a855f7'
-                             : m.roleInProject==='VICE_PRESIDENT'   ? '#ef4444'
-                             : '#ec4899'">
+                [style.color]="m.roleInProject==='COUNTRY_DIRECTOR' ? '#a855f7' : m.roleInProject==='VICE_PRESIDENT' ? '#ef4444' : '#ec4899'">
                 {{ m.displayName || m.roleInProject }}
               </span>
             </div>
@@ -1356,12 +1176,11 @@
 
       <div style="border-top:1px solid;opacity:0.12;margin:6px 0;"></div>
 
-      <!-- TEAM MEMBERS (DIR/VP/ADMIN မပါ) -->
       <div class="rs-section-header" style="margin-bottom:4px;">
-        <span style="font-size:11px;font-weight:700;">Team Members</span>
+        <span style="font-size:11px;font-weight:700;">{{ lbl('teamMembersSidebar') }}</span>
         <span style="font-size:9px;opacity:0.4;">{{ getVisibleMemberCount() }}</span>
       </div>
-      <div *ngIf="!members.length" style="text-align:center;padding:14px 0;font-size:10px;opacity:0.35;">No members yet</div>
+      <div *ngIf="!members.length" style="text-align:center;padding:14px 0;font-size:10px;opacity:0.35;">{{ lbl('noTeamMembers') }}</div>
 
       <ng-container *ngFor="let m of sortMembers(members); let i=index">
         <div *ngIf="m.roleInProject !== 'COUNTRY_DIRECTOR' && m.roleInProject !== 'VICE_PRESIDENT' && m.roleInProject !== 'ADMIN'"
@@ -1372,23 +1191,16 @@
           </div>
           <div class="member-info-wrap">
             <div class="member-name">{{ m.userName || m.name }}</div>
-            <div class="member-info" style="display:flex;align-items:center;gap:3px;flex-wrap:wrap;">
+            <div class="member-info">
               <span style="font-size:9px;"
-                [style.color]="m.roleInProject==='PROJECT_MANAGER' ? '#22c55e'
-                             : m.roleInProject==='LEADER'           ? '#0891b2'
-                             : m.roleInProject==='UI_UX'            ? '#7c3aed'
-                             : m.roleInProject==='DEVELOPER'        ? '#4f46e5'
-                             : m.roleInProject==='QA'               ? '#ea580c'
-                             : '#94a3b8'">
+                [style.color]="m.roleInProject==='PROJECT_MANAGER' ? '#22c55e' : m.roleInProject==='LEADER' ? '#0891b2' : m.roleInProject==='UI_UX' ? '#7c3aed' : m.roleInProject==='DEVELOPER' ? '#4f46e5' : m.roleInProject==='QA' ? '#ea580c' : '#94a3b8'">
                 {{ m.displayName || m.roleInProject || m.role }}
               </span>
-              <span *ngIf="m.tasks && m.tasks > 0" style="color:#22c55e;font-size:9px;"> · {{ m.tasks }} tasks</span>
             </div>
           </div>
           <div class="member-status-dot" [style.background]="m.online ? '#22c55e' : '#475569'"></div>
         </div>
       </ng-container>
-
     </div>
   </div>
 </aside>

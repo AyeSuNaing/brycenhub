@@ -256,6 +256,25 @@ export class ProjectInlineComponent implements OnInit, OnChanges {
     this.cdr.detectChanges();
   }
 
+  // ── i18n helpers ──
+  lbl(key: SetupI18nKey): string {
+    return setupLabel(this.currentLang, key);
+  }
+
+  // ── Typed tabs — avoids 'string not assignable to SetupI18nKey' in template ──
+  get tabs(): Array<{ id: string; labelKey: SetupI18nKey; show: boolean }> {
+    return [
+      { id: 'overview',    labelKey: 'tabOverview',    show: this.canAccessSetup() },
+      { id: 'information', labelKey: 'tabInformation', show: this.canAccessSetup() },
+      { id: 'techstack',   labelKey: 'tabTechStack',   show: this.canAccessSetup() },
+      { id: 'members',     labelKey: 'tabMembers',     show: this.canAccessSetup() },
+      { id: 'rules',       labelKey: 'tabRules',       show: this.canAccessSetup() },
+      { id: 'setup',       labelKey: 'tabSetup',       show: this.canAccessSetup() },
+      { id: 'git',         labelKey: 'tabGit',         show: this.canAccessSetup() },
+    ];
+  }
+
+  /** @deprecated use lbl() instead */
   setupLabel(key: SetupI18nKey): string {
     return setupLabel(this.currentLang, key);
   }
@@ -484,7 +503,7 @@ export class ProjectInlineComponent implements OnInit, OnChanges {
   generateSetupGuide() {
     if (!this.projectId) return;
     if (!this.techStacks || this.techStacks.length === 0) {
-      this.setupError = this.setupLabel('emptyNoTech');
+      this.setupError = this.lbl('emptyNoTech');
       this.cdr.detectChanges();
       return;
     }
@@ -559,7 +578,7 @@ export class ProjectInlineComponent implements OnInit, OnChanges {
         this.cdr.detectChanges();
       },
       error: () => {
-        this.gitCommitsError = this.setupLabel('gitErrorFetchFailed');
+        this.gitCommitsError = this.lbl('gitErrorFetchFailed');
         this.gitCommitsErrorCode = 'NETWORK_ERROR';
         this.gitCommitsLoading = false;
         this.cdr.detectChanges();
@@ -569,12 +588,12 @@ export class ProjectInlineComponent implements OnInit, OnChanges {
 
   private mapCommitsErrorMessage(code: string, fallback?: string): string {
     switch (code) {
-      case 'NO_REPO': return this.setupLabel('gitEmptyNoRepo');
-      case 'REPO_NOT_FOUND': return this.setupLabel('gitErrorRepoNotFound');
-      case 'UNAUTHORIZED': return this.setupLabel('gitErrorInvalidToken');
-      case 'RATE_LIMITED': return this.setupLabel('gitErrorRateLimited');
-      case 'NETWORK_ERROR': return this.setupLabel('gitErrorFetchFailed');
-      default: return fallback || this.setupLabel('gitErrorFetchFailed');
+      case 'NO_REPO':         return this.lbl('gitEmptyNoRepo');
+      case 'REPO_NOT_FOUND':  return this.lbl('gitErrorRepoNotFound');
+      case 'UNAUTHORIZED':    return this.lbl('gitErrorInvalidToken');
+      case 'RATE_LIMITED':    return this.lbl('gitErrorRateLimited');
+      case 'NETWORK_ERROR':   return this.lbl('gitErrorFetchFailed');
+      default: return fallback || this.lbl('gitErrorFetchFailed');
     }
   }
 
@@ -948,12 +967,12 @@ export class ProjectInlineComponent implements OnInit, OnChanges {
     ).length;
 
     return [
-      { label: 'Total Tasks', value: total, icon: '📋', color: 'stat-white' },
-      { label: 'Completed', value: completed, icon: '✅', color: 'stat-green' },
-      { label: 'In Progress', value: inProgress, icon: '⚡', color: 'stat-blue' },
-      { label: 'Completion', value: (this.project?.progress ?? 0) + '%', icon: '📊', color: 'stat-purple' },
-      { label: 'Team Size', value: this.members.length, icon: '👥', color: 'stat-cyan' },
-      { label: 'Overdue', value: overdue, icon: '⚠️', color: 'stat-red' },
+      { label: this.lbl('statTotalTasks'),  value: total,                               icon: '📋', color: 'stat-white'  },
+      { label: this.lbl('statCompleted'),   value: completed,                           icon: '✅', color: 'stat-green'  },
+      { label: this.lbl('statInProgress'),  value: inProgress,                          icon: '⚡', color: 'stat-blue'   },
+      { label: this.lbl('statCompletion'),  value: (this.project?.progress ?? 0) + '%', icon: '📊', color: 'stat-purple' },
+      { label: this.lbl('statTeamSize'),    value: this.members.length,                 icon: '👥', color: 'stat-cyan'   },
+      { label: this.lbl('statOverdue'),     value: overdue,                             icon: '⚠️', color: 'stat-red'    },
     ];
   }
 
@@ -1274,13 +1293,11 @@ export class ProjectInlineComponent implements OnInit, OnChanges {
           const r = u.roleDto?.name || u.roleName || u.role || '';
           return !exclude.includes(r) && u.isActive !== false && u.id !== myId;
         });
-        console.log('[project-inline] all-staff loaded:', this.staffList.length);
         this.staffListLoading = false;
         this.filterStaff();
         this.cdr.detectChanges();
       },
-      error: (err) => {
-        console.error('[project-inline] all-staff error:', err);
+      error: () => {
         this.staffListLoading = false;
         this.cdr.detectChanges();
       }
