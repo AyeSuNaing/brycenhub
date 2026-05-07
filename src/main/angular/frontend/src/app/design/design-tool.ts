@@ -112,7 +112,7 @@ export class DesignToolComponent implements OnInit, AfterViewInit, OnDestroy {
     switch (msg.type) {
 
       case 'DESIGN_READY': {
-        this.loading = false;
+        // this.loading = false;
         this.cdr.detectChanges();
         this.sendToIframe({ type: 'DESIGN_HIDE_TOPBAR' });
         if (this.designMode === 'present') {
@@ -232,10 +232,12 @@ export class DesignToolComponent implements OnInit, AfterViewInit, OnDestroy {
           });
         }
         this.designLoaded = true;
+        this.loading = false;      
         this.cdr.detectChanges();
       },
       error: () => {
         this.designLoaded = true;
+        this.loading = false;      
         this.cdr.detectChanges();
       }
     });

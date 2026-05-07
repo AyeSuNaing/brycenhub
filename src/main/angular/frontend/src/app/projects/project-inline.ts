@@ -284,70 +284,94 @@ export class ProjectInlineComponent implements OnInit, OnChanges {
     return guideOs || null;
   }
 
-  switchLang(lang: string) {
+  async switchLang(lang: string): Promise<void> {
     this.currentLang = lang;
+ 
     if (lang === 'en' || !this.project) {
-      this.translatedTitle = ''; this.translatedDesc = '';
+      this.translatedTitle = '';
+      this.translatedDesc  = '';
       this.tasks.forEach(t => { t.translatedTitle = ''; t.translatedDesc = ''; });
       this.isTranslating = false;
       this.cdr.detectChanges();
       return;
     }
+ 
+    // Loading START — isLoading ကို parent (loadAll) က ကိုင်ထားတယ်
+    // switchLang ကို manual ခေါ်ရင်တော့ isTranslating သုံး
     this.isTranslating = true;
     this.cdr.detectChanges();
+ 
     const h = { headers: this.auth.getHeaders() };
-    this.http.get<any>(`${BASE}/translations/project/${this.project.id}?lang=${lang}`, h).subscribe({
-      next: res => {
-        this.translatedTitle = res.title || '';
-        this.translatedDesc = res.description || '';
-        this.isTranslating = false;
-        this.cdr.detectChanges();
-      },
-      error: () => { this.isTranslating = false; this.cdr.detectChanges(); }
-    });
-    if (this.tasks.length > 0) this.translateTasks(lang);
+ 
+    // Project + Tasks တပြိုင်နက် ဆင်း
+    const projectT$ = this.http
+      .get<any>(`${BASE}/translations/project/${this.project.id}?lang=${lang}`, h)
+      .toPromise()
+      .then(res => {
+        this.translatedTitle = res?.title       || '';
+        this.translatedDesc  = res?.description || '';
+      })
+      .catch(() => {
+        this.translatedTitle = '';
+        this.translatedDesc  = '';
+      });
+ 
+    const tasksT$ = this.translateTasks(lang);
+ 
+    // ✅ ၂ ခုလုံး ပြီးမှ loading ဖြုတ်
+    await Promise.all([projectT$, tasksT$]);
+ 
+    this.isTranslating = false;
+    this.cdr.detectChanges();
   }
 
   loadAll(id: number) {
     const h = { headers: this.auth.getHeaders() };
     this.isLoading = true;
     forkJoin({
-      project: this.http.get<any>(`${BASE}/projects/${id}`, h).pipe(catchError(() => of(null))),
-      members: this.http.get<any[]>(`${BASE}/projects/${id}/members`, h).pipe(catchError(() => of([]))),
-      tasks: this.http.get<any[]>(`${BASE}/tasks/by-project/${id}`, h).pipe(catchError(() => of([]))),
+      project:    this.http.get<any>(`${BASE}/projects/${id}`, h).pipe(catchError(() => of(null))),
+      members:    this.http.get<any[]>(`${BASE}/projects/${id}/members`, h).pipe(catchError(() => of([]))),
+      tasks:      this.http.get<any[]>(`${BASE}/tasks/by-project/${id}`, h).pipe(catchError(() => of([]))),
       activities: this.http.get<any[]>(`${BASE}/activity-logs/by-project/${id}`, h).pipe(catchError(() => of([]))),
-      clients: this.http.get<any[]>(`${BASE}/clients`, h).pipe(catchError(() => of([]))),
-      apis: this.http.get<any[]>(`${BASE}/project-design/${id}/apis/latest?limit=5`, h).pipe(catchError(() => of([]))),
-      dbTables: this.http.get<any[]>(`${BASE}/project-design/${id}/db-tables/latest?limit=6`, h).pipe(catchError(() => of([]))),
+      clients:    this.http.get<any[]>(`${BASE}/clients`, h).pipe(catchError(() => of([]))),
+      apis:       this.http.get<any[]>(`${BASE}/project-design/${id}/apis/latest?limit=5`, h).pipe(catchError(() => of([]))),
+      dbTables:   this.http.get<any[]>(`${BASE}/project-design/${id}/db-tables/latest?limit=6`, h).pipe(catchError(() => of([]))),
     }).subscribe({
-      next: (res: any) => {
-        this.project = res.project;
-        this.members = res.members || [];
-        this.tasks = res.tasks || [];            // ← assign BEFORE enrich
-        this.clients = res.clients || [];
-        this.apiEndpoints = res.apis || [];
-        this.dbTables = res.dbTables || [];
-        // enrich activities AFTER tasks/members are ready
-        this.activities = this.enrichActivities(res.activities || [], this.members);
-        this.clients = res.clients || [];
-        this.apiEndpoints = res.apis || [];
-        this.dbTables = res.dbTables || [];
-        this.isLoading = false;
-        this.cdr.detectChanges();
-        if (this.pendingLang && this.project) {
-          this.switchLang(this.pendingLang);
+      next: async (res: any) => {
+        this.project      = res.project;
+        this.members      = res.members  || [];
+        this.tasks        = res.tasks    || [];
+        this.clients      = res.clients  || [];
+        this.apiEndpoints = res.apis     || [];
+        this.dbTables     = res.dbTables || [];
+        this.activities   = this.enrichActivities(res.activities || [], this.members);
+ 
+        const userLang = this.auth.getUser()?.preferredLanguage || 'en';
+ 
+        if (this.pendingLang) {
+          // pendingLang ရှိရင် — translate အကုန်ပြီးမှ isLoading=false
+          await this.switchLang(this.pendingLang);
           this.pendingLang = '';
+          this.isLoading = false;
+          this.cdr.detectChanges();
+ 
+        } else if (userLang !== 'en') {
+          // ✅ KEY FIX: user language != en ဆိုရင်
+          // translate အကုန်ပြီးမှ isLoading=false ချ → English flash မဖြစ်
+          this.currentLang = userLang;
+          await this.switchLang(userLang);
+          this.isLoading = false;
+          this.cdr.detectChanges();
+ 
         } else {
-          // ✅ auto translate on load
-          const userLang = this.auth.getUser()?.preferredLanguage || 'en';
-          if (userLang !== 'en' && this.tasks.length > 0) {
-            this.translateTasks(userLang);
-          }
+          // English — ချက်ချင်း ပြ
+          this.isLoading = false;
+          this.cdr.detectChanges();
         }
       },
       error: () => { this.isLoading = false; this.cdr.detectChanges(); }
     });
-
+ 
     this.loadTechStackAndRules(id);
     this.loadRemovedMembers(id);
     this.loadSetupGuide(id);
@@ -355,18 +379,29 @@ export class ProjectInlineComponent implements OnInit, OnChanges {
     this.loadDesignPreview(id);
   }
 
-  async translateTasks(lang: string) {
+  async translateTasks(lang: string): Promise<void> {
+    if (!this.tasks.length) return;
     const h = { headers: this.auth.getHeaders() };
-    for (const t of this.tasks) {
-      try {
-        const res: any = await this.http.get(`${BASE}/translations/task/${t.id}?lang=${lang}`, h).toPromise();
-        t.translatedTitle = res.title || ''; t.translatedDesc = res.description || '';
-      } catch {
-        t.translatedTitle = ''; t.translatedDesc = '';
-      }
-    }
+ 
+    // Parallel — sequential loop မဟုတ်ဘူး (fast)
+    await Promise.all(
+      this.tasks.map(async t => {
+        try {
+          const res: any = await this.http
+            .get(`${BASE}/translations/task/${t.id}?lang=${lang}`, h)
+            .toPromise();
+          t.translatedTitle = res?.title       || '';
+          t.translatedDesc  = res?.description || '';
+        } catch {
+          t.translatedTitle = '';
+          t.translatedDesc  = '';
+        }
+      })
+    );
+ 
     this.cdr.detectChanges();
   }
+ 
 
   loadTechStackAndRules(id: number) {
     const h = { headers: this.auth.getHeaders() };
