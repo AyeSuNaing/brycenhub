@@ -262,9 +262,12 @@ export class VpDashboardComponent implements OnInit, OnDestroy {
     }
     this.updateMyTasksHeight();
 
-    const navSaved = this.navState.restoreProjectState();
-    if (navSaved.showProject && navSaved.projectId && navSaved.dashboard === 'vp') {
-      setTimeout(() => { this.openProject(navSaved.projectId!); this.navState.clearProjectState(); }, 300);
+    const savedNav = this.navState.restoreProjectState();
+   if (savedNav.showProject && savedNav.projectId) {
+      this.selectedProjectId = savedNav.projectId;
+      this.showProjectDetail = true;
+      this.navState.clearProjectState();
+      this.cdr.detectChanges();
     }
 
     this._refreshSub = this.refreshService.refresh$.subscribe(() => {

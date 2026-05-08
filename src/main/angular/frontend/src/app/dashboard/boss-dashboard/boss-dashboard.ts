@@ -316,7 +316,13 @@ export class BossDashboard implements OnInit, OnDestroy {
 
     // Restore nav state if back from kanban/design/api-docs etc.
     const saved = this.navState.restoreProjectState();
-
+    if (saved.showProject && saved.projectId &&
+        (saved.dashboard === 'boss' || saved.dashboard === 'vp')) {
+      this.selectedProjectId = saved.projectId;
+      this.showProjectDetail = true;
+      this.navState.clearProjectState();
+      this.cdr.detectChanges();
+    }
     this.loadStats();
     this.loadCountries();
     this.loadBranches();
@@ -326,14 +332,6 @@ export class BossDashboard implements OnInit, OnDestroy {
     this.loadPendingPayrollCount();
     this.loadChartData();
 
-    // Project inline restore — back from kanban/design/api-docs ရင် project ကို ပြန်ဖွင့်
-    if (saved.showProject && saved.projectId &&
-        (saved.dashboard === 'boss' || saved.dashboard === 'vp')) {
-      setTimeout(() => {
-        this.openProject(saved.projectId!);
-        this.navState.clearProjectState();
-      }, 300);
-    }
 
     // RefreshService inject လုပ်ရုံနဲ့ constructor ထဲ heartbeat auto-start ဖြစ်သွားတယ်
 
