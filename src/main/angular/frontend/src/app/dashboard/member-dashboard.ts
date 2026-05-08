@@ -25,6 +25,8 @@ import { StaffProfileInline } from '../admin/staff-profile-inline';
 import { MemberAttendanceInline } from '../shared/attendance-log/member-attendance-inline';
 // ✅ i18n
 import { getLabel, AppLabelKey } from '../i18n/app-labels.i18n';
+import { NavigationStateService } from '../services/navigation-state.service';
+
 
 import {
   Announcement, Notification, ActiveProject, PortfolioProject,
@@ -154,6 +156,7 @@ export class MemberDashboard implements OnInit, AfterViewInit, OnDestroy {
     private router: Router,
     private http: HttpClient,
     private ngZone: NgZone,
+    private navState: NavigationStateService,
   ) { }
 
   ngOnInit() {
@@ -195,6 +198,15 @@ export class MemberDashboard implements OnInit, AfterViewInit, OnDestroy {
     }
 
     this.loadBranchName();
+    const savedNav = this.navState.restoreProjectState();
+    if (savedNav.showProject && savedNav.projectId) {
+      this.selectedProjectId = savedNav.projectId;
+      this.showProjectDetail = true;
+      this.navState.clearProjectState();
+      this.cdr.detectChanges();
+    }
+
+
     this.loadAll();
     this.startUnreadPolling();
   }
