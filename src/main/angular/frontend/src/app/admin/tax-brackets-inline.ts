@@ -6,12 +6,13 @@ import { catchError, of } from 'rxjs';
 
 import { AuthService } from '../services/auth.service';
 import { getLabel, AppLabelKey } from '../i18n/app-labels.i18n';
+import { environment } from '../../environments/environment';
 
-const API_BASE       = 'http://localhost:8080/api';
-const TAX_BASE       = `${API_BASE}/tax-brackets`;
-const BRANCHES_BASE  = `${API_BASE}/branches`;
-const COUNTRIES_BASE = `${API_BASE}/countries`;
-const USERS_BASE     = `${API_BASE}/users`;
+const BASE           = environment.apiBaseUrl;
+const TAX_BASE       = `${BASE}/tax-brackets`;
+const BRANCHES_BASE  = `${BASE}/branches`;
+const COUNTRIES_BASE = `${BASE}/countries`;
+const USERS_BASE     = `${BASE}/users`;
 
 interface TaxBracket { id?: number; countryId?: number; minSalary: number; maxSalary: number | null; taxRate: number; createdAt?: string; }
 interface CountryInfo { id: number; code: string; name: string; currency?: string; flagEmoji?: string; }
@@ -82,7 +83,6 @@ export class TaxBracketsInline implements OnInit {
 
   private get headers() { return this.auth.getHeaders(); }
 
-  // ── i18n helper ──
   lbl(key: AppLabelKey): string {
     return getLabel(this.currentUser?.preferredLanguage, key);
   }
@@ -90,10 +90,21 @@ export class TaxBracketsInline implements OnInit {
   private loadAllCountries(): void {
     this.http.get<CountryInfo[]>(COUNTRIES_BASE, { headers: this.headers })
       .pipe(catchError(() => of([])))
-      .subscribe(list => { this.allCountries = list || []; this.cdr.detectChanges(); });
+      .subscribe(list => {
+        this.allCountries = list || [];
+        // BOSS/CD — branchId မရှိ → first country default select ပြီး brackets load
+        if (this.isGlobalAdmin && !this.viewingCountry && list.length > 0) {
+          this.viewingCountry = list[0];
+          this.loadBrackets();
+        }
+        this.cdr.detectChanges();
+      });
   }
 
   private resolveCountryThenLoad(): void {
+    // BOSS/CD — loadAllCountries() မှာ handle ပြီး (branchId မရှိဘူး)
+    if (this.isGlobalAdmin) return;
+
     const branchId = this.currentUser?.branchId;
     if (!branchId) { this.loadBrackets(); return; }
     this.http.get<any>(`${BRANCHES_BASE}/${branchId}`, { headers: this.headers })
@@ -107,9 +118,7 @@ export class TaxBracketsInline implements OnInit {
   }
 
   toggleCountryMenu(): void { this.showCountryMenu = !this.showCountryMenu; }
-
   selectCountry(c: CountryInfo): void { this.viewingCountry = c; this.showCountryMenu = false; this.calcResult = null; this.loadBrackets(); }
-
   get isViewingOwnCountry(): boolean { if (!this.country || !this.viewingCountry) return true; return this.country.id === this.viewingCountry.id; }
   get userRoleName(): string { return this.currentUser?.role || this.currentUser?.roleName || ''; }
   get isGlobalAdmin(): boolean { const r = this.userRoleName; return r === 'BOSS' || r === 'COUNTRY_DIRECTOR'; }

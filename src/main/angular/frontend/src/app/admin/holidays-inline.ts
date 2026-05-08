@@ -156,7 +156,6 @@ export class HolidaysInline implements OnInit {
 
   private get headers() { return this.auth.getHeaders(); }
 
-  // ── i18n helper ──
   lbl(key: AppLabelKey): string {
     return getLabel(this.currentUser?.preferredLanguage, key);
   }
@@ -164,10 +163,21 @@ export class HolidaysInline implements OnInit {
   private loadAllCountries(): void {
     this.http.get<CountryInfo[]>(`${COUNTRIES_BASE}`, { headers: this.headers })
       .pipe(catchError(() => of([])))
-      .subscribe(list => { this.allCountries = list || []; this.cdr.detectChanges(); });
+      .subscribe(list => {
+        this.allCountries = list || [];
+        // BOSS/CD — branchId မရှိ → first country default select ပြီး holidays load
+        if (this.isGlobalAdmin && !this.viewingCountry && list.length > 0) {
+          this.viewingCountry = list[0];
+          this.loadHolidays();
+        }
+        this.cdr.detectChanges();
+      });
   }
 
   private resolveCountryThenLoad(): void {
+    // BOSS/CD — loadAllCountries() မှာ handle ပြီး (branchId မရှိဘူး)
+    if (this.isGlobalAdmin) return;
+
     const branchId = this.currentUser?.branchId;
     if (!branchId) { this.country = null; this.viewingCountry = null; this.loadHolidays(); return; }
     this.http.get<any>(`${BRANCHES_BASE}/${branchId}`, { headers: this.headers })
