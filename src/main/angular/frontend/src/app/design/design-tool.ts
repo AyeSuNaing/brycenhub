@@ -60,10 +60,12 @@ export class DesignToolComponent implements OnInit, AfterViewInit, OnDestroy {
       this.canEdit = false;
     }
 
+    const baseUrl = (import.meta.env['NG_APP_DESIGN_BASE_URL'] as string) ?? '';
+
     const iframePath =
-      this.designMode === 'edit'    ? '/design-edit.html'    :
-      this.designMode === 'present' ? '/design-present.html' :
-                                      '/design-dev.html';
+    this.designMode === 'edit'    ? `${baseUrl}/design-edit.html`    :
+    this.designMode === 'present' ? `${baseUrl}/design-present.html` :
+                                    `${baseUrl}/design-dev.html`;
     this.iframeSrc = this.sanitizer.bypassSecurityTrustResourceUrl(iframePath);
 
     if (this.projectId) {
