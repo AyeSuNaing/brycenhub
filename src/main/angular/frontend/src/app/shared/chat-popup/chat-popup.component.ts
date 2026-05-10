@@ -170,25 +170,45 @@ export class ChatPopupComponent implements OnInit, OnDestroy {
   }
 
   // ✅ Send call invite to receiver BEFORE opening call tab
+  // ✅ Send call invite BEFORE opening call tab
   startCall(mode: 'voice' | 'video') {
+    const callerId     = Number(this.currentUser.id || this.currentUser.userId);
+    const callerName   = this.currentUser.name;
+    const callerUserId = String(this.currentUser.id || this.currentUser.userId);
+
     const params = new URLSearchParams({
       roomId:   this.roomID,
       mode:     mode,
       name:     this.member.projectName || this.member.name,
       isGroup:  String(this.isGroup),
-      userName: this.currentUser.name,
-      userId:   String(this.currentUser.id),
+      userName: callerName,
+      userId:   callerUserId,
     });
 
-    // Send notification to receiver (direct call only)
-    if (!this.isGroup) {
+    if (this.isGroup) {
+      // ✅ Group call — project members အားလုံးကို invite ပို့
+      const projectId = this.member.projectId || this.member.id;
+      this.http.post(
+        `${environment.apiBaseUrl}/call/invite-group`,
+        {
+          projectId:    projectId,
+          roomId:       this.roomID,
+          mode:         mode,
+          callerName:   callerName,
+          callerUserId: callerUserId,
+          callerId:     callerId,
+        },
+        { headers: this.authService.getHeaders() }
+      ).subscribe({ error: () => {} });
+    } else {
+      // ✅ Direct call — receiver တစ်ယောက်တည်း invite
       this.callNotifService.sendCallInvite({
-        callerId:     Number(this.currentUser.id || this.currentUser.userId),
+        callerId:     callerId,
         calleeId:     this.member.id,
         roomId:       this.roomID,
         mode:         mode,
-        callerName:   this.currentUser.name,
-        callerUserId: String(this.currentUser.id || this.currentUser.userId),
+        callerName:   callerName,
+        callerUserId: callerUserId,
         isGroup:      false,
       });
     }

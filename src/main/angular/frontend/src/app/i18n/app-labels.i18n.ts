@@ -384,7 +384,7 @@ const en: Record<AppLabelKey, string> = {
   // -- Boss Dashboard -- 
   'Company Overview': 'Company Overview',
   'All Branches Global View': 'Brycen Group · All Branches · Global View',
-  'System Live': '● System Live',
+  'System Live': ' System Live',
   'Active worldwide': '● Active worldwide',
   'Total Branches': 'Total Branches',
   countries: 'countries',
@@ -588,7 +588,7 @@ const ja: Record<AppLabelKey, string> = {
   // -- Boss Dashboarc --
   'Company Overview': '会社概要',
   'All Branches Global View': 'ブライセングループ · 全支店 · グローバルビュー',
-  'System Live': '● システム稼働中',
+  'System Live': ' システム稼働中',
   'Active worldwide': '● 世界中で稼働中',
   'Total Branches': '総支店数',
   countries: 'か国',
@@ -794,7 +794,7 @@ const my: Record<AppLabelKey, string> = {
   //-- Boss Dashboard -- 
   'Company Overview': 'ကုမ္ပဏီ အကျဉ်း',
   'All Branches Global View': 'Brycen Group · ဌာနခွဲအားလုံး · ကမ္ဘာ့မြင်ကွင်း',
-  'System Live': '● စနစ်လည်ပတ်နေသည်',
+  'System Live': ' စနစ်လည်ပတ်နေသည်',
   'Active worldwide': '● ကမ္ဘာလုံး တက်ကြွနေ',
   'Total Branches': 'ဌာနခွဲစုစုပေါင်း',
   countries: 'နိုင်ငံ',
@@ -987,7 +987,7 @@ const km: Record<AppLabelKey, string> = {
   // -- Boss Dashboard -- 
   'Company Overview': 'ទិដ្ឋភាពក្រុមហ៊ុន',
   'All Branches Global View': 'Brycen Group · គ្រប់សាខា · ទិដ្ឋភាពពិភពលោក',
-  'System Live': '● ប្រព័ន្ធដំណើរការ',
+  'System Live': ' ប្រព័ន្ធដំណើរការ',
   'Active worldwide': '● សកម្មនៅទូទាំងពិភពលោក',
   'Total Branches': 'សាខាសរុប',
   countries: 'ប្រទេស',
@@ -1183,7 +1183,7 @@ const vi: Record<AppLabelKey, string> = {
   //-- Boss Dashboard -- 
   'Company Overview': 'Tổng quan công ty',
   'All Branches Global View': 'Brycen Group · Tất cả chi nhánh · Toàn cầu',
-  'System Live': '● Hệ thống hoạt động',
+  'System Live': ' Hệ thống hoạt động',
   'Active worldwide': '● Hoạt động toàn cầu',
   'Total Branches': 'Tổng chi nhánh',
   countries: 'quốc gia',
@@ -1376,7 +1376,7 @@ const ko: Record<AppLabelKey, string> = {
   //-- Boss Dashboard --
   'Company Overview': '회사 개요',
   'All Branches Global View': 'Brycen Group · 전체 지점 · 글로벌 뷰',
-  'System Live': '● 시스템 운영 중',
+  'System Live': ' 시스템 운영 중',
   'Active worldwide': '● 전 세계 활성',
   'Total Branches': '총 지점',
   countries: '개국',

@@ -22,6 +22,7 @@ const BASE = environment.apiBaseUrl;
 export class LeaveApprovalInline implements OnInit {
 
   @Input() role: 'vp' | 'admin' = 'admin';
+  @Input() branchId?: number;   // ← Boss Dashboard မှ specific branch ကို pass လုပ်ရန်
   @Output() back = new EventEmitter<void>();
 
   requests:     any[] = [];
@@ -110,11 +111,13 @@ export class LeaveApprovalInline implements OnInit {
   private get activeFrom(): string { return this.useCustom ? this.customFrom : this.periodFrom; }
   private get activeTo():   string { return this.useCustom ? this.customTo   : this.periodTo;   }
 
+  // ── branchId ပါရင် param ထဲ append လုပ်မည် ──────────────────
   private buildQuery(from?: string, to?: string): string {
     const p: string[] = [];
     p.push(`status=${this.statusFilter}`);
     if (from) p.push(`from=${from}`);
     if (to)   p.push(`to=${to}`);
+    if (this.branchId) p.push(`branchId=${this.branchId}`);  // ← ဒါ ထည့်
     return '?' + p.join('&');
   }
 

@@ -195,21 +195,25 @@ public class VpDashboardController {
     // ① STATS
     // ============================================================
     @GetMapping("/stats")
-    public ResponseEntity<StatsResponse> getStats(@AuthenticationPrincipal User vp) {
-        Long branchId = vp.getBranchId();
+    public ResponseEntity<StatsResponse> getStats(
+            @AuthenticationPrincipal User vp,
+            @RequestParam(required = false) Long branchId) {   // ← ဒါထည့်
+
         int year  = LocalDate.now().getYear();
         int month = LocalDate.now().getMonthValue();
         LocalDate today = LocalDate.now();
 
-        if (branchId == null) return ResponseEntity.ok(new StatsResponse());
+        // branchId param ရှိရင် override, မရှိရင် token ထဲကယူ
+        Long effectiveBranchId = (branchId != null) ? branchId : vp.getBranchId();
+        if (effectiveBranchId == null) return ResponseEntity.ok(new StatsResponse());
 
         StatsResponse r = new StatsResponse();
-        r.setTotalStaff(userRepository.countByBranchIdAndIsActiveAndRoleIdNot(branchId, true, 10L));
-        r.setPendingLeave(leaveRequestRepository.countByBranchIdAndStatus(branchId, "PENDING"));
-        r.setPendingOT(otRequestRepository.countByBranchIdAndStatus(branchId, "PENDING"));
+        r.setTotalStaff(userRepository.countByBranchIdAndIsActiveAndRoleIdNot(effectiveBranchId, true, 10L));
+        r.setPendingLeave(leaveRequestRepository.countByBranchIdAndStatus(effectiveBranchId, "PENDING"));
+        r.setPendingOT(otRequestRepository.countByBranchIdAndStatus(effectiveBranchId, "PENDING"));
 
         long pendingSalaryPeriods = salaryHistoryRepository.findAll().stream()
-            .filter(s -> branchId.equals(s.getBranchId()))
+            .filter(s -> effectiveBranchId.equals(s.getBranchId()))
             .filter(s -> "PENDING_APPROVAL".equals(s.getStatus()))
             .map(SalaryHistory::getPayPeriod)
             .filter(Objects::nonNull)
@@ -218,22 +222,34 @@ public class VpDashboardController {
         r.setPendingSalary(pendingSalaryPeriods);
         r.setTotalPending(r.getPendingLeave() + r.getPendingOT() + r.getPendingSalary() + r.getPendingExpense());
 
-        BigDecimal otHours = otRequestRepository.sumApprovedOtHoursByBranch(branchId, year, month);
+        BigDecimal otHours = otRequestRepository.sumApprovedOtHoursByBranch(effectiveBranchId, year, month);
         r.setMonthlyOTHours(otHours != null ? otHours : BigDecimal.ZERO);
-        r.setOnLeaveToday(leaveRequestRepository.findTodayLeaveByBranch(branchId, today).size());
-        r.setActiveProjects(projectRepository.findByBranchId(branchId).stream()
+        r.setOnLeaveToday(leaveRequestRepository.findTodayLeaveByBranch(effectiveBranchId, today).size());
+        r.setActiveProjects(projectRepository.findByBranchId(effectiveBranchId).stream()
                 .filter(p -> "ACTIVE".equals(p.getStatus())).count());
 
-        BigDecimal spend = branchExpenseRepository.sumApprovedByBranchAndMonth(branchId, year, month);
+        BigDecimal spend = branchExpenseRepository.sumApprovedByBranchAndMonth(effectiveBranchId, year, month);
         r.setMonthlySpend(spend != null ? spend : BigDecimal.ZERO);
-        BigDecimal salarySpend = branchExpenseRepository.sumApprovedByBranchTypeMonth(branchId, "SALARY", year, month);
+        BigDecimal salarySpend = branchExpenseRepository.sumApprovedByBranchTypeMonth(effectiveBranchId, "SALARY", year, month);
         r.setMonthlySalarySpend(salarySpend != null ? salarySpend : BigDecimal.ZERO);
-        BigDecimal expenseSpend = branchExpenseRepository.sumApprovedByBranchTypeMonth(branchId, "EXPENSE", year, month);
+        BigDecimal expenseSpend = branchExpenseRepository.sumApprovedByBranchTypeMonth(effectiveBranchId, "EXPENSE", year, month);
         r.setMonthlyExpenseSpend(expenseSpend != null ? expenseSpend : BigDecimal.ZERO);
         r.setCurrentMonth(LocalDate.now().getMonth().name());
 
         return ResponseEntity.ok(r);
     }
+    
+ // ── branchId override ─────────────────────────────────────────
+    private List<Long> getScopedUserIds(User vp, Long overrideBranchId) {
+        Long effectiveBranchId = (overrideBranchId != null) ? overrideBranchId : vp.getBranchId();
+        if (effectiveBranchId == null) return Collections.emptyList();
+        return userRepository.findStaffByBranchIdAndRoleIdNot(effectiveBranchId, 10L)
+                .stream()
+                .filter(u -> Boolean.TRUE.equals(u.getIsActive()))
+                .map(User::getId)
+                .collect(Collectors.toList());
+    }
+    
 
     // ============================================================
     // ② LEAVE REQUESTS
@@ -243,9 +259,10 @@ public class VpDashboardController {
             @AuthenticationPrincipal User vp,
             @RequestParam(required = false) String status,
             @RequestParam(required = false) String from,
-            @RequestParam(required = false) String to) {
+            @RequestParam(required = false) String to,
+            @RequestParam(required = false) Long branchId) {   // ← ဒါထည့်
 
-        List<Long> branchUserIds = getScopedUserIds(vp);
+        List<Long> branchUserIds = getScopedUserIds(vp, branchId); 
         if (branchUserIds.isEmpty()) return ResponseEntity.ok(Collections.emptyList());
 
         LocalDate fromDate = (from != null && !from.isEmpty()) ? LocalDate.parse(from) : null;
@@ -309,9 +326,10 @@ public class VpDashboardController {
             @AuthenticationPrincipal User vp,
             @RequestParam(required = false) String status,
             @RequestParam(required = false) String from,
-            @RequestParam(required = false) String to) {
+            @RequestParam(required = false) String to,
+            @RequestParam(required = false) Long branchId) {   // ← ဒါထည့်
 
-    	List<Long> branchUserIds = getScopedUserIds(vp);
+        List<Long> branchUserIds = getScopedUserIds(vp, branchId);
         if (branchUserIds.isEmpty()) return ResponseEntity.ok(Collections.emptyList());
 
         LocalDate fromDate = (from != null && !from.isEmpty()) ? LocalDate.parse(from) : null;
@@ -549,15 +567,21 @@ public class VpDashboardController {
     // ============================================================
     @GetMapping("/salary-approvals")
     public ResponseEntity<List<SalaryPeriodSummary>> getSalaryApprovals(
-            @AuthenticationPrincipal User vp) {
-    	List<Long> branchIds = getScopedBranchIds(vp);
-        if (branchIds.isEmpty()) return ResponseEntity.ok(Collections.emptyList());
+            @AuthenticationPrincipal User vp,
+            @RequestParam(required = false) Long branchId) {
+
+        Long effectiveBranchId = (branchId != null) ? branchId : vp.getBranchId();
+        if (effectiveBranchId == null) return ResponseEntity.ok(Collections.emptyList());
+
+        // ← ဒါ ၁ ကြောင်းထည့်ရင် compile error ပျောက်သွားမည်
+        List<Long> branchIds = Collections.singletonList(effectiveBranchId);
+
         List<SalaryHistory> pending = salaryHistoryRepository.findAll().stream()
-            .filter(s -> branchIds.contains(s.getBranchId()))
+            .filter(s -> branchIds.contains(s.getBranchId()))    // ✅ branchIds ရပြီ
             .filter(s -> "PENDING_APPROVAL".equals(s.getStatus()))
             .collect(Collectors.toList());
         if (pending.isEmpty()) return ResponseEntity.ok(Collections.emptyList());
-        return ResponseEntity.ok(groupToPeriodSummary(pending, branchIds.get(0)));
+        return ResponseEntity.ok(groupToPeriodSummary(pending, branchIds.get(0)));  // ✅ ရပြီ
     }
 
     // ============================================================

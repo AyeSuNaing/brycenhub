@@ -1,5 +1,5 @@
 import {
-  Component, OnInit, Output, EventEmitter, ChangeDetectorRef
+  Component, OnInit, Input, Output, EventEmitter, ChangeDetectorRef
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
@@ -22,6 +22,7 @@ const VP_BASE = `${BASE}/vp/dashboard`;
 })
 export class SalaryApprovalInline implements OnInit {
 
+  @Input() branchId?: number;   // ← Boss Dashboard မှ specific branch ကို pass လုပ်ရန်
   @Output() back     = new EventEmitter<void>();
   @Output() approved = new EventEmitter<void>();
   @Output() rejected = new EventEmitter<void>();
@@ -45,7 +46,11 @@ export class SalaryApprovalInline implements OnInit {
   load() {
     this.loading = true;
     this.cdr.detectChanges();
-    this.http.get<any[]>(`${VP_BASE}/salary-history`, { headers: this.auth.getHeaders() })
+    // branchId ပါရင် ?branchId=X append လုပ်မည်
+    const url = this.branchId
+      ? `${VP_BASE}/salary-approvals?branchId=${this.branchId}`
+      : `${VP_BASE}/salary-approvals`;
+    this.http.get<any[]>(url, { headers: this.auth.getHeaders() })
       .pipe(catchError(() => of([])))
       .subscribe(data => {
         this.periods = data || [];
