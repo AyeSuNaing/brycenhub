@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ChangeDetectorRef, NgZone } from '@angular/core';
+import { Component, OnInit, OnDestroy, AfterViewInit, ChangeDetectorRef, NgZone } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule, ActivatedRoute } from '@angular/router';
@@ -79,7 +79,7 @@ export interface DepartmentItem {
   templateUrl: './vp-dashboard.html',
   styleUrl: './vp-dashboard.scss'
 })
-export class VpDashboardComponent implements OnInit, OnDestroy {
+export class VpDashboardComponent implements OnInit, AfterViewInit, OnDestroy {
 
   private _refreshSub?: Subscription;
   currentUser: any = null;
@@ -251,7 +251,7 @@ export class VpDashboardComponent implements OnInit, OnDestroy {
     this.currentUser = this.auth.getUser();
     const savedLang = this.currentUser?.preferredLanguage || 'en';
     this.currentLangObj = this.langs.find(l => l.code === savedLang) || this.langs[0];
-    this.loadAll();
+    setTimeout(() => this.loadAll(), 0);
 
     const savedView = localStorage.getItem('brycen-active-view');
     if (savedView) { this.activeView = savedView; localStorage.removeItem('brycen-active-view'); }
@@ -274,6 +274,11 @@ export class VpDashboardComponent implements OnInit, OnDestroy {
       this.loadStats(); this.loadLeaveRequests(); this.loadOtRequests(); this.cdr.detectChanges();
     });
   }
+
+  ngAfterViewInit(): void {
+    this.cdr.detectChanges();
+  }
+
 
   ngOnDestroy(): void { this._refreshSub?.unsubscribe(); this.stopUnreadPolling(); }
 
