@@ -1,15 +1,12 @@
 <div class="call-page">
 
-  <!-- Error only -->
   <div *ngIf="error" class="call-error">
     <span style="font-size:48px;">📵</span>
     <p>{{ error }}</p>
     <button (click)="closeTab()">Close</button>
   </div>
 
-  <!-- ✅ ZegoCloud container — always visible (no *ngIf) -->
-  <div id="zego-call-container"
-       [style.display]="error ? 'none' : 'block'">
-  </div>
+  <!-- plain display:block — no Angular binding -->
+  <div id="zego-call-container" style="display:block;"></div>
 
 </div>

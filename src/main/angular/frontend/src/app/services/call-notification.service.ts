@@ -24,14 +24,7 @@ export interface CallInvitePayload {
 @Injectable({ providedIn: 'root' })
 export class CallNotificationService {
 
-  // ✅ Reactive signal — IncomingCallComponent က effect() နဲ့ subscribe
   readonly incomingCall = signal<IncomingCall | null>(null);
-
-  // ✅ FIX: seen roomIds tracking — တူတဲ့ invite ထပ်မပြအောင်
-  private _seenRoomIds = new Set<string>();
-
-  // ✅ FIX: currently active roomId — accept/reject ပြီးရင် dismiss အောင်
-  private _activeRoomId: string | null = null;
 
   private _pollTimer: any = null;
   private _currentUserId = 0;
@@ -57,9 +50,7 @@ export class CallNotificationService {
     if (!this._currentUserId) return;
 
     this.stopListening();
-    // ✅ FIX: Interval 3s → 4s (slightly reduce race condition)
     this._pollTimer = setInterval(() => this._poll(), 4000);
-    // First poll immediately
     this._poll();
   }
 
@@ -72,11 +63,7 @@ export class CallNotificationService {
 
   // ── Receiver accepts ─────────────────────────────
   acceptCall(roomId: string, calleeId: number): void {
-    // ✅ FIX: Immediately clear signal + mark seen → popup ချက်ချင်း ပိတ်သွားမယ်
-    this._activeRoomId = roomId;
-    this._seenRoomIds.add(roomId);
     this.incomingCall.set(null);
-
     this.http.post(
       `${environment.apiBaseUrl}/call/accept`,
       { roomId, calleeId },
@@ -86,11 +73,7 @@ export class CallNotificationService {
 
   // ── Receiver rejects ─────────────────────────────
   rejectCall(roomId: string, calleeId: number): void {
-    // ✅ FIX: Immediately clear signal + mark seen → popup ချက်ချင်း ပိတ်သွားမယ်
-    this._activeRoomId = roomId;
-    this._seenRoomIds.add(roomId);
     this.incomingCall.set(null);
-
     this.http.post(
       `${environment.apiBaseUrl}/call/reject`,
       { roomId, calleeId },
@@ -107,38 +90,24 @@ export class CallNotificationService {
       { headers: this.getAuthHeaders() }
     ).subscribe({
       next: (res) => {
-        // No incoming call (empty body / null)
+        // No incoming call
         if (!res || !res.roomId) {
-          // ✅ Clear stale signal if backend ပြန် empty ဖြစ်ရင်
           if (this.incomingCall() !== null) {
             this.incomingCall.set(null);
           }
           return;
         }
 
-        const roomId: string = res.roomId;
-
-        // ✅ FIX: seenRoomIds check — ဒီ roomId ကို ဖန်တီးပြီးပြီဆိုရင် ထပ်မပြ
-        if (this._seenRoomIds.has(roomId)) {
-          return;
-        }
-
-        // ✅ FIX: activeRoomId check — လက်ရှိ active call ရှိနေရင် ထပ်မပြ
-        if (this._activeRoomId === roomId) {
-          return;
-        }
-
-        // ✅ Same call already showing → skip
+        // Same call already showing → skip
         const current = this.incomingCall();
-        if (current && current.roomId === roomId) {
+        if (current && current.roomId === res.roomId) {
           return;
         }
 
-        // New incoming call — show popup
-        this._seenRoomIds.add(roomId);
+        // ✅ New incoming call — show popup (seenRoomIds မသုံးတော့)
         this.incomingCall.set({
-          roomId,
-          mode:         res.mode    || 'video',
+          roomId:       res.roomId,
+          mode:         res.mode         || 'video',
           callerName:   res.callerName   || 'Unknown',
           callerUserId: res.callerUserId || '',
           callerId:     Number(res.callerId || 0),

@@ -65,11 +65,12 @@ export class CallComponent implements OnInit, OnDestroy {
       this.zpInstance = ZegoUIKitPrebuilt.create(token);
 
       this.zpInstance.joinRoom({
-        container:                    container,
+        container,
         scenario: {
-          mode: this.isGroup
-            ? ZegoUIKitPrebuilt.GroupCall
-            : ZegoUIKitPrebuilt.OneONoneCall,
+           mode: ZegoUIKitPrebuilt.GroupCall,
+          // mode: this.isGroup
+          //   ? ZegoUIKitPrebuilt.GroupCall
+          //   : ZegoUIKitPrebuilt.OneONoneCall,
         },
         showPreJoinView:              false,
         turnOnMicrophoneWhenJoining:  true,
@@ -80,20 +81,10 @@ export class CallComponent implements OnInit, OnDestroy {
         showScreenSharingButton:      this.mode === 'video',
         showTextChat:                 true,
         showUserList:                 this.isGroup,
-        maxUsers:                     this.isGroup ? 20 : 2,
+        maxUsers:                      10,
 
-        // ✅ Self leave → close tab
         onLeaveRoom: () => {
           this.closeTab();
-        },
-
-        // ✅ Other user leaves → auto close tab (1-to-1 only)
-        onUserLeave: (users: any[]) => {
-          if (!this.isGroup && users && users.length > 0) {
-            setTimeout(() => {
-              this.closeTab();
-            }, 1500); // 1.5s နဲနဲ ကြာမှ close
-          }
         },
       });
 

@@ -68,11 +68,9 @@ export class ChatPopupComponent implements OnInit, OnDestroy {
 
   ngOnInit() {
     this.currentUser = this.authService.getUser();
-
     if (!this.currentUser.id && this.currentUser.userId) {
       this.currentUser.id = this.currentUser.userId;
     }
-
     if (this.isGroup && this.member.projectId) {
       this.roomID = this.zegoService.getProjectRoomId(this.member.projectId);
     } else {
@@ -80,7 +78,6 @@ export class ChatPopupComponent implements OnInit, OnDestroy {
         this.currentUser.id, this.member.id
       );
     }
-
     this.loadChatHistory();
     this.startPolling();
   }
@@ -98,10 +95,7 @@ export class ChatPopupComponent implements OnInit, OnDestroy {
     } else {
       url = `${environment.apiBaseUrl}/chat/project/${this.member.projectId}`;
     }
-
-    this.http.get<any[]>(url, {
-      headers: this.authService.getHeaders()
-    }).subscribe({
+    this.http.get<any[]>(url, { headers: this.authService.getHeaders() }).subscribe({
       next: (msgs) => {
         this.messages = msgs.map(m => ({
           id: String(m.id),
@@ -122,7 +116,6 @@ export class ChatPopupComponent implements OnInit, OnDestroy {
     if (!this.newMessage.trim()) return;
     const content = this.newMessage.trim();
     this.newMessage = '';
-
     this.http.post<any>(
       `${environment.apiBaseUrl}/chat/send`,
       {
@@ -169,19 +162,21 @@ export class ChatPopupComponent implements OnInit, OnDestroy {
     }
   }
 
-  // ✅ Send call invite to receiver BEFORE opening call tab
-  // ✅ Send call invite BEFORE opening call tab
   startCall(mode: 'voice' | 'video') {
     const callerId     = Number(this.currentUser.id || this.currentUser.userId);
-    const callerName   = this.currentUser.name;
     const callerUserId = String(this.currentUser.id || this.currentUser.userId);
+
+    // ✅ Group call မှာ project name ပြမယ်၊ direct မှာ caller name ပြမယ်
+    const callerName = this.isGroup
+      ? (this.member.projectName || this.member.name)
+      : this.currentUser.name;
 
     const params = new URLSearchParams({
       roomId:   this.roomID,
       mode:     mode,
       name:     this.member.projectName || this.member.name,
       isGroup:  String(this.isGroup),
-      userName: callerName,
+      userName: this.currentUser.name,
       userId:   callerUserId,
     });
 
@@ -194,7 +189,7 @@ export class ChatPopupComponent implements OnInit, OnDestroy {
           projectId:    projectId,
           roomId:       this.roomID,
           mode:         mode,
-          callerName:   callerName,
+          callerName:   callerName,   // ← project name
           callerUserId: callerUserId,
           callerId:     callerId,
         },
@@ -207,23 +202,17 @@ export class ChatPopupComponent implements OnInit, OnDestroy {
         calleeId:     this.member.id,
         roomId:       this.roomID,
         mode:         mode,
-        callerName:   callerName,
+        callerName:   callerName,     // ← caller name
         callerUserId: callerUserId,
         isGroup:      false,
       });
     }
 
-    // Open call tab
     window.open(`/call?${params.toString()}`, '_blank');
   }
 
-  toggleMinimize() {
-    this.isMinimized = !this.isMinimized;
-  }
-
-  closePopup() {
-    this.close.emit();
-  }
+  toggleMinimize() { this.isMinimized = !this.isMinimized; }
+  closePopup() { this.close.emit(); }
 
   scrollToBottom() {
     setTimeout(() => {
@@ -236,16 +225,11 @@ export class ChatPopupComponent implements OnInit, OnDestroy {
 
   startPolling(): void {
     this.stopPolling();
-    this._pollTimer = setInterval(() => {
-      this.pollNewMessages();
-    }, 3000);
+    this._pollTimer = setInterval(() => this.pollNewMessages(), 3000);
   }
 
   stopPolling(): void {
-    if (this._pollTimer) {
-      clearInterval(this._pollTimer);
-      this._pollTimer = null;
-    }
+    if (this._pollTimer) { clearInterval(this._pollTimer); this._pollTimer = null; }
   }
 
   pollNewMessages(): void {
@@ -257,16 +241,12 @@ export class ChatPopupComponent implements OnInit, OnDestroy {
     } else {
       url = `${environment.apiBaseUrl}/chat/project/${this.member.projectId}`;
     }
-
-    this.http.get<any[]>(url, {
-      headers: this.authService.getHeaders()
-    }).subscribe({
+    this.http.get<any[]>(url, { headers: this.authService.getHeaders() }).subscribe({
       next: (msgs) => {
         if (!msgs || msgs.length === 0) return;
         const lastId = String(msgs[msgs.length - 1].id);
         if (lastId === this._lastMessageId) return;
         this._lastMessageId = lastId;
-
         this.messages = msgs.map(m => ({
           id: String(m.id),
           senderId: String(m.senderId),

@@ -433,7 +433,7 @@ export class MemberDashboard implements OnInit, AfterViewInit, OnDestroy {
     const myId = this.currentUser?.id || this.currentUser?.userId;
     if (myId) {
       this.http.put(
-        `${BASE}/chat/read-direct/${m.userId || m.id}`,
+        `${BASE}/chat/read-channel?type=DIRECT&channelId=${m.userId || m.id}`,
         {},
         { headers: this.authService.getHeaders() }
       ).pipe(catchError(() => of(null))).subscribe(() => {
@@ -457,7 +457,7 @@ export class MemberDashboard implements OnInit, AfterViewInit, OnDestroy {
     };
     this.isGroupChat = true;
     this.http.put(
-      `${BASE}/chat/read-group/${p.id}`,
+      `${BASE}/chat/read-channel?type=PROJECT&channelId=${p.id}`,
       {},
       { headers: this.authService.getHeaders() }
     ).pipe(catchError(() => of(null))).subscribe(() => {
@@ -505,6 +505,7 @@ export class MemberDashboard implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
+
   loadUnreadCounts() {
     const myId = this.currentUser?.id || this.currentUser?.userId;
     if (!myId) return;
@@ -518,7 +519,12 @@ export class MemberDashboard implements OnInit, AfterViewInit, OnDestroy {
         this.ngZone.run(() => {
           counts.forEach((c: any) => {
             if (c.channelId && c.unreadCount !== undefined) {
-              this.projectUnreadCounts[c.channelId] = c.unreadCount;
+              // ✅ FIX: လက်ရှိ ဖွင့်နေတဲ့ project chat ဆိုရင် count မပြ
+              const isCurrentOpen = this.selectedChatMember?.projectId === c.channelId
+                                 && this.isGroupChat;
+              if (!isCurrentOpen) {
+                this.projectUnreadCounts[c.channelId] = c.unreadCount;
+              }
             }
           });
           this.cdr.detectChanges();
@@ -533,7 +539,12 @@ export class MemberDashboard implements OnInit, AfterViewInit, OnDestroy {
       this.ngZone.run(() => {
         counts.forEach((c: any) => {
           if (c.senderId && c.unreadCount !== undefined) {
-            this.memberUnreadCounts[c.senderId] = c.unreadCount;
+            // ✅ FIX: လက်ရှိ ဖွင့်နေတဲ့ direct chat ဆိုရင် count မပြ
+            const isCurrentOpen = this.selectedChatMember?.id === c.senderId
+                                && !this.isGroupChat;
+            if (!isCurrentOpen) {
+              this.memberUnreadCounts[c.senderId] = c.unreadCount;
+            }
           }
         });
         this.cdr.detectChanges();

@@ -109,11 +109,18 @@ public class ChatService {
         }
     }
 
+ // ChatService.java မှာ markChannelAsRead() နဲ့ getUnreadCount() ကို replace လုပ်ပါ
+
     public void markChannelAsRead(String channelType, Long channelId, Long userId) {
         List<ChatMessage> messages;
         if ("GLOBAL".equals(channelType)) {
             messages = chatMessageRepository
                     .findByChannelTypeOrderByCreatedAtAsc(channelType);
+        } else if ("DIRECT".equals(channelType)) {
+            // ✅ FIX: DIRECT မှာ ၂ ဘက်လုံးကနေ messages ဆွဲ
+            // channelId = otherUserId (တဖက်သား userId)
+            messages = chatMessageRepository
+                    .findDirectMessages(userId, channelId);
         } else {
             messages = chatMessageRepository
                     .findByChannelTypeAndChannelIdOrderByCreatedAtAsc(channelType, channelId);
@@ -134,11 +141,16 @@ public class ChatService {
         if ("GLOBAL".equals(channelType)) {
             messages = chatMessageRepository
                     .findByChannelTypeOrderByCreatedAtAsc(channelType);
+        } else if ("DIRECT".equals(channelType)) {
+            // ✅ FIX: DIRECT မှာ ၂ ဘက်လုံးကနေ messages ဆွဲ
+            messages = chatMessageRepository
+                    .findDirectMessages(userId, channelId);
         } else {
             messages = chatMessageRepository
                     .findByChannelTypeAndChannelIdOrderByCreatedAtAsc(channelType, channelId);
         }
         return messages.stream()
+                .filter(m -> !m.getSenderId().equals(userId)) // ✅ ကိုယ် ပို့တာ မပါ
                 .filter(m -> chatReadStatusRepository
                         .findByMessageIdAndUserId(m.getId(), userId).isEmpty())
                 .count();
