@@ -512,13 +512,13 @@
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
           <div class="card-title" style="margin-bottom:0;">{{ lbl('teamMembersTitle') }}</div>
           <div style="display:flex;align-items:center;gap:8px;">
-            <span style="font-size:9px;padding:2px 8px;border-radius:20px;background:#22c55e22;color:#22c55e;font-weight:700;">{{ getVisibleMemberCount() }} {{ lbl('rules') }}</span>
+            <span style="font-size:9px;padding:2px 8px;border-radius:20px;background:#22c55e22;color:#22c55e;font-weight:700;">{{ getVisibleMemberCount() }} {{ lbl('teamMembersSidebar') }}</span>
             <button *ngIf="canEdit()" (click)="showMemberEdit = !showMemberEdit; showMemberEdit && loadStaffList()"
               style="display:flex;align-items:center;gap:5px;padding:4px 12px;border-radius:8px;border:1px solid;font-size:11px;font-weight:600;cursor:pointer;transition:all 0.15s;"
               [style.borderColor]="showMemberEdit ? '#22c55e' : 'var(--color-border,#1e2d4a)'"
               [style.background]="showMemberEdit ? '#22c55e22' : 'transparent'"
               [style.color]="showMemberEdit ? '#22c55e' : '#64748b'">
-              {{ showMemberEdit ? lbl('editCancel') : lbl('editProject') }}
+              {{ showMemberEdit ? lbl('colDone') : lbl('editProject') }}
             </button>
           </div>
         </div>
