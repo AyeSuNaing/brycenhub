@@ -92,7 +92,7 @@ export class TaxBracketsInline implements OnInit {
       .pipe(catchError(() => of([])))
       .subscribe(list => {
         this.allCountries = list || [];
-        // BOSS/CD — branchId မရှိ → first country default select ပြီး brackets load
+        // Global admin (BOSS / CD / Super Admin) — branchId မရှိ → first country default
         if (this.isGlobalAdmin && !this.viewingCountry && list.length > 0) {
           this.viewingCountry = list[0];
           this.loadBrackets();
@@ -102,7 +102,7 @@ export class TaxBracketsInline implements OnInit {
   }
 
   private resolveCountryThenLoad(): void {
-    // BOSS/CD — loadAllCountries() မှာ handle ပြီး (branchId မရှိဘူး)
+    // Global admin — loadAllCountries() မှာ handle ပြီး
     if (this.isGlobalAdmin) return;
 
     const branchId = this.currentUser?.branchId;
@@ -121,7 +121,14 @@ export class TaxBracketsInline implements OnInit {
   selectCountry(c: CountryInfo): void { this.viewingCountry = c; this.showCountryMenu = false; this.calcResult = null; this.loadBrackets(); }
   get isViewingOwnCountry(): boolean { if (!this.country || !this.viewingCountry) return true; return this.country.id === this.viewingCountry.id; }
   get userRoleName(): string { return this.currentUser?.role || this.currentUser?.roleName || ''; }
-  get isGlobalAdmin(): boolean { const r = this.userRoleName; return r === 'BOSS' || r === 'COUNTRY_DIRECTOR'; }
+
+  // ✅ FIX: Super Admin (ADMIN + branchId null) ကို global admin အဖြစ် သတ်မှတ်
+  get isGlobalAdmin(): boolean {
+    const r = this.userRoleName;
+    if (r === 'BOSS' || r === 'COUNTRY_DIRECTOR') return true;
+    return r === 'ADMIN' && !this.currentUser?.branchId;
+  }
+
   get canEdit(): boolean { if (!this.viewingCountry) return false; return this.userRoleName === 'ADMIN'; }
   get countryFlag(): string { const c = this.viewingCountry; if (!c) return '🌍'; return c.flagEmoji || this.flagFallback[c.code] || '🌍'; }
   get countryName(): string { return this.viewingCountry?.name || 'Global'; }

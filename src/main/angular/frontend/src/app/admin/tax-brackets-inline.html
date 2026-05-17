@@ -25,40 +25,29 @@
       </div>
     </div>
 
+    <!-- COUNTRY PILLS ROW (Global Admin only) -->
+    <div *ngIf="isGlobalAdmin" class="tax-country-pills-bar">
+      <span class="tax-pills-label">🌍 Country:</span>
+      <div class="tax-pills-row">
+        <button *ngFor="let c of allCountries"
+          class="tax-country-pill"
+          [class.tax-pill-active]="viewingCountry?.id === c.id"
+          (click)="selectCountry(c)">
+          <span class="tax-pill-flag">{{ getFlagFor(c) }}</span>
+          <span class="tax-pill-name">{{ c.name }}</span>
+        </button>
+      </div>
+    </div>
+
     <!-- MAIN CARD -->
     <div class="tax-card">
       <div class="tax-card-header">
         <div class="tax-title-row">
           <div class="card-title">
-            <span class="title-icon">💰</span>
             <span>{{ lbl('Tax Brackets (title)') }}</span>
           </div>
 
-          <div class="country-switcher" *ngIf="viewingCountry && isGlobalAdmin">
-            <button class="country-pill" [class.not-own]="!isViewingOwnCountry" (click)="toggleCountryMenu()">
-              {{ countryFlag }} {{ countryName }}
-              <span *ngIf="!isViewingOwnCountry" class="view-only-badge">Global</span>
-              <span class="dropdown-arrow">▾</span>
-            </button>
-            <div *ngIf="showCountryMenu" class="country-menu-backdrop" (click)="showCountryMenu = false"></div>
-            <div *ngIf="showCountryMenu" class="country-menu">
-              <div class="menu-header">Switch country</div>
-              <button *ngIf="country" class="country-option own" [class.active]="viewingCountry.id === country.id" (click)="selectCountry(country)">
-                <span class="opt-flag">{{ getFlagFor(country) }}</span>
-                <span class="opt-name">{{ country.name }}</span>
-                <span class="opt-badge own-badge">⭐ Yours</span>
-              </button>
-              <div class="menu-divider" *ngIf="country"></div>
-              <ng-container *ngFor="let c of allCountries">
-                <button *ngIf="!country || c.id !== country.id" class="country-option" [class.active]="viewingCountry.id === c.id" (click)="selectCountry(c)">
-                  <span class="opt-flag">{{ getFlagFor(c) }}</span>
-                  <span class="opt-name">{{ c.name }}</span>
-                  <span class="opt-badge view-badge">👁️</span>
-                </button>
-              </ng-container>
-            </div>
-          </div>
-
+          <!-- Branch Admin: static pill (no switcher) -->
           <span *ngIf="viewingCountry && !isGlobalAdmin" class="country-pill static">
             {{ countryFlag }} {{ countryName }}
           </span>
@@ -88,7 +77,7 @@
         <div class="empty-sub">
           <ng-container *ngIf="canEdit && hasPresetForCountry">Click "{{ seedButtonLabel }}" for a quick start.</ng-container>
           <ng-container *ngIf="canEdit && !hasPresetForCountry">Click "{{ lbl('+ Add Bracket') }}" to create the first tier.</ng-container>
-          <ng-container *ngIf="!canEdit">Switch to your country to manage tax brackets.</ng-container>
+          <ng-container *ngIf="!canEdit">Select a country above to view tax brackets.</ng-container>
         </div>
       </div>
 

@@ -298,3 +298,236 @@
 /* Misc */
 .sa-loading { text-align: center; padding: 48px; opacity: 0.4; font-size: 13px; }
 .sa-empty   { text-align: center; padding: 48px; opacity: 0.3; font-size: 13px; grid-column: 1/-1; }
+
+/* ── Right Panel — StaffPanel role filter preset ────────────────
+   StaffPanel ကို management roles ပဲ ပြအောင် CSS ဖြင့် filter
+   (BOSS, COUNTRY_DIRECTOR, VICE_PRESIDENT, ADMIN ပဲ ကျန်)
+   TS filter မလိုဘဲ StaffPanel @Input rolePreset ထည့်ရင် ပိုကောင်း
+   ─────────────────────────────────────────────────────────────── */
+
+/* Management Chat FAB */
+.sa-mgmt-chat-fab {
+  position: fixed; bottom: 24px; right: 290px; z-index: 500;
+  display: flex; align-items: center; gap: 8px;
+  background: rgba(124,58,237,0.9);
+  border: 1px solid rgba(167,139,250,0.4);
+  border-radius: 24px; padding: 10px 18px;
+  cursor: pointer; font-size: 13px; font-weight: 600;
+  color: white; box-shadow: 0 4px 20px rgba(124,58,237,0.4);
+  transition: all 0.2s;
+  backdrop-filter: blur(8px);
+  &:hover {
+    background: rgba(124,58,237,1);
+    box-shadow: 0 6px 28px rgba(124,58,237,0.6);
+    transform: translateY(-2px);
+  }
+}
+.fab-label { font-size: 12px; white-space: nowrap; }
+.fab-badge {
+  background: #ef4444; color: white;
+  font-size: 10px; font-weight: 800;
+  min-width: 18px; height: 18px; border-radius: 9px;
+  display: flex; align-items: center; justify-content: center;
+  padding: 0 4px;
+  animation: sa-pulse 2s infinite;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   RIGHT PANEL — VP Dashboard style
+═══════════════════════════════════════════════════════════════ */
+.sa-right-panel {
+  width: 260px; flex-shrink: 0;
+  background: var(--surface, #111827);
+  border-left: 1px solid var(--border, rgba(255,255,255,0.08));
+  display: flex; flex-direction: column;
+  overflow-y: auto; overflow-x: hidden;
+  &::-webkit-scrollbar { width: 2px; }
+  &::-webkit-scrollbar-thumb { background: rgba(124,58,237,0.3); border-radius: 1px; }
+  scrollbar-width: thin;
+  @media (max-width: 1200px) { display: none; }
+}
+
+.sa-rp-section {
+  display: flex; flex-direction: column;
+  border-bottom: 1px solid var(--border, rgba(255,255,255,0.08));
+  padding-bottom: 8px;
+  /* max-height ဖြုတ်ပြီ — panel တစ်ခုလုံး scroll */
+}
+
+.sa-rp-header {
+  display: flex; align-items: center; gap: 6px;
+  padding: 10px 12px 6px; flex-shrink: 0;
+}
+.sa-rp-icon  { font-size: 13px; }
+.sa-rp-title { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; opacity: 0.5; flex: 1; color: var(--text, #e2e8f0); }
+.sa-rp-count {
+  font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 10px;
+  background: rgba(124,58,237,0.15); color: #a78bfa;
+}
+
+.sa-rp-search {
+  display: flex; align-items: center; gap: 6px;
+  margin: 0 10px 6px; padding: 5px 8px; border-radius: 7px;
+  background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.07);
+  font-size: 11px; flex-shrink: 0;
+  input { background: transparent; border: none; outline: none; font-size: 11px; color: var(--text, #e2e8f0); width: 100%; &::placeholder { color: #475569; } }
+}
+
+.sa-rp-empty { text-align: center; padding: 20px; font-size: 11px; opacity: 0.3; }
+
+.sa-rp-list {
+  padding: 0 6px;
+  /* overflow ဖြုတ်ပြီ — panel level scroll သုံး */
+}
+
+.sa-rp-card {
+  display: flex; align-items: center; gap: 7px;
+  padding: 6px 6px; border-radius: 8px; transition: background 0.15s;
+  &:hover { background: rgba(124,58,237,0.06); .sa-rp-chat-btn { opacity: 1; transform: translateX(0); } }
+  &.sa-rp-self { opacity: 0.6; }
+}
+
+.sa-rp-avatar {
+  width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 700; color: white;
+}
+.sa-rp-info  { flex: 1; min-width: 0; }
+.sa-rp-name  { font-size: 11px; font-weight: 600; color: var(--text, #e2e8f0); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sa-rp-meta  { display: flex; align-items: center; gap: 4px; margin-top: 1px; }
+.sa-rp-role-badge {
+  font-size: 8px; font-weight: 700; padding: 1px 5px; border-radius: 5px; white-space: nowrap;
+}
+.sa-rp-branch { font-size: 9px; opacity: 0.4; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.sa-rp-chat-btn {
+  width: 24px; height: 24px; border-radius: 50%; flex-shrink: 0;
+  background: rgba(124,58,237,0.15); border: 1px solid rgba(124,58,237,0.3);
+  color: #a78bfa; font-size: 11px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0; transform: translateX(4px); transition: all 0.15s;
+  &:hover { background: rgba(124,58,237,0.3); transform: scale(1.1) !important; }
+}
+.sa-rp-you {
+  font-size: 8px; font-weight: 700; padding: 1px 6px; border-radius: 8px;
+  background: rgba(34,197,94,0.15); color: #4ade80;
+}
+
+/* Group Chat section */
+.sa-rp-unread-badge {
+  font-size: 9px; font-weight: 800; padding: 1px 6px; border-radius: 10px;
+  background: #7c3aed; color: white; margin-left: auto;
+}
+.sa-rp-group-card {
+  display: flex; align-items: center; gap: 8px;
+  margin: 4px 8px; padding: 8px 10px; border-radius: 10px; cursor: pointer;
+  background: rgba(124,58,237,0.08); border: 1px solid rgba(124,58,237,0.15);
+  transition: all 0.2s;
+  &:hover { background: rgba(124,58,237,0.18); border-color: rgba(124,58,237,0.35); }
+}
+.sa-rp-group-icon {
+  width: 32px; height: 32px; border-radius: 9px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center; font-size: 16px;
+}
+.sa-rp-group-info { flex: 1; min-width: 0; }
+.sa-rp-group-name { font-size: 12px; font-weight: 700; color: var(--text, #e2e8f0); }
+.sa-rp-group-sub  { font-size: 10px; opacity: 0.4; margin-top: 1px; }
+.sa-rp-unread-dot {
+  min-width: 18px; height: 18px; border-radius: 9px;
+  background: #7c3aed; color: white; font-size: 10px; font-weight: 800;
+  display: flex; align-items: center; justify-content: center; padding: 0 4px;
+}
+
+/* Remove old FAB (replaced by right panel) */
+.sa-mgmt-chat-fab { display: none; }
+
+/* Online dot small (right panel) */
+.sa-online-dot-sm {
+  width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; margin-left: 2px;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   LIGHT MODE OVERRIDES
+═══════════════════════════════════════════════════════════════ */
+:host-context(body.light),
+body.light .sa-shell {
+  color: #1e293b;
+
+  .sa-topbar {
+    background: white;
+    border-bottom-color: #e2e8f0;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  }
+  .sa-logo-text  { color: #1e293b; }
+  .sa-logo-sub   { color: #7c3aed; }
+  .sa-search-box {
+    background: #f8fafc; border-color: #e2e8f0;
+    input { color: #1e293b; }
+  }
+  .sa-lang-btn   { background: #f8fafc; border-color: #e2e8f0; color: #64748b; }
+  .sa-lang-menu  { background: white; border-color: #e2e8f0; }
+  .sa-lang-item  { color: #1e293b; &:hover { background: rgba(124,58,237,0.06); } }
+  .sa-icon-btn   { background: #f8fafc; border-color: #e2e8f0; color: #64748b; }
+
+  /* Sidebar */
+  .sa-sidebar    { background: white; border-right-color: #e2e8f0; }
+  .sa-sidebar-scroll { background: white; }
+  .sa-profile-name   { color: #1e293b; }
+  .sa-section-label  { color: #64748b; }
+  .sa-nav-item   { color: #64748b; &:hover { background: rgba(124,58,237,0.06); color: #1e293b; } }
+  .sa-nav-active { background: rgba(124,58,237,0.08) !important; color: #7c3aed !important; }
+  .sa-divider    { border-top-color: #e2e8f0; }
+  .sa-sidebar-bottom { border-top-color: #e2e8f0; background: white; }
+  .sa-settings-submenu { background: white; border-color: #e2e8f0; }
+  .sa-sub-item   { color: #64748b; &:hover { background: rgba(124,58,237,0.06); } }
+
+  /* Stats cards */
+  .sa-stat-card  {
+    background: white; border-color: #e2e8f0;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    &:hover { border-color: rgba(124,58,237,0.3); }
+  }
+  .sa-stat-value { color: #111827; }
+  .sa-stat-label { color: #374151; }
+  .sa-stat-sub   { color: #6b7280 !important; }
+
+  /* Main card */
+  .sa-card { background: white; border-color: #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+  .sa-card-title { color: #1e293b; }
+  .sa-page-title { color: #111827; }
+  .sa-page-sub   { color: #64748b; }
+
+  /* Quick action buttons */
+  .sa-quick-btn {
+    background: #f8fafc; border-color: #e2e8f0;
+    &:hover { border-color: rgba(124,58,237,0.3); background: rgba(124,58,237,0.04); }
+  }
+  .sa-quick-title { color: #1e293b; }
+  .sa-quick-sub   { color: #94a3b8; }
+
+  /* Company overview */
+  .sa-branch-card { background: white; border-color: #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+  .sa-branch-name   { color: #111827; }
+  .sa-branch-country { color: #64748b; }
+  .sa-branch-stats { background: #f8fafc; }
+  .sa-bstat-val   { color: #111827; }
+  .sa-bstat-lbl   { color: #94a3b8; }
+  .sa-branch-admin-name { color: #7c3aed; }
+
+  /* Right panel */
+  .sa-right-panel { background: #f8fafc; border-left-color: #e2e8f0; }
+  .sa-rp-title    { color: #374151; }
+  .sa-rp-name     { color: #111827; }
+  .sa-rp-branch   { color: #94a3b8; }
+  .sa-rp-search   { background: white; border-color: #e2e8f0;
+    input { color: #1e293b; }
+  }
+  .sa-rp-card     { &:hover { background: rgba(124,58,237,0.04); } }
+  .sa-rp-group-card {
+    background: #eef2ff; border-color: #c7d2fe;
+    &:hover { background: #e0e7ff; }
+  }
+  .sa-rp-group-name { color: #1e293b; }
+  .sa-rp-group-sub  { color: #94a3b8; }
+  .sa-rp-empty    { color: #94a3b8; }
+}

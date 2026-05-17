@@ -43,18 +43,10 @@ public class SuperAdminDashboardController {
         return ADMIN_ROLE_ID.equals(user.getRoleId()) && user.getBranchId() == null;
     }
 
-    // ── Country code → flag emoji (Country model မှာ flagEmoji မရှိ) ──
-    private static String getFlagByCode(String code) {
-        if (code == null) return "🌐";
-        switch (code.toUpperCase()) {
-            case "JP": return "🇯🇵";
-            case "MM": return "🇲🇲";
-            case "KH": return "🇰🇭";
-            case "VN": return "🇻🇳";
-            case "KR": return "🇰🇷";
-            case "US": return "🇺🇸";
-            default:   return "🌐";
-        }
+    // ── flagEmoji — null safe (Country.flagEmoji field ရှိပြီ) ─────
+    private static String flagEmoji(jp.co.brycen.asn.model.Country c) {
+        if (c == null) return "🌐";
+        return c.getFlagEmoji() != null ? c.getFlagEmoji() : "🌐";
     }
 
     // ═══════════════════════════════════════════════════════════
@@ -154,7 +146,7 @@ public class SuperAdminDashboardController {
                         row.setCountryId(c.getId());
                         row.setCountryName(c.getName());
                         row.setCountryCode(c.getCode());
-                        row.setCountryFlag(getFlagByCode(c.getCode()));
+                        row.setCountryFlag(flagEmoji(c));
                         row.setHolidayCount(holidayCountCache.getOrDefault(c.getId(), 0L));
                     }
                 }

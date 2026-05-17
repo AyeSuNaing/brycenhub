@@ -44,6 +44,13 @@
 
     <!-- Bell -->
     <app-bell-notification [notifications]="notifications"></app-bell-notification>
+
+    <!-- Right Panel Toggle -->
+    <div class="sa-icon-btn" (click)="showRightPanel=!showRightPanel;$event.stopPropagation()"
+      [title]="showRightPanel ? 'Hide panel' : 'Show panel'"
+      [style.background]="showRightPanel ? 'rgba(124,58,237,0.2)' : ''">
+      <span>{{ showRightPanel ? '◀' : '▶' }}</span>
+    </div>
   </header>
 
   <!-- Announcement bar -->
@@ -325,5 +332,101 @@
       </app-change-password-inline>
 
     </div><!-- /main-center -->
+    <!-- ═══════ RIGHT PANEL (VP style) ═══════ -->
+    <aside class="sa-right-panel" *ngIf="showRightPanel">
+
+      <!-- ① MANAGEMENT (BOSS + CD + VP) -->
+      <div class="sa-rp-section" >
+        <div class="sa-rp-header">
+          <span class="sa-rp-title" style="color:#a855f7;">MANAGEMENT</span>
+          <span class="sa-rp-count" style="background:rgba(168,85,247,0.12);color:#a855f7;border:1px solid rgba(168,85,247,0.25);">{{ mgmtStaff.length }}</span>
+        </div>
+        <div class="sa-rp-list">
+          <div *ngFor="let s of mgmtStaff"
+            class="sa-rp-card"
+            style="border-left:2px solid rgba(168,85,247,0.4);"
+            (click)="openDirectChat(s)">
+            <div class="sa-rp-avatar" [style.background]="getAvatarColor(s.name)">{{ getInitial(s.name) }}</div>
+            <div class="sa-rp-info">
+              <div class="sa-rp-name">{{ s.name }}</div>
+              <div class="sa-rp-meta">
+                <span class="sa-rp-role-badge"
+                  [style.background]="(s.roleColor || '#a855f7') + '22'"
+                  [style.color]="s.roleColor || '#a855f7'">
+                  {{ s.roleDisplayName || s.roleName }}
+                </span>
+              </div>
+            </div>
+            <span *ngIf="memberUnreadCounts[s.id] > 0" class="sa-rp-unread-dot">{{ memberUnreadCounts[s.id] }}</span>
+            <div class="sa-online-dot-sm" [style.background]="s.online ? '#22c55e' : '#334155'"
+              [style.boxShadow]="s.online ? '0 0 5px #22c55e88' : 'none'"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ② GROUP CHATS -->
+      <div class="sa-rp-section" >
+        <div class="sa-rp-header">
+          <span class="sa-rp-title" style="color:#22c55e;">💬 GROUP CHATS</span>
+          <span class="sa-rp-count" style="background:rgba(34,197,94,0.12);color:#22c55e;border:1px solid rgba(34,197,94,0.25);">1</span>
+        </div>
+        <!-- Global Management Chat -->
+        <div class="sa-rp-group-card" (click)="openMgmtGroupChat()">
+          <div class="sa-rp-group-icon" style="background:rgba(124,58,237,0.2);">⚡</div>
+          <div class="sa-rp-group-info">
+            <div class="sa-rp-group-name">Management Chat</div>
+            <div class="sa-rp-group-sub">All management · Global</div>
+          </div>
+          <span *ngIf="mgmtUnreadCount > 0" class="sa-rp-unread-dot">{{ mgmtUnreadCount }}</span>
+        </div>
+      </div>
+
+      <!-- ③ ADMIN TEAM (1-to-1, Branch Admins) -->
+      <div class="sa-rp-section" >
+        <div class="sa-rp-header">
+          <span class="sa-rp-title" style="color:#f59e0b;">ADMIN TEAM</span>
+          <span class="sa-rp-count" style="background:rgba(245,158,11,0.12);color:#f59e0b;border:1px solid rgba(245,158,11,0.25);">{{ adminTeam.length }}</span>
+        </div>
+        <!-- Admin search -->
+        <div class="sa-rp-search">
+          <span>🔍</span>
+          <input [(ngModel)]="adminSearch" placeholder="Search admin..." />
+        </div>
+        <div class="sa-rp-list">
+          <div *ngFor="let s of filteredAdminTeam"
+            class="sa-rp-card"
+            [class.sa-rp-self]="s.id === currentUser?.id"
+            (click)="s.id !== currentUser?.id && openAdminDirectChat(s)">
+            <div class="sa-rp-avatar" [style.background]="getAvatarColor(s.name)">{{ getInitial(s.name) }}</div>
+            <div class="sa-rp-info">
+              <div class="sa-rp-name">{{ s.name }}</div>
+              <div class="sa-rp-meta">
+                <span class="sa-rp-role-badge"
+                  style="background:rgba(245,158,11,0.15);color:#f59e0b;">Admin</span>
+                <span *ngIf="s.branchName" class="sa-rp-branch">· {{ s.branchName }}</span>
+              </div>
+            </div>
+            <span *ngIf="memberUnreadCounts[s.id] > 0" class="sa-rp-unread-dot">{{ memberUnreadCounts[s.id] }}</span>
+            <span *ngIf="s.id === currentUser?.id" class="sa-rp-you">You</span>
+            <div *ngIf="s.id !== currentUser?.id"
+              class="sa-online-dot-sm"
+              [style.background]="s.online ? '#22c55e' : '#334155'"
+              [style.boxShadow]="s.online ? '0 0 5px #22c55e88' : 'none'">
+            </div>
+          </div>
+          <div *ngIf="filteredAdminTeam.length === 0" class="sa-rp-empty">No admins found</div>
+        </div>
+      </div>
+
+    </aside><!-- /right-panel -->
+
   </div><!-- /main-row -->
+
+  <!-- ── Chat Popup ── -->
+  <app-chat-popup
+    *ngIf="activeChatMember"
+    [member]="activeChatMember"
+    [isGroup]="isGroupChat"
+    (close)="closeChatPopup()">
+  </app-chat-popup>
 </div><!-- /sa-shell -->

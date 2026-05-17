@@ -31,7 +31,7 @@ interface StaffItem {
 export class StaffPanelComponent implements OnInit {
   /** Disable chat button entirely (default: true = enabled) */
   @Input() enableChat = true;
-
+  @Input() allowedRoles: string[] = [];
   /** Custom title (if empty → auto-generated per role) */
   @Input() title = '';
 
@@ -149,6 +149,10 @@ export class StaffPanelComponent implements OnInit {
   get filteredStaff(): StaffItem[] {
     let list = this.staffList;
 
+    if (this.allowedRoles.length > 0) {
+      list = list.filter(s => this.allowedRoles.includes(s.roleName || ''));
+    }
+    
     // Branch filter
     if (this.selectedBranchFilter !== 'ALL') {
       list = list.filter(s => s.branchId === this.selectedBranchFilter);

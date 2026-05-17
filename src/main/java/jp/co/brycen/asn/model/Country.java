@@ -24,6 +24,11 @@ public class Country {
     private String name;
     // Japan, Myanmar, Cambodia...
 
+    // ✅ DB မှာ flag_emoji column ရှိနေပြီ
+    @Column(name = "flag_emoji")
+    private String flagEmoji;
+    // 🇯🇵, 🇲🇲, 🇰🇭 ...
+
     @Column(length = 10)
     private String currency;
     // JPY, MMK, USD, VND, KRW, USD

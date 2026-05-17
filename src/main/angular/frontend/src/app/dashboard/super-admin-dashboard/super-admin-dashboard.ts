@@ -20,6 +20,7 @@ import { SalaryStructuresInline }    from '../../admin/salary-structures-inline'
 
 import { BranchManagementInline }    from '../../super-admin/branch-management-inline';
 import { BranchAdminInline }         from '../../super-admin/branch-admin-inline';
+import { ChatPopupComponent, ChatMember } from '../../shared/chat-popup/chat-popup.component';
 
 import { environment } from '../../../environments/environment';
 
@@ -38,6 +39,7 @@ const LOGO_SVG = `data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIiIGhlaWdodD0iMzIi
     StaffListInline, StaffProfileInline,
     HolidaysInline, TaxBracketsInline, SalaryStructuresInline,
     BranchManagementInline, BranchAdminInline,
+    ChatPopupComponent,
   ],
   templateUrl: './super-admin-dashboard.html',
   styleUrl: './super-admin-dashboard.scss',
@@ -53,9 +55,131 @@ export class SuperAdminDashboard implements OnInit, OnDestroy {
   activeView    = 'dashboard';
   currentUser: any = null;
 
+  showRightPanel = true;
+
   // Staff profile navigation
   selectedStaffId  = 0;
   profileBackTo    = 'staff-list';
+
+  // ── Chat (Management Group) ──────────────────────────────────────
+  activeChatMember: ChatMember | null = null;
+  isGroupChat = false;
+  mgmtUnreadCount = 0;
+  private _unreadTimer: any;
+
+  // ── Management Staff (right panel) ────────────────────────────
+  mgmtStaff:     any[] = [];
+  mgmtSearch     = '';
+  loadingMgmt    = false;
+  directTarget:  ChatMember | null = null;
+
+  readonly MGMT_ROLES = ['BOSS','COUNTRY_DIRECTOR','VICE_PRESIDENT'];
+  readonly MGMT_ROLES_ALL = ['BOSS','COUNTRY_DIRECTOR','VICE_PRESIDENT','ADMIN'];
+
+  // Admin team (1-to-1 chat)
+  adminTeam: any[] = [];
+  loadingAdminTeam = false;
+  adminSearch = '';
+  memberUnreadCounts: Record<number, number> = {};
+  branchChatUnread = 0;
+  private _unreadPollTimer: any;
+
+  loadMgmtStaff() {
+    this.loadingMgmt = true;
+    this.http.get<any[]>(`${BASE}/users/all-staff`, { headers: this.auth.getHeaders() }).subscribe({
+      next: list => {
+        const all = list || [];
+        // Management: BOSS + CD + VP only
+        this.mgmtStaff = all.filter(u => this.MGMT_ROLES.includes(u.roleName || u.role || ''));
+        // Admin team: ADMIN role only (branch admins)
+        this.adminTeam  = all.filter(u => (u.roleName || u.role || '') === 'ADMIN');
+        this.loadingMgmt = false;
+        this.cdr.detectChanges();
+      },
+      error: () => { this.loadingMgmt = false; },
+    });
+  }
+
+  get filteredAdminTeam(): any[] {
+    if (!this.adminSearch.trim()) return this.adminTeam;
+    const q = this.adminSearch.toLowerCase();
+    return this.adminTeam.filter(s =>
+      (s.name||'').toLowerCase().includes(q) ||
+      (s.branchName||'').toLowerCase().includes(q)
+    );
+  }
+
+  loadUnreadCounts() {
+    const myId = this.currentUser?.id || this.currentUser?.userId;
+    if (!myId) return;
+    this.http.get<any[]>(`${BASE}/chat/direct-unread-by-sender?userId=${myId}`, { headers: this.auth.getHeaders() })
+      .subscribe({ next: list => { (list||[]).forEach(r => { if (r.senderId) this.memberUnreadCounts[r.senderId] = r.unreadCount || 0; }); this.cdr.detectChanges(); }, error: () => {} });
+  }
+
+  openAdminDirectChat(s: any) {
+    this.isGroupChat = false;
+    this.activeChatMember = {
+      id: s.id, name: s.name,
+      role: s.roleDisplayName || s.roleName,
+      color: s.roleColor || '#f59e0b',
+      initial: this.getInitial(s.name),
+    };
+    const myId = this.currentUser?.id || this.currentUser?.userId;
+    this.http.put(`${BASE}/chat/read-channel?type=DIRECT&channelId=${myId}`, {}, { headers: this.auth.getHeaders() })
+      .subscribe({ error: () => {} });
+    this.memberUnreadCounts[s.id] = 0;
+    this.cdr.detectChanges();
+  }
+
+  get filteredMgmt(): any[] {
+    if (!this.mgmtSearch.trim()) return this.mgmtStaff;
+    const q = this.mgmtSearch.toLowerCase();
+    return this.mgmtStaff.filter(s =>
+      (s.name||'').toLowerCase().includes(q) ||
+      (s.branchName||'').toLowerCase().includes(q)
+    );
+  }
+
+  openDirectChat(s: any) {
+    this.isGroupChat = false;
+    this.activeChatMember = {
+      id: s.id, name: s.name,
+      role: s.roleDisplayName || s.roleName,
+      color: s.roleColor || '#7c3aed',
+      initial: this.getInitial(s.name),
+    };
+    this.cdr.detectChanges();
+  }
+
+  openMgmtGroupChat() {
+    // GLOBAL channel — Management group chat
+    this.isGroupChat = true;
+    this.activeChatMember = {
+      id: 0,
+      name: '⚡ Management Chat',
+      projectId: 0,
+      projectName: 'GLOBAL',
+      color: '#7c3aed',
+    };
+    // Mark as read
+    this.http.put(
+      `${BASE}/chat/read-channel?type=GLOBAL`, {},
+      { headers: this.auth.getHeaders() }
+    ).subscribe({ error: () => {} });
+    this.mgmtUnreadCount = 0;
+    this.cdr.detectChanges();
+  }
+
+  closeChatPopup() {
+    this.activeChatMember = null;
+    this.isGroupChat = false;
+    this.cdr.detectChanges();
+  }
+
+  loadMgmtUnread() {
+    this.http.get<any>(`${BASE}/chat/unread`, { headers: this.auth.getHeaders() })
+      .subscribe({ next: r => { this.mgmtUnreadCount = r?.count || 0; this.cdr.detectChanges(); }, error: () => {} });
+  }
 
   // ── Stats ──────────────────────────────────────────────────────
   stats = {
@@ -149,13 +273,20 @@ export class SuperAdminDashboard implements OnInit, OnDestroy {
     this.loadStats();
     this.loadAnnouncements();
     this.loadNotifications();
+    this.loadMgmtStaff();
+    this._unreadPollTimer = setInterval(() => this.loadUnreadCounts(), 10_000);
 
     // Poll notifications every 30s
     this._pollTimer = setInterval(() => this.loadNotifications(), 30_000);
+    // Poll management unread
+    this.loadMgmtUnread();
+    this._unreadTimer = setInterval(() => this.loadMgmtUnread(), 15_000);
   }
 
   ngOnDestroy() {
     if (this._pollTimer) clearInterval(this._pollTimer);
+    if (this._unreadTimer) clearInterval(this._unreadTimer);
+    if (this._unreadPollTimer) clearInterval(this._unreadPollTimer);
   }
 
   @HostListener('document:click')

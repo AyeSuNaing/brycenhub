@@ -1,228 +1,295 @@
-<div class="holidays-wrapper">
-  <div class="holidays-main">
+<div class="holidays-wrapper" (click)="closePopup()">
 
-    <!-- STATS ROW -->
-    <div class="stats-grid">
-      <div class="stat-card">
-        <div class="stat-label">{{ lbl('TOTAL HOLIDAYS') }}</div>
-        <div class="stat-value">{{ statsTotal }}</div>
-        <div class="stat-sub">● {{ currentYear }} · {{ countryName }}</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-label">{{ lbl('THIS MONTH') }}</div>
-        <div class="stat-value accent-purple">{{ statsThisMonth }}</div>
-        <div class="stat-sub">● {{ calendarMonthShort }} {{ calendarYear }}</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-label">{{ lbl('UPCOMING 30 DAYS') }}</div>
-        <div class="stat-value accent-green">{{ statsUpcoming }}</div>
-        <div class="stat-sub">{{ lbl('Next month window') }}</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-label">{{ lbl('WEEKEND OVERLAP') }}</div>
-        <div class="stat-value accent-amber">{{ statsWeekendOverlap }}</div>
-        <div class="stat-sub">{{ lbl('Falls on Sat/Sun') }}</div>
-      </div>
+  <!-- ══ STATS ══════════════════════════════════════════════════ -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-label">TOTAL HOLIDAYS</div>
+      <div class="stat-value">{{ statsTotal }}</div>
+      <div class="stat-sub">{{ yearlyYear }} · {{ selectedCountries.length }} countries</div>
     </div>
-
-    <!-- MAIN CARD -->
-    <div class="hol-card">
-
-      <div class="hol-card-header">
-        <div class="hol-title-row">
-          <div class="card-title">
-            <span class="title-icon">🗓️</span>
-            <span>{{ lbl('Public Holidays (title)') }}</span>
-          </div>
-
-          <div class="country-switcher" *ngIf="viewingCountry">
-            <button class="country-pill" [class.not-own]="!isViewingOwnCountry && !isGlobalAdmin" (click)="toggleCountryMenu()">
-              {{ countryFlag }} {{ countryName }}
-              <span class="dropdown-arrow">▾</span>
-            </button>
-            <div *ngIf="showCountryMenu" class="country-menu-backdrop" (click)="showCountryMenu = false"></div>
-            <div *ngIf="showCountryMenu" class="country-menu">
-              <div class="menu-header">Switch country</div>
-              <button *ngIf="country" class="country-option own" [class.active]="viewingCountry.id === country.id" (click)="selectCountry(country)">
-                <span class="opt-flag">{{ getFlagFor(country) }}</span>
-                <span class="opt-name">{{ country.name }}</span>
-                <span class="opt-badge own-badge">⭐ Yours</span>
-              </button>
-              <div class="menu-divider" *ngIf="country"></div>
-              <ng-container *ngFor="let c of allCountries">
-                <button *ngIf="!country || c.id !== country.id" class="country-option" [class.active]="viewingCountry.id === c.id" (click)="selectCountry(c)">
-                  <span class="opt-flag">{{ getFlagFor(c) }}</span>
-                  <span class="opt-name">{{ c.name }}</span>
-                  <span class="opt-badge view-badge">👁️</span>
-                </button>
-              </ng-container>
-            </div>
-          </div>
-        </div>
-
-        <div class="hol-actions">
-          <div class="view-toggle">
-            <button class="toggle-btn" [class.active]="viewMode === 'calendar'" (click)="setViewMode('calendar')">
-              {{ lbl('Calendar') }}
-            </button>
-            <button class="toggle-btn" [class.active]="viewMode === 'list'" (click)="setViewMode('list')">
-              {{ lbl('List') }}
-            </button>
-          </div>
-          <ng-container *ngIf="canEdit">
-            <button class="btn-primary" (click)="openCreateForm()">
-              {{ lbl('+ Add Holiday') }}
-            </button>
-          </ng-container>
-        </div>
-      </div>
-
-      <!-- CALENDAR VIEW -->
-      <div *ngIf="viewMode === 'calendar'" class="calendar-view">
-        <div class="cal-nav">
-          <button class="nav-btn" (click)="changeCalendarMonth(-1)">‹</button>
-          <h3 class="cal-title">{{ calendarMonthName }} {{ calendarYear }}</h3>
-          <button class="nav-btn" (click)="changeCalendarMonth(1)">›</button>
-          <button class="today-btn" (click)="goToToday()">{{ lbl('Today') }}</button>
-          <div class="cal-legend">
-            <span class="legend-item"><span class="legend-dot holiday"></span> {{ lbl('Holiday') }}</span>
-            <span class="legend-item"><span class="legend-dot weekend"></span> {{ lbl('Weekend') }}</span>
-            <span class="legend-item"><span class="legend-dot today"></span> {{ lbl('Today') }}</span>
-          </div>
-        </div>
-
-        <div class="cal-weekdays">
-          <div class="weekday sun">{{ lbl('SUN') }}</div>
-          <div class="weekday">{{ lbl('MON') }}</div>
-          <div class="weekday">{{ lbl('TUE') }}</div>
-          <div class="weekday">{{ lbl('WED') }}</div>
-          <div class="weekday">{{ lbl('THU') }}</div>
-          <div class="weekday">{{ lbl('FRI') }}</div>
-          <div class="weekday sat">{{ lbl('SAT') }}</div>
-        </div>
-
-        <div class="cal-grid">
-          <div *ngFor="let week of calendarGrid" class="cal-week">
-            <div *ngFor="let cell of week"
-                 class="cal-cell"
-                 [class.other-month]="!cell.isCurrentMonth"
-                 [class.weekend]="cell.isWeekend && cell.isCurrentMonth"
-                 [class.today]="cell.isToday"
-                 [class.has-holiday]="cell.holiday && cell.isCurrentMonth"
-                 [class.not-editable]="!canEdit"
-                 (click)="onCellClick(cell)"
-                 [title]="cell.holiday ? cell.holiday.name : ''">
-              <div class="cell-day">{{ cell.day }}</div>
-              <div *ngIf="cell.holiday && cell.isCurrentMonth" class="cell-holiday">
-                {{ cell.holiday.name }}
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- LIST VIEW -->
-      <div *ngIf="viewMode === 'list'">
-        <div class="hol-controls">
-          <div class="year-nav">
-            <button class="nav-btn" (click)="changeYear(-1)">‹</button>
-            <span class="year-label">{{ currentYear }}</span>
-            <button class="nav-btn" (click)="changeYear(1)">›</button>
-          </div>
-          <div class="month-filter">
-            <button class="chip" [class.active]="selectedMonth === 0" (click)="selectedMonth = 0">{{ lbl('All') }}</button>
-            <button *ngFor="let m of [1,2,3,4,5,6,7,8,9,10,11,12]" class="chip" [class.active]="selectedMonth === m" (click)="selectedMonth = m">
-              {{ ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][m-1] }}
-            </button>
-          </div>
-          <div class="total-count"><strong>{{ filteredHolidays.length }}</strong></div>
-        </div>
-
-        <div *ngIf="loading" class="loading-box">Loading holidays...</div>
-
-        <div *ngIf="!loading && filteredHolidays.length === 0" class="empty-box">
-          <div class="empty-icon">{{ countryFlag }}</div>
-          <div class="empty-title">No holidays yet for {{ countryName }}</div>
-          <div class="empty-sub">
-            <ng-container *ngIf="hasPresetForCountry && canEdit">
-              Click "Seed {{ countryName }} {{ currentYear }}" for a quick start.
-            </ng-container>
-          </div>
-        </div>
-
-        <div *ngIf="!loading && filteredHolidays.length > 0" class="hol-list">
-          <div *ngFor="let group of holidaysByMonth" class="month-group">
-            <div class="month-header">
-              <span class="month-name">{{ group.month }}</span>
-              <span class="month-badge">{{ group.items.length }}</span>
-            </div>
-            <div class="holiday-cards">
-              <div *ngFor="let h of group.items" class="holiday-card" [class.weekend]="isWeekend(h.holidayDate)">
-                <div class="date-box">
-                  <span class="date-day">{{ formatDate(h.holidayDate).split(' ')[1] }}</span>
-                  <span class="date-month">{{ formatDate(h.holidayDate).split(' ')[0] }}</span>
-                </div>
-                <div class="card-main">
-                  <div class="holiday-name" [title]="h.name">{{ h.name }}</div>
-                  <div class="holiday-meta">
-                    <span class="meta-day">{{ formatDay(h.holidayDate) }}</span>
-                    <span *ngIf="isWeekend(h.holidayDate)" class="meta-weekend">{{ lbl('Weekend') }}</span>
-                  </div>
-                </div>
-                <div *ngIf="canEdit" class="card-actions">
-                  <button class="btn-icon" (click)="openEditForm(h)" aria-label="Edit">✏️</button>
-                  <button class="btn-icon danger" (click)="confirmDelete(h)" aria-label="Delete">🗑️</button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
+    <div class="stat-card">
+      <div class="stat-label">THIS MONTH</div>
+      <div class="stat-value accent-purple">{{ statsThisMonth }}</div>
+      <div class="stat-sub">{{ calendarMonthShort }} {{ calendarYear }}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">UPCOMING 30 DAYS</div>
+      <div class="stat-value accent-green">{{ statsUpcoming }}</div>
+      <div class="stat-sub">Next 30 days</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">WEEKEND OVERLAP</div>
+      <div class="stat-value accent-amber">{{ statsWeekendOverlap }}</div>
+      <div class="stat-sub">Falls on Sat/Sun</div>
     </div>
   </div>
-</div>
 
-<!-- ADD / EDIT MODAL -->
-<div *ngIf="showForm" class="modal-backdrop" (click)="closeForm()">
-  <div class="modal" (click)="$event.stopPropagation()">
-    <div class="modal-header">
-      <h3>{{ editMode ? '✏️ Edit Holiday' : lbl('+ Add Holiday') }}</h3>
-      <button class="btn-close" (click)="closeForm()">×</button>
-    </div>
-    <div class="modal-body">
-      <div class="form-row">
-        <label>Date <span class="required">*</span></label>
-        <input type="date" [(ngModel)]="form.holidayDate" class="input">
-      </div>
-      <div class="form-row">
-        <label>Holiday Name <span class="required">*</span></label>
-        <input type="text" [(ngModel)]="form.name" class="input" placeholder="e.g. Khmer New Year (Day 1)" maxlength="200">
-      </div>
-      <div *ngIf="formError" class="form-error">⚠️ {{ formError }}</div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn-secondary" (click)="closeForm()" [disabled]="saving">{{ lbl('Back') }}</button>
-      <button class="btn-primary" (click)="saveForm()" [disabled]="saving">
-        {{ saving ? '...' : (editMode ? 'Update' : 'Create') }}
+  <!-- ══ COUNTRY PILLS ══════════════════════════════════════════ -->
+  <div class="hol-pills-bar">
+    <span class="pills-label">🌍 Countries:</span>
+    <div class="pills-row">
+      <button *ngFor="let c of allCountries"
+        class="country-pill"
+        [class.pill-active]="isSelected(c)"
+        [style.--pill-color]="countryColor(c.code)"
+        (click)="toggleCountry(c)">
+        <span class="pill-flag">{{ getFlagFor(c) }}</span>
+        <span class="pill-name">{{ c.name }}</span>
+        <span *ngIf="isSelected(c)" class="pill-check">✓</span>
       </button>
     </div>
   </div>
-</div>
 
-<!-- DELETE MODAL -->
-<div *ngIf="deleteTarget" class="modal-backdrop" (click)="cancelDelete()">
-  <div class="modal modal-sm" (click)="$event.stopPropagation()">
-    <div class="modal-header">
-      <h3>🗑️ Delete Holiday?</h3>
+  <!-- ══ MAIN CARD ══════════════════════════════════════════════ -->
+  <div class="hol-card">
+
+    <!-- Card header -->
+    <div class="hol-card-header">
+      <div class="hol-title">🗓️ Public Holidays</div>
+      <div style="flex:1"></div>
+      <div *ngIf="loading" class="hol-loading-dot"></div>
+      <div class="view-toggle">
+        <button class="toggle-btn" [class.active]="viewMode==='calendar'" (click)="viewMode='calendar'">Monthly</button>
+        <button class="toggle-btn" [class.active]="viewMode==='yearly'"   (click)="viewMode='yearly'">Yearly</button>
+        <button class="toggle-btn" [class.active]="viewMode==='list'"     (click)="viewMode='list'">List</button>
+      </div>
+      <button *ngIf="canEdit" class="btn-add-hol" (click)="openCreateForm()">+ Add Holiday</button>
     </div>
-    <div class="modal-body">
-      <p>Delete <strong>{{ deleteTarget.name }}</strong> on {{ formatDate(deleteTarget.holidayDate) }}?</p>
-      <p class="muted">This action cannot be undone.</p>
+
+    <!-- Legend -->
+    <div class="hol-legend" *ngIf="selectedCountries.length > 1">
+      <div *ngFor="let c of selectedCountries" class="legend-item">
+        <span class="legend-dot" [style.background]="countryColor(c.code)"></span>
+        <span class="legend-flag">{{ getFlagFor(c) }}</span>
+        <span class="legend-name">{{ c.name }}</span>
+      </div>
     </div>
-    <div class="modal-footer">
-      <button class="btn-secondary" (click)="cancelDelete()">{{ lbl('Back') }}</button>
-      <button class="btn-danger" (click)="executeDelete()">Delete</button>
+
+    <!-- ════════════════════════════════════════════════════════
+         MONTHLY CALENDAR
+    ════════════════════════════════════════════════════════ -->
+    <ng-container *ngIf="viewMode === 'calendar'">
+
+      <div class="cal-nav">
+        <button class="nav-btn" (click)="prevMonth()">‹</button>
+        <div class="cal-title">{{ calendarMonthName }} {{ calendarYear }}</div>
+        <button class="nav-btn" (click)="nextMonth()">›</button>
+        <button class="today-btn" (click)="goToday()">Today</button>
+      </div>
+
+      <div class="calendar-grid">
+        <div class="cal-weekdays">
+          <div *ngFor="let d of ['Sun','Mon','Tue','Wed','Thu','Fri','Sat']" class="wd">{{ d }}</div>
+        </div>
+        <div *ngFor="let week of calendarGrid" class="cal-week">
+          <div *ngFor="let cell of week"
+            class="cal-cell"
+            [class.other-month]="!cell.isCurrentMonth"
+            [class.is-today]="cell.isToday"
+            [class.is-weekend]="cell.isWeekend"
+            [class.has-holiday]="cell.holidays.length > 0 && cell.isCurrentMonth"
+            (click)="openPopup(cell, $event)">
+
+            <!-- Day number -->
+            <div class="cell-day-wrap">
+              <span class="cell-day" [class.today-circle]="cell.isToday">{{ cell.day }}</span>
+            </div>
+
+            <!-- Holiday tags (max 3) -->
+            <ng-container *ngIf="cell.isCurrentMonth">
+              <div *ngFor="let h of cell.holidays.slice(0,3)"
+                class="cell-hol-tag"
+                [style.background]="h._countryColor + '20'"
+                [style.border-left]="'3px solid ' + h._countryColor"
+                [style.color]="h._countryColor">
+                <span class="tag-flag">{{ h._countryFlag }}</span>
+                <span class="tag-name">{{ h.name }}</span>
+              </div>
+              <div *ngIf="cell.holidays.length > 3" class="cell-more"
+                [style.color]="cell.holidays[0]._countryColor">
+                +{{ cell.holidays.length - 3 }} more
+              </div>
+            </ng-container>
+
+          </div>
+        </div>
+      </div>
+    </ng-container>
+
+    <!-- ════════════════════════════════════════════════════════
+         YEARLY CALENDAR — 4 rows × 3 cols
+    ════════════════════════════════════════════════════════ -->
+    <ng-container *ngIf="viewMode === 'yearly'">
+
+      <div class="cal-nav">
+        <button class="nav-btn" (click)="prevYear()">‹</button>
+        <div class="cal-title">{{ yearlyYear }}</div>
+        <button class="nav-btn" (click)="nextYear()">›</button>
+        <button class="today-btn" (click)="yearlyYear = calendarYear">This Year</button>
+      </div>
+
+      <!-- 4 rows of 3 months -->
+      <div *ngFor="let row of MONTH_ROWS" class="yearly-row">
+        <div *ngFor="let m of row" class="mini-month-card">
+
+          <!-- Month header -->
+          <div class="mini-header">
+            <span class="mini-month-name">{{ MONTHS[m] }}</span>
+            <span class="mini-count" *ngIf="holidaysInMonth(m).length > 0">
+              {{ holidaysInMonth(m).length }}
+            </span>
+          </div>
+
+          <!-- Weekday labels -->
+          <div class="mini-weekdays">
+            <div *ngFor="let d of ['S','M','T','W','T','F','S']" class="mini-wd">{{ d }}</div>
+          </div>
+
+          <!-- Calendar rows -->
+          <div *ngFor="let week of getMiniGrid(m)" class="mini-week">
+            <div *ngFor="let cell of week"
+              class="mini-cell"
+              [class.mini-other]="!cell.isCurrentMonth"
+              [class.mini-today]="cell.isToday"
+              [class.mini-weekend]="cell.isWeekend && cell.isCurrentMonth"
+              [class.mini-has-hol]="cell.holidays.length > 0 && cell.isCurrentMonth"
+              (click)="openPopup(cell, $event)">
+
+              <span class="mini-day-num" *ngIf="cell.isCurrentMonth">{{ cell.day }}</span>
+
+              <!-- Holiday dots -->
+              <div *ngIf="cell.holidays.length > 0 && cell.isCurrentMonth" class="mini-dots">
+                <span *ngFor="let h of cell.holidays.slice(0,3)"
+                  class="mini-dot"
+                  [style.background]="h._countryColor">
+                </span>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- Click hint -->
+          <div class="mini-click-hint" (click)="clickMiniMonth(m)">View month →</div>
+
+        </div>
+      </div>
+
+    </ng-container>
+
+    <!-- ════════════════════════════════════════════════════════
+         LIST VIEW
+    ════════════════════════════════════════════════════════ -->
+    <ng-container *ngIf="viewMode === 'list'">
+      <div class="hol-controls">
+        <div class="year-nav">
+          <button class="nav-btn" (click)="changeYear(-1)">‹</button>
+          <span class="year-label">{{ currentYear }}</span>
+          <button class="nav-btn" (click)="changeYear(1)">›</button>
+        </div>
+        <div class="month-filter">
+          <button class="chip" [class.active]="selectedMonth===0" (click)="selectedMonth=0">All</button>
+          <button *ngFor="let m of [1,2,3,4,5,6,7,8,9,10,11,12]"
+            class="chip" [class.active]="selectedMonth===m" (click)="selectedMonth=m">
+            {{ MONTHS[m-1] }}
+          </button>
+        </div>
+        <span class="total-count"><strong>{{ filteredHolidays.length }}</strong> holidays</span>
+      </div>
+
+      <div *ngIf="loading" class="empty-box">Loading...</div>
+      <div *ngIf="!loading && filteredHolidays.length === 0" class="empty-box">No holidays found</div>
+
+      <div class="hol-list">
+        <div *ngFor="let h of filteredHolidays" class="hol-row"
+          [style.border-left]="'4px solid ' + h._countryColor">
+          <div class="hol-date-col">
+            <div class="hol-date">{{ formatDate(h.holidayDate) }}</div>
+            <div class="hol-day-name">{{ getDayName(h.holidayDate) }}</div>
+          </div>
+          <span class="hol-row-flag">{{ h._countryFlag }}</span>
+          <div class="hol-name-col">
+            <div class="hol-name">{{ h.name }}</div>
+            <span class="hol-weekend-badge" *ngIf="isWeekend(h.holidayDate)">Weekend</span>
+          </div>
+          <div class="hol-actions-col" *ngIf="canEdit">
+            <button class="hol-btn-edit" (click)="openEditForm(h)">✏️</button>
+            <button class="hol-btn-del"  (click)="askDelete(h)">🗑️</button>
+          </div>
+        </div>
+      </div>
+    </ng-container>
+
+    <!-- Seed row -->
+    <div *ngIf="canEdit && selectedCountries.length > 0" class="seed-row">
+      <span class="seed-label">Quick seed:</span>
+      <ng-container *ngFor="let c of selectedCountries">
+        <button *ngIf="hasPreset(c.code)" class="seed-btn"
+          [style.border-color]="countryColor(c.code) + '66'"
+          [style.color]="countryColor(c.code)"
+          (click)="seedPresets(c)">
+          {{ getFlagFor(c) }} Seed {{ c.name }} {{ calendarYear }}
+        </button>
+      </ng-container>
+    </div>
+
+  </div><!-- /hol-card -->
+
+  <!-- ══ DAY POPUP ══════════════════════════════════════════════ -->
+  <div *ngIf="popup" class="day-popup"
+    [style.left.px]="popup.x"
+    [style.top.px]="popup.y"
+    (click)="$event.stopPropagation()">
+    <div class="popup-date">{{ formatDateFull(popup.dateStr) }}</div>
+    <div *ngFor="let h of popup.holidays" class="popup-row"
+      [style.border-left]="'3px solid ' + h._countryColor">
+      <span class="popup-flag">{{ h._countryFlag }}</span>
+      <span class="popup-name">{{ h.name }}</span>
+    </div>
+    <button class="popup-close" (click)="closePopup()">✕</button>
+  </div>
+
+  <!-- ══ FORM MODAL ══════════════════════════════════════════════ -->
+  <div class="hol-overlay" *ngIf="showForm" (click)="cancelForm()">
+    <div class="hol-modal" (click)="$event.stopPropagation()">
+      <div class="hol-modal-header">
+        <div class="hol-modal-title">{{ editMode ? '✏️ Edit Holiday' : '🌴 Add Holiday' }}</div>
+        <button class="hol-modal-close" (click)="cancelForm()">✕</button>
+      </div>
+      <div class="hol-form-error" *ngIf="formError">❌ {{ formError }}</div>
+      <div class="hol-form-group">
+        <label class="hol-label">COUNTRY *</label>
+        <select class="hol-input" [(ngModel)]="form.countryId">
+          <option [ngValue]="undefined" disabled>Select country...</option>
+          <option *ngFor="let c of selectedCountries" [ngValue]="c.id">{{ getFlagFor(c) }} {{ c.name }}</option>
+        </select>
+      </div>
+      <div class="hol-form-group">
+        <label class="hol-label">DATE *</label>
+        <input class="hol-input" type="date" [(ngModel)]="form.holidayDate" />
+      </div>
+      <div class="hol-form-group">
+        <label class="hol-label">HOLIDAY NAME *</label>
+        <input class="hol-input" [(ngModel)]="form.name" placeholder="e.g. New Year's Day" />
+      </div>
+      <div class="hol-modal-footer">
+        <button class="hol-btn-cancel" (click)="cancelForm()">Cancel</button>
+        <button class="hol-btn-save" (click)="saveHoliday()" [disabled]="saving">
+          {{ saving ? 'Saving...' : (editMode ? 'Update' : 'Add Holiday') }}
+        </button>
+      </div>
     </div>
   </div>
+
+  <!-- ══ DELETE CONFIRM ══════════════════════════════════════════ -->
+  <div class="hol-overlay" *ngIf="deleteTarget" (click)="cancelDelete()">
+    <div class="hol-modal hol-modal-sm" (click)="$event.stopPropagation()">
+      <div class="hol-modal-title" style="margin-bottom:10px;">🗑️ Delete Holiday?</div>
+      <p style="font-size:13px;opacity:0.6;margin-bottom:16px;">"{{ deleteTarget.name }}" will be permanently removed.</p>
+      <div class="hol-modal-footer">
+        <button class="hol-btn-cancel" (click)="cancelDelete()">Cancel</button>
+        <button class="hol-btn-danger" (click)="confirmDelete()">Yes, Delete</button>
+      </div>
+    </div>
+  </div>
+
 </div>

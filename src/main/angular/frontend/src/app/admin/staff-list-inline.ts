@@ -35,7 +35,7 @@ export class StaffListInline implements OnInit {
   filterDept   = '';
   filterRole   = '';
   filterStatus = '';
-  filterBranch = '';   // BOSS only — branch filter
+  filterBranch = '';
 
   // ── Role helpers ──
   get userRole(): string {
@@ -45,7 +45,28 @@ export class StaffListInline implements OnInit {
     return this.userRole === 'BOSS';
   }
 
-  // ── Unique branches from staffList (BOSS mode) ──
+  get isCountryDirector(): boolean {
+    return this.userRole === 'COUNTRY_DIRECTOR';
+  }
+
+  /**
+   * isSuperAdmin: ADMIN role + branchId = null
+   * Super Admin ကို BOSS နဲ့ branch filter တူအောင် ထားမည်
+   */
+  get isSuperAdmin(): boolean {
+    const user = this.auth.getUser();
+    return user?.role === 'ADMIN' && (user?.branchId == null || user?.branchId === undefined);
+  }
+
+  /**
+   * isGlobalView: Branch filter ပြမည့် roles
+   * BOSS | COUNTRY_DIRECTOR | Super Admin (ADMIN + branchId null)
+   */
+  get isGlobalView(): boolean {
+    return this.isBoss || this.isCountryDirector || this.isSuperAdmin;
+  }
+
+  // ── Unique branches from staffList ─────────────────────────────
   get availableBranches(): { id: number; name: string }[] {
     const map = new Map<number, string>();
     for (const s of this.staffList) {
@@ -73,10 +94,12 @@ export class StaffListInline implements OnInit {
     return getLabel(this.auth.getUser()?.preferredLanguage, key);
   }
 
-  // ── Load Staff: BOSS → all-staff, others → staff-list (my branch) ──
+  // ── Load Staff ────────────────────────────────────────────────
+  // BOSS / COUNTRY_DIRECTOR / Super Admin → all-staff (global)
+  // Others → staff-list (own branch only)
   loadStaff() {
     this.isLoading = true;
-    const endpoint = this.isBoss
+    const endpoint = this.isGlobalView
       ? `${BASE}/users/all-staff`
       : `${BASE}/users/staff-list`;
 
@@ -91,23 +114,30 @@ export class StaffListInline implements OnInit {
       });
   }
 
-  // ── Load Departments: BOSS → no dept filter (branch filter instead), others → my-branch ──
+  // ── Load Departments ──────────────────────────────────────────
+  // Global view → skip (branch filter ပဲ သုံး)
+  // Others → my-branch departments
   loadDepartments() {
-    if (this.isBoss) {
-      // BOSS uses branch filter instead — skip dept load
+    if (this.isGlobalView) {
       this.departments = [];
       return;
     }
     this.http.get<any[]>(`${BASE}/departments/my-branch`, { headers: this.auth.getHeaders() })
-      .subscribe({ next: list => { this.departments = list || []; this.cdr.detectChanges(); }, error: () => {} });
+      .subscribe({
+        next: list => { this.departments = list || []; this.cdr.detectChanges(); },
+        error: () => {}
+      });
   }
 
   loadRoles() {
     this.http.get<any[]>(`${BASE}/user-roles`, { headers: this.auth.getHeaders() })
-      .subscribe({ next: list => { this.roles = list || []; this.cdr.detectChanges(); }, error: () => {} });
+      .subscribe({
+        next: list => { this.roles = list || []; this.cdr.detectChanges(); },
+        error: () => {}
+      });
   }
 
-  // ── Role sort order (VpDashboardController နဲ့ တူညီ) ──
+  // ── Role sort order ────────────────────────────────────────────
   private roleOrder(roleName: string): number {
     switch ((roleName || '').toUpperCase()) {
       case 'BOSS':             return 1;
@@ -123,6 +153,7 @@ export class StaffListInline implements OnInit {
     }
   }
 
+  // ── Filtered list ──────────────────────────────────────────────
   get filteredList(): any[] {
     return this.staffList
       .filter(s => {
@@ -134,24 +165,27 @@ export class StaffListInline implements OnInit {
         const matchStatus  = !this.filterStatus ||
           (this.filterStatus === 'active'   &&  s.isActive) ||
           (this.filterStatus === 'inactive' && !s.isActive);
+        // Branch filter — global view only
         const matchBranch  = !this.filterBranch || s.branchId == this.filterBranch;
         return matchSearch && matchDept && matchRole && matchStatus && matchBranch;
       })
       .sort((a, b) => {
-        const ra = this.roleOrder(a.roleName);
-        const rb = this.roleOrder(b.roleName);
+        const ra = this.roleOrder(a.roleName || a.role || '');
+        const rb = this.roleOrder(b.roleName || b.role || '');
         if (ra !== rb) return ra - rb;
-        // same role → name alphabetical
         return (a.name || '').localeCompare(b.name || '');
       });
   }
 
+  // ── Helpers ────────────────────────────────────────────────────
+  getInitial(name: string): string { return name ? name.charAt(0).toUpperCase() : '?'; }
+
   getAvatarColor(name: string): string {
-    const colors = ['#16a34a','#3b82f6','#8b5cf6','#f59e0b','#ef4444','#06b6d4','#ec4899','#14b8a6'];
-    let hash = 0;
-    for (let i = 0; i < (name?.length || 0); i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
-    return colors[Math.abs(hash) % colors.length];
+    const colors = ['#16a34a','#0284c7','#7c3aed','#db2777','#ea580c','#0891b2','#b45309'];
+    return colors[(name?.charCodeAt(0) || 0) % colors.length];
   }
 
-  getInitial(name: string): string { return name ? name.charAt(0).toUpperCase() : '?'; }
+  getRoleColor(roleColor: string): string {
+    return roleColor || '#64748b';
+  }
 }
