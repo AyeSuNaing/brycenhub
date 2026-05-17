@@ -26,7 +26,7 @@ import { ChangePasswordInline } from '../../shared/change-password/change-passwo
 import { LeaveApprovalInline } from '../../shared/leave-approval/leave-approval-inline';
 import { OtApprovalInline }    from '../../shared/ot-approval/ot-approval-inline';
 import { SalaryApprovalInline } from '../../shared/salary-approval/salary-approval-inline';
-
+import { ClientListInline } from '../../shared/client-list/client-list-inline';
 
 // ✅ i18n
 import { getLabel, AppLabelKey } from '../../i18n/app-labels.i18n';
@@ -75,6 +75,7 @@ export interface DepartmentItem {
     LeaveApprovalInline, 
     OtApprovalInline,
     SalaryApprovalInline,
+    ClientListInline,
   ],
   templateUrl: './vp-dashboard.html',
   styleUrl: './vp-dashboard.scss'
@@ -196,6 +197,26 @@ export class VpDashboardComponent implements OnInit, AfterViewInit, OnDestroy {
   branchName = '';
   branches: any[] = [];
 
+  otActing:    Record<number, boolean> = {};
+  leaveActing: Record<number, boolean> = {};
+  toastMsg    = '';
+  toastType: 'success' | 'error' = 'success';
+  private _toastTimer: any;
+
+
+
+  showToast(msg: string, type: 'success' | 'error' = 'success') {
+    this.toastMsg = msg;
+    this.toastType = type;
+    this.cdr.detectChanges();
+    clearTimeout(this._toastTimer);
+    this._toastTimer = setTimeout(() => {
+      this.toastMsg = '';
+      this.cdr.detectChanges();
+    }, 3000);
+  }
+
+  
   // ══════════════════════════════════════════════════════════════
   // ✅ i18n — label helper (used in HTML as lbl('key'))
   // ══════════════════════════════════════════════════════════════
@@ -271,7 +292,23 @@ export class VpDashboardComponent implements OnInit, AfterViewInit, OnDestroy {
     }
 
     this._refreshSub = this.refreshService.refresh$.subscribe(() => {
-      this.loadStats(); this.loadLeaveRequests(); this.loadOtRequests(); this.cdr.detectChanges();
+      const t = () => new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit', fractionalSecondDigits: 3 });
+
+      console.log(`[VP Dashboard] 🔄 Refresh triggered — ${t()}`);
+      
+      this.loadStats();
+      console.log(`[VP Dashboard] 📊 loadStats() called — ${t()}`);
+      
+      this.loadLeaveRequests();
+      console.log(`[VP Dashboard] 🏖 loadLeaveRequests() called — ${t()}`);
+      
+      this.loadOtRequests();
+      console.log(`[VP Dashboard] ⏰ loadOtRequests() called — ${t()}`);
+      
+      this.loadSalaryDashboard();
+      console.log(`[VP Dashboard] 💰 loadSalaryDashboard() called — ${t()}`);
+      
+      this.cdr.detectChanges();
     });
   }
 
@@ -416,6 +453,8 @@ export class VpDashboardComponent implements OnInit, AfterViewInit, OnDestroy {
   closePayrollApprovals(): void { this.activeView = 'dashboard';          this.cdr.detectChanges(); }
 
   loadSalaryDashboard(): void {
+
+  const t = () => new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit', fractionalSecondDigits: 3 });
     this.http.get<any[]>(`${VP_BASE}/salary-approvals`, { headers: this.headers })
       .pipe(catchError(() => of([])))
       .subscribe(data => {
@@ -663,7 +702,18 @@ export class VpDashboardComponent implements OnInit, AfterViewInit, OnDestroy {
     const url = this.approveUrl(a); if (!url) return;
     this.http.patch(url, {}, { headers: this.headers })
       .pipe(catchError(() => { alert('Failed.'); return of(null); }))
-      .subscribe(r => { if (r !== null) { this.removeApprovalLocally(a); this.loadStats(); } });
+      // .subscribe(r => { if (r !== null) { this.removeApprovalLocally(a); this.loadStats(); } });
+      .subscribe(r => {
+        this.otActing[a.id] = false;
+        if (r !== null) {
+          this.removeApprovalLocally(a);
+          this.loadStats();
+          this.showToast(`✅ ${a.staffName}'s ${a.type} approved`);  // ← ထည့်
+        } else {
+          this.showToast('❌ Action failed. Please try again.', 'error');
+        }
+        this.cdr.detectChanges();
+      });
   }
 
   rejectApproval(a: PendingApproval): void {

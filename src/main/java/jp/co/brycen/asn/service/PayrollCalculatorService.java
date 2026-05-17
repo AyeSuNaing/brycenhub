@@ -18,6 +18,10 @@ import java.time.*;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import jp.co.brycen.asn.model.AnnouncementTranslation;
+import jp.co.brycen.asn.repository.AnnouncementTranslationRepository;
+import jp.co.brycen.asn.translation.TranslationProvider;
+
 /**
  * PayrollCalculatorService — Phase 1+2+3+Finance+Announcement
  *
@@ -61,7 +65,9 @@ public class PayrollCalculatorService {
     private final FinanceCategoryRepository   categoryRepo;
     private final BranchExpenseRepository     branchExpenseRepo;
     private final AnnouncementRepository      announcementRepo;   // ← NEW
-
+    private final AnnouncementTranslationRepository announcementTranslationRepo; // ← ထည့်
+    private final TranslationProvider              translationProvider;   
+    
     // ═══════════════════════════════════════════════════════════
     // PHASE 1 — PREVIEW + SAVE
     // ═══════════════════════════════════════════════════════════
@@ -576,15 +582,19 @@ public class PayrollCalculatorService {
 
             // 📢 Announcement — Step 4: Salary Paid
             String paidDate = now.toLocalDate().toString();
-            String netStr   = currency + " " + batchNet.setScale(MONEY_SCALE, ROUND).toPlainString();
 
             postAnnouncement(
-                adminId, branchId,
-                "💰 " + formatPeriodLabel(payPeriod) + " Salary Paid",
-                affected + " staff · " + netStr + " net · Paid on " + paidDate
-                    + (trimmedNote != null && !trimmedNote.isEmpty() ? " · " + trimmedNote : ""),
-                "IMPORTANT"
-            );
+            	    adminId, branchId,
+            	    "💰 " + formatPeriodLabel(payPeriod) + " Salary Paid",
+            	    "Paid on " + paidDate + "\n"
+            	        + "Thank you for your hard work and dedication this month! 🙏\n"
+            	        + "Your effort makes Brycen stronger every day. Well done! 💪\n"
+            	        + "Great teamwork this month — keep up the amazing work! ⭐\n"
+            	        + "Grateful for every one of you. Let's keep growing together! 🚀\n"
+            	        + "Your commitment drives our success. Thank you, team! 🌟"
+            	        + (trimmedNote != null && !trimmedNote.isEmpty() ? "\n\n📝 " + trimmedNote : ""),
+            	    "IMPORTANT"
+            	);
         }
 
         return new PayrollBatchDto.BatchActionResponse(
@@ -617,11 +627,24 @@ public class PayrollCalculatorService {
 	        a.setOriginalLanguage("en");
 	        a.setIsPinned(0);
 	        a.setPriority(priority);
-	 
 	        // Payroll announcements → 24hr auto-expire
 	        a.setExpiresAt(LocalDateTime.now().plusHours(24));
 	 
 	        announcementRepo.save(a);
+	        String[] langs = { "ja", "my", "km", "vi", "ko" };
+	        for (String lang : langs) {
+	            try {
+	                AnnouncementTranslation t = new AnnouncementTranslation();
+	                t.setAnnouncementId(a.getId());
+	                t.setLanguageCode(lang);
+	                t.setTranslatedTitle(translationProvider.translate(title, "en", lang));
+	                t.setTranslatedContent(translationProvider.translate(content, "en", lang));
+	                announcementTranslationRepo.save(t);
+	            } catch (Exception ex) {
+	                log.warn("[Payroll] Translation skip lang={}: {}", lang, ex.getMessage());
+	            }
+	        }
+	        
 	        log.info("[Payroll] Announcement posted — branchId={}, title={}", branchId, title);
 	    } catch (Exception e) {
 	        log.warn("[Payroll] Announcement failed (non-critical): {}", e.getMessage());

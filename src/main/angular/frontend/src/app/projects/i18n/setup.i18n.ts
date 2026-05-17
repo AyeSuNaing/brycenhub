@@ -71,7 +71,8 @@ export type SetupI18nKey =
   | 'colBacklog' | 'colInProgress' | 'colInReview'
   | 'colCustomerConfirm' | 'colDone'
   // ── Kanban UI ──
-  | 'kanbanBackTo' | 'kanbanNewTask';
+  | 'kanbanBackTo' | 'kanbanNewTask'
+  | 'tabClient' ;
 
 export type SetupI18nLang = 'en' | 'my' | 'ja' | 'vi' | 'ko' | 'km';
 
@@ -250,6 +251,7 @@ export const SETUP_I18N: Record<SetupI18nLang, Record<SetupI18nKey, string>> = {
     colDone: 'Done',
     kanbanBackTo: '← Back to',
     kanbanNewTask: '+ New Task',
+    tabClient: '👥 Client',
   },
 
   // ═══════════════════════════════════════════════════════════════
@@ -425,6 +427,8 @@ export const SETUP_I18N: Record<SetupI18nLang, Record<SetupI18nKey, string>> = {
     colDone: 'ပြီးပြီ',
     kanbanBackTo: '← သို့',
     kanbanNewTask: '+ တာဝန်အသစ်',
+    tabClient: '👥 ကလိုင်းယင့်',
+    
   },
 
   // ═══════════════════════════════════════════════════════════════
@@ -600,6 +604,7 @@ export const SETUP_I18N: Record<SetupI18nLang, Record<SetupI18nKey, string>> = {
     colDone: '完了',
     kanbanBackTo: '← 戻る:',
     kanbanNewTask: '＋ 新しいタスク',
+    tabClient: '👥 クライアント',
   },
 
   // ═══════════════════════════════════════════════════════════════
@@ -775,6 +780,7 @@ export const SETUP_I18N: Record<SetupI18nLang, Record<SetupI18nKey, string>> = {
     colDone: 'រួចរាល់',
     kanbanBackTo: '← ត្រឡប់ទៅ',
     kanbanNewTask: '+ កិច្ចការថ្មី',
+    tabClient: '👥 អតិថិជន',
   },
 
   // ═══════════════════════════════════════════════════════════════
@@ -950,6 +956,7 @@ export const SETUP_I18N: Record<SetupI18nLang, Record<SetupI18nKey, string>> = {
     colDone: 'Hoàn thành',
     kanbanBackTo: '← Quay lại',
     kanbanNewTask: '+ Tác vụ mới',
+    tabClient: '👥 Khách hàng',
   },
 
   // ═══════════════════════════════════════════════════════════════
@@ -1125,6 +1132,7 @@ export const SETUP_I18N: Record<SetupI18nLang, Record<SetupI18nKey, string>> = {
     colDone: '완료',
     kanbanBackTo: '← 돌아가기:',
     kanbanNewTask: '+ 새 작업',
+    tabClient: '👥 클라이언트',
   },
 };
 

@@ -230,7 +230,7 @@ export class MemberAttendanceInline implements OnInit {
 
   isLate(timeIn: string): boolean {
     const [h, m] = timeIn.split(':').map(Number);
-    return h > 9 || (h === 9 && m > 0);
+    return h > 8 || (h === 8 && m > 0);
   }
 
   getTimeInColor(log: LogRow): string {

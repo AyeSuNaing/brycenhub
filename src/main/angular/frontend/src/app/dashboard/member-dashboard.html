@@ -126,6 +126,13 @@
             <span class="nav-icon">📋</span>
             <span>{{ lbl('Attendance Log') }} </span>
           </div>
+
+          <div *ngIf="canSeeClients()" class="sidebar-item" [class.active]="activeView==='clients'"
+            (click)="closeProject(); setView('clients')">
+            <span class="nav-icon">🏢</span>
+            <span>Clients</span>
+          </div>
+
           <!-- New Project -->
           <div *ngIf="canCreateProject()" (click)="openNewProject()"
             style="display:flex;align-items:center;gap:8px;margin:6px 8px 2px;padding:9px 12px;
@@ -254,6 +261,13 @@
     <app-tax-brackets-inline *ngIf="activeView==='tax'"
       (back)="setView('dashboard')">
     </app-tax-brackets-inline>
+
+    <app-client-list-inline
+      *ngIf="activeView==='clients' && !showProjectDetail && !showNewProject"
+      (back)="setView('dashboard')"
+      style="flex:1;min-width:0;overflow:hidden;">
+    </app-client-list-inline>
+
 
     <!-- ════════════ DASHBOARD HOME ════════════ -->
     <main *ngIf="!showProjectDetail && !showNewProject && activeView==='dashboard'" class="main-content">

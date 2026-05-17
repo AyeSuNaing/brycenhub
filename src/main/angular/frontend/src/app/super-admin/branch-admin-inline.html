@@ -1,0 +1,151 @@
+<div class="ba-wrap">
+
+  <!-- Header -->
+  <div class="ba-header">
+    <button class="ba-back-btn" (click)="back.emit()">← Back</button>
+    <div>
+      <div class="ba-title">👤 Branch Admins</div>
+      <div class="ba-sub">{{ filtered.length }} admins</div>
+    </div>
+    <div style="flex:1"></div>
+
+    <!-- Branch filter -->
+    <select class="ba-select" [(ngModel)]="filterBranchId">
+      <option [ngValue]="null">All Branches</option>
+      <option *ngFor="let b of branches" [ngValue]="b.id">{{ b.name }}</option>
+    </select>
+
+    <!-- Status filter -->
+    <select class="ba-select" [(ngModel)]="filterStatus">
+      <option value="ALL">All Status</option>
+      <option value="ACTIVE">Active</option>
+      <option value="INACTIVE">Inactive</option>
+    </select>
+
+    <!-- Search -->
+    <div class="ba-search">
+      <span style="opacity:0.4;">🔍</span>
+      <input [(ngModel)]="searchQuery" placeholder="Search admin..." />
+    </div>
+
+    <!-- Add -->
+    <button class="ba-add-btn" (click)="openAdd()">+ Add Admin</button>
+  </div>
+
+  <!-- Alerts -->
+  <div class="ba-success" *ngIf="success">✅ {{ success }}</div>
+  <div class="ba-error"   *ngIf="error && !showModal">❌ {{ error }}</div>
+
+  <!-- Loading -->
+  <div class="ba-loading" *ngIf="loading">Loading admins...</div>
+
+  <!-- Cards -->
+  <div class="ba-grid" *ngIf="!loading">
+    <div *ngFor="let a of filtered" class="ba-card" [class.ba-inactive]="!a.isActive">
+      <!-- Avatar + Info -->
+      <div class="ba-card-top">
+        <div class="ba-avatar" [style.background]="getColor(a.name)">
+          {{ getInitial(a.name) }}
+        </div>
+        <div class="ba-info">
+          <div class="ba-name">{{ a.name }}</div>
+          <div class="ba-email">{{ a.email }}</div>
+          <div class="ba-branch-tag">🏢 {{ branchName(a.branchId) }}</div>
+        </div>
+        <div class="ba-status-pill" [class.ba-status-active]="a.isActive">
+          {{ a.isActive ? 'Active' : 'Inactive' }}
+        </div>
+      </div>
+
+      <!-- Meta -->
+      <div class="ba-meta" *ngIf="a.phone">
+        <span style="opacity:0.4;">📞</span> {{ a.phone }}
+      </div>
+
+      <!-- Actions -->
+      <div class="ba-card-actions">
+        <button class="ba-btn-edit" (click)="openEdit(a)">✏️ Edit</button>
+        <button class="ba-btn-toggle"
+          [class.ba-btn-deactivate]="a.isActive"
+          [class.ba-btn-activate]="!a.isActive"
+          (click)="toggleActive(a)">
+          {{ a.isActive ? '🔴 Deactivate' : '🟢 Activate' }}
+        </button>
+        <button class="ba-btn-copy" (click)="copyCredentials(a)" title="Copy credentials">📋</button>
+      </div>
+    </div>
+
+    <!-- Empty -->
+    <div *ngIf="filtered.length === 0" class="ba-empty">
+      No branch admins found
+    </div>
+  </div>
+
+  <!-- Add / Edit Modal -->
+  <div class="ba-overlay" *ngIf="showModal" (click)="closeModal()">
+    <div class="ba-modal" (click)="$event.stopPropagation()">
+      <div class="ba-modal-header">
+        <div class="ba-modal-title">{{ isEditing ? '✏️ Edit Admin' : '👤 Add Branch Admin' }}</div>
+        <button class="ba-modal-close" (click)="closeModal()">✕</button>
+      </div>
+
+      <div class="ba-error" *ngIf="error">❌ {{ error }}</div>
+
+      <div class="ba-form-row">
+        <div class="ba-form-group">
+          <label class="ba-label">FULL NAME *</label>
+          <input class="ba-input" [(ngModel)]="form.name" placeholder="John Doe" />
+        </div>
+        <div class="ba-form-group">
+          <label class="ba-label">PHONE</label>
+          <input class="ba-input" [(ngModel)]="form.phone" placeholder="+855 12 345 678" />
+        </div>
+      </div>
+
+      <div class="ba-form-group" *ngIf="!isEditing">
+        <label class="ba-label">EMAIL *</label>
+        <input class="ba-input" [(ngModel)]="form.email" type="email"
+          placeholder="admin@company.com"
+          (blur)="checkEmail()" />
+        <div class="ba-field-hint ba-field-error" *ngIf="emailExists">Email already exists</div>
+        <div class="ba-field-hint" *ngIf="checkingEmail">Checking...</div>
+      </div>
+
+      <div class="ba-form-group" *ngIf="!isEditing">
+        <label class="ba-label">PASSWORD *</label>
+        <div class="ba-pass-wrap">
+          <input class="ba-input" [type]="showPass ? 'text' : 'password'"
+            [(ngModel)]="form.password" placeholder="Generated password" />
+          <button class="ba-pass-toggle" (click)="showPass=!showPass">
+            {{ showPass ? '🙈' : '👁️' }}
+          </button>
+          <button class="ba-regenerate" (click)="regeneratePass()" title="Regenerate">🔄</button>
+        </div>
+      </div>
+
+      <div class="ba-form-row">
+        <div class="ba-form-group">
+          <label class="ba-label">BRANCH *</label>
+          <select class="ba-input" [(ngModel)]="form.branchId">
+            <option [ngValue]="null" disabled>Select branch...</option>
+            <option *ngFor="let b of branches" [ngValue]="b.id">{{ b.name }}</option>
+          </select>
+        </div>
+        <div class="ba-form-group">
+          <label class="ba-label">LANGUAGE</label>
+          <select class="ba-input" [(ngModel)]="form.preferredLanguage">
+            <option *ngFor="let l of languages" [value]="l.code">{{ l.label }}</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="ba-modal-footer">
+        <button class="ba-btn-cancel" (click)="closeModal()">Cancel</button>
+        <button class="ba-btn-save" (click)="save()" [disabled]="saving || emailExists">
+          {{ saving ? 'Saving...' : (isEditing ? 'Update Admin' : 'Create Admin') }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+</div>

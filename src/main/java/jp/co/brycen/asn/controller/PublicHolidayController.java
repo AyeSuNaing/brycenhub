@@ -67,7 +67,8 @@ public class PublicHolidayController {
     // GET /api/public-holidays?year=2026
     // ============================================================
     @GetMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'VICE_PRESIDENT', 'COUNTRY_DIRECTOR', 'BOSS')")
+    @PreAuthorize("isAuthenticated()")
+//    @PreAuthorize("hasAnyRole('ADMIN', 'VICE_PRESIDENT', 'COUNTRY_DIRECTOR', 'BOSS')")
     public ResponseEntity<List<PublicHoliday>> list(
             @AuthenticationPrincipal User admin,
             @RequestParam(required = false) Integer year) {
@@ -92,7 +93,8 @@ public class PublicHolidayController {
     // GET /api/public-holidays/by-country/3?year=2026
     // ============================================================
     @GetMapping("/by-country/{countryId}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'VICE_PRESIDENT', 'COUNTRY_DIRECTOR', 'BOSS')")
+    @PreAuthorize("isAuthenticated()")
+//    @PreAuthorize("hasAnyRole('ADMIN', 'VICE_PRESIDENT', 'COUNTRY_DIRECTOR', 'BOSS')")
     public ResponseEntity<List<PublicHoliday>> listByCountry(
             @PathVariable Long countryId,
             @RequestParam(required = false) Integer year) {
@@ -105,7 +107,8 @@ public class PublicHolidayController {
     // GET /api/public-holidays/by-month?year=2026&month=4
     // ============================================================
     @GetMapping("/by-month")
-    @PreAuthorize("hasAnyRole('ADMIN', 'VICE_PRESIDENT', 'COUNTRY_DIRECTOR', 'BOSS')")
+    @PreAuthorize("isAuthenticated()")
+//    @PreAuthorize("hasAnyRole('ADMIN', 'VICE_PRESIDENT', 'COUNTRY_DIRECTOR', 'BOSS')")
     public ResponseEntity<List<PublicHoliday>> listByMonth(
             @AuthenticationPrincipal User admin,
             @RequestParam(required = false) Integer year,
@@ -125,7 +128,8 @@ public class PublicHolidayController {
     // ④ GET BY ID
     // ============================================================
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'VICE_PRESIDENT', 'COUNTRY_DIRECTOR', 'BOSS')")
+    @PreAuthorize("isAuthenticated()")
+//    @PreAuthorize("hasAnyRole('ADMIN', 'VICE_PRESIDENT', 'COUNTRY_DIRECTOR', 'BOSS')")
     public ResponseEntity<?> getById(@PathVariable Long id) {
         return publicHolidayRepository.findById(id)
                 .<ResponseEntity<?>>map(ResponseEntity::ok)

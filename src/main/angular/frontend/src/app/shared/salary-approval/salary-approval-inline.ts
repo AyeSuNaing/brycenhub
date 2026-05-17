@@ -8,6 +8,7 @@ import { of } from 'rxjs';
 import { AuthService } from '../../services/auth.service';
 import { environment } from '../../../environments/environment';
 import { getLabel, AppLabelKey } from '../../i18n/app-labels.i18n';
+import { RefreshService } from '../../services/refresh.service';
 
 const BASE    = environment.apiBaseUrl;
 const VP_BASE = `${BASE}/vp/dashboard`;
@@ -35,6 +36,7 @@ export class SalaryApprovalInline implements OnInit {
     private http: HttpClient,
     private auth: AuthService,
     private cdr:  ChangeDetectorRef,
+    private refreshService: RefreshService,
   ) {}
 
   ngOnInit() { this.load(); }
@@ -71,7 +73,7 @@ export class SalaryApprovalInline implements OnInit {
       return of(null);
     })).subscribe(r => {
       this.acting[p.payPeriod] = false;
-      if (r !== null) { this.load(); this.approved.emit(); }
+      if (r !== null) { this.load(); this.approved.emit(); this.refreshService.trigger(); }
       this.cdr.detectChanges();
     });
   }
@@ -90,7 +92,7 @@ export class SalaryApprovalInline implements OnInit {
       return of(null);
     })).subscribe(r => {
       this.acting[p.payPeriod] = false;
-      if (r !== null) { this.load(); this.rejected.emit(); }
+      if (r !== null) { this.load(); this.rejected.emit(); this.refreshService.trigger(); }
       this.cdr.detectChanges();
     });
   }

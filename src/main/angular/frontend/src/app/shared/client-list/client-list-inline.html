@@ -1,0 +1,405 @@
+<main class="main-content" style="overflow-y:auto;padding:20px;">
+
+  <!-- Header -->
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+    <div style="display:flex;align-items:center;gap:12px;">
+      <button (click)="back.emit()"
+        style="font-size:11px;opacity:0.45;cursor:pointer;background:none;
+          border:none;color:inherit;padding:0;transition:opacity 0.2s;"
+        onmouseenter="this.style.opacity='1'"
+        onmouseleave="this.style.opacity='0.45'">
+        ← Back
+      </button>
+      <span style="opacity:0.15;">|</span>
+      <div>
+        <div style="font-size:15px;font-weight:700;">🏢 Clients</div>
+        <div style="font-size:10px;opacity:0.4;margin-top:1px;">{{ clients.length }} clients in your branch</div>
+      </div>
+    </div>
+    <!-- + New Client button -->
+    <button *ngIf="!showForm" (click)="openForm()"
+      style="display:flex;align-items:center;gap:6px;padding:8px 16px;
+        border-radius:9px;border:none;cursor:pointer;font-size:12px;font-weight:700;
+        background:linear-gradient(135deg,#14532d,#16a34a);color:white;
+        font-family:inherit;transition:opacity 0.2s;"
+      onmouseenter="this.style.opacity='0.85'"
+      onmouseleave="this.style.opacity='1'">
+      <span>+</span> New Client
+    </button>
+  </div>
+
+  <!-- ════ NEW CLIENT FORM ════ -->
+  <div *ngIf="showForm" class="card" style="padding:20px;margin-bottom:20px;">
+
+    <div style="display:flex;align-items:center;justify-content:space-between;
+      margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid rgba(148,163,184,0.1);">
+      <div>
+        <div style="font-size:13px;font-weight:700;">🏢 New Client</div>
+        <div style="font-size:10px;opacity:0.4;margin-top:1px;">Add a new client to your branch</div>
+      </div>
+      <button (click)="closeForm()"
+        style="background:none;border:none;cursor:pointer;font-size:18px;
+          opacity:0.4;color:inherit;line-height:1;"
+        onmouseenter="this.style.opacity='1'"
+        onmouseleave="this.style.opacity='0.4'">✕</button>
+    </div>
+
+    <div *ngIf="errorMsg"
+      style="padding:10px 14px;border-radius:8px;margin-bottom:14px;
+        background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);
+        color:#ef4444;font-size:11px;">
+      ⚠️ {{ errorMsg }}
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+
+      <!-- Company Name * -->
+      <div style="grid-column:1/-1;">
+        <label style="font-size:9px;font-weight:700;text-transform:uppercase;
+          letter-spacing:0.8px;opacity:0.5;display:block;margin-bottom:5px;">
+          COMPANY NAME <span style="color:#ef4444;">*</span>
+        </label>
+        <input [(ngModel)]="form.companyName" placeholder="e.g. Sunrise Hospital"
+          style="width:100%;padding:9px 12px;border-radius:8px;font-size:12px;
+            background:rgba(148,163,184,0.06);border:1px solid rgba(148,163,184,0.18);
+            color:inherit;font-family:inherit;outline:none;box-sizing:border-box;"/>
+      </div>
+
+      <!-- Business Type -->
+      <div>
+        <label style="font-size:9px;font-weight:700;text-transform:uppercase;
+          letter-spacing:0.8px;opacity:0.5;display:block;margin-bottom:5px;">BUSINESS TYPE</label>
+        <select [(ngModel)]="form.businessType"
+          style="width:100%;padding:9px 12px;border-radius:8px;font-size:12px;
+            background:rgba(148,163,184,0.06);border:1px solid rgba(148,163,184,0.18);
+            color:inherit;font-family:inherit;outline:none;cursor:pointer;">
+          <option value="">Select...</option>
+          <option value="Healthcare">Healthcare</option>
+          <option value="Finance">Finance</option>
+          <option value="Retail">Retail</option>
+          <option value="Logistics">Logistics</option>
+          <option value="IT">IT</option>
+          <option value="Education">Education</option>
+          <option value="Manufacturing">Manufacturing</option>
+          <option value="Internal">Internal</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+
+      <!-- Industry -->
+      <div>
+        <label style="font-size:9px;font-weight:700;text-transform:uppercase;
+          letter-spacing:0.8px;opacity:0.5;display:block;margin-bottom:5px;">INDUSTRY</label>
+        <input [(ngModel)]="form.industry" placeholder="e.g. Hospital, Banking"
+          style="width:100%;padding:9px 12px;border-radius:8px;font-size:12px;
+            background:rgba(148,163,184,0.06);border:1px solid rgba(148,163,184,0.18);
+            color:inherit;font-family:inherit;outline:none;box-sizing:border-box;"/>
+      </div>
+
+      <!-- Company Size -->
+      <div>
+        <label style="font-size:9px;font-weight:700;text-transform:uppercase;
+          letter-spacing:0.8px;opacity:0.5;display:block;margin-bottom:5px;">COMPANY SIZE</label>
+        <select [(ngModel)]="form.companySize"
+          style="width:100%;padding:9px 12px;border-radius:8px;font-size:12px;
+            background:rgba(148,163,184,0.06);border:1px solid rgba(148,163,184,0.18);
+            color:inherit;font-family:inherit;outline:none;cursor:pointer;">
+          <option value="">Select...</option>
+          <option value="1-10">1–10</option>
+          <option value="11-50">11–50</option>
+          <option value="51-200">51–200</option>
+          <option value="201-500">201–500</option>
+          <option value="200+">200+</option>
+        </select>
+      </div>
+
+      <!-- Website -->
+      <div>
+        <label style="font-size:9px;font-weight:700;text-transform:uppercase;
+          letter-spacing:0.8px;opacity:0.5;display:block;margin-bottom:5px;">WEBSITE</label>
+        <input [(ngModel)]="form.website" placeholder="https://example.com" type="url"
+          style="width:100%;padding:9px 12px;border-radius:8px;font-size:12px;
+            background:rgba(148,163,184,0.06);border:1px solid rgba(148,163,184,0.18);
+            color:inherit;font-family:inherit;outline:none;box-sizing:border-box;"/>
+      </div>
+
+      <!-- Country -->
+      <div>
+        <label style="font-size:9px;font-weight:700;text-transform:uppercase;
+          letter-spacing:0.8px;opacity:0.5;display:block;margin-bottom:5px;">COUNTRY</label>
+        <input [(ngModel)]="form.country" placeholder="e.g. Cambodia"
+          style="width:100%;padding:9px 12px;border-radius:8px;font-size:12px;
+            background:rgba(148,163,184,0.06);border:1px solid rgba(148,163,184,0.18);
+            color:inherit;font-family:inherit;outline:none;box-sizing:border-box;"/>
+      </div>
+
+      <!-- City -->
+      <div>
+        <label style="font-size:9px;font-weight:700;text-transform:uppercase;
+          letter-spacing:0.8px;opacity:0.5;display:block;margin-bottom:5px;">CITY</label>
+        <input [(ngModel)]="form.city" placeholder="e.g. Phnom Penh"
+          style="width:100%;padding:9px 12px;border-radius:8px;font-size:12px;
+            background:rgba(148,163,184,0.06);border:1px solid rgba(148,163,184,0.18);
+            color:inherit;font-family:inherit;outline:none;box-sizing:border-box;"/>
+      </div>
+
+      <!-- Divider: Contact Person -->
+      <div style="grid-column:1/-1;border-top:1px solid rgba(148,163,184,0.1);
+        padding-top:12px;margin-top:4px;">
+        <div style="font-size:10px;font-weight:700;opacity:0.5;margin-bottom:8px;">
+          👤 Contact Person
+        </div>
+      </div>
+
+      <!-- Contact Name -->
+      <div>
+        <label style="font-size:9px;font-weight:700;text-transform:uppercase;
+          letter-spacing:0.8px;opacity:0.5;display:block;margin-bottom:5px;">CONTACT NAME</label>
+        <input [(ngModel)]="form.contactName" placeholder="e.g. Dara Chan"
+          style="width:100%;padding:9px 12px;border-radius:8px;font-size:12px;
+            background:rgba(148,163,184,0.06);border:1px solid rgba(148,163,184,0.18);
+            color:inherit;font-family:inherit;outline:none;box-sizing:border-box;"/>
+      </div>
+
+      <!-- Contact Position -->
+      <div>
+        <label style="font-size:9px;font-weight:700;text-transform:uppercase;
+          letter-spacing:0.8px;opacity:0.5;display:block;margin-bottom:5px;">POSITION</label>
+        <input [(ngModel)]="form.contactPosition" placeholder="e.g. Product Owner"
+          style="width:100%;padding:9px 12px;border-radius:8px;font-size:12px;
+            background:rgba(148,163,184,0.06);border:1px solid rgba(148,163,184,0.18);
+            color:inherit;font-family:inherit;outline:none;box-sizing:border-box;"/>
+      </div>
+
+      <!-- Contact Email -->
+      <div>
+        <label style="font-size:9px;font-weight:700;text-transform:uppercase;
+          letter-spacing:0.8px;opacity:0.5;display:block;margin-bottom:5px;">EMAIL</label>
+        <input [(ngModel)]="form.contactEmail" placeholder="contact@example.com" type="email"
+          style="width:100%;padding:9px 12px;border-radius:8px;font-size:12px;
+            background:rgba(148,163,184,0.06);border:1px solid rgba(148,163,184,0.18);
+            color:inherit;font-family:inherit;outline:none;box-sizing:border-box;"/>
+      </div>
+
+      <!-- Contact Phone -->
+      <div>
+        <label style="font-size:9px;font-weight:700;text-transform:uppercase;
+          letter-spacing:0.8px;opacity:0.5;display:block;margin-bottom:5px;">PHONE</label>
+        <input [(ngModel)]="form.contactPhone" placeholder="+855 12 345 678"
+          style="width:100%;padding:9px 12px;border-radius:8px;font-size:12px;
+            background:rgba(148,163,184,0.06);border:1px solid rgba(148,163,184,0.18);
+            color:inherit;font-family:inherit;outline:none;box-sizing:border-box;"/>
+      </div>
+
+      <!-- Notes -->
+      <div style="grid-column:1/-1;">
+        <label style="font-size:9px;font-weight:700;text-transform:uppercase;
+          letter-spacing:0.8px;opacity:0.5;display:block;margin-bottom:5px;">NOTES</label>
+        <textarea [(ngModel)]="form.notes" rows="2" placeholder="Additional notes..."
+          style="width:100%;padding:9px 12px;border-radius:8px;font-size:12px;
+            background:rgba(148,163,184,0.06);border:1px solid rgba(148,163,184,0.18);
+            color:inherit;font-family:inherit;outline:none;resize:vertical;
+            box-sizing:border-box;"></textarea>
+      </div>
+
+    </div>
+
+    <!-- Form Actions -->
+    <div style="display:flex;justify-content:flex-end;gap:8px;
+      margin-top:16px;padding-top:14px;border-top:1px solid rgba(148,163,184,0.1);">
+      <button (click)="closeForm()" [disabled]="saving"
+        style="padding:8px 16px;border-radius:8px;border:1px solid rgba(148,163,184,0.2);
+          background:transparent;color:inherit;font-size:12px;cursor:pointer;font-family:inherit;">
+        Cancel
+      </button>
+      <button (click)="submitForm()" [disabled]="saving"
+        style="padding:8px 20px;border-radius:8px;border:none;cursor:pointer;
+          font-size:12px;font-weight:700;font-family:inherit;
+          background:linear-gradient(135deg,#14532d,#16a34a);color:white;"
+        [style.opacity]="saving ? '0.6' : '1'">
+        {{ saving ? '⏳ Saving...' : '✓ Save Client' }}
+      </button>
+    </div>
+  </div>
+
+  <!-- Loading -->
+  <div *ngIf="loading" style="text-align:center;padding:60px;opacity:0.35;font-size:12px;">
+    Loading...
+  </div>
+
+  <!-- Empty -->
+  <div *ngIf="!loading && clients.length===0 && !showForm"
+    style="text-align:center;padding:60px;opacity:0.3;">
+    <div style="font-size:36px;margin-bottom:12px;">🏢</div>
+    <div style="font-size:13px;font-weight:600;">No clients yet</div>
+    <div style="font-size:11px;margin-top:4px;">Click + New Client to add one</div>
+  </div>
+
+  <!-- List -->
+  <div *ngIf="!loading && clients.length>0"
+    style="display:flex;flex-direction:column;gap:12px;">
+
+    <div *ngFor="let c of clients" class="card" style="padding:0;overflow:hidden;">
+
+      <!-- Header -->
+      <div style="display:flex;align-items:center;gap:14px;padding:14px 18px;
+        border-bottom:1px solid rgba(148,163,184,0.08);">
+        <div style="width:42px;height:42px;border-radius:10px;flex-shrink:0;
+          background:linear-gradient(135deg,#312e81,#4f46e5);
+          display:flex;align-items:center;justify-content:center;
+          font-size:17px;font-weight:700;color:white;">
+          {{ getInitial(c.companyName) }}
+        </div>
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:14px;font-weight:700;">{{ c.companyName }}</div>
+          <div style="display:flex;align-items:center;gap:6px;margin-top:2px;">
+            <span *ngIf="c.businessType" style="font-size:10px;opacity:0.5;">{{ c.businessType }}</span>
+            <span *ngIf="c.businessType && c.industry" style="opacity:0.3;font-size:10px;">·</span>
+            <span *ngIf="c.industry" style="font-size:10px;opacity:0.5;">{{ c.industry }}</span>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
+          <span *ngIf="c.companySize" style="font-size:10px;opacity:0.5;">{{ c.companySize }} staff</span>
+          <span style="font-size:10px;padding:3px 10px;border-radius:20px;font-weight:700;"
+            [style.background]="c.status==='ACTIVE'?'rgba(34,197,94,0.12)':'rgba(148,163,184,0.12)'"
+            [style.color]="c.status==='ACTIVE'?'#16a34a':'#64748b'">
+            {{ c.status || 'ACTIVE' }}
+          </span>
+        </div>
+      </div>
+
+      <!-- Detail Grid -->
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:0;">
+
+        <!-- Contact -->
+        <div style="padding:14px 18px;border-right:1px solid rgba(148,163,184,0.08);">
+          <div style="font-size:9px;font-weight:700;text-transform:uppercase;
+            letter-spacing:0.8px;opacity:0.4;margin-bottom:10px;">👤 Contact</div>
+          <div style="display:flex;flex-direction:column;gap:6px;">
+            <div *ngIf="c.contactName" style="font-size:12px;font-weight:600;">
+              {{ c.contactName }}
+              <span *ngIf="c.contactPosition"
+                style="font-size:10px;opacity:0.45;font-weight:400;margin-left:4px;">
+                · {{ c.contactPosition }}
+              </span>
+            </div>
+            <a *ngIf="c.contactEmail" [href]="'mailto:'+c.contactEmail"
+              style="display:flex;align-items:center;gap:6px;font-size:11px;
+                color:#818cf8;text-decoration:none;">
+              <span>✉️</span>
+              <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ c.contactEmail }}</span>
+            </a>
+            <div *ngIf="c.contactPhone"
+              style="display:flex;align-items:center;gap:6px;font-size:11px;opacity:0.6;">
+              <span>📞</span>{{ c.contactPhone }}
+            </div>
+            <div *ngIf="!c.contactName && !c.contactEmail && !c.contactPhone"
+              style="font-size:11px;opacity:0.3;">No contact info</div>
+          </div>
+        </div>
+
+        <!-- Location & Web -->
+        <div style="padding:14px 18px;border-right:1px solid rgba(148,163,184,0.08);">
+          <div style="font-size:9px;font-weight:700;text-transform:uppercase;
+            letter-spacing:0.8px;opacity:0.4;margin-bottom:10px;">🌍 Location & Web</div>
+          <div style="display:flex;flex-direction:column;gap:6px;">
+            <div *ngIf="c.city || c.country"
+              style="display:flex;align-items:center;gap:6px;font-size:11px;opacity:0.7;">
+              <span>📍</span>{{ c.city }}{{ c.city && c.country ? ', ' : '' }}{{ c.country }}
+            </div>
+            <div *ngIf="c.address"
+              style="display:flex;align-items:flex-start;gap:6px;font-size:11px;opacity:0.5;">
+              <span style="flex-shrink:0;margin-top:1px;">🏠</span>
+              <span style="line-height:1.4;">{{ c.address }}</span>
+            </div>
+            <div *ngIf="c.timezone"
+              style="display:flex;align-items:center;gap:6px;font-size:11px;opacity:0.5;">
+              <span>🕐</span>{{ c.timezone }}
+            </div>
+            <a *ngIf="c.website" [href]="c.website" target="_blank"
+              style="display:flex;align-items:center;gap:6px;font-size:11px;
+                color:#60a5fa;text-decoration:none;">
+              <span>🌐</span>
+              <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ c.website }}</span>
+            </a>
+            <div *ngIf="!c.city && !c.country && !c.address && !c.website && !c.timezone"
+              style="font-size:11px;opacity:0.3;">No location info</div>
+          </div>
+        </div>
+
+        <!-- Notes & Requirements -->
+        <div style="padding:14px 18px;">
+          <div style="font-size:9px;font-weight:700;text-transform:uppercase;
+            letter-spacing:0.8px;opacity:0.4;margin-bottom:10px;">📋 Notes & Requirements</div>
+          <div style="display:flex;flex-direction:column;gap:8px;">
+            <div *ngIf="c.requirements">
+              <div style="font-size:9px;opacity:0.4;margin-bottom:3px;">Requirements</div>
+              <div style="font-size:11px;opacity:0.7;line-height:1.5;
+                display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;">
+                {{ c.requirements }}
+              </div>
+            </div>
+            <div *ngIf="c.notes">
+              <div style="font-size:9px;opacity:0.4;margin-bottom:3px;">Notes</div>
+              <div style="font-size:11px;opacity:0.6;line-height:1.5;
+                display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;">
+                {{ c.notes }}
+              </div>
+            </div>
+            <div *ngIf="!c.requirements && !c.notes"
+              style="font-size:11px;opacity:0.3;">No notes</div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Projects Section -->
+      <div style="padding:12px 18px;border-top:1px solid rgba(148,163,184,0.08);">
+        <div style="font-size:9px;font-weight:700;text-transform:uppercase;
+          letter-spacing:0.8px;opacity:0.4;margin-bottom:8px;">
+          🚀 Projects
+          <span *ngIf="getProjects(c.id).length > 0">({{ getProjects(c.id).length }})</span>
+        </div>
+        <div *ngIf="loadingProjects[c.id]" style="font-size:10px;opacity:0.3;">Loading...</div>
+        <div *ngIf="!loadingProjects[c.id] && getProjects(c.id).length === 0"
+          style="font-size:11px;opacity:0.3;">No projects assigned</div>
+        <div *ngIf="!loadingProjects[c.id] && getProjects(c.id).length > 0"
+          style="display:flex;flex-wrap:wrap;gap:6px;">
+          <div *ngFor="let p of getProjects(c.id)"
+            style="display:flex;align-items:center;gap:7px;padding:6px 12px;
+              border-radius:8px;border:1px solid rgba(148,163,184,0.15);
+              background:rgba(148,163,184,0.04);">
+            <div style="width:6px;height:6px;border-radius:50%;flex-shrink:0;"
+              [style.background]="getStatusColor(p.status)"></div>
+            <span style="font-size:11px;font-weight:600;">{{ p.title }}</span>
+            <div style="display:flex;align-items:center;gap:4px;">
+              <div style="width:40px;height:3px;border-radius:2px;
+                background:rgba(148,163,184,0.2);overflow:hidden;">
+                <div style="height:100%;border-radius:2px;"
+                  [style.width.%]="p.progress"
+                  [style.background]="getStatusColor(p.status)"></div>
+              </div>
+              <span style="font-size:9px;opacity:0.5;">{{ p.progress }}%</span>
+            </div>
+            <span *ngIf="p.priority"
+              style="font-size:8px;padding:1px 6px;border-radius:20px;font-weight:700;"
+              [style.background]="getPriorityColor(p.priority)+'22'"
+              [style.color]="getPriorityColor(p.priority)">
+              {{ p.priority }}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div style="padding:8px 18px;border-top:1px solid rgba(148,163,184,0.06);
+        display:flex;align-items:center;justify-content:space-between;">
+        <span style="font-size:9px;opacity:0.3;">Added {{ c.createdAt | date:'MMM d, y' }}</span>
+        <span *ngIf="c.updatedAt && c.updatedAt !== c.createdAt"
+          style="font-size:9px;opacity:0.25;">Updated {{ c.updatedAt | date:'MMM d, y' }}</span>
+      </div>
+
+    </div>
+  </div>
+
+</main>

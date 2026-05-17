@@ -65,6 +65,11 @@
           <div class="sidebar-item" [class.active]="activeView==='branch-projects'" (click)="setView('branch-projects')"><span class="nav-icon">📁</span><span>{{ lbl('Branch Projects') }}</span></div>
           <div class="sidebar-item" [class.active]="activeView==='members' || activeView==='member-profile'" (click)="setView('members')"><span class="nav-icon">👥</span><span>{{ lbl('Members') }}</span></div>
           <div class="sidebar-item" [class.active]="activeView==='announcements'" (click)="setView('announcements')"><span class="nav-icon">📢</span><span>{{ lbl('Announcements') }}</span></div>
+          <div class="sidebar-item" [class.active]="activeView==='clients'"
+            (click)="setView('clients')">
+            <span class="nav-icon">🏢</span>
+            <span>Clients</span>
+          </div>
           <hr class="section-divider"/>
         </div>
 
@@ -80,7 +85,7 @@
           </div>
           <div class="sidebar-item" [class.active]="activeView==='salary-approvals'" (click)="setView('salary-approvals')">
             <span>{{ lbl('Salary') }}</span>
-            <span *ngIf="approvalCounts.SALARY>0" style="margin-left:auto;min-width:18px;height:18px;border-radius:20px;background:rgba(245,158,11,0.2);color:#f59e0b;font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center;padding:0 4px;">{{ approvalCounts.SALARY }}</span>
+            <span *ngIf="approvalCounts.SALARY>0" style="margin-left:auto;min-width:18px;height:18px;border-radius:20px;background:#ef4444;color:white;font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center;padding:0 4px;">{{ approvalCounts.SALARY }}</span>
           </div>
           <hr class="section-divider"/>
         </div>
@@ -167,6 +172,12 @@
         <app-staff-list-inline *ngIf="activeView==='members'" (viewProfile)="onViewProfile($event)" (addStaff)="setView('members')" (back)="setView('dashboard')"></app-staff-list-inline>
         <app-staff-profile-inline *ngIf="activeView==='member-profile'" [staffId]="selectedStaffId" (back)="setView('members')"></app-staff-profile-inline>
 
+        <app-client-list-inline
+          *ngIf="activeView==='clients'"
+          (back)="setView('dashboard')"
+          style="flex:1;min-width:0;overflow:hidden;">
+        </app-client-list-inline>
+
         <div *ngIf="activeView==='branches'" style="padding:16px;display:flex;flex-direction:column;gap:10px;overflow-y:auto;height:100%;">
           <div style="font-size:14px;font-weight:700;margin-bottom:4px;">🏢 {{ lbl('Office Address') }}</div>
           <div *ngIf="branches.length===0" style="text-align:center;padding:40px;font-size:12px;opacity:0.4;">{{ lbl('No offices found') }}</div>
@@ -188,7 +199,7 @@
             <div class="stat-card"><div class="stat-label">{{ lbl('OT Hours (Month)') }}</div><div class="stat-value">{{ stats.monthlyOTHours }}</div><div class="stat-sub">{{ lbl('hrs this month') }}</div></div>
           </div>
 
-          <!-- OT CARD -->
+          <!-- ════ OT CARD ════ -->
           <div class="card" style="padding:0;margin-bottom:10px;">
             <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px;">
               <div style="display:flex;align-items:center;gap:10px;">
@@ -200,27 +211,38 @@
             </div>
             <div *ngIf="otApprovals.length===0" style="text-align:center;padding:20px 18px;font-size:11px;opacity:0.3;border-top:1px solid rgba(148,163,184,0.07);">{{ lbl('No pending OT requests') }}</div>
             <ng-container *ngIf="otApprovals.length>0">
-              <div style="display:grid;grid-template-columns:36px 2fr 1fr 1.5fr auto;gap:10px;padding:8px 18px;border-top:1px solid rgba(148,163,184,0.07);border-bottom:1px solid rgba(148,163,184,0.07);">
-                <span></span>
+              <!-- ✅ OT Header — Leave card နဲ့ တူညီတဲ့ column structure -->
+              <div style="display:grid;grid-template-columns:170px 90px 130px 1fr 200px;gap:0;align-items:center;padding:8px 18px;border-top:1px solid rgba(148,163,184,0.07);border-bottom:1px solid rgba(148,163,184,0.1);">
                 <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.4;">{{ lbl('Staff') }}</span>
                 <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.4;">{{ lbl('Work Date') }}</span>
-                <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.4;">{{ lbl('Details') }}</span>
+                <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.4;">{{ lbl('OT Hours') }}</span>
+                <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.4;">{{ lbl('Reason') }}</span>
                 <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.4;">{{ lbl('Action') }}</span>
               </div>
-              <div *ngFor="let a of otApprovals; let last=last" [style.border-bottom]="last?'none':'1px solid rgba(148,163,184,0.05)'" style="display:grid;grid-template-columns:36px 2fr 1fr 1.5fr auto;gap:10px;padding:11px 18px;align-items:center;">
-                <div style="width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:white;" [style.background]="a.avatarColor">{{ a.staffInitial }}</div>
-                <div><div style="font-size:11px;font-weight:600;">{{ a.staffName }}</div><div style="font-size:9px;opacity:0.45;">{{ a.subtitle }}</div></div>
-                <div style="font-size:10px;opacity:0.7;">{{ a.dueText }}</div>
-                <div style="font-size:10px;opacity:0.65;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ a.reason }}</div>
-                <div style="display:flex;gap:6px;">
-                  <button (click)="approveApproval(a)" style="font-size:10px;padding:5px 14px;background:linear-gradient(135deg,#14532d,#16a34a);color:white;border:none;border-radius:6px;cursor:pointer;font-weight:700;font-family:inherit;">{{ lbl('Approve') }}</button>
-                  <button (click)="rejectApproval(a)" style="font-size:10px;padding:5px 12px;background:transparent;color:currentColor;border:1px solid rgba(148,163,184,0.2);border-radius:6px;cursor:pointer;opacity:0.7;font-family:inherit;">{{ lbl('Reject') }}</button>
+              <!-- ✅ OT Data rows — header grid နဲ့ ညှိထားတာ -->
+              <div *ngFor="let a of otApprovals; let last=last"
+                [style.border-bottom]="last?'none':'1px solid rgba(148,163,184,0.05)'"
+                style="display:grid;grid-template-columns:170px 90px 130px 1fr 200px;gap:0;align-items:center;padding:12px 18px;">
+                <!-- Staff -->
+                <div style="font-size:11px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ a.staffName }}</div>
+                <!-- Work Date -->
+                <div style="font-size:10px;opacity:0.75;white-space:nowrap;">{{ a.dueText }}</div>
+                <!-- Details (subtitle) -->
+                <div>
+                  <span style="font-size:9px;padding:3px 9px;border-radius:20px;font-weight:700;background:rgba(249,115,22,0.12);color:#fb923c;white-space:nowrap;">{{ a.subtitle }}</span>
+                </div>
+                <!-- Reason -->
+                <div style="font-size:10px;opacity:0.6;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ a.reason }}</div>
+                <!-- Action -->
+                <div style="display:flex;gap:6px;flex-shrink:0;padding-left:8px;">
+                  <button (click)="approveApproval(a)" style="font-size:10px;padding:5px 16px;background:linear-gradient(135deg,#14532d,#16a34a);color:white;border:none;border-radius:7px;cursor:pointer;font-weight:700;font-family:inherit;white-space:nowrap;">{{ lbl('Approve') }}</button>
+                  <button (click)="rejectApproval(a)" style="font-size:10px;padding:5px 12px;background:transparent;color:currentColor;border:1px solid rgba(148,163,184,0.25);border-radius:7px;cursor:pointer;opacity:0.7;font-family:inherit;white-space:nowrap;">{{ lbl('Reject') }}</button>
                 </div>
               </div>
             </ng-container>
           </div>
 
-          <!-- LEAVE CARD -->
+          <!-- ════ LEAVE CARD ════ -->
           <div class="card" style="padding:0;margin-bottom:10px;">
             <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px;">
               <div style="display:flex;align-items:center;gap:10px;">
@@ -256,7 +278,7 @@
             </ng-container>
           </div>
 
-          <!-- SALARY CARD (Dashboard summary) -->
+          <!-- ════ SALARY CARD ════ -->
           <div class="card" style="padding:0;margin-bottom:10px;">
             <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px;">
               <div style="display:flex;align-items:center;gap:10px;">
@@ -292,7 +314,7 @@
             </ng-container>
           </div>
 
-          <!-- BRANCH PROJECTS CARD -->
+          <!-- ════ BRANCH PROJECTS CARD ════ -->
           <div class="card" style="padding:14px;margin-bottom:10px;">
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
               <div class="card-title" style="margin-bottom:0;font-size:12px;">{{ lbl('Branch Projects (card)') }}</div>
@@ -389,4 +411,15 @@
 
   <app-chat-popup *ngIf="activeChatMember" [member]="activeChatMember" [isGroup]="isGroupChat" (close)="closeMemberPopup()"></app-chat-popup>
   <app-payslip-modal [isOpen]="payslipOpen" [recordId]="payslipRecordId" (close)="closePayslip()" (actionSuccess)="loadSalaryApprovals()"></app-payslip-modal>
+
+    <div *ngIf="toastMsg"
+    style="position:fixed;bottom:24px;right:24px;z-index:9999;
+      padding:12px 18px;border-radius:12px;font-size:12px;font-weight:600;
+      display:flex;align-items:center;gap:8px;color:white;
+      box-shadow:0 8px 24px rgba(0,0,0,0.3);
+      animation:slideUp 0.25s ease;"
+    [style.background]="toastType==='success'?'rgba(22,163,74,0.95)':'rgba(239,68,68,0.95)'">
+    {{ toastMsg }}
+  </div>
+  
 </div>

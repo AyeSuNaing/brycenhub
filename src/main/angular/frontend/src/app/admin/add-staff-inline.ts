@@ -49,6 +49,9 @@ export class AddStaffInline implements OnInit {
     preferredLanguage: 'en',
     phone:             '',
     profileImage:      '',
+    // ✅ Salary fields ထည့်
+    baseSalary:        null as number | null,
+    currency:          'USD',
   };
 
   copied      = false;
@@ -148,6 +151,14 @@ export class AddStaffInline implements OnInit {
   selectedPhoneCode = { flag: '🇰🇭', code: '+855', country: 'KH', digits: 9 };
   showPhoneDropdown = false;
   phoneDigits       = '';
+
+  // ✅ Currency prefix helper
+  get currencyPrefix(): string {
+    const map: Record<string, string> = {
+      USD: '$', KHR: '៛', MMK: 'K', JPY: '¥', VND: '₫', KRW: '₩',
+    };
+    return map[this.form.currency] || this.form.currency;
+  }
 
   constructor(
     private http: HttpClient,
@@ -312,6 +323,12 @@ export class AddStaffInline implements OnInit {
     return w;
   }
 
+  // ✅ Today ISO date helper
+  private todayISO(): string {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  }
+
   submit() {
     this.errorMsg = '';
     const errors: string[] = [];
@@ -325,13 +342,47 @@ export class AddStaffInline implements OnInit {
     if (errors.length > 0) { this.errorMsg = errors.join(' · '); return; }
 
     this.isSubmitting = true;
-    this.http.post<any>(`${BASE}/users`, { ...this.form }, { headers: this.auth.getHeaders() }).subscribe({
+
+    // baseSalary နဲ့ currency ကို POST /api/users ထဲ မပို့ဘဲ သပ်သပ် ခွဲပါ
+    const { baseSalary, currency, ...userPayload } = this.form;
+
+    this.http.post<any>(`${BASE}/users`, { ...userPayload }, { headers: this.auth.getHeaders() }).subscribe({
       next: user => {
-        if (this.cvFile) this.uploadCv(user.id);
-        else if (this.skillsInput.length > 0) this.saveSkills(user.id);
-        else this.onSuccess();
+        // ✅ Salary save → CV upload → Skills save → Success chain
+        const afterSalary = () => {
+          if (this.cvFile) this.uploadCv(user.id);
+          else if (this.skillsInput.length > 0) this.saveSkills(user.id);
+          else this.onSuccess();
+        };
+
+        if (baseSalary && Number(baseSalary) > 0) {
+          this.saveSalary(user.id, Number(baseSalary), currency, afterSalary);
+        } else {
+          afterSalary();
+        }
       },
-      error: (err) => { this.isSubmitting = false; this.errorMsg = err?.error?.message || 'Failed to create staff'; this.cdr.detectChanges(); }
+      error: (err) => {
+        this.isSubmitting = false;
+        this.errorMsg = err?.error?.message || 'Failed to create staff';
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  // ✅ Salary save method အသစ်
+  saveSalary(userId: number, baseSalary: number, currency: string, next: () => void): void {
+    this.http.post(
+      `${BASE}/salary-structures`,
+      {
+        userId,
+        baseSalary,
+        effectiveDate: this.todayISO(),
+        note: 'Initial salary',
+      },
+      { headers: this.auth.getHeaders() }
+    ).subscribe({
+      next: () => next(),
+      error: () => next(), // salary fail ရင်လည်း user create ပြီးသားလို့ ဆက်သွားမည်
     });
   }
 

@@ -1,4 +1,4 @@
-import { Component, OnInit, Output, EventEmitter, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, Output, EventEmitter, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
@@ -7,6 +7,8 @@ import { environment } from '../../environments/environment';
 import { PayslipModalComponent } from '../shared/payslip-modal.component';
 import { RefreshService } from '../services/refresh.service';
 import { getLabel, AppLabelKey } from '../i18n/app-labels.i18n';
+import { Subscription } from 'rxjs';
+
 
 const BASE = environment.apiBaseUrl;
 const PAYROLL_BASE = `${BASE}/payroll`;
@@ -43,7 +45,7 @@ interface BatchStatus {
   styleUrls: ['./payroll-history-inline.scss'],
   host: { style: 'display:contents' }
 })
-export class PayrollHistoryInline implements OnInit {
+export class PayrollHistoryInline implements OnInit, OnDestroy  {
   @Output() back = new EventEmitter<void>();
 
   data: HistoryResponse | null = null;
@@ -56,6 +58,7 @@ export class PayrollHistoryInline implements OnInit {
   actionDialog: 'submit' | 'paid' | null = null;
   actionNote = ''; actionLoading = false;
   currentUser: any = null; currentRole = '';
+  private _refreshSub?: Subscription;
 
   // ── i18n ──────────────────────────────────
   lbl(key: AppLabelKey): string {
@@ -72,6 +75,13 @@ export class PayrollHistoryInline implements OnInit {
     this.currentRole = (this.currentUser?.role || '').toUpperCase();
     this.branchId = this.currentUser?.branchId || 0;
     this.load();
+      this._refreshSub = this.refreshService.refresh$.subscribe(() => {
+      this.load(this.selectedPeriod);
+    });
+  }
+
+  ngOnDestroy(): void {
+    this._refreshSub?.unsubscribe();
   }
 
   load(payPeriod?: string) {

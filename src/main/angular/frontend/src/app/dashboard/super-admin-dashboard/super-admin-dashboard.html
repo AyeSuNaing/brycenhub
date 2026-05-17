@@ -1,0 +1,329 @@
+<div class="sa-shell" (click)="onDocClick()">
+
+  <!-- ══════════════ TOP BAR ══════════════ -->
+  <header class="sa-topbar">
+    <div class="sa-logo-wrap">
+      <img [src]="logoSrc" class="sa-logo-img" alt="Brycen" />
+      <div>
+        <div class="sa-logo-text">Brycen Hub</div>
+        <div class="sa-logo-sub">Super Admin</div>
+      </div>
+    </div>
+
+    <div class="sa-topbar-spacer"></div>
+
+    <!-- Search -->
+    <div class="sa-search-box">
+      <span style="opacity:0.4;font-size:13px;">🔍</span>
+      <input [(ngModel)]="searchQuery" placeholder="Search..." (click)="$event.stopPropagation()" />
+    </div>
+
+    <!-- Language -->
+    <div class="sa-lang-btn" (click)="showLangMenu=!showLangMenu;$event.stopPropagation()">
+      <span>{{ currentLangObj.flag }}</span>
+      <span>{{ currentLangObj.display }}</span>
+      <span style="opacity:0.4;font-size:9px;">▼</span>
+
+      <div class="sa-lang-menu" *ngIf="showLangMenu" (click)="$event.stopPropagation()">
+        <div *ngFor="let lang of languages" class="sa-lang-item"
+          (click)="setLang(lang)"
+          [style.background]="currentLangObj.code===lang.code?'rgba(124,58,237,0.15)':'transparent'"
+          [style.color]="currentLangObj.code===lang.code?'#a78bfa':''">
+          <span>{{ lang.flag }}</span>
+          <span style="font-weight:600;">{{ lang.display }}</span>
+          <span style="opacity:0.5;font-size:10px;">{{ lang.name }}</span>
+          <span *ngIf="currentLangObj.code===lang.code" style="margin-left:auto;">✓</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Theme -->
+    <div class="sa-icon-btn" (click)="toggleTheme();$event.stopPropagation()">
+      <span>{{ isDark ? '🌙' : '☀️' }}</span>
+    </div>
+
+    <!-- Bell -->
+    <app-bell-notification [notifications]="notifications"></app-bell-notification>
+  </header>
+
+  <!-- Announcement bar -->
+  <app-announcement-bar [announcements]="announcements"
+    (announcementsChange)="announcements = $event">
+  </app-announcement-bar>
+
+  <!-- ══════════════ MAIN ROW ══════════════ -->
+  <div class="sa-main-row">
+
+    <!-- ═══════ LEFT SIDEBAR ═══════ -->
+    <aside class="sa-sidebar">
+      <div class="sa-sidebar-scroll">
+
+        <!-- Profile -->
+        <div class="sa-profile-section">
+          <div class="sa-avatar-wrap">
+            <div class="sa-avatar" [style.background]="getAvatarColor(currentUser?.name || '')">
+              <span>{{ getInitial(currentUser?.name || '') }}</span>
+            </div>
+            <div class="sa-online-dot"></div>
+          </div>
+          <div class="sa-profile-name">{{ currentUser?.name || 'Super Admin' }}</div>
+          <span class="sa-role-badge">⚡ SUPER ADMIN</span>
+        </div>
+        <hr class="sa-divider" />
+
+        <!-- Nav -->
+        <div *ngFor="let section of navSections" style="margin-top:6px;">
+          <div class="sa-section-label">{{ section.label }}</div>
+          <div *ngFor="let item of section.items"
+            class="sa-nav-item"
+            [class.sa-nav-active]="activeView === item.key"
+            (click)="setView(item.key)">
+            <span class="sa-nav-icon">{{ item.icon }}</span>
+            <span>{{ item.label }}</span>
+          </div>
+          <hr class="sa-divider" style="margin:6px 0;" />
+        </div>
+
+      </div><!-- /sidebar-scroll -->
+
+      <!-- Settings bottom -->
+      <div class="sa-sidebar-bottom">
+        <div class="sa-settings-wrap">
+          <div *ngIf="settingsOpen" class="sa-settings-submenu">
+            <div class="sa-sub-item" (click)="openMyProfile();$event.stopPropagation()">
+              <span>👤</span><span>My Profile</span>
+            </div>
+            <div class="sa-sub-item" (click)="setView('change-password');settingsOpen=false;$event.stopPropagation()">
+              <span>🔒</span><span>Change Password</span>
+            </div>
+            <hr class="sa-divider" />
+            <div class="sa-sub-item sa-signout-item" (click)="signOut()">
+              <span>🚪</span><span>Sign out</span>
+            </div>
+          </div>
+          <div class="sa-nav-item" (click)="settingsOpen=!settingsOpen;$event.stopPropagation()">
+            <span class="sa-nav-icon">⚙️</span>
+            <span>Settings</span>
+            <span style="margin-left:auto;font-size:10px;opacity:0.5;">{{ settingsOpen ? '▼' : '▲' }}</span>
+          </div>
+        </div>
+      </div>
+    </aside><!-- /sidebar -->
+
+    <!-- ═══════ MAIN CONTENT ═══════ -->
+    <div class="sa-main-center">
+
+      <!-- ── DASHBOARD HOME ── -->
+      <main class="sa-main-content" *ngIf="activeView === 'dashboard'">
+
+        <div class="sa-page-header">
+          <div>
+            <div class="sa-page-title">⚡ Super Admin</div>
+            <div class="sa-page-sub">System-wide management — All branches</div>
+          </div>
+          <div class="sa-live-badge">
+            <div class="sa-live-dot"></div>
+            System Live
+          </div>
+        </div>
+
+        <!-- Stats Grid -->
+        <div class="sa-stats-grid">
+          <div class="sa-stat-card" (click)="setView('branches')" style="cursor:pointer;">
+            <div class="sa-stat-icon">🏢</div>
+            <div class="sa-stat-value">{{ loadingStats ? '—' : stats.totalBranches }}</div>
+            <div class="sa-stat-label">Total Branches</div>
+            <div class="sa-stat-sub">Click to manage</div>
+          </div>
+          <div class="sa-stat-card" (click)="setView('branch-admins')" style="cursor:pointer;">
+            <div class="sa-stat-icon">👤</div>
+            <div class="sa-stat-value">{{ loadingStats ? '—' : stats.totalBranchAdmins }}</div>
+            <div class="sa-stat-label">Branch Admins</div>
+            <div class="sa-stat-sub">Active admins</div>
+          </div>
+          <div class="sa-stat-card" (click)="setView('staff-list')" style="cursor:pointer;">
+            <div class="sa-stat-icon">👥</div>
+            <div class="sa-stat-value">{{ loadingStats ? '—' : stats.totalStaff }}</div>
+            <div class="sa-stat-label">Total Staff</div>
+            <div class="sa-stat-sub">All branches</div>
+          </div>
+          <div class="sa-stat-card" (click)="setView('announce')" style="cursor:pointer;">
+            <div class="sa-stat-icon">📢</div>
+            <div class="sa-stat-value">{{ loadingStats ? '—' : stats.totalAnnouncements }}</div>
+            <div class="sa-stat-label">Announcements</div>
+            <div class="sa-stat-sub">Active now</div>
+          </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="sa-card">
+          <div class="sa-card-header">
+            <div class="sa-card-title">⚡ Quick Actions</div>
+          </div>
+          <div class="sa-quick-grid">
+            <div class="sa-quick-btn" (click)="setView('branches')">
+              <span class="sa-quick-icon">🏢</span>
+              <div>
+                <div class="sa-quick-title">Branch Management</div>
+                <div class="sa-quick-sub">Add / Edit / Delete branches</div>
+              </div>
+            </div>
+            <div class="sa-quick-btn" (click)="setView('branch-admins')">
+              <span class="sa-quick-icon">👤</span>
+              <div>
+                <div class="sa-quick-title">Branch Admins</div>
+                <div class="sa-quick-sub">Manage admin accounts</div>
+              </div>
+            </div>
+            <div class="sa-quick-btn" (click)="setView('staff-list')">
+              <span class="sa-quick-icon">👥</span>
+              <div>
+                <div class="sa-quick-title">View Staff</div>
+                <div class="sa-quick-sub">Browse all staff (read-only)</div>
+              </div>
+            </div>
+            <div class="sa-quick-btn" (click)="setView('company-overview')">
+              <span class="sa-quick-icon">🌏</span>
+              <div>
+                <div class="sa-quick-title">Company Overview</div>
+                <div class="sa-quick-sub">All branches at a glance</div>
+              </div>
+            </div>
+            <div class="sa-quick-btn" (click)="setView('holidays')">
+              <span class="sa-quick-icon">🌴</span>
+              <div>
+                <div class="sa-quick-title">Holidays</div>
+                <div class="sa-quick-sub">View by branch / country</div>
+              </div>
+            </div>
+            <div class="sa-quick-btn" (click)="setView('announce')">
+              <span class="sa-quick-icon">📢</span>
+              <div>
+                <div class="sa-quick-title">Announcements</div>
+                <div class="sa-quick-sub">Post global announcements</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </main><!-- /dashboard -->
+
+      <!-- ── COMPANY OVERVIEW ── -->
+      <main class="sa-main-content" *ngIf="activeView === 'company-overview'">
+        <div class="sa-page-header">
+          <div>
+            <div class="sa-page-title">🌏 Company Overview</div>
+            <div class="sa-page-sub">All branches at a glance</div>
+          </div>
+        </div>
+
+        <div *ngIf="loadingOverview" class="sa-loading">Loading...</div>
+
+        <div *ngIf="!loadingOverview" class="sa-overview-grid">
+          <div *ngFor="let b of companyOverview" class="sa-branch-card">
+            <div class="sa-branch-card-header">
+              <span class="sa-branch-flag">{{ countryFlag(b.countryCode) }}</span>
+              <div>
+                <div class="sa-branch-name">{{ b.branchName }}</div>
+                <div class="sa-branch-country">{{ b.countryName }}</div>
+              </div>
+              <span class="sa-branch-status" [class.sa-status-active]="b.status !== 'INACTIVE'">
+                {{ b.status || 'Active' }}
+              </span>
+            </div>
+            <div class="sa-branch-stats">
+              <div class="sa-bstat">
+                <div class="sa-bstat-val">{{ b.staffCount || 0 }}</div>
+                <div class="sa-bstat-lbl">Staff</div>
+              </div>
+              <div class="sa-bstat">
+                <div class="sa-bstat-val">{{ b.adminCount || 0 }}</div>
+                <div class="sa-bstat-lbl">Admins</div>
+              </div>
+              <div class="sa-bstat">
+                <div class="sa-bstat-val">{{ b.holidayCount || 0 }}</div>
+                <div class="sa-bstat-lbl">Holidays</div>
+              </div>
+              <div class="sa-bstat">
+                <div class="sa-bstat-val">{{ b.taxBracketCount || 0 }}</div>
+                <div class="sa-bstat-lbl">Tax Tiers</div>
+              </div>
+            </div>
+            <div class="sa-branch-admin-name" *ngIf="b.adminName">
+              <span style="opacity:0.5;">Admin:</span> {{ b.adminName }}
+            </div>
+            <div class="sa-branch-actions">
+              <button class="sa-btn-sm" (click)="setView('staff-list')">👥 Staff</button>
+              <button class="sa-btn-sm" (click)="setView('holidays')">🌴 Holidays</button>
+              <button class="sa-btn-sm" (click)="setView('tax')">💰 Tax</button>
+            </div>
+          </div>
+
+          <!-- Empty -->
+          <div *ngIf="companyOverview.length === 0" class="sa-empty">
+            No branches found
+          </div>
+        </div>
+      </main><!-- /company-overview -->
+
+      <!-- ── BRANCH MANAGEMENT ── -->
+      <app-branch-management-inline
+        *ngIf="activeView === 'branches'"
+        (back)="closeToDashboard()">
+      </app-branch-management-inline>
+
+      <!-- ── BRANCH ADMINS ── -->
+      <app-branch-admin-inline
+        *ngIf="activeView === 'branch-admins'"
+        (back)="closeToDashboard()">
+      </app-branch-admin-inline>
+
+      <!-- ── STAFF LIST (View Only — no Add button) ── -->
+      <app-staff-list-inline
+        *ngIf="activeView === 'staff-list'"
+        [showAddBtn]="false"
+        (back)="closeToDashboard()"
+        (viewProfile)="onViewStaffProfile($event)">
+      </app-staff-list-inline>
+
+      <!-- ── STAFF PROFILE (View Only) ── -->
+      <app-staff-profile-inline
+        *ngIf="activeView === 'staff-profile'"
+        [staffId]="selectedStaffId"
+        [backLabel]="profileBackTo === 'dashboard' ? 'Dashboard' : 'Staff List'"
+        (back)="onStaffProfileBack()">
+      </app-staff-profile-inline>
+
+      <!-- ── HOLIDAYS (View Only) ── -->
+      <app-holidays-inline
+        *ngIf="activeView === 'holidays'"
+        (back)="closeToDashboard()">
+      </app-holidays-inline>
+
+      <!-- ── TAX BRACKETS (View Only) ── -->
+      <app-tax-brackets-inline
+        *ngIf="activeView === 'tax'"
+        (back)="closeToDashboard()">
+      </app-tax-brackets-inline>
+
+      <!-- ── SALARY HISTORY (View Only) ── -->
+      <app-salary-structures-inline
+        *ngIf="activeView === 'salary'"
+        (back)="closeToDashboard()">
+      </app-salary-structures-inline>
+
+      <!-- ── ANNOUNCEMENTS ── -->
+      <app-announcement-inline
+        *ngIf="activeView === 'announce'"
+        style="flex:1;display:flex;flex-direction:column;min-height:0;overflow:hidden;">
+      </app-announcement-inline>
+
+      <!-- ── CHANGE PASSWORD ── -->
+      <app-change-password-inline
+        *ngIf="activeView === 'change-password'"
+        (back)="setView('dashboard')">
+      </app-change-password-inline>
+
+    </div><!-- /main-center -->
+  </div><!-- /main-row -->
+</div><!-- /sa-shell -->

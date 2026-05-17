@@ -204,6 +204,43 @@
         </app-custom-select>
       </div>
 
+      <!-- ✅ Currency (left col) -->
+      <div class="form-group" style="padding-top:4px;border-top:1px solid rgba(128,128,128,0.08);grid-column:1/2;">
+        <label class="form-label">💰 CURRENCY
+          <span style="font-size:9px;font-weight:400;opacity:0.4;text-transform:none;margin-left:4px;">(optional)</span>
+        </label>
+        <select class="form-input" [(ngModel)]="form.currency" style="cursor:pointer;">
+          <option value="USD">🇺🇸 USD — US Dollar</option>
+          <option value="KHR">🇰🇭 KHR — Riel</option>
+          <option value="MMK">🇲🇲 MMK — Kyat</option>
+          <option value="JPY">🇯🇵 JPY — Yen</option>
+          <option value="VND">🇻🇳 VND — Dong</option>
+          <option value="KRW">🇰🇷 KRW — Won</option>
+        </select>
+      </div>
+
+      <!-- ✅ Base Salary (right col) -->
+      <div class="form-group" style="padding-top:4px;border-top:1px solid rgba(128,128,128,0.08);grid-column:2/3;">
+        <label class="form-label">BASE SALARY
+          <span style="font-size:9px;font-weight:400;opacity:0.4;text-transform:none;margin-left:4px;">(optional — can be set later)</span>
+        </label>
+        <div class="input-wrapper">
+          <span class="input-icon" style="font-size:12px;font-weight:700;color:#16a34a;">{{ currencyPrefix }}</span>
+          <input class="form-input with-icon"
+            type="number"
+            [(ngModel)]="form.baseSalary"
+            min="0" step="0.01"
+            placeholder="e.g. 1500"
+            [style.borderColor]="form.baseSalary && form.baseSalary > 0 ? 'rgba(22,163,74,0.5)' : ''" />
+        </div>
+        <div *ngIf="form.baseSalary && form.baseSalary > 0"
+          style="margin-top:5px;font-size:9px;color:#16a34a;display:flex;align-items:center;gap:4px;">
+          <span>✅</span>
+          <span>{{ currencyPrefix }}{{ form.baseSalary | number:'1.0-2' }} will be saved on create</span>
+        </div>
+      </div>
+      <!-- ✅ End Salary -->
+
     </div>
 
     <div style="display:flex;justify-content:flex-end;margin-top:24px;
@@ -621,6 +658,18 @@
             <div style="font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.4;">{{ lbl('LANGUAGE') }}</div>
             <div style="font-size:11px;font-weight:600;">{{ getLangLabel(form.preferredLanguage) }}</div>
           </div>
+          <!-- ✅ Salary preview in accordion -->
+          <div *ngIf="form.baseSalary && form.baseSalary > 0" style="display:flex;flex-direction:column;gap:3px;">
+            <div style="font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.4;">💰 BASE SALARY</div>
+            <div style="font-size:12px;font-weight:700;color:#16a34a;">
+              {{ currencyPrefix }}{{ form.baseSalary | number:'1.0-2' }}
+              <span style="font-size:9px;opacity:0.6;font-weight:400;">{{ form.currency }}</span>
+            </div>
+          </div>
+          <div *ngIf="!form.baseSalary || form.baseSalary <= 0" style="display:flex;flex-direction:column;gap:3px;">
+            <div style="font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;opacity:0.4;">💰 BASE SALARY</div>
+            <div style="font-size:11px;opacity:0.35;">Not set (optional)</div>
+          </div>
         </div>
       </div>
     </div>
@@ -704,6 +753,16 @@
           <span>{{ !getPhoneError()?'✅':'❌' }}</span>
           {{ lbl('PHONE') }} {{ !getPhoneError()?'('+form.phone+')':'— '+getPhoneError() }}
         </div>
+        <!-- ✅ Salary status -->
+        <div style="display:flex;align-items:center;gap:6px;font-size:10px;"
+          [style.color]="form.baseSalary && form.baseSalary > 0 ? '#16a34a' : '#94a3b8'">
+          <span>{{ form.baseSalary && form.baseSalary > 0 ? '✅' : '⚪' }}</span>
+          💰 Salary
+          <span *ngIf="form.baseSalary && form.baseSalary > 0" style="font-weight:700;">
+            {{ currencyPrefix }}{{ form.baseSalary | number:'1.0-2' }}
+          </span>
+          <span *ngIf="!form.baseSalary || form.baseSalary <= 0" style="opacity:0.45;">(not set — optional)</span>
+        </div>
         <div style="display:flex;align-items:center;gap:6px;font-size:10px;" [style.color]="cvPreview?'#16a34a':'#f59e0b'">
           <span>{{ cvPreview?'✅':'⚠️' }}</span> CV {{ cvPreview?'uploaded':lbl('CV not uploaded (optional)') }}
         </div>
@@ -750,7 +809,11 @@
         </div>
         <div>
           <div style="font-size:13px;font-weight:700;">{{ form.name }}</div>
-          <div style="font-size:10px;opacity:0.4;">New team member</div>
+          <div style="font-size:10px;opacity:0.4;">New team member
+            <span *ngIf="form.baseSalary && form.baseSalary > 0" style="color:#16a34a;font-weight:600;">
+              · {{ currencyPrefix }}{{ form.baseSalary | number:'1.0-2' }} salary set ✅
+            </span>
+          </div>
         </div>
       </div>
       <div style="padding:16px 24px;display:flex;flex-direction:column;gap:10px;">

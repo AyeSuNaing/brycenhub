@@ -50,20 +50,23 @@ export class Login implements OnDestroy {
     this.loginSub?.unsubscribe();
   }
 
-  getDashboardRoute(role: string): string {
-    switch (role) {
-      case 'BOSS':             return '/dashboard/boss';
-      case 'COUNTRY_DIRECTOR': return '/dashboard/boss';   // DR → Boss Dashboard
-      case 'VICE_PRESIDENT':   return '/dashboard/vp';
-      case 'ADMIN':            return '/dashboard/admin';
-      case 'PROJECT_MANAGER':  return '/dashboard/pm';
-      case 'LEADER':           return '/dashboard/leader';
-      case 'DEVELOPER':        return '/dashboard/developer';
-      case 'UI_UX':            return '/dashboard/uiux';
-      case 'QA':               return '/dashboard/qa';
-      default:                 return '/dashboard/member';
-    }
+  
+getDashboardRoute(role: string, branchId?: number | null): string {
+  switch (role) {
+    case 'BOSS':             return '/dashboard/boss';
+    case 'COUNTRY_DIRECTOR': return '/dashboard/boss';
+    case 'VICE_PRESIDENT':   return '/dashboard/vp';
+    case 'ADMIN':
+      // Super Admin = ADMIN + branchId NULL
+      return (branchId == null) ? '/dashboard/super-admin' : '/dashboard/admin';
+    case 'PROJECT_MANAGER':  return '/dashboard/pm';
+    case 'LEADER':           return '/dashboard/leader';
+    case 'DEVELOPER':        return '/dashboard/developer';
+    case 'UI_UX':            return '/dashboard/uiux';
+    case 'QA':               return '/dashboard/qa';
+    default:                 return '/dashboard/member';
   }
+}
 
   private validateInput(): string | null {
     const email = this.email?.trim() ?? '';

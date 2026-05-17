@@ -729,8 +729,8 @@ body.light {
 }
 
 .ann-modal {
-    width: 480px;
-    max-width: 90vw;
+    width: 620px;          /* 480 → 620 */
+    max-width: 92vw;
     border-radius: 16px;
     border: 1px solid;
     overflow: hidden;
@@ -754,7 +754,7 @@ body.light {
 }
 
 .ann-modal-header {
-    padding: 14px 16px 12px;
+    padding: 18px 22px 14px;   /* padding ကြီး */
     border-bottom: 1px solid;
     display: flex;
     align-items: flex-start;
@@ -770,7 +770,7 @@ body.light {
 }
 
 .ann-modal-body {
-    padding: 14px 16px;
+    padding: 20px 22px;
 }
 
 .ann-modal-footer {

@@ -26,7 +26,7 @@ import { MemberAttendanceInline } from '../shared/attendance-log/member-attendan
 // ✅ i18n
 import { getLabel, AppLabelKey } from '../i18n/app-labels.i18n';
 import { NavigationStateService } from '../services/navigation-state.service';
-
+import { ClientListInline } from '../shared/client-list/client-list-inline';
 
 import {
   Announcement, Notification, ActiveProject, PortfolioProject,
@@ -57,6 +57,8 @@ const LOGO_SVG = `data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIiIGhlaWdodD0iMzIi
     TaxBracketsInline,     // ✅ NEW
     StaffProfileInline,    // ✅ NEW
     MemberAttendanceInline, // ✅ NEW
+    ClientListInline,
+
   ],
   templateUrl: './member-dashboard.html',
   styleUrl: './member-dashboard.scss'
@@ -550,6 +552,11 @@ export class MemberDashboard implements OnInit, AfterViewInit, OnDestroy {
         this.cdr.detectChanges();
       });
     });
+  }
+
+  canSeeClients(): boolean {
+    const role = this.currentUser?.role || '';
+    return ['PROJECT_MANAGER', 'VICE_PRESIDENT', 'COUNTRY_DIRECTOR', 'BOSS', 'ADMIN'].includes(role);
   }
 
   getInitialFromName(name: string): string {

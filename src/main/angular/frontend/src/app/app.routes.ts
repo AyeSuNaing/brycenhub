@@ -17,6 +17,7 @@ export const routes: Routes = [
       { path: 'director', loadComponent: () => import('./dashboard/boss-dashboard/boss-dashboard').then(m => m.BossDashboard) },
       { path: 'vp',        loadComponent: () => import('./dashboard/vp-dashboard/vp-dashboard').then(m => m.VpDashboardComponent) },
       { path: 'admin',     loadComponent: () => import('./dashboard/admin-dashboard').then(m => m.AdminDashboard) },
+      { path: 'super-admin', loadComponent: () => import('./dashboard/super-admin-dashboard/super-admin-dashboard').then(m => m.SuperAdminDashboard) },
       { path: 'pm',        loadComponent: () => import('./dashboard/member-dashboard').then(m => m.MemberDashboard) },
       { path: 'leader',    loadComponent: () => import('./dashboard/member-dashboard').then(m => m.MemberDashboard) },
       { path: 'developer', loadComponent: () => import('./dashboard/member-dashboard').then(m => m.MemberDashboard) },

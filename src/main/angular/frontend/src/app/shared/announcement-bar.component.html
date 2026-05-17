@@ -55,8 +55,8 @@
           <span *ngIf="modalAnn?.isPinned === 1" style="font-size:9px;opacity:0.4">🔒 Pinned</span>
         </div>
         <!-- ✅ translatedTitle -->
-        <p style="font-size:13px;font-weight:700;margin-bottom:2px">{{ getTitle(modalAnn) }}</p>
-        <p style="font-size:9px;opacity:0.45">
+        <p style="font-size:20px;font-weight:700;margin-bottom:4px;letter-spacing:-0.3px;">{{ getTitle(modalAnn) }}</p>
+        <p style="font-size:14px;opacity:0.45;margin-top:3px;">
           {{ modalAnn?.authorName || modalAnn?.meta || '' }}
           <ng-container *ngIf="modalAnn?.createdAt"> · {{ timeAgo(modalAnn.createdAt) }}</ng-container>
           <ng-container *ngIf="modalAnn?.time"> · {{ modalAnn.time }}</ng-container>
@@ -67,7 +67,7 @@
 
     <!-- Body — ✅ translatedContent -->
     <div class="ann-modal-body">
-      <p style="font-size:12px;line-height:1.7;opacity:0.85;white-space:pre-line;">
+      <p style="font-size:16px;line-height:1.9;opacity:0.9;white-space:pre-line;">
         {{ getContent(modalAnn) }}
       </p>
     </div>
