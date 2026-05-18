@@ -130,11 +130,11 @@
           <div *ngIf="canSeeClients()" class="sidebar-item" [class.active]="activeView==='clients'"
             (click)="closeProject(); setView('clients')">
             <span class="nav-icon">🏢</span>
-            <span>Clients</span>
+            <span>{{ lbl('tabClient') }} </span>
           </div>
 
           <!-- New Project -->
-          <div *ngIf="canCreateProject()" (click)="openNewProject()"
+          <div *ngIf="canCreateProject()" class="sidebar-item" [class.active]="activeView==='newproject'" (click)="closeProject();  openNewProject()"
             style="display:flex;align-items:center;gap:8px;margin:6px 8px 2px;padding:9px 12px;
               border-radius:10px;cursor:pointer;background:linear-gradient(135deg,#14532d,#16a34a);
               border:none;transition:all 0.2s;box-shadow:0 2px 12px rgba(22,163,74,0.3);"
@@ -425,10 +425,11 @@
     </main>
 
     <!-- ✅ RIGHT SIDEBAR — attendance ပါထည့် -->
-    <aside *ngIf="!showProjectDetail && !showNewProject &&
+    <aside *ngIf="!showProjectDetail && 
       (activeView==='dashboard' || activeView==='leave' || activeView==='ot' ||
        activeView==='announce' || activeView==='holidays' || activeView==='tax' ||
-       activeView==='change-password' || activeView==='my-profile' || activeView==='attendance')"
+       activeView==='change-password' || activeView==='my-profile' || activeView==='attendance'  
+       || activeView==='clients'  || activeView==='newproject' )"  
       class="right-sidebar" style="width:260px;min-width:260px;max-width:260px;">
 
       <!-- My Tasks -->

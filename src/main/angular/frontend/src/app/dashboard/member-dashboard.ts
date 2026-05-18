@@ -107,15 +107,24 @@ export class MemberDashboard implements OnInit, AfterViewInit, OnDestroy {
     return getLabel(this.currentLangObj.code, key);
   }
 
+  // setView(v: string): void {
+  //   this.activeView = v;
+  //   if (v === 'dashboard') {
+  //     this.showProjectDetail = false;
+  //     this.showNewProject    = false;
+  //   }
+  //   this.cdr.detectChanges();
+  // }
+    
   setView(v: string): void {
     this.activeView = v;
-    if (v === 'dashboard') {
-      this.showProjectDetail = false;
-      this.showNewProject    = false;
-    }
+
+    this.showProjectDetail = false;
+    this.showNewProject = false;
+    this.selectedProjectId = null;
+
     this.cdr.detectChanges();
   }
-
   loading = {
     stats: true, projects: true, team: true, tasks: true,
     overdue: true, activity: true, deadline: true, announce: true, notif: true,
@@ -382,19 +391,71 @@ export class MemberDashboard implements OnInit, AfterViewInit, OnDestroy {
 
   getBarMaxVal(): number { return Math.max(...this.chartData.map(d => d.done + d.inProgress + d.todo)); }
 
-  openProject(id: number) {
+  // openProject(id: number) {
+  //   this.activeView = 'dashboard';
+  //   this.router.navigate(['/dashboard/member'], { queryParams: { projectId: id } });
+  // }
+  // closeProject() {
+  //   this.router.navigate(['/dashboard/member']);
+  //   this.activeView = 'dashboard';
+  //   this.showProjectDetail = false;
+  //   this.showNewProject = false;
+  //   this.selectedProjectId = null;
+  //   this.cdr.detectChanges();
+  // }
+  
+
+  openProject(id: number): void {
+    this.selectedProjectId = id;
+
+    this.showProjectDetail = true;
+    this.showNewProject = false;   // ✅ close new project
     this.activeView = 'dashboard';
-    this.router.navigate(['/dashboard/member'], { queryParams: { projectId: id } });
+
+    this.router.navigate(
+      ['/dashboard/member'],
+      { queryParams: { projectId: id } }
+    );
+
+    this.cdr.detectChanges();
   }
-  closeProject() {
+
+  closeProject(): void {
     this.router.navigate(['/dashboard/member']);
+
     this.activeView = 'dashboard';
+    this.showProjectDetail = false;
+    this.showNewProject = false;
+    this.selectedProjectId = null;
+
+    this.cdr.detectChanges();
   }
-  openNewProject() { this.showNewProject = true; this.showProjectDetail = false; }
-  closeNewProject() { this.showNewProject = false; }
+
+  
+  openNewProject() {
+    this.activeView = 'newproject';
+    this.showNewProject = true;
+    this.showProjectDetail = false;
+    this.selectedProjectId = null;
+    this.cdr.detectChanges();
+  }
+
+  closeNewProject(): void {
+    this.showNewProject = false;
+    this.showProjectDetail = false;
+    this.selectedProjectId = null;
+    this.activeView = 'dashboard';
+
+    this.router.navigate(['/dashboard/member']);
+
+    this.cdr.detectChanges();
+  }
+
+
   onProjectCreated(project: any) {
     this.showNewProject = false;
     this.openProject(project.id);
+    this.showNewProject = false; 
     this.loadAll();
     this.cdr.detectChanges();
   }

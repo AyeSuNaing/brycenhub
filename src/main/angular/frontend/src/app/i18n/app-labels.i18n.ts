@@ -192,7 +192,8 @@ export type AppLabelKey =
   | 'PROGRESS VS TIMELINE' | 'View delayed'
   | 'project needs attention' | 'projects need attention'
   | 'No deadlines in next 30 days' | 'Upcoming Deadlines' | 'Project Health'
-  | 'BRANCH' | 'PROJECTS';
+  | 'BRANCH' | 'PROJECTS'
+  | 'tabClient' ;
 
 
 // ═══════════════════════════════════════════════════════════════
@@ -401,6 +402,7 @@ const en: Record<AppLabelKey, string> = {
   'Project Health': 'Project Health',
   BRANCH: 'BRANCH',
   PROJECTS: 'PROJECTS',
+  tabClient: 'Client',
 };
 
 // ═══════════════════════════════════════════════════════════════
@@ -605,6 +607,7 @@ const ja: Record<AppLabelKey, string> = {
   'Project Health': 'プロジェクト健全性',
   BRANCH: '支店',
   PROJECTS: 'プロジェクト',
+  tabClient: 'クライアント',
 };
 
 // ═══════════════════════════════════════════════════════════════
@@ -811,6 +814,7 @@ const my: Record<AppLabelKey, string> = {
   'Project Health': 'ပရောဂျက်ကျန်းမာရေး',
   BRANCH: 'ဌာနခွဲ',
   PROJECTS: 'ပရောဂျက်',
+  tabClient: 'ကလိုင်းယင့်',
 };
 
 // ═══════════════════════════════════════════════════════════════
@@ -1004,6 +1008,7 @@ const km: Record<AppLabelKey, string> = {
   'Project Health': 'សុខភាពគម្រោង',
   BRANCH: 'សាខា',
   PROJECTS: 'គម្រោង',
+  tabClient: 'អតិថិជន',
 
 };
 
@@ -1200,6 +1205,7 @@ const vi: Record<AppLabelKey, string> = {
   'Project Health': 'Sức khỏe dự án',
   BRANCH: 'Chi nhánh',
   PROJECTS: 'Dự án',
+  tabClient: 'Khách hàng',
   
 };
 
@@ -1393,6 +1399,7 @@ const ko: Record<AppLabelKey, string> = {
   'Project Health': '프로젝트 건강도',
   BRANCH: '지점',
   PROJECTS: '프로젝트',
+  tabClient: '클라이언트',
 
 };
 

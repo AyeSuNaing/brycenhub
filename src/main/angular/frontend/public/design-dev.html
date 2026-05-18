@@ -908,7 +908,7 @@
       if (!el || typeof html2canvas === 'undefined') { callback(null); return; }
       html2canvas(el, {
         useCORS: true, allowTaint: true,
-        scale: 0.5,          // 50% scale — smaller token count
+        scale: 0.1,          // 50% scale — smaller token count
         backgroundColor: '#ffffff',
         logging: false
       }).then(function(canvas) {
@@ -921,7 +921,10 @@
         out.width = outW; out.height = outH;
         var ctx = out.getContext('2d');
         ctx.drawImage(canvas, 0, 0, outW, outH);
-        var b64 = out.toDataURL('image/jpeg', 0.7).split(',')[1];
+        
+        var b64 = out.toDataURL('image/jpeg', 0.4).split(',')[1];
+        if (b64.length > 30000) { callback(null); return; }
+        callback(b64);
         callback(b64);
       }).catch(function() { callback(null); });
     }
