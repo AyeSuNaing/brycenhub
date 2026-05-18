@@ -14,19 +14,25 @@ import { getLabel, AppLabelKey } from '../i18n/app-labels.i18n';
 const BASE = environment.apiBaseUrl;
 
 export interface BranchProjectItem {
-  id:           number;
-  name:         string;
-  status:       'On Track' | 'At Risk' | 'Delayed';
+  id:            number;
+  name:          string;
+  status:        'On Track' | 'At Risk' | 'Delayed';
   projectStatus: string;
-  progress:     number;
-  ownerName:    string;
-  ownerInitial: string;
-  ownerColor:   string;
-  dueDate:      string;
-  health:       number;
-  staffCount:   number;
-  totalTasks:   number;
-  doneTasks:    number;
+  progress:      number;
+  ownerName:     string;
+  ownerInitial:  string;
+  ownerColor:    string;
+  dueDate:       string;
+  health:        number;
+  staffCount:    number;
+  totalTasks:    number;
+  doneTasks:     number;
+  // ── P&L fields ─────────────────────────────────
+  budget:        number | null;
+  staffCost:     number;
+  profitLoss:    number | null;
+  profitPct:     number | null;
+  isProfit:      boolean;
 }
 
 @Component({
@@ -42,13 +48,14 @@ export class BranchProjectsInline implements OnInit {
   @Input() hidePanel = true;
   @Output() back = new EventEmitter<void>();
 
-  projects:   BranchProjectItem[] = [];
-  isLoading   = true;
+  projects:    BranchProjectItem[] = [];
+  isLoading    = true;
+  loadingPL    = false;
   statusFilter = 'ALL';
   hoveredRow:  any = null;
 
-  showProjectDetail   = false;
-  selectedProjectId:  number | null = null;
+  showProjectDetail  = false;
+  selectedProjectId: number | null = null;
 
   readonly STATUS_FILTERS = [
     { key: 'ALL',       label: 'All'      },
@@ -63,7 +70,6 @@ export class BranchProjectsInline implements OnInit {
     private cdr:  ChangeDetectorRef,
   ) {}
 
-  // ── i18n ──────────────────────────────────
   lbl(key: AppLabelKey): string {
     return getLabel(this.auth.getUser()?.preferredLanguage, key);
   }
@@ -84,7 +90,54 @@ export class BranchProjectsInline implements OnInit {
         this.projects  = (list || []).map(p => this.normalize(p));
         this.isLoading = false;
         this.cdr.detectChanges();
+        // projects ပြီးမှ P/L load
+        this.loadProfitLoss();
       });
+  }
+
+  // ── P&L ──────────────────────────────────────────────────────────
+  loadProfitLoss(): void {
+    this.loadingPL = true;
+    this.http.get<any>(`${BASE}/projects/profit-loss`, { headers: this.auth.getHeaders() })
+      .pipe(catchError(() => of(null)))
+      .subscribe(resp => {
+        this.loadingPL = false;
+        if (!resp?.projects) { this.cdr.detectChanges(); return; }
+        (resp.projects as any[]).forEach(pl => {
+          const p = this.projects.find(x => x.id === pl.projectId);
+          if (p) {
+            p.budget     = pl.budget     != null ? Number(pl.budget)       : null;
+            p.staffCost  = Number(pl.staffCost   ?? 0);
+            p.profitLoss = pl.profitLoss != null ? Number(pl.profitLoss)   : null;
+            p.profitPct  = pl.profitPercent != null ? Number(pl.profitPercent) : null;
+            // ✅ Java boolean getter → JSON "profit" (not "isProfit")
+            p.isProfit   = !!(pl.profit ?? pl.isProfit);
+          }
+        });
+        this.cdr.detectChanges();
+      });
+  }
+
+  // P&L badge text — "+$18,266 (37%)"
+  formatPL(pl: number | null, pct: number | null): string {
+    if (pl === null) return '—';
+    const sign   = pl >= 0 ? '+' : '';
+    const amount = Math.abs(pl).toLocaleString('en-US', {
+      minimumFractionDigits: 0, maximumFractionDigits: 0
+    });
+    const pctStr = pct !== null ? ` (${Math.abs(pct).toFixed(0)}%)` : '';
+    return `${sign}$${amount}${pctStr}`;
+  }
+
+  // P&L summary getters
+  get profitProjects():   BranchProjectItem[] {
+    return this.projects.filter(p => p.isProfit && p.budget !== null);
+  }
+  get lossProjects():     BranchProjectItem[] {
+    return this.projects.filter(p => !p.isProfit && p.budget !== null);
+  }
+  get noBudgetProjects(): BranchProjectItem[] {
+    return this.projects.filter(p => p.budget === null);
   }
 
   private normalize(p: any): BranchProjectItem {
@@ -107,6 +160,8 @@ export class BranchProjectsInline implements OnInit {
       staffCount: p.staffCount || 0,
       totalTasks: p.totalTasks || 0,
       doneTasks:  p.doneTasks  || 0,
+      // P/L defaults (merged by loadProfitLoss)
+      budget: null, staffCost: 0, profitLoss: null, profitPct: null, isProfit: false,
     };
   }
 
@@ -125,8 +180,8 @@ export class BranchProjectsInline implements OnInit {
   }
 
   openProject(id: number): void {
-    this.selectedProjectId  = id;
-    this.showProjectDetail  = true;
+    this.selectedProjectId = id;
+    this.showProjectDetail = true;
     this.cdr.detectChanges();
   }
 

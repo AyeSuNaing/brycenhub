@@ -56,9 +56,10 @@ getDashboardRoute(role: string, branchId?: number | null): string {
     case 'BOSS':             return '/dashboard/boss';
     case 'COUNTRY_DIRECTOR': return '/dashboard/boss';
     case 'VICE_PRESIDENT':   return '/dashboard/vp';
-    case 'ADMIN':
-      // Super Admin = ADMIN + branchId NULL
-      return (branchId == null) ? '/dashboard/super-admin' : '/dashboard/admin';
+    // case 'ADMIN': 
+    //   // Super Admin = ADMIN + branchId NULL
+    //   return (branchId == null) ? '/dashboard/super-admin' : '/dashboard/admin';
+    case 'ADMIN':            return '/dashboard/admin';
     case 'PROJECT_MANAGER':  return '/dashboard/pm';
     case 'LEADER':           return '/dashboard/leader';
     case 'DEVELOPER':        return '/dashboard/developer';

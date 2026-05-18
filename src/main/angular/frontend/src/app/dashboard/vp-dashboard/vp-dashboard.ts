@@ -48,6 +48,13 @@ export interface BranchProject {
   status: 'On Track' | 'At Risk' | 'Delayed';
   progress: number; ownerName: string; ownerInitial: string;
   ownerColor: string; dueDate: string; health: number;
+  // ── P/L fields ──────────────────────────────────
+  budget:       number | null;
+  staffCost:    number;
+  profitLoss:   number | null;
+  profitPct:    number | null;
+  isProfit:     boolean;
+  staffCount:   number;
 }
 
 export interface BranchMemberItem {
@@ -72,7 +79,7 @@ export interface DepartmentItem {
     HolidaysInline,
     TaxBracketsInline,
     ChangePasswordInline,
-    LeaveApprovalInline, 
+    LeaveApprovalInline,
     OtApprovalInline,
     SalaryApprovalInline,
     ClientListInline,
@@ -92,6 +99,9 @@ export class VpDashboardComponent implements OnInit, AfterViewInit, OnDestroy {
 
   showProjectDetail = false;
   selectedProjectId: number | null = null;
+
+  // ── Right sidebar toggle ──────────────────────────────────────
+  rightSidebarOpen = true;
 
   langs = [
     { code: 'en', display: 'EN', name: 'English',    flag: '🇺🇸' },
@@ -136,6 +146,9 @@ export class VpDashboardComponent implements OnInit, AfterViewInit, OnDestroy {
   salaryHistoryPeriods: any[] = [];
   salaryActing: { [period: string]: boolean } = {};
   loadingSalary = false;
+
+  // ── Profit / Loss ─────────────────────────────────────────────
+  loadingPL = false;
 
   selectedSalaryPeriod: any = null;
   salaryDetailRows:     any[] = [];
@@ -203,10 +216,8 @@ export class VpDashboardComponent implements OnInit, AfterViewInit, OnDestroy {
   toastType: 'success' | 'error' = 'success';
   private _toastTimer: any;
 
-
-
   showToast(msg: string, type: 'success' | 'error' = 'success') {
-    this.toastMsg = msg;
+    this.toastMsg  = msg;
     this.toastType = type;
     this.cdr.detectChanges();
     clearTimeout(this._toastTimer);
@@ -216,17 +227,9 @@ export class VpDashboardComponent implements OnInit, AfterViewInit, OnDestroy {
     }, 3000);
   }
 
-  
-  // ══════════════════════════════════════════════════════════════
-  // ✅ i18n — label helper (used in HTML as lbl('key'))
-  // ══════════════════════════════════════════════════════════════
   lbl(key: AppLabelKey): string {
     return getLabel(this.currentLangObj.code, key);
   }
-
-  // ══════════════════════════════════════════════════════════════
-  // ACTIVE CHECK HELPERS
-  // ══════════════════════════════════════════════════════════════
 
   isActiveLeave(r: any): boolean {
     if (!r.endDate) return true;
@@ -252,8 +255,8 @@ export class VpDashboardComponent implements OnInit, AfterViewInit, OnDestroy {
     return 2;
   }
 
-  get sortedLeave(): any[] { return [...this.historyLeave].sort((a, b) => this.leaveRank(a)  - this.leaveRank(b)); }
-  get sortedOt():    any[] { return [...this.historyOt].sort((a, b)    => this.otRank(a)     - this.otRank(b)); }
+  get sortedLeave(): any[] { return [...this.historyLeave].sort((a, b) => this.leaveRank(a) - this.leaveRank(b)); }
+  get sortedOt():    any[] { return [...this.historyOt].sort((a, b)    => this.otRank(a)    - this.otRank(b));    }
 
   constructor(
     private http: HttpClient,
@@ -284,7 +287,7 @@ export class VpDashboardComponent implements OnInit, AfterViewInit, OnDestroy {
     this.updateMyTasksHeight();
 
     const savedNav = this.navState.restoreProjectState();
-   if (savedNav.showProject && savedNav.projectId) {
+    if (savedNav.showProject && savedNav.projectId) {
       this.selectedProjectId = savedNav.projectId;
       this.showProjectDetail = true;
       this.navState.clearProjectState();
@@ -292,41 +295,29 @@ export class VpDashboardComponent implements OnInit, AfterViewInit, OnDestroy {
     }
 
     this._refreshSub = this.refreshService.refresh$.subscribe(() => {
-      const t = () => new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit', fractionalSecondDigits: 3 });
-
-      console.log(`[VP Dashboard] 🔄 Refresh triggered — ${t()}`);
-      
       this.loadStats();
-      console.log(`[VP Dashboard] 📊 loadStats() called — ${t()}`);
-      
       this.loadLeaveRequests();
-      console.log(`[VP Dashboard] 🏖 loadLeaveRequests() called — ${t()}`);
-      
       this.loadOtRequests();
-      console.log(`[VP Dashboard] ⏰ loadOtRequests() called — ${t()}`);
-      
       this.loadSalaryDashboard();
-      console.log(`[VP Dashboard] 💰 loadSalaryDashboard() called — ${t()}`);
-      
       this.cdr.detectChanges();
     });
   }
 
-  ngAfterViewInit(): void {
-    this.cdr.detectChanges();
+  ngAfterViewInit(): void { this.cdr.detectChanges(); }
+
+  ngOnDestroy(): void {
+    this._refreshSub?.unsubscribe();
+    this.stopUnreadPolling();
   }
-
-
-  ngOnDestroy(): void { this._refreshSub?.unsubscribe(); this.stopUnreadPolling(); }
 
   private get headers() { return this.auth.getHeaders(); }
 
   setView(view: string): void {
     this.activeView = view;
-    if (view === 'announcements') { this.loadAnnouncements(); }
-    if (view === 'branches') { this.loadBranches(); }
+    if (view === 'announcements')    { this.loadAnnouncements(); }
+    if (view === 'branches')         { this.loadBranches(); }
     if (view === 'salary-approvals') { this.loadingSalary = true; this.loadSalaryApprovals(); }
-    if (view === 'salary-detail') { this.loadSalaryDetail(); }
+    if (view === 'salary-detail')    { this.loadSalaryDetail(); }
     if (view === 'view-leave') {
       this.historyFilter = 'ALL'; this.useCustom = false; this.resetSearch();
       const p = this.getCurrentPayPeriod();
@@ -453,8 +444,6 @@ export class VpDashboardComponent implements OnInit, AfterViewInit, OnDestroy {
   closePayrollApprovals(): void { this.activeView = 'dashboard';          this.cdr.detectChanges(); }
 
   loadSalaryDashboard(): void {
-
-  const t = () => new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit', fractionalSecondDigits: 3 });
     this.http.get<any[]>(`${VP_BASE}/salary-approvals`, { headers: this.headers })
       .pipe(catchError(() => of([])))
       .subscribe(data => {
@@ -512,9 +501,50 @@ export class VpDashboardComponent implements OnInit, AfterViewInit, OnDestroy {
 
   loadAll(): void {
     this.loadBranchName();
-    this.loadStats(); this.loadLeaveRequests(); this.loadOtRequests();
-    this.loadSalaryDashboard(); this.loadBranchProjects(); this.loadBranchMembers();
+    this.loadStats();
+    this.loadLeaveRequests();
+    this.loadOtRequests();
+    this.loadSalaryDashboard();
+    this.loadBranchMembers();
     this.loadBranches();
+    this.loadBranchProjectsThenPL();
+  }
+
+  loadBranchProjectsThenPL(): void {
+    this.http.get<any[]>(`${VP_BASE}/branch-projects`, { headers: this.headers })
+      .pipe(catchError(() => of([])))
+      .subscribe(list => {
+        this.branchProjects   = (list || []).map(p => this.normalizeProject(p));
+        this.loading.projects = false;
+        this.cdr.detectChanges();
+        this.loadProfitLoss();
+        this.loadProjectUnreadCounts();
+        this.startUnreadPolling();
+      });
+  }
+
+  loadBranchProjects(): void { this.loadBranchProjectsThenPL(); }
+
+  loadProfitLoss(): void {
+    this.loadingPL = true;
+    this.http.get<any>(`${BASE}/projects/profit-loss`, { headers: this.headers })
+      .pipe(catchError(() => of(null)))
+      .subscribe(resp => {
+        this.loadingPL = false;
+        if (!resp?.projects) { this.cdr.detectChanges(); return; }
+        (resp.projects as any[]).forEach(pl => {
+          const bp = this.branchProjects.find(p => p.id === pl.projectId);
+          if (bp) {
+            bp.budget     = pl.budget     != null ? Number(pl.budget)     : null;
+            bp.staffCost  = Number(pl.staffCost   ?? 0);
+            bp.profitLoss = pl.profitLoss != null ? Number(pl.profitLoss) : null;
+            bp.profitPct  = pl.profitPercent != null ? Number(pl.profitPercent) : null;
+            bp.isProfit   = !!(pl.profit ?? pl.isProfit);
+            bp.staffCount = Number(pl.staffCount  ?? bp.staffCount);
+          }
+        });
+        this.cdr.detectChanges();
+      });
   }
 
   loadBranchName(): void {
@@ -523,21 +553,14 @@ export class VpDashboardComponent implements OnInit, AfterViewInit, OnDestroy {
     this.http.get<any>(`${BASE}/branches/${branchId}`, { headers: this.headers })
       .pipe(catchError(() => of(null)))
       .subscribe(b => {
-        if (b?.name) {
-          this.branchName = b.name;
-          this.cdr.markForCheck();
-          this.cdr.detectChanges();
-        }
+        if (b?.name) { this.branchName = b.name; this.cdr.markForCheck(); this.cdr.detectChanges(); }
       });
   }
 
   loadBranches(): void {
     this.http.get<any[]>(`${BASE}/branches`, { headers: this.headers })
       .pipe(catchError(() => of([])))
-      .subscribe(list => {
-        this.branches = list || [];
-        this.cdr.detectChanges();
-      });
+      .subscribe(list => { this.branches = list || []; this.cdr.detectChanges(); });
   }
 
   loadStats(): void {
@@ -575,19 +598,9 @@ export class VpDashboardComponent implements OnInit, AfterViewInit, OnDestroy {
     this.http.get<any[]>(`${VP_BASE}/ot-requests?status=PENDING`, { headers: this.headers })
       .pipe(catchError(() => of([])))
       .subscribe(list => {
-        this.otApprovals      = (list || []).map(ot => this.normalizeOt(ot));
+        this.otApprovals       = (list || []).map(ot => this.normalizeOt(ot));
         this.approvalCounts.OT = this.otApprovals.length;
         this.recomputeTotalPending(); this.cdr.detectChanges();
-      });
-  }
-
-  loadBranchProjects(): void {
-    this.http.get<any[]>(`${VP_BASE}/branch-projects`, { headers: this.headers })
-      .pipe(catchError(() => of([])))
-      .subscribe(list => {
-        this.branchProjects   = (list || []).map(p => this.normalizeProject(p));
-        this.loading.projects = false; this.cdr.detectChanges();
-        this.loadProjectUnreadCounts(); this.startUnreadPolling();
       });
   }
 
@@ -687,6 +700,8 @@ export class VpDashboardComponent implements OnInit, AfterViewInit, OnDestroy {
       ownerColor: p.pmColor || '#64748b',
       dueDate: ed ? this.formatDate(ed) : '—',
       health: this.calcHealth(st, prog, dl),
+      budget: null, staffCost: 0, profitLoss: null, profitPct: null, isProfit: false,
+      staffCount: p.staffCount || 0,
     };
   }
 
@@ -702,13 +717,12 @@ export class VpDashboardComponent implements OnInit, AfterViewInit, OnDestroy {
     const url = this.approveUrl(a); if (!url) return;
     this.http.patch(url, {}, { headers: this.headers })
       .pipe(catchError(() => { alert('Failed.'); return of(null); }))
-      // .subscribe(r => { if (r !== null) { this.removeApprovalLocally(a); this.loadStats(); } });
       .subscribe(r => {
         this.otActing[a.id] = false;
         if (r !== null) {
           this.removeApprovalLocally(a);
           this.loadStats();
-          this.showToast(`✅ ${a.staffName}'s ${a.type} approved`);  // ← ထည့်
+          this.showToast(`✅ ${a.staffName}'s ${a.type} approved`);
         } else {
           this.showToast('❌ Action failed. Please try again.', 'error');
         }
@@ -772,25 +786,22 @@ export class VpDashboardComponent implements OnInit, AfterViewInit, OnDestroy {
 
   selectLang(lang: any): void {
     this.currentLangObj = lang;
-    this.showLangMenu = false;
+    this.showLangMenu   = false;
     try {
       const stored = localStorage.getItem('user');
       if (stored) { const u = JSON.parse(stored); u.preferredLanguage = lang.code; localStorage.setItem('user', JSON.stringify(u)); }
     } catch(e) {}
     this.http.put(`${BASE}/auth/language`, { language: lang.code }, { headers: this.headers }).subscribe({
-      next: () => {
-        localStorage.setItem('brycen-active-view', this.activeView);
-        if (this.selectedStaffId) { localStorage.setItem('brycen-selected-staff', String(this.selectedStaffId)); }
-        window.location.reload();
-      },
-      error: () => {
-        localStorage.setItem('brycen-active-view', this.activeView);
-        if (this.selectedStaffId) { localStorage.setItem('brycen-selected-staff', String(this.selectedStaffId)); }
-        window.location.reload();
-      },
+      next: () => { this.reloadPage(); },
+      error: () => { this.reloadPage(); },
     });
   }
 
+  private reloadPage(): void {
+    localStorage.setItem('brycen-active-view', this.activeView);
+    if (this.selectedStaffId) { localStorage.setItem('brycen-selected-staff', String(this.selectedStaffId)); }
+    window.location.reload();
+  }
 
   setApprovalTab(tab: ApprovalTab): void {
     this.activeApprovalTab = tab;
@@ -837,6 +848,14 @@ export class VpDashboardComponent implements OnInit, AfterViewInit, OnDestroy {
     return s + Number(amount || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   }
 
+  formatPL(pl: number | null, pct: number | null): string {
+    if (pl === null) return '—';
+    const sign   = pl >= 0 ? '+' : '';
+    const amount = Math.abs(pl).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+    const pctStr = pct !== null ? ` (${Math.abs(pct).toFixed(0)}%)` : '';
+    return `${sign}$${amount}${pctStr}`;
+  }
+
   formatPeriodLabel(code: string): string {
     if (!code || code.length < 7) return code || '';
     const [y, m] = code.split('-');
@@ -847,6 +866,10 @@ export class VpDashboardComponent implements OnInit, AfterViewInit, OnDestroy {
 
   getManagementMembers(): BranchMemberItem[] { return this.teamMembers.filter(m => m.management === true); }
   getTeamMembers():       BranchMemberItem[] { return this.teamMembers.filter(m => m.management !== true); }
+
+  get profitProjects():   BranchProject[] { return this.branchProjects.filter(p => p.isProfit && p.budget !== null); }
+  get lossProjects():     BranchProject[] { return this.branchProjects.filter(p => !p.isProfit && p.budget !== null); }
+  get noBudgetProjects(): BranchProject[] { return this.branchProjects.filter(p => p.budget === null); }
 
   private getMemberRoleOrder(role: string): number {
     const order: Record<string, number> = {
@@ -927,8 +950,8 @@ export class VpDashboardComponent implements OnInit, AfterViewInit, OnDestroy {
     const myId = this.currentUser?.id || this.currentUser?.userId;
     if (!myId) return;
     this.selectedStaffId = myId;
-    this.activeView = 'member-profile';
-    this.settingsOpen = false;
+    this.activeView      = 'member-profile';
+    this.settingsOpen    = false;
     this.cdr.detectChanges();
   }
 

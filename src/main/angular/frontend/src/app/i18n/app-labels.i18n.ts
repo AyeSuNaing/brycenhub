@@ -52,6 +52,7 @@ export type AppLabelKey =
   | 'Branch Projects (card)' | 'projects' | 'total projects'
   | 'PROJECT' | 'STATUS' | 'PROGRESS' | 'OWNER' | 'DUE DATE' | 'HEALTH'
   | 'TOTAL' | 'ON TRACK' | 'AT RISK' | 'DELAYED'
+  | 'PandL' | 'Profit' | 'Loss'
   | 'TEAM' | 'TASKS' | 'DUE' | 'All'
   | 'On Track' | 'At Risk' | 'Delayed' | 'ACTIVE (status)'
   // ── STAFF LIST PAGE ──
@@ -249,7 +250,7 @@ const en: Record<AppLabelKey, string> = {
   'Branch Projects (card)': 'Branch Projects', projects: 'projects',
   'total projects': 'total projects',
   PROJECT: 'PROJECT', STATUS: 'STATUS', PROGRESS: 'PROGRESS',
-  OWNER: 'OWNER', 'DUE DATE': 'DUE DATE', HEALTH: 'HEALTH',
+  OWNER: 'OWNER', 'DUE DATE': 'DUE DATE', HEALTH: 'HEALTH', PandL: 'P&L', Profit: 'Profit', Loss: 'Loss',
   TOTAL: 'TOTAL', 'ON TRACK': 'ON TRACK', 'AT RISK': 'AT RISK', DELAYED: 'DELAYED',
   TEAM: 'TEAM', TASKS: 'TASKS', DUE: 'DUE', All: 'All',
   'On Track': 'On Track', 'At Risk': 'At Risk', Delayed: 'Delayed',
@@ -455,7 +456,7 @@ const ja: Record<AppLabelKey, string> = {
   'Branch Projects (card)': 'ブランチプロジェクト', projects: '件',
   'total projects': '件のプロジェクト',
   PROJECT: 'プロジェクト', STATUS: 'ステータス', PROGRESS: '進捗',
-  OWNER: '担当者', 'DUE DATE': '期限', HEALTH: '健全性',
+  OWNER: '担当者', 'DUE DATE': '期限', HEALTH: '健全性', PandL: '損益', Profit: '利益', Loss: '損失',
   TOTAL: '合計', 'ON TRACK': '順調', 'AT RISK': '要注意', DELAYED: '遅延',
   TEAM: 'チーム', TASKS: 'タスク', DUE: '期限', All: 'すべて',
   'On Track': '順調', 'At Risk': '要注意', Delayed: '遅延', 'ACTIVE (status)': 'アクティブ',
@@ -660,7 +661,7 @@ const my: Record<AppLabelKey, string> = {
   'Branch Projects (card)': 'ဌာနခွဲပရောဂျက်', projects: 'ခု',
   'total projects': 'ပရောဂျက်စုစုပေါင်း',
   PROJECT: 'ပရောဂျက်', STATUS: 'အခြေအနေ', PROGRESS: 'တိုးတက်မှု',
-  OWNER: 'တာဝန်ခံ', 'DUE DATE': 'သတ်မှတ်ရက်', HEALTH: 'ကျန်းမာရေး',
+  OWNER: 'တာဝန်ခံ', 'DUE DATE': 'သတ်မှတ်ရက်', HEALTH: 'ကျန်းမာရေး', PandL: 'အမြတ်/အရှုံး', Profit: 'အမြတ်', Loss: 'အရှုံး',
   TOTAL: 'စုစုပေါင်း', 'ON TRACK': 'ပုံမှန်', 'AT RISK': 'အန္တရာယ်ရှိ', DELAYED: 'နောက်ကျ',
   TEAM: 'အဖွဲ့', TASKS: 'တာဝန်', DUE: 'ရက်', All: 'အားလုံး',
   'On Track': 'ပုံမှန်', 'At Risk': 'အန္တရာယ်ရှိ', Delayed: 'နောက်ကျ',
@@ -866,7 +867,7 @@ const km: Record<AppLabelKey, string> = {
   'Branch Projects (card)': 'គម្រោងសាខា', projects: 'គម្រោង',
   'total projects': 'គម្រោងសរុប',
   PROJECT: 'គម្រោង', STATUS: 'ស្ថានភាព', PROGRESS: 'វឌ្ឍនភាព',
-  OWNER: 'ម្ចាស់', 'DUE DATE': 'កាលកំណត់', HEALTH: 'សុខភាព',
+  OWNER: 'ម្ចាស់', 'DUE DATE': 'កាលកំណត់', HEALTH: 'សុខភាព', PandL: 'ចំណេញ/ខាត', Profit: 'ចំណេញ', Loss: 'ខាត',
   TOTAL: 'សរុប', 'ON TRACK': 'ធម្មតា', 'AT RISK': 'ហានិភ័យ', DELAYED: 'យឺត',
   TEAM: 'ក្រុម', TASKS: 'ភារកិច្ច', DUE: 'ថ្ងៃ', All: 'ទាំងអស់',
   'On Track': 'ដំណើរការធម្មតា', 'At Risk': 'មានហានិភ័យ', Delayed: 'យឺត',
@@ -1061,7 +1062,7 @@ const vi: Record<AppLabelKey, string> = {
   'Branch Projects (card)': 'Dự án chi nhánh', projects: 'dự án',
   'total projects': 'tổng dự án',
   PROJECT: 'DỰ ÁN', STATUS: 'TRẠNG THÁI', PROGRESS: 'TIẾN ĐỘ',
-  OWNER: 'PHỤ TRÁCH', 'DUE DATE': 'HẠN', HEALTH: 'SỨC KHỎE',
+  OWNER: 'PHỤ TRÁCH', 'DUE DATE': 'HẠN', HEALTH: 'SỨC KHỎE', PandL: 'Lãi/Lỗ', Profit: 'Lãi', Loss: 'Lỗ',
   TOTAL: 'TỔNG', 'ON TRACK': 'ĐÚNG TIẾN ĐỘ', 'AT RISK': 'RỦI RO', DELAYED: 'TRỄ',
   TEAM: 'NHÓM', TASKS: 'NHIỆM VỤ', DUE: 'HẠN', All: 'Tất cả',
   'On Track': 'Đúng tiến độ', 'At Risk': 'Có rủi ro', Delayed: 'Trễ',
@@ -1255,7 +1256,7 @@ const ko: Record<AppLabelKey, string> = {
   'Branch Projects (card)': '지점 프로젝트', projects: '개',
   'total projects': '총 프로젝트',
   PROJECT: '프로젝트', STATUS: '상태', PROGRESS: '진행률',
-  OWNER: '담당자', 'DUE DATE': '마감일', HEALTH: '건강도',
+  OWNER: '담당자', 'DUE DATE': '마감일', HEALTH: '건강도', PandL: '손익', Profit: '이익', Loss: '손실',
   TOTAL: '합계', 'ON TRACK': '정상', 'AT RISK': '위험', DELAYED: '지연',
   TEAM: '팀', TASKS: '태스크', DUE: '마감', All: '전체',
   'On Track': '정상', 'At Risk': '위험', Delayed: '지연', 'ACTIVE (status)': '활성',
